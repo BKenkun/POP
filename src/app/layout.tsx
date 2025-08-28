@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from '@/context/cart-context';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { SalesNotification } from '@/components/sales-notification';
 
 export const metadata: Metadata = {
   title: 'Popper España',
@@ -32,6 +33,7 @@ export default function RootLayout({
             <Footer />
           </div>
           <Toaster />
+          <SalesNotification />
         </CartProvider>
       </body>
     </html>
