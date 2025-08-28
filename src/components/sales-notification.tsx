@@ -42,7 +42,7 @@ export function SalesNotification() {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    const randomDelay = Math.random() * 10000 + 8000; // Between 8-18 seconds
+    const randomDelay = Math.random() * 15000 + 12000; // Between 12-27 seconds
     timeoutRef.current = setTimeout(() => {
       showRandomToast();
       scheduleNextToast();
@@ -55,7 +55,7 @@ export function SalesNotification() {
     const initialDelay = setTimeout(() => {
         showRandomToast();
         scheduleNextToast();
-    }, 8000);
+    }, 10000);
 
     return () => {
         clearTimeout(initialDelay);
