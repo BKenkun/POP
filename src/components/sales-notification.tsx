@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { products } from '@/lib/products';
 import { formatPrice } from '@/lib/utils';
@@ -13,16 +13,10 @@ const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.le
 
 export function SalesNotification() {
   const { toast } = useToast();
-  const [lastNotificationTime, setLastNotificationTime] = useState(0);
 
 
   useEffect(() => {
     const showRandomToast = () => {
-      // Don't show toast if one was shown recently
-      if (Date.now() - lastNotificationTime < 10000) {
-          return;
-      }
-      
       const product = getRandomItem(products);
       const quantity = Math.floor(Math.random() * 2) + 1;
       const name = getRandomItem(names);
@@ -43,7 +37,6 @@ export function SalesNotification() {
           </div>
         )
       });
-      setLastNotificationTime(Date.now());
     };
     
     // Show the first toast after a short delay
@@ -52,13 +45,15 @@ export function SalesNotification() {
     // Then show toasts at a random interval
     const interval = setInterval(() => {
         showRandomToast();
-    }, Math.random() * 15000 + 10000); // Between 10-25 seconds
+    }, Math.random() * 10000 + 5000); // Between 5-15 seconds
 
     return () => {
         clearTimeout(firstTimeout);
         clearInterval(interval);
     };
-  }, [toast, lastNotificationTime]);
+  }, [toast]);
 
   return null; // This component doesn't render anything itself
 }
+
+    
