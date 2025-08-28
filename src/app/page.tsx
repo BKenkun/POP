@@ -9,9 +9,9 @@ export default function Home() {
     <div className="space-y-12">
       <div className="text-center space-y-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold text-primary tracking-tight">Popper España</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-primary tracking-tight">Calidad Premium, Sensaciones Únicas</h1>
           <p className="mt-2 text-base text-foreground/80 max-w-2xl mx-auto">
-            Descubre nuestra exclusiva colección de productos popper premium. Calidad inigualable para una experiencia sin precedentes.
+            Explora nuestra cuidada selección de poppers y descubre una pureza y potencia que redefine la experiencia.
           </p>
         </div>
 
