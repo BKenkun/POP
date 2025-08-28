@@ -1,0 +1,119 @@
+"use client";
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { useCart } from '@/context/cart-context';
+import { formatPrice } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface CartSheetProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+}
+
+export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
+  const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart } = useCart();
+  const { toast } = useToast();
+
+  const handleCheckout = () => {
+    if(cartCount === 0) {
+      toast({
+        title: "Your cart is empty",
+        description: "Please add items to your cart before proceeding to checkout.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onOpenChange(false);
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
+        <SheetHeader className="px-6">
+          <SheetTitle>Shopping Cart ({cartCount})</SheetTitle>
+        </SheetHeader>
+        <Separator />
+        {cartCount > 0 ? (
+          <>
+            <ScrollArea className="flex-1">
+              <div className="flex flex-col gap-4 p-6">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex items-start gap-4">
+                    <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={item.imageHint}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{item.name}</h3>
+                      <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-6 text-center">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => removeFromCart(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <SheetFooter className="bg-secondary/50 p-6">
+              <div className="w-full space-y-4">
+                <div className="flex justify-between font-semibold">
+                  <span>Subtotal</span>
+                  <span>{formatPrice(cartTotal)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Items are not reserved. Shipping and taxes calculated at checkout.
+                </p>
+                <Link href="/checkout" passHref>
+                  <Button asChild size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleCheckout}>
+                    <a>Proceed to Checkout</a>
+                  </Button>
+                </Link>
+              </div>
+            </SheetFooter>
+          </>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+            <ShoppingBag className="h-24 w-24 text-muted-foreground/30" strokeWidth={1} />
+            <h2 className="text-xl font-semibold">Your cart is empty</h2>
+            <p className="text-muted-foreground">Looks like you haven't added anything yet.</p>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
