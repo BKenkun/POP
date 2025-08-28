@@ -17,7 +17,7 @@ export default function CheckoutClientPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const shippingCost = 500; // $5.00
+  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
   const taxAmount = cartTotal * 0.08; // 8% tax
   const total = cartTotal + shippingCost + taxAmount;
   
@@ -115,7 +115,7 @@ export default function CheckoutClientPage() {
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>{formatPrice(shippingCost)}</span>
+                 <span>{shippingCost === 0 ? 'Free' : formatPrice(shippingCost)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Taxes (Est.)</span>
