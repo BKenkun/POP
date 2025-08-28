@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CartSheetProps {
@@ -94,6 +94,16 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                 <div className="flex justify-between font-semibold">
                   <span>Subtotal</span>
                   <span>{formatPrice(cartTotal)}</span>
+                </div>
+                 <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <Box className="h-4 w-4 text-primary" />
+                        <span>Embalaje 100% discreto.</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-primary" />
+                        <span>Envío 24/48h.</span>
+                    </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
                   Items are not reserved. Shipping and taxes calculated at checkout.

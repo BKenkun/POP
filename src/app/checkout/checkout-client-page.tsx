@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, ShoppingBag } from 'lucide-react';
+import { Lock, ShoppingBag, ShieldCheck, CreditCard, Clock, Box } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
@@ -71,6 +71,36 @@ export default function CheckoutClientPage() {
               ))}
             </CardContent>
           </Card>
+          <div className="mt-8 space-y-4 text-sm text-muted-foreground">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="h-5 w-5 flex-shrink-0 text-primary" />
+              <div>
+                <p className="font-semibold text-foreground">Sítio Web 100% seguro</p>
+                <p>Tus datos están protegidos en todo momento.</p>
+              </div>
+            </div>
+             <div className="flex items-start gap-3">
+              <CreditCard className="h-5 w-5 flex-shrink-0 text-primary" />
+              <div>
+                <p className="font-semibold text-foreground">Pago anónimo</p>
+                <p>No mencionamos el nombre del sitio web en el extracto bancario.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 flex-shrink-0 text-primary" />
+              <div>
+                <p className="font-semibold text-foreground">Entrega en 24/48 horas (con Chrono Express)</p>
+                <p>Pedidos realizados hasta las 12h en día laboral se entregan en 24/48h (España Península).</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Box className="h-5 w-5 flex-shrink-0 text-primary" />
+              <div>
+                <p className="font-semibold text-foreground">Embalaje discreto</p>
+                <p>Tu privacidad está garantizada con un paquete sin marcas.</p>
+              </div>
+            </div>
+          </div>
         </div>
         <div>
           <h2 className="text-2xl font-headline mb-4">Payment Details</h2>
