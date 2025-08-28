@@ -34,8 +34,8 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardHeader>
       <CardContent className="flex-grow p-5 space-y-2">
-        <CardTitle className="text-xl font-medium leading-snug tracking-normal font-body">{product.name}</CardTitle>
-        <p className="text-2xl font-headline font-bold text-primary">{formatPrice(product.price)}</p>
+        <CardTitle className="text-xl font-medium leading-snug tracking-normal">{product.name}</CardTitle>
+        <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
       </CardContent>
       <CardFooter className="p-5 pt-0">
         <Button
