@@ -7,7 +7,7 @@ import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 
 const names = ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."];
-const locations = ["Alicante", "Elche", "Benidorm", "Torrevieja", "Orihuela", "Alcoy", "Denia", "San Vicente del Raspeig"];
+const locations = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Palma", "Las Palmas", "Bilbao", "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón", "A Coruña", "Granada", "Elche", "Oviedo", "Cartagena", "Jerez", "Pamplona", "Almería", "San Sebastián", "Burgos", "Albacete", "Santander", "Castellón", "Badajoz", "Logroño", "Salamanca", "Huelva", "Lleida", "Tarragona", "Cádiz", "Jaén", "Ourense", "Lugo"];
 
 const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
