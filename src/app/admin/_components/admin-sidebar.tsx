@@ -11,7 +11,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, LogOut, Eye } from 'lucide-react';
+import { Home, Newspaper, LogOut, Store } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -47,8 +47,8 @@ export default function AdminSidebar() {
            <SidebarMenuItem>
             <Link href="/" passHref target="_blank">
               <SidebarMenuButton>
-                <Eye />
-                <span>View Site</span>
+                <Store />
+                <span>Back to Shop</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

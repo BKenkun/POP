@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { products } from '@/lib/products';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 const names = ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."];
 const locations = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Palma", "Las Palmas", "Bilbao", "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón", "A Coruña", "Granada", "Elche", "Oviedo", "Cartagena", "Jerez", "Pamplona", "Almería", "San Sebastián", "Burgos", "Albacete", "Santander", "Castellón", "Badajoz", "Logroño", "Salamanca", "Huelva", "Lleida", "Tarragona", "Cádiz", "Jaén", "Ourense", "Lugo"];
@@ -14,6 +15,9 @@ const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.le
 export function SalesNotification() {
   const { toast } = useToast();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pathname = usePathname();
+
+  const isAdminPath = pathname.startsWith('/admin');
 
   const showRandomToast = useCallback(() => {
     const product = getRandomItem(products);
@@ -51,6 +55,13 @@ export function SalesNotification() {
 
 
   useEffect(() => {
+    if (isAdminPath) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      return;
+    }
+
     // Start the first notification after an initial delay
     const initialDelay = setTimeout(() => {
         showRandomToast();
@@ -63,7 +74,7 @@ export function SalesNotification() {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [toast, showRandomToast, scheduleNextToast]);
+  }, [isAdminPath, toast, showRandomToast, scheduleNextToast]);
 
   return null; // This component doesn't render anything itself
 }
