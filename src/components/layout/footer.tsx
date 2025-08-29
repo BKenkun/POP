@@ -20,7 +20,7 @@ export function Footer() {
              <p className="text-sm text-muted-foreground text-center md:text-left">
               &copy; {new Date().getFullYear()} Popper España. T
               {isBlogPath ? (
-                <Link href="/admin" className="hover:text-primary">o</Link>
+                <Link href="/admin/login" className="hover:text-primary">o</Link>
               ) : (
                 'o'
               )}
