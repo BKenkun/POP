@@ -8,9 +8,10 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarTrigger,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, LogOut } from 'lucide-react';
+import { Home, Newspaper, LogOut, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -43,8 +44,17 @@ export default function AdminSidebar() {
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
+           <SidebarMenuItem>
+            <Link href="/" passHref target="_blank">
+              <SidebarMenuButton>
+                <Eye />
+                <span>View Site</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+       <SidebarSeparator />
       <SidebarFooter>
          <Link href="/admin/login" passHref>
              <Button variant="ghost" className="justify-start w-full gap-2">
