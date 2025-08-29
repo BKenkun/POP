@@ -9,37 +9,71 @@ import { useToast } from '@/hooks/use-toast';
 import { Lock, ShoppingBag, ShieldCheck, CreditCard, Clock, Box } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { loadStripe } from '@stripe/stripe-js';
+
+// TODO: Add your Stripe public key to your environment variables
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart } = useCart();
   const { toast } = useToast();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const shippingCost = cartTotal > 40 ? 0 : 500; // 5.00€, free over 40€
+  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
   const taxAmount = cartTotal * 0.08; // 8% tax
   const total = cartTotal + shippingCost + taxAmount;
   
   useEffect(() => {
-    if (cartCount === 0) {
-      router.push('/');
+    // Redirect to home if cart is empty on page load
+    if (cartCount === 0 && !loading) {
+       setTimeout(() => router.push('/'), 100);
     }
-  }, [cartCount, router]);
+  }, [cartCount, router, loading]);
 
-  const handlePayment = () => {
-    // This is where you would integrate Stripe Checkout.
-    // Since we cannot add new packages, this is a simulation.
+  const handlePayment = async () => {
+    setLoading(true);
     toast({
-      title: 'Order Placed!',
-      description: 'Thank you for your purchase. Your order is being processed.',
+        title: 'Redirecting to payment...',
+        description: 'Please wait while we prepare your secure checkout.',
     });
-    // On successful payment, you would clear the cart.
-    clearCart();
-    router.push('/');
+
+    // In a real application, you would create a checkout session on your server
+    // and then redirect to Stripe. This is a simulation of that process.
+
+    // 1. Create a server action to handle checkout session creation.
+    // const response = await createCheckoutSession(cartItems);
+
+    // 2. If the session is created successfully, get the session ID.
+    // const { sessionId } = response;
+
+    // 3. Redirect to Stripe Checkout.
+    // const stripe = await stripePromise;
+    // const { error } = await stripe.redirectToCheckout({ sessionId });
+    
+    // if (error) {
+    //   toast({
+    //     title: 'Error',
+    //     description: 'Could not redirect to payment. Please try again.',
+    //     variant: 'destructive',
+    //   });
+    //   setLoading(false);
+    // }
+
+    // For now, we'll simulate a successful order.
+    setTimeout(() => {
+        toast({
+            title: 'Order Placed! (Simulation)',
+            description: 'Thank you for your purchase. Your order is being processed.',
+        });
+        clearCart();
+        setLoading(false);
+    }, 2000);
   };
 
-  if (cartCount === 0) {
+  if (cartCount === 0 && !loading) {
     return (
        <div className="flex flex-col items-center justify-center h-[50vh] text-center">
             <ShoppingBag className="h-24 w-24 text-muted-foreground/30" strokeWidth={1} />
@@ -128,9 +162,9 @@ export default function CheckoutClientPage() {
               </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch gap-4">
-              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handlePayment}>
+              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handlePayment} disabled={loading}>
                 <Lock className="mr-2 h-4 w-4" />
-                Proceed to Payment
+                {loading ? 'Processing...' : 'Proceed to Payment'}
               </Button>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <p>Secure payments powered by Stripe</p>
