@@ -48,13 +48,11 @@ export default function BlogPage() {
               <p className="text-muted-foreground">{post.excerpt}</p>
             </CardContent>
             <CardFooter>
-              <Link href={`/blog/${post.slug}`} passHref>
-                <Button asChild variant="link" className="px-0">
-                  <a>
-                    Leer más <ArrowRight className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              </Link>
+              <Button asChild variant="link" className="px-0">
+                <Link href={`/blog/${post.slug}`}>
+                  Leer más <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </CardFooter>
           </Card>
         ))}
