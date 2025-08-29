@@ -17,7 +17,7 @@ export default function CheckoutClientPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
+  const shippingCost = cartTotal > 40 ? 0 : 500; // 5.00€, free over 40€
   const taxAmount = cartTotal * 0.08; // 8% tax
   const total = cartTotal + shippingCost + taxAmount;
   
