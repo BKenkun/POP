@@ -2,15 +2,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function Footer() {
     const pathname = usePathname();
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const isAdminPath = pathname.startsWith('/admin');
     const isBlogPath = pathname.startsWith('/blog');
 
     // Hide footer on admin login page
     if (isAdminPath && pathname.includes('/login')) {
       return null;
+    }
+    
+    if (!isMounted) {
+        return (
+            <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
+                <div className="container">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-muted-foreground text-center md:text-left">
+                    &copy; {new Date().getFullYear()} Popper España. Todos los derechos reservados.
+                    </p>
+                    <nav className="flex items-center gap-4">
+                    <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">
+                        Blog
+                    </Link>
+                    </nav>
+                </div>
+                </div>
+          </footer>
+        );
     }
 
     return (
