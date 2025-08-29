@@ -6,10 +6,18 @@ import { useCart } from '@/context/cart-context';
 import { CartSheet } from '@/components/cart-sheet';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export function Header() {
   const { cartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isAdminPath = pathname.startsWith('/admin');
+
+  if (isAdminPath) {
+    return null;
+  }
 
   return (
     <>
