@@ -49,7 +49,7 @@ export default function AdminSidebar() {
          <Link href="/admin/login" passHref>
              <Button variant="ghost" className="justify-start w-full gap-2">
                 <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <span className="group-data-[collapsible=icon]:hidden">Logout</span>
              </Button>
         </Link>
       </SidebarFooter>
