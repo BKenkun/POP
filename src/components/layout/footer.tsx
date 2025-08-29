@@ -12,6 +12,9 @@ export function Footer() {
                <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">
                 Blog
               </Link>
+               <Link href="/admin" className="text-sm text-muted-foreground hover:text-primary">
+                Admin
+              </Link>
             </nav>
           </div>
         </div>
