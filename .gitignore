@@ -8,26 +8,24 @@
 # Testing
 /coverage
 
-# Next.js build output
-/.next
-/out
+# Next.js
+/.next/
+/out/
 
 # Production
 /build
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
 
 # Misc
 .DS_Store
 *.pem
 
 # Local Environment Variables
-.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Firebase
-.firebase/
-firebase-debug.log
-database-debug.log
-storage-debug.log
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
