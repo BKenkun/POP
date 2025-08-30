@@ -5,6 +5,6 @@ import { CartItem } from '@/lib/types';
 
 export async function createCheckoutSessionAction(
     items: CartItem[]
-): Promise<{ sessionId: string | null; error?: string }> {
+): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
     return createCheckoutSession(items);
 }

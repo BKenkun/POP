@@ -11,7 +11,7 @@ const getStripeInstance = () => {
     }
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
-        console.error('STRIPE_SECRET_KEY is not set in your environment variables. Using fallback data.');
+        console.error('STRIPE_SECRET_KEY is not set. Using fallback data.');
         return null;
     }
     stripe = new Stripe(secretKey, {
@@ -61,10 +61,10 @@ export async function getStripeProducts(): Promise<Product[]> {
 
 export async function createCheckoutSession(
     items: CartItem[]
-): Promise<{ sessionId: string | null; error?: string }> {
+): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
      const stripe = getStripeInstance();
     if (!stripe) {
-        return { sessionId: null, error: 'Stripe is not configured.' };
+        return { sessionId: null, sessionUrl: null, error: 'Stripe is not configured.' };
     }
 
     try {
@@ -92,9 +92,13 @@ export async function createCheckoutSession(
             cancel_url: `${YOUR_DOMAIN}/`,
         });
 
-        return { sessionId: session.id };
+        if (!session.url) {
+            return { sessionId: null, sessionUrl: null, error: 'Could not create checkout session URL.'}
+        }
+
+        return { sessionId: session.id, sessionUrl: session.url };
     } catch (error: any) {
         console.error('Error creating Stripe checkout session:', error);
-        return { sessionId: null, error: error.message };
+        return { sessionId: null, sessionUrl: null, error: error.message };
     }
 }

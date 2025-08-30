@@ -11,14 +11,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadStripe } from '@stripe/stripe-js';
 import { createCheckoutSessionAction } from '@/app/actions/checkout';
 
-// Initialize Stripe with the public key from environment variables.
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount, clearCart } = useCart();
+  const { cartItems, cartTotal, cartCount } = useCart();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -42,22 +38,15 @@ export default function CheckoutClientPage() {
     });
 
     try {
-        const { sessionId, error: sessionError } = await createCheckoutSessionAction(cartItems);
+        const { sessionUrl, error: sessionError } = await createCheckoutSessionAction(cartItems);
 
-        if (sessionError || !sessionId) {
+        if (sessionError || !sessionUrl) {
             throw new Error(sessionError || 'Could not create checkout session.');
         }
 
-        const stripe = await stripePromise;
-        if (!stripe) {
-            throw new Error('Stripe.js has not loaded yet.');
-        }
-
-        const { error } = await stripe.redirectToCheckout({ sessionId });
+        // Redirect to Stripe's checkout page
+        window.location.href = sessionUrl;
         
-        if (error) {
-           throw new Error(error.message);
-        }
     } catch (error: any) {
         console.error("Payment Error: ", error);
         toast({
