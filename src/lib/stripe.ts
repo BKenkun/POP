@@ -2,12 +2,10 @@ import Stripe from 'stripe';
 import type { Product } from './types';
 import { products as fallbackProducts } from './products';
 
-// This is a workaround for the environment variable issue in the current setup.
-// In a standard Next.js project, process.env.STRIPE_SECRET_KEY would be available directly.
 const getStripeInstance = () => {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
-        // console.error('STRIPE_SECRET_KEY is not set. Using fallback data.');
+        console.error('STRIPE_SECRET_KEY is not set. Using fallback data.');
         return null;
     }
     return new Stripe(secretKey, {
@@ -40,6 +38,11 @@ export async function getStripeProducts(): Promise<Product[]> {
                 tag: product.metadata.tag,
              };
         }).filter(p => p.price > 0);
+        
+        if (availableProducts.length === 0) {
+            console.log("No active products with prices found on Stripe. Returning fallback products.");
+            return fallbackProducts;
+        }
 
         return availableProducts;
 
