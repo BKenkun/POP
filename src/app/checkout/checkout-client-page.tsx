@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
+import { createCheckoutSession } from '@/app/actions/stripe';
 
 // Initialize Stripe with the public key from environment variables.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -22,7 +23,7 @@ export default function CheckoutClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
+  const shippingCost = cartTotal > 40 ? 0 : 500; // 5.00€, free over 40€
   const taxAmount = cartTotal * 0.08; // 8% tax
   const total = cartTotal + shippingCost + taxAmount;
   
@@ -40,37 +41,37 @@ export default function CheckoutClientPage() {
         description: 'Please wait while we prepare your secure checkout.',
     });
 
-    // In a real application, you would create a checkout session on your server
-    // and then redirect to Stripe. This is a simulation of that process.
+    try {
+        const { sessionId } = await createCheckoutSession(cartItems);
 
-    // 1. Create a server action to handle checkout session creation.
-    // const response = await createCheckoutSession(cartItems);
+        if (!sessionId) {
+            throw new Error('Could not create checkout session.');
+        }
 
-    // 2. If the session is created successfully, get the session ID.
-    // const { sessionId } = response;
+        const stripe = await stripePromise;
+        if (!stripe) {
+            throw new Error('Stripe.js has not loaded yet.');
+        }
 
-    // 3. Redirect to Stripe Checkout.
-    // const stripe = await stripePromise;
-    // const { error } = await stripe.redirectToCheckout({ sessionId });
-    
-    // if (error) {
-    //   toast({
-    //     title: 'Error',
-    //     description: 'Could not redirect to payment. Please try again.',
-    //     variant: 'destructive',
-    //   });
-    //   setLoading(false);
-    // }
-
-    // For now, we'll simulate a successful order.
-    setTimeout(() => {
+        const { error } = await stripe.redirectToCheckout({ sessionId });
+        
+        if (error) {
+            toast({
+                title: 'Error',
+                description: 'Could not redirect to payment. Please try again.',
+                variant: 'destructive',
+            });
+            setLoading(false);
+        }
+    } catch (error) {
+        console.error("Payment Error: ", error);
         toast({
-            title: 'Order Placed! (Simulation)',
-            description: 'Thank you for your purchase. Your order is being processed.',
+            title: 'Payment Failed',
+            description: 'Something went wrong. Please try again later.',
+            variant: 'destructive',
         });
-        clearCart();
         setLoading(false);
-    }, 2000);
+    }
   };
 
   if (cartCount === 0 && !loading) {
@@ -162,7 +163,7 @@ export default function CheckoutClientPage() {
               </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch gap-4">
-              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handlePayment} disabled={loading}>
+              <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handlePayment} disabled={loading || cartCount === 0}>
                 <Lock className="mr-2 h-4 w-4" />
                 {loading ? 'Processing...' : 'Proceed to Payment'}
               </Button>
