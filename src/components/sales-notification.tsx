@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { products } from '@/lib/products';
+import { getStripeProducts } from '@/lib/stripe-client';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import type { Product } from '@/lib/types';
 
 const names = ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."];
 const locations = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Palma", "Las Palmas", "Bilbao", "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón", "A Coruña", "Granada", "Elche", "Oviedo", "Cartagena", "Jerez", "Pamplona", "Almería", "San Sebastián", "Burgos", "Albacete", "Santander", "Castellón", "Badajoz", "Logroño", "Salamanca", "Huelva", "Lleida", "Tarragona", "Cádiz", "Jaén", "Ourense", "Lugo"];
@@ -16,10 +17,21 @@ export function SalesNotification() {
   const { toast } = useToast();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+        const fetchedProducts = await getStripeProducts();
+        setProducts(fetchedProducts);
+    }
+    fetchProducts();
+  }, [])
 
   const isAdminPath = pathname.startsWith('/admin');
 
   const showRandomToast = useCallback(() => {
+    if (products.length === 0) return;
+
     const product = getRandomItem(products);
     const quantity = Math.floor(Math.random() * 2) + 1;
     const name = getRandomItem(names);
@@ -40,7 +52,7 @@ export function SalesNotification() {
         </div>
       )
     });
-  }, [toast]);
+  }, [toast, products]);
 
   const scheduleNextToast = useCallback(() => {
     if (timeoutRef.current) {
@@ -55,7 +67,7 @@ export function SalesNotification() {
 
 
   useEffect(() => {
-    if (isAdminPath) {
+    if (isAdminPath || products.length === 0) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -74,7 +86,7 @@ export function SalesNotification() {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [isAdminPath, toast, showRandomToast, scheduleNextToast]);
+  }, [isAdminPath, products, toast, showRandomToast, scheduleNextToast]);
 
   return null; // This component doesn't render anything itself
 }

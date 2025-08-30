@@ -1,10 +1,13 @@
 import { ProductCard } from '@/components/product-card';
-import { products } from '@/lib/products';
+import { getStripeProducts } from '@/lib/stripe';
 import { ShieldCheck, Truck, Box, Send, CreditCard } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Product } from '@/lib/types';
 
-export default function Home() {
+export default async function Home() {
+  const products: Product[] = await getStripeProducts();
+  
   return (
     <div className="space-y-12">
       <div className="text-center space-y-4">
