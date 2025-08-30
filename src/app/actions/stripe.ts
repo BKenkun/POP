@@ -3,25 +3,28 @@
 import { CartItem } from '@/lib/types';
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not set in your environment variables');
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-06-20',
-});
+const getStripeInstance = () => {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+        throw new Error('STRIPE_SECRET_KEY is not set in your environment variables. Please check your .env.local file.');
+    }
+    return new Stripe(secretKey, {
+        apiVersion: '2024-06-20',
+    });
+};
 
 export async function createCheckoutSession(
     items: CartItem[]
-): Promise<{ sessionId: string | null }> {
+): Promise<{ sessionId: string | null; error?: string }> {
     try {
+        const stripe = getStripeInstance();
         const line_items = items.map((item) => {
             return {
                 price_data: {
                     currency: 'eur',
                     product_data: {
                         name: item.name,
-                        images: [item.imageUrl],
+                        images: item.imageUrl ? [item.imageUrl] : [],
                     },
                     unit_amount: item.price, // Price in cents
                 },
@@ -37,12 +40,12 @@ export async function createCheckoutSession(
             line_items,
             mode: 'payment',
             success_url: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${YOUR_DOMAIN}/checkout/cancel`,
+            cancel_url: `${YOUR_DOMAIN}/`,
         });
 
         return { sessionId: session.id };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating Stripe checkout session:', error);
-        return { sessionId: null };
+        return { sessionId: null, error: error.message };
     }
 }

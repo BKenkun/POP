@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Product } from '@/lib/types';
 
+export const revalidate = 60; // Revalidate the page every 60 seconds
+
 export default async function Home() {
   const products: Product[] = await getStripeProducts();
   

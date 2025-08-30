@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getStripeProducts } from '@/lib/stripe-client';
+import { products as staticProducts } from '@/lib/products';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -20,11 +20,8 @@ export function SalesNotification() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    async function fetchProducts() {
-        const fetchedProducts = await getStripeProducts();
-        setProducts(fetchedProducts);
-    }
-    fetchProducts();
+    // Use the static product list for notifications
+    setProducts(staticProducts);
   }, [])
 
   const isAdminPath = pathname.startsWith('/admin');

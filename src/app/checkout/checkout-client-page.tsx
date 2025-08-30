@@ -23,7 +23,7 @@ export default function CheckoutClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const shippingCost = cartTotal > 40 ? 0 : 500; // 5.00€, free over 40€
+  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
   const taxAmount = cartTotal * 0.08; // 8% tax
   const total = cartTotal + shippingCost + taxAmount;
   
@@ -42,10 +42,10 @@ export default function CheckoutClientPage() {
     });
 
     try {
-        const { sessionId } = await createCheckoutSession(cartItems);
+        const { sessionId, error: sessionError } = await createCheckoutSession(cartItems);
 
-        if (!sessionId) {
-            throw new Error('Could not create checkout session.');
+        if (sessionError || !sessionId) {
+            throw new Error(sessionError || 'Could not create checkout session.');
         }
 
         const stripe = await stripePromise;
@@ -56,18 +56,13 @@ export default function CheckoutClientPage() {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         
         if (error) {
-            toast({
-                title: 'Error',
-                description: 'Could not redirect to payment. Please try again.',
-                variant: 'destructive',
-            });
-            setLoading(false);
+           throw new Error(error.message);
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Payment Error: ", error);
         toast({
             title: 'Payment Failed',
-            description: 'Something went wrong. Please try again later.',
+            description: error.message || 'Something went wrong. Please try again later.',
             variant: 'destructive',
         });
         setLoading(false);
