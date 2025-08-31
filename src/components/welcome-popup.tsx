@@ -13,24 +13,32 @@ import { Percent } from 'lucide-react';
 
 const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // We need to wait for the component to mount to access localStorage
-    const hasVisited = localStorage.getItem('hasVisitedPopperStore');
-    if (!hasVisited) {
-      // Show the popup after a short delay
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        localStorage.setItem('hasVisitedPopperStore', 'true');
-      }, 2000); // 2-second delay
-      return () => clearTimeout(timer);
-    }
+    setIsMounted(true);
   }, []);
 
-  // Handler to pass to the SubscriptionForm to close the dialog on submit
+  useEffect(() => {
+    if (isMounted) {
+      const hasVisited = localStorage.getItem('hasVisitedPopperStore');
+      if (!hasVisited) {
+        const timer = setTimeout(() => {
+          setIsOpen(true);
+          localStorage.setItem('hasVisitedPopperStore', 'true');
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isMounted]);
+
   const handleSubscription = () => {
     setIsOpen(false);
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
