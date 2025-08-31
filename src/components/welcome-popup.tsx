@@ -13,8 +13,10 @@ import { Percent } from 'lucide-react';
 
 const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const hasVisited = localStorage.getItem('hasVisitedPopperStore');
     if (!hasVisited) {
       const timer = setTimeout(() => {
@@ -28,6 +30,10 @@ const WelcomePopup = () => {
   const handleSubscription = () => {
     setIsOpen(false);
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
