@@ -21,6 +21,7 @@ export function Footer() {
       return null;
     }
     
+    // Fallback for SSR to prevent layout shifts, no extra padding needed here
     if (!isMounted) {
         return (
             <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
@@ -42,8 +43,8 @@ export function Footer() {
 
     return (
       <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
-        {/* Add padding to the bottom to avoid overlapping with floating cart button */}
-        <div className="container pb-20 md:pb-8">
+        {/* Add padding-right to the container to avoid overlapping with floating cart button */}
+        <div className="container pr-24 md:pr-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
              <p className="text-sm text-muted-foreground text-center md:text-left">
               &copy; {new Date().getFullYear()} Popper España. T
