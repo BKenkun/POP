@@ -11,7 +11,7 @@ const getStripeInstance = () => {
     }
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
-        console.error('STRIPE_SECRET_KEY is not set. Using fallback data.');
+        console.warn('STRIPE_SECRET_KEY is not set. Using fallback data.');
         return null;
     }
     stripe = new Stripe(secretKey, {
@@ -36,6 +36,8 @@ export async function getStripeProducts(): Promise<Product[]> {
 
         const availableProducts: Product[] = products.data.map((product: any) => {
              const price = product.default_price;
+             const stock = product.metadata.stock ? parseInt(product.metadata.stock, 10) : undefined;
+             
              return {
                 id: product.id,
                 name: product.name,
@@ -45,6 +47,7 @@ export async function getStripeProducts(): Promise<Product[]> {
                 imageHint: 'product bottle',
                 tag: product.metadata.tag,
                 galleryImages: product.metadata.gallery_images?.split(',').map((url: string) => url.trim()) || [],
+                stock: stock,
              };
         }).filter(p => p.price > 0);
         

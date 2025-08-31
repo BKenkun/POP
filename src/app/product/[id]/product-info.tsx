@@ -5,7 +5,7 @@ import { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, ShieldCheck, Truck, Box } from 'lucide-react';
+import { ShoppingCart, ShieldCheck, Truck, Box, XCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface ProductInfoProps {
@@ -14,14 +14,18 @@ interface ProductInfoProps {
 
 export function ProductInfo({ product }: ProductInfoProps) {
   const { addToCart } = useCart();
+  const isSoldOut = product.stock === 0;
 
   return (
     <div className="flex flex-col space-y-6">
       <div>
-        {product.tag && (
+        {product.tag && !isSoldOut && (
           <Badge variant="secondary" className="mb-2">
             {product.tag}
           </Badge>
+        )}
+        {isSoldOut && (
+            <Badge variant="destructive" className="mb-2">Agotado</Badge>
         )}
         <h1 className="text-3xl md:text-4xl font-headline text-primary">
           {product.name}
@@ -37,9 +41,19 @@ export function ProductInfo({ product }: ProductInfoProps) {
       <Button
         size="lg"
         onClick={() => addToCart(product)}
+        disabled={isSoldOut}
       >
-        <ShoppingCart className="mr-2 h-5 w-5" />
-        Añadir al carrito
+        {isSoldOut ? (
+          <>
+            <XCircle className="mr-2 h-5 w-5" />
+            Agotado
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            Añadir al carrito
+          </>
+        )}
       </Button>
 
       <Separator />

@@ -7,6 +7,7 @@ export interface Product {
   imageHint: string;
   tag?: string;
   galleryImages?: string[];
+  stock?: number;
 }
 
 export interface CartItem extends Product {
