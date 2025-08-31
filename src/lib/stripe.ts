@@ -96,6 +96,10 @@ export async function createCheckoutSession(
             mode: 'payment',
             success_url: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${YOUR_DOMAIN}/`,
+            billing_address_collection: 'required',
+            shipping_address_collection: {
+              allowed_countries: ['ES'],
+            },
         });
 
         if (!session.url) {
