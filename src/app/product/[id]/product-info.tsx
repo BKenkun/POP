@@ -19,14 +19,16 @@ export function ProductInfo({ product }: ProductInfoProps) {
   return (
     <div className="flex flex-col space-y-6">
       <div>
-        {product.tag && !isSoldOut && (
-          <Badge variant="secondary" className="mb-2">
-            {product.tag}
-          </Badge>
-        )}
-        {isSoldOut && (
-            <Badge variant="destructive" className="mb-2">Agotado</Badge>
-        )}
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+            {isSoldOut && (
+                <Badge variant="destructive">Agotado</Badge>
+            )}
+            {!isSoldOut && product.tags?.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+        </div>
         <h1 className="text-3xl md:text-4xl font-headline text-primary">
           {product.name}
         </h1>

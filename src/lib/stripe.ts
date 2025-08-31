@@ -45,7 +45,7 @@ export async function getStripeProducts(): Promise<Product[]> {
                 price: price?.unit_amount || 0, 
                 imageUrl: product.images?.[0] || 'https://picsum.photos/400/400',
                 imageHint: 'product bottle',
-                tag: product.metadata.tag,
+                tags: product.metadata.tags?.split(',').map((t: string) => t.trim()) || [],
                 galleryImages: product.metadata.gallery_images?.split(',').map((url: string) => url.trim()) || [],
                 stock: stock,
              };

@@ -5,7 +5,7 @@ export interface Product {
   price: number; // Price in cents
   imageUrl: string;
   imageHint: string;
-  tag?: string;
+  tags?: string[];
   galleryImages?: string[];
   stock?: number;
 }

@@ -35,11 +35,13 @@ export function ProductCard({ product }: ProductCardProps) {
               data-ai-hint={product.imageHint}
             />
              {isSoldOut && (
-              <Badge variant="destructive" className="absolute top-4 left-4 text-sm z-10">Agotado</Badge>
+              <Badge variant="destructive" className="absolute top-4 left-4 text-sm z-20">Agotado</Badge>
             )}
-            {product.tag && !isSoldOut && (
-              <Badge variant="secondary" className="absolute top-4 right-4 text-sm">{product.tag}</Badge>
-            )}
+             <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                {product.tags?.map((tag) => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                ))}
+             </div>
           </div>
         </CardHeader>
         <CardContent className="flex-grow p-5 space-y-2">
