@@ -20,8 +20,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border/60">
-      <Link href={`/product/${product.id}`} passHref legacyBehavior>
-        <a className="flex-grow flex flex-col">
+      <Link href={`/product/${product.id}`} className="flex-grow flex flex-col">
           <CardHeader className="p-0 relative">
             <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <Eye className="text-white h-10 w-10" />
@@ -46,7 +45,6 @@ export function ProductCard({ product }: ProductCardProps) {
             </CardTitle>
             <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
           </CardContent>
-        </a>
       </Link>
       <CardFooter className="p-5 pt-0">
         <Button
