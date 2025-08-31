@@ -14,6 +14,7 @@ export function Footer() {
 
     const isAdminPath = pathname.startsWith('/admin');
     const isBlogPath = pathname.startsWith('/blog');
+    const isCheckout = pathname.startsWith('/checkout');
 
     // Hide footer on admin login page
     if (isAdminPath && pathname.includes('/login')) {
@@ -41,7 +42,8 @@ export function Footer() {
 
     return (
       <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
-        <div className="container">
+        {/* Add padding to the bottom to avoid overlapping with floating cart button */}
+        <div className="container pb-20 md:pb-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
              <p className="text-sm text-muted-foreground text-center md:text-left">
               &copy; {new Date().getFullYear()} Popper España. T
