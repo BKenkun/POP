@@ -5,14 +5,13 @@ import { products as fallbackProducts } from './products';
 // This is the global instance of Stripe, initialized once.
 let stripe: Stripe | null = null;
 
-const getStripeInstance = () => {
+const getStripeInstance = (): Stripe => {
     if (stripe) {
         return stripe;
     }
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
-        console.warn('STRIPE_SECRET_KEY is not set. Using fallback data.');
-        return null;
+        throw new Error('STRIPE_SECRET_KEY environment variable is not set.');
     }
     stripe = new Stripe(secretKey, {
         apiVersion: '2024-06-20',
@@ -22,12 +21,8 @@ const getStripeInstance = () => {
 };
 
 export async function getStripeProducts(): Promise<Product[]> {
-    const stripe = getStripeInstance();
-    if (!stripe) {
-        return fallbackProducts;
-    }
-
     try {
+        const stripe = getStripeInstance();
         const products = await stripe.products.list({
             active: true,
             limit: 20,
@@ -52,7 +47,7 @@ export async function getStripeProducts(): Promise<Product[]> {
         }).filter(p => p.price > 0);
         
         if (availableProducts.length === 0) {
-            console.log("No active products with prices found on Stripe. Returning fallback products.");
+            console.warn("No active products with prices found on Stripe. Returning fallback products.");
             return fallbackProducts;
         }
 
@@ -60,6 +55,7 @@ export async function getStripeProducts(): Promise<Product[]> {
 
     } catch (error) {
         console.error("Error fetching products from Stripe:", error);
+        console.warn("Returning fallback products due to an error.");
         return fallbackProducts;
     }
 }
@@ -67,12 +63,8 @@ export async function getStripeProducts(): Promise<Product[]> {
 export async function createCheckoutSession(
     items: CartItem[]
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
-     const stripe = getStripeInstance();
-    if (!stripe) {
-        return { sessionId: null, sessionUrl: null, error: 'Stripe is not configured.' };
-    }
-
     try {
+        const stripe = getStripeInstance();
         const line_items = items.map((item) => {
             return {
                 price_data: {
