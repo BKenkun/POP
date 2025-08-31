@@ -6,7 +6,11 @@ import { Input } from './ui/input';
 import { Send } from 'lucide-react';
 import React from 'react';
 
-const SubscriptionForm = () => {
+interface SubscriptionFormProps {
+    onSubscribed?: () => void;
+}
+
+const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     const { toast } = useToast();
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -18,6 +22,9 @@ const SubscriptionForm = () => {
                 description: "Pronto recibirás nuestras mejores ofertas.",
             });
             e.currentTarget.reset();
+            if (onSubscribed) {
+                onSubscribed();
+            }
         }
     };
     
