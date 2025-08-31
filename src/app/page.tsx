@@ -1,11 +1,10 @@
 
 import { ProductCard } from '@/components/product-card';
 import { getStripeProducts } from '@/lib/stripe';
-import { ShieldCheck, Truck, Box, CreditCard, Send } from 'lucide-react';
+import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import WelcomePopup from '@/components/welcome-popup';
+import ClientOnlyWelcomePopup from '@/components/client-only-welcome-popup';
+import SubscriptionForm from '@/components/subscription-form';
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
@@ -15,7 +14,7 @@ export default async function Home() {
   
   return (
     <div className="space-y-12">
-      <WelcomePopup />
+      <ClientOnlyWelcomePopup />
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight">Calidad Premium, Sensaciones Únicas</h1>
         <p className="mt-2 text-lg text-foreground/80 max-w-2xl mx-auto">
@@ -60,21 +59,7 @@ export default async function Home() {
               </div>
             </div>
         </div>
-        <div className="bg-primary p-8 rounded-lg">
-          <div className="max-w-2xl mx-auto text-center">
-              <h3 className="font-semibold font-headline text-2xl mb-3 text-primary-foreground">Suscríbete a nuestro boletín</h3>
-              <p className="text-sm text-primary-foreground/80 mb-6">
-              Puede cancelar su suscripción en cualquier momento. Para ello, consulte nuestra información de contacto en la declaración legal.
-              </p>
-              <form className="flex w-full max-w-md mx-auto items-center space-x-2">
-                  <Input name="email" type="email" placeholder="Introduce tu email..." className="flex-1 bg-background dark:bg-card" required />
-                  <Button type="submit" variant="destructive">
-                      <Send className="h-4 w-4 mr-2" />
-                      Suscribirse
-                  </Button>
-              </form>
-          </div>
-        </div>
+        <SubscriptionForm />
       </div>
 
     </div>
