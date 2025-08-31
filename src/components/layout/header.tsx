@@ -1,16 +1,10 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingCart, Truck, PackageCheck } from 'lucide-react';
-import { useCart } from '@/context/cart-context';
-import { CartSheet } from '@/components/cart-sheet';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { Truck, PackageCheck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export function Header() {
-  const { cartCount } = useCart();
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
 
   const isAdminPath = pathname.startsWith('/admin');
@@ -40,26 +34,8 @@ export function Header() {
               <span className="font-bold text-xl text-primary">Popper España</span>
             </Link>
           </div>
-
-          <div className="flex flex-1 items-center justify-end space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              aria-label="Open cart"
-              onClick={() => setIsCartOpen(true)}
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                  {cartCount}
-                </span>
-              )}
-            </Button>
-          </div>
         </div>
       </header>
-      <CartSheet isOpen={isCartOpen} onOpenChange={setIsCartOpen} />
     </>
   );
 }
