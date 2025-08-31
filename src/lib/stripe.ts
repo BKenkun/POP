@@ -10,8 +10,9 @@ const getStripeInstance = () => {
         return stripe;
     }
     const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (!secretKey) {
-        console.warn('STRIPE_SECRET_KEY is not set. Using fallback data.');
+    // Explicitly check for the placeholder value as well.
+    if (!secretKey || secretKey.includes('...')) {
+        console.warn('STRIPE_SECRET_KEY is not set or is a placeholder. Using fallback data.');
         return null;
     }
     stripe = new Stripe(secretKey, {
