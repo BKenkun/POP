@@ -11,7 +11,8 @@ const getStripeInstance = (): Stripe => {
     }
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
-        throw new Error('STRIPE_SECRET_KEY environment variable is not set.');
+        // This will now clearly fail if the key is not in .env.local
+        throw new Error('STRIPE_SECRET_KEY environment variable is not set. Please create a .env.local file and add it.');
     }
     stripe = new Stripe(secretKey, {
         apiVersion: '2024-06-20',
@@ -23,13 +24,13 @@ const getStripeInstance = (): Stripe => {
 export async function getStripeProducts(): Promise<Product[]> {
     try {
         const stripe = getStripeInstance();
-        const products = await stripe.products.list({
+        const productsResponse = await stripe.products.list({
             active: true,
             limit: 20,
             expand: ['data.default_price'],
         });
 
-        const availableProducts: Product[] = products.data.map((product: any) => {
+        const availableProducts: Product[] = productsResponse.data.map((product: any) => {
              const price = product.default_price;
              const stock = product.metadata.stock ? parseInt(product.metadata.stock, 10) : undefined;
              
@@ -47,7 +48,7 @@ export async function getStripeProducts(): Promise<Product[]> {
         }).filter(p => p.price > 0);
         
         if (availableProducts.length === 0) {
-            console.warn("No active products with prices found on Stripe. Returning fallback products.");
+            console.warn("Stripe connection successful, but no active products with prices were found. Returning fallback products.");
             return fallbackProducts;
         }
 
@@ -55,7 +56,7 @@ export async function getStripeProducts(): Promise<Product[]> {
 
     } catch (error) {
         console.error("Error fetching products from Stripe:", error);
-        console.warn("Returning fallback products due to an error.");
+        console.warn("Returning fallback products due to an error connecting to Stripe.");
         return fallbackProducts;
     }
 }
@@ -73,6 +74,10 @@ export async function createCheckoutSession(
                         name: item.name,
                         images: item.imageUrl ? [item.imageUrl] : [],
                         description: item.description,
+                        // Pass product ID to metadata for stock updates
+                        metadata: {
+                            productId: item.id,
+                        },
                     },
                     unit_amount: item.price, // Price in cents
                 },

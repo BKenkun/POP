@@ -41,10 +41,6 @@ const nextConfig: NextConfig = {
         '*.cloudworkstations.dev',
     ],
   },
-  env: {
-    STRIPE_SECRET_KEY: 'sk_test_51S2BOxBKkrkkTRlpCTYMcfwxYjFECPRK5l7r1pylfxQzp25xGkubkAEqKIZHTu5tWExLk4Dwll7NX2OebXvzAC5c00RYcxcdWa',
-    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-  },
 };
 
 export default nextConfig;
