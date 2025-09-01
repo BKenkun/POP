@@ -32,8 +32,16 @@ export default async function Home() {
       {newArrivals.length > 0 && (
         <ProductCarousel title="Novedades" products={newArrivals} />
       )}
+      
+      {offers.length > 0 && (
+         <ProductCarousel title="Ofertas Especiales" products={offers} />
+      )}
 
-      <div className="my-12">
+      {bestSellers.length > 0 && (
+         <ProductCarousel title="Lo Más Vendido" products={bestSellers} />
+      )}
+      
+       <div className="my-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-left max-w-5xl mx-auto">
             <div className="flex items-start gap-3">
               <ShieldCheck className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
@@ -66,18 +74,9 @@ export default async function Home() {
         </div>
       </div>
       
-      {offers.length > 0 && (
-         <ProductCarousel title="Ofertas Especiales" products={offers} />
-      )}
-
       <div className="my-12">
         <SubscriptionForm />
       </div>
-
-      {bestSellers.length > 0 && (
-         <ProductCarousel title="Lo Más Vendido" products={bestSellers} />
-      )}
-      
     </div>
   );
 }
