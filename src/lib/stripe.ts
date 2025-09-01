@@ -45,15 +45,9 @@ export async function getStripeProducts(): Promise<Product[]> {
       let productDetails: Record<string, string> | undefined = undefined;
       if (product.metadata.product_details) {
         try {
-          // This robust regex will find the JSON object within the string, even if it's surrounded by other text or newlines.
-          const jsonMatch = product.metadata.product_details.match(/{[\s\S]*}/);
-          if (jsonMatch && jsonMatch[0]) {
-            // Replace single quotes with double quotes to fix common JSON format errors
-            const correctedJsonString = jsonMatch[0].replace(/'/g, '"');
+            // Directly try to parse, after correcting for single quotes.
+            const correctedJsonString = product.metadata.product_details.replace(/'/g, '"');
             productDetails = JSON.parse(correctedJsonString);
-          } else {
-             console.error(`No valid JSON object found in product_details for product ${product.id}`);
-          }
         } catch (e) {
           console.error(`Error parsing product_details for product ${product.id}:`, e);
         }
