@@ -44,13 +44,13 @@ export async function getStripeProducts(): Promise<Product[]> {
       let productDetails: Record<string, string> | undefined = undefined;
       if (product.metadata.product_details) {
         try {
-          // Clean the string from markdown code blocks before parsing
-          const cleanedDetails = product.metadata.product_details
-            .replace(/```json/g, '')
-            .replace(/```/g, '')
-            .replace(/<br>/g, '')
-            .trim();
-          productDetails = JSON.parse(cleanedDetails);
+          // This regex will find the JSON object within the string, even if it's surrounded by other text.
+          const jsonMatch = product.metadata.product_details.match(/{[\s\S]*}/);
+          if (jsonMatch) {
+            productDetails = JSON.parse(jsonMatch[0]);
+          } else {
+             console.error(`No valid JSON object found in product_details for product ${product.id}`);
+          }
         } catch (e) {
           console.error(`Error parsing product_details for product ${product.id}:`, e);
         }
