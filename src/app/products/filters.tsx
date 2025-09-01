@@ -92,18 +92,28 @@ export default function ProductFilters({
     let filtered = products;
 
     if (searchQuery) {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => {
-        const inName = p.name.toLowerCase().includes(lowercasedQuery);
-        const inDescription = p.description?.toLowerCase().includes(lowercasedQuery);
-        const inBrand = p.brand?.toLowerCase().includes(lowercasedQuery);
-        const inSize = p.size?.toLowerCase().includes(lowercasedQuery);
-        const inComposition = p.composition?.toLowerCase().includes(lowercasedQuery);
-        const inTags = p.tags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
-        const inInternalTags = p.internalTags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
+        const lowercasedQuery = searchQuery.toLowerCase();
+        
+        // Find which internal tags match the search query (e.g., searching "Novedades" should match "novedad" tag)
+        const matchingInternalTags = Object.entries(internalTagMap)
+            .filter(([, label]) => label.toLowerCase().includes(lowercasedQuery))
+            .map(([tag]) => tag);
+            
+        filtered = filtered.filter(p => {
+            const inName = p.name.toLowerCase().includes(lowercasedQuery);
+            const inDescription = p.description?.toLowerCase().includes(lowercasedQuery);
+            const inBrand = p.brand?.toLowerCase().includes(lowercasedQuery);
+            const inSize = p.size?.toLowerCase().includes(lowercasedQuery);
+            const inComposition = p.composition?.toLowerCase().includes(lowercasedQuery);
+            const inTags = p.tags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
+            
+            // Check if any of the product's internal tags are in our list of tags that match the search query.
+            const inInternalTagsByLabel = p.internalTags?.some(tag => matchingInternalTags.includes(tag));
+            // Also check for direct match, e.g. searching for "oferta"
+            const inInternalTagsDirect = p.internalTags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
 
-        return inName || inDescription || inBrand || inSize || inComposition || inTags || inInternalTags;
-      });
+            return inName || inDescription || inBrand || inSize || inComposition || inTags || inInternalTagsByLabel || inInternalTagsDirect;
+        });
     }
 
     if (selectedBrands.length > 0) {
