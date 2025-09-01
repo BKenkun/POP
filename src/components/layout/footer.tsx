@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Footer() {
     const pathname = usePathname();
-    const isMobile = useIsMobile();
     const isAdminPath = pathname.startsWith('/admin');
 
     if (isAdminPath && pathname.includes('/login')) {
@@ -46,24 +44,7 @@ export function Footer() {
         </ul>
     );
 
-    const DesktopFooter = () => (
-        <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8">
-            <div>
-                <h4 className="font-semibold text-base text-foreground mb-3">Información</h4>
-                <LinkList links={linksCol1} />
-            </div>
-             <div>
-                <h4 className="font-semibold text-base text-foreground mb-3">Legal</h4>
-                <LinkList links={linksCol2} />
-            </div>
-             <div>
-                <h4 className="font-semibold text-base text-foreground mb-3">Ayuda</h4>
-                <LinkList links={linksCol3} />
-            </div>
-        </div>
-    );
-
-    const MobileFooter = () => (
+    const AccordionFooter = () => (
         <Accordion type="multiple" className="w-full md:col-span-3">
             <AccordionItem value="info">
                 <AccordionTrigger className="font-semibold text-base text-foreground">Información</AccordionTrigger>
@@ -94,7 +75,9 @@ export function Footer() {
                      <h3 className="font-bold text-lg mb-2 text-foreground">Popper España</h3>
                      <p className="text-sm text-muted-foreground">Tu tienda de confianza para aromas de calidad superior.</p>
                 </div>
-                {isMobile ? <MobileFooter /> : <DesktopFooter />}
+                <div className="md:col-span-3">
+                    <AccordionFooter />
+                </div>
             </div>
 
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
