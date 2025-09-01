@@ -19,6 +19,7 @@ import { X, Search } from 'lucide-react';
 import ProductGrid from './product-grid';
 import { Input } from '@/components/ui/input';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface ProductFiltersProps {
   products: Product[];
@@ -146,57 +147,59 @@ export default function ProductFilters({ products, uniqueTags, initialSearchQuer
                         </Button>
                     )}
                 </div>
-                
-                <div>
-                    <h4 className="font-semibold mb-3">Ordenar por</h4>
-                    <Select value={sortOrder} onValueChange={setSortOrder}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar orden" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="name-asc">Nombre (A-Z)</SelectItem>
-                            <SelectItem value="name-desc">Nombre (Z-A)</SelectItem>
-                            <SelectItem value="price-asc">Precio (Menor a Mayor)</SelectItem>
-                            <SelectItem value="price-desc">Precio (Mayor a Menor)</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
 
-                <Separator />
-
-                 <div>
-                    <h4 className="font-semibold mb-3">Categorías</h4>
-                    <div className="space-y-2">
-                        {Object.entries(internalTagMap).map(([tag, label]) => (
-                            <div key={tag} className="flex items-center space-x-2">
-                            <Checkbox 
-                                id={`internal-${tag}`} 
-                                checked={selectedInternalTags.includes(tag)}
-                                onCheckedChange={() => handleInternalTagChange(tag)}
-                            />
-                            <Label htmlFor={`internal-${tag}`} className="font-normal cursor-pointer">{label}</Label>
+                <Accordion type="multiple" defaultValue={['sort', 'categories', 'brands']} className="w-full">
+                    <AccordionItem value="sort">
+                        <AccordionTrigger className="text-base font-semibold">Ordenar por</AccordionTrigger>
+                        <AccordionContent>
+                             <Select value={sortOrder} onValueChange={setSortOrder}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar orden" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="name-asc">Nombre (A-Z)</SelectItem>
+                                    <SelectItem value="name-desc">Nombre (Z-A)</SelectItem>
+                                    <SelectItem value="price-asc">Precio (Menor a Mayor)</SelectItem>
+                                    <SelectItem value="price-desc">Precio (Mayor a Menor)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="categories">
+                        <AccordionTrigger className="text-base font-semibold">Categorías</AccordionTrigger>
+                        <AccordionContent>
+                             <div className="space-y-2">
+                                {Object.entries(internalTagMap).map(([tag, label]) => (
+                                    <div key={tag} className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id={`internal-${tag}`} 
+                                        checked={selectedInternalTags.includes(tag)}
+                                        onCheckedChange={() => handleInternalTagChange(tag)}
+                                    />
+                                    <Label htmlFor={`internal-${tag}`} className="font-normal cursor-pointer">{label}</Label>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                <Separator />
-                
-                <div>
-                    <h4 className="font-semibold mb-3">Marcas</h4>
-                    <div className="space-y-2">
-                    {uniqueTags.map(tag => (
-                        <div key={tag} className="flex items-center space-x-2">
-                        <Checkbox 
-                            id={tag} 
-                            checked={selectedTags.includes(tag)}
-                            onCheckedChange={() => handleTagChange(tag)}
-                        />
-                        <Label htmlFor={tag} className="font-normal cursor-pointer">{tag}</Label>
-                        </div>
-                    ))}
-                    </div>
-                </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="brands">
+                        <AccordionTrigger className="text-base font-semibold">Marcas</AccordionTrigger>
+                        <AccordionContent>
+                            <div className="space-y-2">
+                            {uniqueTags.map(tag => (
+                                <div key={tag} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={tag} 
+                                    checked={selectedTags.includes(tag)}
+                                    onCheckedChange={() => handleTagChange(tag)}
+                                />
+                                <Label htmlFor={tag} className="font-normal cursor-pointer">{tag}</Label>
+                                </div>
+                            ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </CardContent>
         </Card>
       </aside>
