@@ -5,9 +5,6 @@ import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import ClientOnlyFeatures from '@/components/client-only-features';
 import SubscriptionForm from '@/components/subscription-form';
-import { ProductCarousel } from '@/components/product-carousel';
-import { Separator } from '@/components/ui/separator';
-
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
 
@@ -30,15 +27,36 @@ export default async function Home() {
       </div>
 
       {newArrivals.length > 0 && (
-        <ProductCarousel title="Novedades" products={newArrivals} />
+        <section className="space-y-6">
+          <h2 className="text-2xl md:text-3xl font-headline text-primary">Novedades</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {newArrivals.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
       )}
       
       {offers.length > 0 && (
-         <ProductCarousel title="Ofertas Especiales" products={offers} />
+         <section className="space-y-6">
+          <h2 className="text-2xl md:text-3xl font-headline text-primary">Ofertas Especiales</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {offers.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
       )}
 
       {bestSellers.length > 0 && (
-         <ProductCarousel title="Lo Más Vendido" products={bestSellers} />
+         <section className="space-y-6">
+          <h2 className="text-2xl md:text-3xl font-headline text-primary">Lo Más Vendido</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bestSellers.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
       )}
       
        <div className="my-12">
