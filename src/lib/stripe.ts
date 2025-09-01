@@ -47,16 +47,16 @@ export async function getStripeProducts(): Promise<Product[]> {
         try {
           const detailsString = product.metadata.product_details;
           // Find the JSON object within the string using a regular expression.
-          // This looks for the first '{' and the last '}'
+          // This looks for the first '{' and the last '}' to isolate the JSON object.
           const jsonMatch = detailsString.match(/\{[\s\S]*\}/);
 
           if (jsonMatch) {
-            // We have a match, now we can parse it.
+            // We have a match, now we can safely parse it.
             productDetails = JSON.parse(jsonMatch[0]);
           }
         } catch (e) {
+          // If parsing fails for any reason, log the error but do not crash the app.
           console.error(`Error parsing product_details for product ${product.id}. Malformed JSON found.`, e);
-          // Set to undefined so it doesn't break the page.
           productDetails = undefined;
         }
       }
