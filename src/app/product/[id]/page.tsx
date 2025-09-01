@@ -38,16 +38,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     ...(product.galleryImages || []),
   ];
   
-  // Basic cleanup for the description content to avoid hydration issues.
-  let descriptionContent = product.longDescription || product.description || '';
-  if (descriptionContent) {
-      // A simple check to remove a trailing unwanted closing div tag.
-      if (descriptionContent.trim().endsWith('</div>')) {
-          descriptionContent = descriptionContent.trim().slice(0, -6);
-      }
-  }
-  
-  const hasDetails = product.productDetails && product.productDetails.length > 0;
+  const hasDetails = (product.productDetails && product.productDetails.length > 0) || (product.longDescription && product.longDescription.length > 0)
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -56,16 +47,6 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         <ProductInfo product={product} />
       </div>
       
-      {descriptionContent && (
-        <>
-          <Separator className="my-10" />
-          <div
-            className="prose dark:prose-invert max-w-none text-foreground/80"
-            dangerouslySetInnerHTML={{ __html: descriptionContent }}
-          />
-        </>
-      )}
-
       {hasDetails && (
         <>
           <Separator className="my-10" />

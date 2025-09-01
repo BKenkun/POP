@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,10 +9,11 @@ interface ProductDetailsProps {
 }
 
 export function ProductDetails({ product }: ProductDetailsProps) {
-  const hasDetails = product.productDetails && product.productDetails.length > 0;
+  const hasLongDescription = product.longDescription && product.longDescription.length > 0;
+  const hasProductDetails = product.productDetails && product.productDetails.length > 0;
 
   // Parse the productDetails string into an array of key-value pairs
-  const detailsList = hasDetails
+  const detailsList = hasProductDetails
     ? product.productDetails!.split('\n').map(line => {
         const parts = line.split(':');
         const key = parts[0]?.trim().replace(/,$/, ''); // Remove trailing comma if present
@@ -21,30 +21,49 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         return { key, value };
       }).filter(item => item.key && item.value)
     : [];
-    
-  if (!hasDetails) {
+
+  const defaultTab = hasLongDescription ? 'description' : 'details';
+
+  if (!hasLongDescription && !hasProductDetails) {
     return null;
   }
-
+  
   return (
-    <Tabs defaultValue="details">
+    <Tabs defaultValue={defaultTab}>
       <TabsList className="mb-4">
-        <TabsTrigger value="details">Detalles del producto</TabsTrigger>
+        {hasLongDescription && <TabsTrigger value="description">Descripción</TabsTrigger>}
+        {hasProductDetails && <TabsTrigger value="details">Detalles del producto</TabsTrigger>}
       </TabsList>
-      <TabsContent value="details">
-          <Card>
-              <CardContent className="p-6">
-                  <ul className="space-y-4">
-                      {detailsList.map((item, index) => (
-                          <li key={index} className="flex flex-col sm:flex-row text-sm">
-                              <strong className="w-full sm:w-1/4 font-semibold text-foreground">{item.key}:</strong>
-                              <span className="w-full sm:w-3/4 text-muted-foreground">{item.value}</span>
-                          </li>
-                      ))}
-                  </ul>
-              </CardContent>
-          </Card>
-      </TabsContent>
+
+      {hasLongDescription && (
+        <TabsContent value="description">
+            <Card>
+                <CardContent className="p-6">
+                    <div
+                        className="prose dark:prose-invert max-w-none text-foreground/80"
+                        dangerouslySetInnerHTML={{ __html: product.longDescription! }}
+                    />
+                </CardContent>
+            </Card>
+        </TabsContent>
+      )}
+
+      {hasProductDetails && (
+          <TabsContent value="details">
+            <Card>
+                <CardContent className="p-6">
+                    <ul className="space-y-4">
+                        {detailsList.map((item, index) => (
+                            <li key={index} className="flex flex-col sm:flex-row text-sm">
+                                <strong className="w-full sm:w-1/4 font-semibold text-foreground">{item.key}:</strong>
+                                <span className="w-full sm:w-3/4 text-muted-foreground">{item.value}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
