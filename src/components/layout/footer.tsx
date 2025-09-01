@@ -44,7 +44,7 @@ export function Footer() {
     return (
       <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
         {/* Add padding-right to the container to avoid overlapping with floating cart button */}
-        <div className="container pr-16 md:pr-16">
+        <div className="container pr-24">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
              <p className="text-sm text-muted-foreground text-center md:text-left">
               &copy; {new Date().getFullYear()} Popper España. T
