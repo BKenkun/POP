@@ -23,13 +23,13 @@ export function Header() {
             <span className="font-bold text-xl text-primary-foreground">Popper España</span>
           </Link>
            <nav className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-white/10">
+              <Button variant="ghost" asChild className="text-primary-foreground">
                 <Link href="/products">
                     <ShoppingBag className="h-4 w-4 mr-2"/>
                     Ver Productos
                 </Link>
               </Button>
-               <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-white/10">
+               <Button variant="ghost" size="icon" className="text-primary-foreground">
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Buscar</span>
               </Button>
