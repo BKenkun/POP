@@ -1,9 +1,10 @@
 import { getStripeProducts } from '@/lib/stripe';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { Product } from '@/lib/types';
 import { ProductGallery } from './product-gallery';
 import { ProductInfo } from './product-info';
+import { ProductDetails } from './product-details';
+import { Separator } from '@/components/ui/separator';
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -43,6 +44,14 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         <ProductGallery images={galleryImages} productName={product.name} />
         <ProductInfo product={product} />
       </div>
+      
+      {(product.description || product.productDetails) && (
+        <>
+          <Separator className="my-10" />
+          <ProductDetails product={product} />
+        </>
+      )}
+
     </div>
   );
 }

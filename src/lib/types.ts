@@ -8,6 +8,7 @@ export interface Product {
   tags?: string[];
   galleryImages?: string[];
   stock?: number;
+  productDetails?: Record<string, string>;
 }
 
 export interface CartItem extends Product {
