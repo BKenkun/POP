@@ -44,7 +44,13 @@ export async function getStripeProducts(): Promise<Product[]> {
       let productDetails: Record<string, string> | undefined = undefined;
       if (product.metadata.product_details) {
         try {
-          productDetails = JSON.parse(product.metadata.product_details);
+          // Clean the string from markdown code blocks before parsing
+          const cleanedDetails = product.metadata.product_details
+            .replace(/```json/g, '')
+            .replace(/```/g, '')
+            .replace(/<br>/g, '')
+            .trim();
+          productDetails = JSON.parse(cleanedDetails);
         } catch (e) {
           console.error(`Error parsing product_details for product ${product.id}:`, e);
         }
