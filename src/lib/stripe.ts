@@ -45,15 +45,21 @@ export async function getStripeProducts(): Promise<Product[]> {
       let productDetails: Record<string, string> | undefined = undefined;
       if (product.metadata.product_details) {
         try {
-            // Find the JSON object within the string using a regular expression.
-            const jsonMatch = product.metadata.product_details.match(/{[\s\S]*}/);
-            if (jsonMatch) {
-              // Replace single quotes with double quotes to fix common JSON format errors
-              const correctedJsonString = jsonMatch[0].replace(/'/g, '"');
-              productDetails = JSON.parse(correctedJsonString);
-            }
+          const rawDetails = product.metadata.product_details;
+          // Find the JSON object within the string using a regular expression.
+          // This looks for the first '{' and the last '}'
+          const jsonMatch = rawDetails.match(/\{[\s\S]*\}/);
+
+          if (jsonMatch) {
+            // We have a match, now we can parse it.
+            // No need to replace quotes, as JSON should have double quotes.
+            // The try-catch block will handle any remaining parsing errors.
+            productDetails = JSON.parse(jsonMatch[0]);
+          }
         } catch (e) {
-          console.error(`Error parsing product_details for product ${product.id}:`, e);
+          console.error(`Error parsing product_details for product ${product.id}. Malformed JSON found.`, e);
+          // Set to undefined so it doesn't break the page.
+          productDetails = undefined;
         }
       }
 
