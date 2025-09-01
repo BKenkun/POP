@@ -5,16 +5,23 @@ import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import ClientOnlyFeatures from '@/components/client-only-features';
 import SubscriptionForm from '@/components/subscription-form';
+import { ProductCarousel } from '@/components/product-carousel';
+import { Separator } from '@/components/ui/separator';
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
 
 export default async function Home() {
-  const products: Product[] = await getStripeProducts();
+  const allProducts: Product[] = await getStripeProducts();
+
+  const newArrivals = allProducts.filter(p => p.internalTags?.includes('novedad'));
+  const bestSellers = allProducts.filter(p => p.internalTags?.includes('mas-vendido'));
+  const offers = allProducts.filter(p => p.internalTags?.includes('oferta'));
   
   return (
-    <div className="space-y-12">
+    <div className="space-y-16">
       <ClientOnlyFeatures />
+      
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight">Calidad Premium, Sensaciones Únicas</h1>
         <p className="mt-2 text-lg text-foreground/80 max-w-2xl mx-auto">
@@ -22,13 +29,11 @@ export default async function Home() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {newArrivals.length > 0 && (
+        <ProductCarousel title="Novedades" products={newArrivals} />
+      )}
 
-      <div className="space-y-10">
+      <div className="my-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-left max-w-5xl mx-auto">
             <div className="flex items-start gap-3">
               <ShieldCheck className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
@@ -60,9 +65,19 @@ export default async function Home() {
             </div>
         </div>
       </div>
+      
+      {offers.length > 0 && (
+         <ProductCarousel title="Ofertas Especiales" products={offers} />
+      )}
+
       <div className="my-12">
         <SubscriptionForm />
       </div>
+
+      {bestSellers.length > 0 && (
+         <ProductCarousel title="Lo Más Vendido" products={bestSellers} />
+      )}
+      
     </div>
   );
 }
