@@ -6,6 +6,7 @@ export interface Product {
   imageUrl: string;
   imageHint: string;
   tags?: string[];
+  internalTags?: string[];
   galleryImages?: string[];
   stock?: number;
   productDetails?: Record<string, string>;

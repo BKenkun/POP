@@ -64,6 +64,7 @@ export async function getStripeProducts(): Promise<Product[]> {
         imageUrl: product.images?.[0] || 'https://picsum.photos/400/400',
         imageHint: 'product bottle',
         tags: product.metadata.tags?.split(',').map((t: string) => t.trim()) || [],
+        internalTags: product.metadata.internal_tags?.split(',').map((t: string) => t.trim()) || [],
         galleryImages:
           product.metadata.gallery_images
             ?.split(',')

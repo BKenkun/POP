@@ -5,6 +5,7 @@ import { ProductGallery } from './product-gallery';
 import { ProductInfo } from './product-info';
 import { ProductDetails } from './product-details';
 import { Separator } from '@/components/ui/separator';
+import { RelatedProducts } from './related-products';
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -27,7 +28,8 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+  const allProducts = await getStripeProducts();
+  const product = allProducts.find((p) => p.id === params.id);
 
   if (!product) {
     notFound();
@@ -52,6 +54,8 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         </>
       )}
 
+      <Separator className="my-10" />
+      <RelatedProducts currentProduct={product} allProducts={allProducts} />
     </div>
   );
 }
