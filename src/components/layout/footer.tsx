@@ -29,7 +29,7 @@ export function Footer() {
 
     const LinkColumn = ({ title, links }: { title: string; links: { href: string; text: string }[] }) => (
         <div>
-            <h4 className="font-semibold text-base mb-3 text-foreground">{title}</h4>
+            <h4 className="font-semibold text-base mb-3 text-foreground/90">{title}</h4>
             <ul className="space-y-2">
                 {links.map(link => (
                     <li key={link.href}>
@@ -43,9 +43,9 @@ export function Footer() {
     );
 
     return (
-      <footer className="border-t border-border/40 mt-16 pt-10 pb-8">
-        <div className="container pr-24">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <footer className="border-t border-border/40 mt-12 pt-8 pb-6">
+        <div className="container">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
                 <div className="md:col-span-1">
                      <h3 className="font-bold text-lg mb-2 text-foreground">Popper España</h3>
                      <p className="text-sm text-muted-foreground">Tu tienda de confianza para aromas de calidad superior.</p>
