@@ -51,8 +51,6 @@ export async function getStripeProducts(): Promise<Product[]> {
               // Replace single quotes with double quotes to fix common JSON format errors
               const correctedJsonString = jsonMatch[0].replace(/'/g, '"');
               productDetails = JSON.parse(correctedJsonString);
-            } else {
-               console.error(`No valid JSON object found in product_details for product ${product.id}`);
             }
         } catch (e) {
           console.error(`Error parsing product_details for product ${product.id}:`, e);
