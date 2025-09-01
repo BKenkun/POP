@@ -58,16 +58,22 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         <ProductInfo product={product} />
       </div>
       
-      <Separator className="my-10" />
+      {descriptionContent && (
+        <>
+          <Separator className="my-10" />
+          <div
+            className="prose dark:prose-invert max-w-none text-foreground/80"
+            dangerouslySetInnerHTML={{ __html: descriptionContent }}
+          />
+        </>
+      )}
 
-      <div
-          className="prose dark:prose-invert max-w-none text-foreground/80"
-          dangerouslySetInnerHTML={{ __html: descriptionContent }}
-        />
-
-      <Separator className="my-10" />
-      
-      <ProductDetails product={product} />
+      {hasDetails && (
+        <>
+          <Separator className="my-10" />
+          <ProductDetails product={product} />
+        </>
+      )}
 
       <Separator className="my-10" />
       <RelatedProducts currentProduct={product} allProducts={allProducts} />
