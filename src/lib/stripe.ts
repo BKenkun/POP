@@ -52,8 +52,6 @@ export async function getStripeProducts(): Promise<Product[]> {
 
           if (jsonMatch) {
             // We have a match, now we can parse it.
-            // No need to replace quotes, as JSON should have double quotes.
-            // The try-catch block will handle any remaining parsing errors.
             productDetails = JSON.parse(jsonMatch[0]);
           }
         } catch (e) {
