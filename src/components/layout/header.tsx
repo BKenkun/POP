@@ -30,11 +30,6 @@ export function Header() {
             Productos
         </Link>
       </Button>
-      <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start">
-        <Link href="/blog" onClick={() => setIsOpen(false)}>
-            Blog
-        </Link>
-      </Button>
        <SearchForm onSearch={() => setIsOpen(false)} />
     </>
   )
