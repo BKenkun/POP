@@ -45,9 +45,10 @@ export async function getStripeProducts(): Promise<Product[]> {
       let productDetails: Record<string, string> | undefined = undefined;
       if (product.metadata.product_details) {
         try {
+          const detailsString = product.metadata.product_details;
           // Find the JSON object within the string using a regular expression.
           // This looks for the first '{' and the last '}'
-          const jsonMatch = product.metadata.product_details.match(/\{[\s\S]*\}/);
+          const jsonMatch = detailsString.match(/\{[\s\S]*\}/);
 
           if (jsonMatch) {
             // We have a match, now we can parse it.
