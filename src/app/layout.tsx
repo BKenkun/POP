@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
 import FloatingCartButton from '@/components/floating-cart-button';
+import { use } from 'react';
 
 export const metadata: Metadata = {
   title: 'Popper España',

@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Footer() {
     const pathname = usePathname();
+    const isMobile = useIsMobile();
     const isAdminPath = pathname.startsWith('/admin');
 
-    // Hide footer on admin login page
     if (isAdminPath && pathname.includes('/login')) {
       return null;
     }
@@ -32,53 +34,67 @@ export function Footer() {
     const linksCol2 = footerLinks.slice(5, 10);
     const linksCol3 = footerLinks.slice(10);
 
+    const LinkList = ({ links }: { links: { href: string; text: string }[] }) => (
+        <ul className="space-y-2 pt-2">
+            {links.map(link => (
+                <li key={link.href}>
+                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                        {link.text}
+                    </Link>
+                </li>
+            ))}
+        </ul>
+    );
+
+    const DesktopFooter = () => (
+        <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8">
+            <div>
+                <h4 className="font-semibold text-base text-foreground mb-3">Información</h4>
+                <LinkList links={linksCol1} />
+            </div>
+             <div>
+                <h4 className="font-semibold text-base text-foreground mb-3">Legal</h4>
+                <LinkList links={linksCol2} />
+            </div>
+             <div>
+                <h4 className="font-semibold text-base text-foreground mb-3">Ayuda</h4>
+                <LinkList links={linksCol3} />
+            </div>
+        </div>
+    );
+
+    const MobileFooter = () => (
+        <Accordion type="multiple" className="w-full md:col-span-3">
+            <AccordionItem value="info">
+                <AccordionTrigger className="font-semibold text-base text-foreground">Información</AccordionTrigger>
+                <AccordionContent>
+                    <LinkList links={linksCol1} />
+                </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="legal">
+                <AccordionTrigger className="font-semibold text-base text-foreground">Legal</AccordionTrigger>
+                <AccordionContent>
+                    <LinkList links={linksCol2} />
+                </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="help">
+                <AccordionTrigger className="font-semibold text-base text-foreground">Ayuda</AccordionTrigger>
+                <AccordionContent>
+                    <LinkList links={linksCol3} />
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
+    );
 
     return (
       <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
         <div className="container pr-24">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div className="md:col-span-1">
-                     <h3 className="font-bold text-lg text-primary-foreground mb-2">Popper España</h3>
+                     <h3 className="font-bold text-lg mb-2 text-primary">Popper España</h3>
                      <p className="text-sm text-muted-foreground">Tu tienda de confianza para aromas de calidad superior.</p>
                 </div>
-                <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-8">
-                    <div>
-                        <h4 className="font-semibold text-base text-foreground mb-3">Información</h4>
-                        <ul className="space-y-2">
-                            {linksCol1.map(link => (
-                                <li key={link.href}>
-                                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                                        {link.text}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                     <div>
-                        <h4 className="font-semibold text-base text-foreground mb-3">Legal</h4>
-                        <ul className="space-y-2">
-                            {linksCol2.map(link => (
-                                <li key={link.href}>
-                                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                                        {link.text}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                     <div>
-                        <h4 className="font-semibold text-base text-foreground mb-3">Ayuda</h4>
-                        <ul className="space-y-2">
-                            {linksCol3.map(link => (
-                                <li key={link.href}>
-                                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                                        {link.text}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
+                {isMobile ? <MobileFooter /> : <DesktopFooter />}
             </div>
 
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -100,4 +116,4 @@ export function Footer() {
         </div>
       </footer>
     );
-  }
+}
