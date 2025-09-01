@@ -37,6 +37,9 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     product.imageUrl,
     ...(product.galleryImages || []),
   ];
+  
+  const descriptionContent = product.longDescription || product.description || '';
+  const hasDetails = product.productDetails && product.productDetails.length > 0;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -45,12 +48,9 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         <ProductInfo product={product} />
       </div>
       
-      {(product.description || (product.productDetails && Object.keys(product.productDetails).length > 0)) && (
-        <>
-          <Separator className="my-10" />
-          <ProductDetails product={product} />
-        </>
-      )}
+      <Separator className="my-10" />
+
+      <ProductDetails product={product} descriptionContent={descriptionContent} />
 
       <Separator className="my-10" />
       <RelatedProducts currentProduct={product} allProducts={allProducts} />

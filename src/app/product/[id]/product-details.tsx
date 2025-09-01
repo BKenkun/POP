@@ -1,21 +1,17 @@
 
+'use client';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface ProductDetailsProps {
   product: Product;
+  descriptionContent: string;
 }
 
-export function ProductDetails({ product }: ProductDetailsProps) {
+export function ProductDetails({ product, descriptionContent }: ProductDetailsProps) {
   const hasDetails = product.productDetails && product.productDetails.length > 0;
-
-  // Clean the long description to prevent hydration errors
-  const cleanedLongDescription = product.longDescription
-    ? product.longDescription.replace(/\s+/g, ' ').trim()
-    : null;
-    
-  const descriptionContent = cleanedLongDescription || product.description || '';
 
   // Parse the productDetails string into an array of key-value pairs
   const detailsList = hasDetails
