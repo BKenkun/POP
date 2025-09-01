@@ -3,8 +3,8 @@
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Send } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Send, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface SubscriptionFormProps {
     onSubscribed?: () => void;
@@ -12,16 +12,38 @@ interface SubscriptionFormProps {
 
 const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     const { toast } = useToast();
-    const [isMounted, setIsMounted] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setLoading(true);
         const email = e.currentTarget.email.value;
-        if(email) {
+
+        if(!email) {
+            toast({
+                title: "Error",
+                description: "Please enter your email address.",
+                variant: "destructive",
+            });
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Something went wrong.');
+            }
+
             toast({
                 title: "¡Gracias por suscribirte!",
                 description: "Pronto recibirás nuestras mejores ofertas.",
@@ -30,13 +52,18 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
             if (onSubscribed) {
                 onSubscribed();
             }
+
+        } catch (error: any) {
+             toast({
+                title: "Subscription Failed",
+                description: error.message || "Could not subscribe. Please try again later.",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
         }
     };
     
-    if (!isMounted) {
-        return null;
-    }
-
     return (
         <div className="bg-primary/20 dark:bg-primary/10 p-8 rounded-lg">
             <div className="max-w-2xl mx-auto text-center">
@@ -45,10 +72,14 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
                 Puede cancelar su suscripción en cualquier momento. Para ello, consulte nuestra información de contacto en la declaración legal.
                 </p>
                 <form onSubmit={handleSubmit} className="flex w-full max-w-md mx-auto items-center space-x-2">
-                    <Input name="email" type="email" placeholder="Introduce tu email..." className="flex-1 bg-background dark:bg-card" required />
-                    <Button type="submit" variant="destructive">
-                        <Send className="h-4 w-4 mr-2" />
-                        Suscribirse
+                    <Input name="email" type="email" placeholder="Introduce tu email..." className="flex-1 bg-background dark:bg-card" required disabled={loading}/>
+                    <Button type="submit" variant="destructive" disabled={loading}>
+                        {loading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                            <Send className="h-4 w-4 mr-2" />
+                        )}
+                        {loading ? 'Suscribiendo...' : 'Suscribirse'}
                     </Button>
                 </form>
             </div>
