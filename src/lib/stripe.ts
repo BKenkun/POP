@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 import type { Product, CartItem } from './types';
 
