@@ -46,8 +46,10 @@ export async function getStripeProducts(): Promise<Product[]> {
         try {
           // This regex will find the JSON object within the string, even if it's surrounded by other text.
           const jsonMatch = product.metadata.product_details.match(/{[\s\S]*}/);
-          if (jsonMatch) {
-            productDetails = JSON.parse(jsonMatch[0]);
+          if (jsonMatch && jsonMatch[0]) {
+            // Replace single quotes with double quotes to fix common JSON format errors
+            const correctedJsonString = jsonMatch[0].replace(/'/g, '"');
+            productDetails = JSON.parse(correctedJsonString);
           } else {
              console.error(`No valid JSON object found in product_details for product ${product.id}`);
           }

@@ -24,6 +24,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
       if (existingItem) {
+        // Check if adding another item exceeds stock
+        if (product.stock !== undefined && existingItem.quantity >= product.stock) {
+          toast({
+            title: "Stock limit reached",
+            description: `You cannot add more of ${product.name}.`,
+            variant: "destructive"
+          });
+          return prevItems;
+        }
         return prevItems.map(item =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
@@ -49,9 +58,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       removeFromCart(productId);
     } else {
       setCartItems(prevItems =>
-        prevItems.map(item =>
-          item.id === productId ? { ...item, quantity } : item
-        )
+        prevItems.map(item => {
+          if (item.id === productId) {
+             // Check against stock when updating quantity
+            if (item.stock !== undefined && quantity > item.stock) {
+                toast({
+                    title: "Stock limit reached",
+                    description: `Only ${item.stock} units of ${item.name} available.`,
+                    variant: "destructive"
+                });
+                return { ...item, quantity: item.stock };
+            }
+            return { ...item, quantity };
+          }
+          return item;
+        })
       );
     }
   };

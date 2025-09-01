@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { CartProvider } from '@/context/cart-context';
+import { Providers } from '@/context/providers';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
@@ -25,7 +25,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Belleza&family=Alegreya:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <CartProvider>
+        <Providers>
           <div className="flex flex-col min-h-screen bg-background">
             <Header />
             <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -36,7 +36,7 @@ export default function RootLayout({
           <Toaster />
           <SalesNotification />
           <FloatingCartButton />
-        </CartProvider>
+        </Providers>
       </body>
     </html>
   );
