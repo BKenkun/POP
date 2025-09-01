@@ -43,12 +43,11 @@ export async function getStripeProducts(): Promise<Product[]> {
         : undefined;
       
       let productDetails: Record<string, string> | undefined = undefined;
+
       if (product.metadata.product_details) {
         try {
-          const detailsString = product.metadata.product_details;
-          // Find the JSON object within the string using a regular expression.
-          // This looks for the first '{' and the last '}' to isolate the JSON object.
-          const jsonMatch = detailsString.match(/\{[\s\S]*\}/);
+          // This regex finds the string between the first '{' and the last '}'
+          const jsonMatch = product.metadata.product_details.match(/\{[\s\S]*\}/);
 
           if (jsonMatch) {
             // We have a match, now we can safely parse it.
@@ -60,6 +59,7 @@ export async function getStripeProducts(): Promise<Product[]> {
           productDetails = undefined;
         }
       }
+
 
       return {
         id: product.id,
