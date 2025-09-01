@@ -2,16 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export function Footer() {
     const pathname = usePathname();
-    const [isMounted, setIsMounted] = useState(false);
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
     const isAdminPath = pathname.startsWith('/admin');
 
     // Hide footer on admin login page
@@ -19,21 +12,6 @@ export function Footer() {
       return null;
     }
     
-    // Fallback for SSR to prevent layout shifts
-    if (!isMounted) {
-        return (
-            <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
-                <div className="container">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-sm text-muted-foreground text-center md:text-left">
-                    &copy; {new Date().getFullYear()} Popper España. Todos los derechos reservados.
-                    </p>
-                </div>
-                </div>
-          </footer>
-        );
-    }
-
     const footerLinks = [
         { href: "/informacion-legal", text: "Información legal" },
         { href: "/terminos-y-condiciones", text: "Termos y Condiciones Generales" },
