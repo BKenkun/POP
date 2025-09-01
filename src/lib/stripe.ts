@@ -60,11 +60,21 @@ export async function getStripeProducts(): Promise<Product[]> {
           rawProductDetails = details.split('\n').filter(line => line.trim() !== '').join('\n');
       }
 
+      // --- Long Description Workaround ---
+      // Find all metadata keys starting with long_description_, sort them, and join them.
+      const longDescParts = Object.entries(product.metadata)
+        .filter(([key]) => key.startsWith('long_description_'))
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB, undefined, { numeric: true }))
+        .map(([, value]) => value);
+      
+      const longDescription = longDescParts.length > 0 ? longDescParts.join('') : undefined;
+      // --- End Workaround ---
+
       return {
         id: product.id,
         name: product.name,
         description: product.description,
-        longDescription: product.metadata.long_description,
+        longDescription: longDescription,
         price: price?.unit_amount || 0,
         imageUrl: product.images?.[0] || 'https://picsum.photos/400/400',
         imageHint: 'product bottle',
