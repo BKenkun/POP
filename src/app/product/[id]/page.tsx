@@ -45,7 +45,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
         <ProductInfo product={product} />
       </div>
       
-      {(product.description || product.productDetails) && (
+      {(product.description || (product.productDetails && Object.keys(product.productDetails).length > 0)) && (
         <>
           <Separator className="my-10" />
           <ProductDetails product={product} />

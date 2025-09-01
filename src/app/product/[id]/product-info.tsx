@@ -34,11 +34,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </h1>
         <p className="text-3xl font-bold mt-2">{formatPrice(product.price)}</p>
       </div>
-
-      <div
-        className="prose dark:prose-invert text-foreground/80"
-        dangerouslySetInnerHTML={{ __html: product.description || '' }}
-      />
       
       <Button
         size="lg"
