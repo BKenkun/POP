@@ -45,7 +45,7 @@ export async function getStripeProducts(): Promise<Product[]> {
       let productDetails: Record<string, string> | undefined = undefined;
       if (product.metadata.product_details) {
         try {
-          // This regex will find the JSON object within the string, even if it's surrounded by other text.
+          // This robust regex will find the JSON object within the string, even if it's surrounded by other text or newlines.
           const jsonMatch = product.metadata.product_details.match(/{[\s\S]*}/);
           if (jsonMatch && jsonMatch[0]) {
             // Replace single quotes with double quotes to fix common JSON format errors
