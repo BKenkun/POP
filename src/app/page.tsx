@@ -3,8 +3,7 @@ import { ProductCard } from '@/components/product-card';
 import { getStripeProducts } from '@/lib/stripe';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
-import ClientOnlyWelcomePopup from '@/components/client-only-welcome-popup';
-import SubscriptionForm from '@/components/subscription-form';
+import ClientOnlyFeatures from '@/components/client-only-features';
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
@@ -14,7 +13,7 @@ export default async function Home() {
   
   return (
     <div className="space-y-12">
-      <ClientOnlyWelcomePopup />
+      <ClientOnlyFeatures />
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight">Calidad Premium, Sensaciones Únicas</h1>
         <p className="mt-2 text-lg text-foreground/80 max-w-2xl mx-auto">
@@ -59,7 +58,6 @@ export default async function Home() {
               </div>
             </div>
         </div>
-        <SubscriptionForm />
       </div>
 
     </div>
