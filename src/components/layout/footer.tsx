@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export function Footer() {
     const pathname = usePathname();
@@ -28,55 +27,33 @@ export function Footer() {
         { href: "/blog", text: "Blog" }
     ];
 
-    const linksCol1 = footerLinks.slice(0, 5);
-    const linksCol2 = footerLinks.slice(5, 10);
-    const linksCol3 = footerLinks.slice(10);
-
-    const LinkList = ({ links }: { links: { href: string; text: string }[] }) => (
-        <ul className="space-y-2 pt-2">
-            {links.map(link => (
-                <li key={link.href}>
-                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                        {link.text}
-                    </Link>
-                </li>
-            ))}
-        </ul>
-    );
-
-    const AccordionFooter = () => (
-        <Accordion type="multiple" className="w-full md:col-span-3">
-            <AccordionItem value="info">
-                <AccordionTrigger className="font-semibold text-base text-foreground">Información</AccordionTrigger>
-                <AccordionContent>
-                    <LinkList links={linksCol1} />
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="legal">
-                <AccordionTrigger className="font-semibold text-base text-foreground">Legal</AccordionTrigger>
-                <AccordionContent>
-                    <LinkList links={linksCol2} />
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="help">
-                <AccordionTrigger className="font-semibold text-base text-foreground">Ayuda</AccordionTrigger>
-                <AccordionContent>
-                    <LinkList links={linksCol3} />
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
+    const LinkColumn = ({ title, links }: { title: string; links: { href: string; text: string }[] }) => (
+        <div>
+            <h4 className="font-semibold text-base mb-3 text-foreground">{title}</h4>
+            <ul className="space-y-2">
+                {links.map(link => (
+                    <li key={link.href}>
+                        <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                            {link.text}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 
     return (
-      <footer className="border-t border-border/40 mt-16 pt-12 pb-8">
+      <footer className="border-t border-border/40 mt-16 pt-10 pb-8">
         <div className="container pr-24">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div className="md:col-span-1">
                      <h3 className="font-bold text-lg mb-2 text-foreground">Popper España</h3>
                      <p className="text-sm text-muted-foreground">Tu tienda de confianza para aromas de calidad superior.</p>
                 </div>
-                <div className="md:col-span-3">
-                    <AccordionFooter />
+                <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
+                   <LinkColumn title="Información" links={footerLinks.slice(0, 5)} />
+                   <LinkColumn title="Legal" links={footerLinks.slice(5, 10)} />
+                   <LinkColumn title="Ayuda" links={footerLinks.slice(10)} />
                 </div>
             </div>
 
