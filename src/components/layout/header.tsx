@@ -2,8 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
 import { PackageCheck } from 'lucide-react';
@@ -25,10 +24,9 @@ export function Header() {
             <span className="font-bold text-xl text-primary-foreground">Popper España</span>
           </Link>
            <nav className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent/80 hover:text-accent-foreground">
+              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground">
                 <Link href="/products">
-                    <ShoppingBag className="h-4 w-4 mr-2"/>
-                    Ver Productos
+                    Productos
                 </Link>
               </Button>
                <SearchForm />

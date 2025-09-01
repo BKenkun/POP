@@ -4,7 +4,6 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
 export function SearchForm() {
   const router = useRouter();
@@ -30,7 +29,7 @@ export function SearchForm() {
             name="search"
             defaultValue={defaultSearch}
             placeholder="Buscar..."
-            className="w-40 lg:w-64 pl-9 h-9 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:w-48 lg:focus:w-80 transition-all duration-300"
+            className="w-40 lg:w-48 pl-9 h-9 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:w-48 lg:focus:w-64 transition-all duration-300"
         />
     </form>
   );
