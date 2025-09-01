@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -10,6 +11,9 @@ export interface Product {
   galleryImages?: string[];
   stock?: number;
   productDetails?: string;
+  brand?: string;
+  size?: string;
+  composition?: string;
 }
 
 export interface CartItem extends Product {

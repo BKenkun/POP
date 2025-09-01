@@ -75,6 +75,9 @@ export async function getStripeProducts(): Promise<Product[]> {
             .map((url: string) => url.trim()) || [],
         stock: stock,
         productDetails: rawProductDetails,
+        brand: product.metadata.brand,
+        size: product.metadata.size,
+        composition: product.metadata.composition,
       };
     })
     .filter((p) => p.price > 0);

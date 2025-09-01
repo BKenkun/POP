@@ -18,10 +18,22 @@ export default async function ProductsPage({
     const products: Product[] = await getStripeProducts();
     const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined;
 
-    // Extract unique tags for filtering
-    const allTags = new Set<string>();
-    products.forEach(p => p.tags?.forEach(t => allTags.add(t)));
-    const uniqueTags = Array.from(allTags);
+    // Extract unique values for filtering
+    const getUniqueValues = (key: keyof Product) => {
+        const allValues = new Set<string>();
+        products.forEach(p => {
+            const value = p[key];
+            if (typeof value === 'string' && value) {
+                allValues.add(value);
+            }
+        });
+        return Array.from(allValues);
+    };
+
+    const uniqueBrands = getUniqueValues('brand');
+    const uniqueSizes = getUniqueValues('size');
+    const uniqueCompositions = getUniqueValues('composition');
+
 
     return (
         <div>
@@ -31,7 +43,13 @@ export default async function ProductsPage({
                     Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección.
                 </p>
             </div>
-            <ProductFilters products={products} uniqueTags={uniqueTags} initialSearchQuery={searchQuery}/>
+            <ProductFilters 
+                products={products} 
+                uniqueBrands={uniqueBrands}
+                uniqueSizes={uniqueSizes}
+                uniqueCompositions={uniqueCompositions}
+                initialSearchQuery={searchQuery}
+            />
         </div>
     );
 }

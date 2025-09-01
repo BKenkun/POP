@@ -23,7 +23,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 interface ProductFiltersProps {
   products: Product[];
-  uniqueTags: string[];
+  uniqueBrands: string[];
+  uniqueSizes: string[];
+  uniqueCompositions: string[];
   initialSearchQuery?: string;
 }
 
@@ -33,9 +35,17 @@ const internalTagMap: { [key: string]: string } = {
     'mas-vendido': 'Más Vendidos',
 };
 
-export default function ProductFilters({ products, uniqueTags, initialSearchQuery = '' }: ProductFiltersProps) {
+export default function ProductFilters({ 
+    products, 
+    uniqueBrands, 
+    uniqueSizes, 
+    uniqueCompositions,
+    initialSearchQuery = '' 
+}: ProductFiltersProps) {
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedCompositions, setSelectedCompositions] = useState<string[]>([]);
   const [selectedInternalTags, setSelectedInternalTags] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState('name-asc');
   
@@ -58,21 +68,23 @@ export default function ProductFilters({ products, uniqueTags, initialSearchQuer
     }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
-
-  const handleTagChange = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+  
+  const createToggleHandler = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
+    setter(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
     );
   };
 
-  const handleInternalTagChange = (tag: string) => {
-    setSelectedInternalTags(prev =>
-        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
-  };
+  const handleBrandChange = createToggleHandler(setSelectedBrands);
+  const handleSizeChange = createToggleHandler(setSelectedSizes);
+  const handleCompositionChange = createToggleHandler(setSelectedCompositions);
+  const handleInternalTagChange = createToggleHandler(setSelectedInternalTags);
+
 
   const clearFilters = () => {
-    setSelectedTags([]);
+    setSelectedBrands([]);
+    setSelectedSizes([]);
+    setSelectedCompositions([]);
     setSelectedInternalTags([]);
   };
 
@@ -87,15 +99,21 @@ export default function ProductFilters({ products, uniqueTags, initialSearchQuer
         );
     }
 
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(p =>
-        selectedTags.every(tag => p.tags?.includes(tag))
-      );
+    if (selectedBrands.length > 0) {
+      filtered = filtered.filter(p => p.brand && selectedBrands.includes(p.brand));
+    }
+    
+    if (selectedSizes.length > 0) {
+        filtered = filtered.filter(p => p.size && selectedSizes.includes(p.size));
+    }
+
+    if (selectedCompositions.length > 0) {
+        filtered = filtered.filter(p => p.composition && selectedCompositions.includes(p.composition));
     }
     
     if (selectedInternalTags.length > 0) {
         filtered = filtered.filter(p =>
-            selectedInternalTags.every(tag => p.internalTags?.includes(tag))
+            p.internalTags?.some(tag => selectedInternalTags.includes(tag))
         );
     }
 
@@ -113,9 +131,36 @@ export default function ProductFilters({ products, uniqueTags, initialSearchQuer
           return 0;
       }
     });
-  }, [products, searchQuery, selectedTags, selectedInternalTags, sortOrder]);
+  }, [products, searchQuery, selectedBrands, selectedSizes, selectedCompositions, selectedInternalTags, sortOrder]);
   
-  const hasActiveFilters = selectedTags.length > 0 || selectedInternalTags.length > 0;
+  const hasActiveFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || selectedInternalTags.length > 0;
+  
+  const FilterCheckboxGroup = ({ title, values, selectedValues, onValueChange }: {
+    title: string;
+    values: string[];
+    selectedValues: string[];
+    onValueChange: (value: string) => void;
+  }) => (
+    values.length > 0 && (
+      <AccordionItem value={title.toLowerCase()}>
+        <AccordionTrigger className="text-base font-semibold">{title}</AccordionTrigger>
+        <AccordionContent>
+          <div className="space-y-2">
+            {values.map(value => (
+              <div key={value} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`${title}-${value}`}
+                  checked={selectedValues.includes(value)}
+                  onCheckedChange={() => onValueChange(value)}
+                />
+                <Label htmlFor={`${title}-${value}`} className="font-normal cursor-pointer">{value}</Label>
+              </div>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    )
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -165,6 +210,7 @@ export default function ProductFilters({ products, uniqueTags, initialSearchQuer
                             </Select>
                         </AccordionContent>
                     </AccordionItem>
+
                     <AccordionItem value="categories">
                         <AccordionTrigger className="text-base font-semibold">Categorías</AccordionTrigger>
                         <AccordionContent>
@@ -182,23 +228,27 @@ export default function ProductFilters({ products, uniqueTags, initialSearchQuer
                             </div>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="brands">
-                        <AccordionTrigger className="text-base font-semibold">Marcas</AccordionTrigger>
-                        <AccordionContent>
-                            <div className="space-y-2">
-                            {uniqueTags.map(tag => (
-                                <div key={tag} className="flex items-center space-x-2">
-                                <Checkbox 
-                                    id={tag} 
-                                    checked={selectedTags.includes(tag)}
-                                    onCheckedChange={() => handleTagChange(tag)}
-                                />
-                                <Label htmlFor={tag} className="font-normal cursor-pointer">{tag}</Label>
-                                </div>
-                            ))}
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
+
+                    <FilterCheckboxGroup 
+                        title="Marcas"
+                        values={uniqueBrands}
+                        selectedValues={selectedBrands}
+                        onValueChange={handleBrandChange}
+                    />
+                    
+                    <FilterCheckboxGroup 
+                        title="Tamaño"
+                        values={uniqueSizes}
+                        selectedValues={selectedSizes}
+                        onValueChange={handleSizeChange}
+                    />
+                    
+                    <FilterCheckboxGroup 
+                        title="Composición"
+                        values={uniqueCompositions}
+                        selectedValues={selectedCompositions}
+                        onValueChange={handleCompositionChange}
+                    />
                 </Accordion>
             </CardContent>
         </Card>
