@@ -91,7 +91,7 @@ export function Footer() {
         <div className="container pr-24">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div className="md:col-span-1">
-                     <h3 className="font-bold text-lg mb-2 text-primary">Popper España</h3>
+                     <h3 className="font-bold text-lg mb-2 text-foreground">Popper España</h3>
                      <p className="text-sm text-muted-foreground">Tu tienda de confianza para aromas de calidad superior.</p>
                 </div>
                 {isMobile ? <MobileFooter /> : <DesktopFooter />}
