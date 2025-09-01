@@ -33,6 +33,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
           {product.name}
         </h1>
         <p className="text-3xl font-bold mt-2">{formatPrice(product.price)}</p>
+        {product.description && (
+            <p className="text-foreground/80 mt-4">{product.description}</p>
+        )}
       </div>
       
       <Button
