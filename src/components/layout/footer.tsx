@@ -45,12 +45,11 @@ export function Footer() {
     return (
       <footer className="border-t border-border/40 mt-12 pt-8 pb-6">
         <div className="container">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
-                <div className="md:col-span-1">
-                     <h3 className="font-bold text-lg mb-2 text-foreground">Popper España</h3>
-                     <p className="text-sm text-muted-foreground">Tu tienda de confianza para aromas de calidad superior.</p>
-                </div>
-                <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div className="mb-8">
+                <p className="text-sm text-center md:text-left text-muted-foreground mb-6">
+                    <span className="font-bold text-foreground">Popper España:</span> Tu tienda de confianza para aromas de calidad superior.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                    <LinkColumn title="Información" links={footerLinks.slice(0, 5)} />
                    <LinkColumn title="Legal" links={footerLinks.slice(5, 10)} />
                    <LinkColumn title="Ayuda" links={footerLinks.slice(10)} />
