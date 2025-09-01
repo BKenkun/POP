@@ -33,7 +33,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               src={product.imageUrl}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-contain p-4"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               data-ai-hint={product.imageHint}
             />
