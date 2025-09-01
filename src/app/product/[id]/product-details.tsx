@@ -9,7 +9,13 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product }: ProductDetailsProps) {
   const hasDetails = product.productDetails && product.productDetails.length > 0;
-  const descriptionContent = product.longDescription || product.description || '';
+
+  // Clean the long description to prevent hydration errors
+  const cleanedLongDescription = product.longDescription
+    ? product.longDescription.replace(/\s+/g, ' ').trim()
+    : null;
+    
+  const descriptionContent = cleanedLongDescription || product.description || '';
 
   // Parse the productDetails string into an array of key-value pairs
   const detailsList = hasDetails

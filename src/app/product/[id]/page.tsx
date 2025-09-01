@@ -7,8 +7,6 @@ import { ProductDetails } from './product-details';
 import { Separator } from '@/components/ui/separator';
 import { RelatedProducts } from './related-products';
 
-export const revalidate = 60; // Revalidate every 60 seconds
-
 async function getProduct(id: string): Promise<Product | undefined> {
   const products = await getStripeProducts();
   return products.find((p) => p.id === id);
