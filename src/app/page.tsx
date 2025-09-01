@@ -4,6 +4,7 @@ import { getStripeProducts } from '@/lib/stripe';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import ClientOnlyFeatures from '@/components/client-only-features';
+import SubscriptionForm from '@/components/subscription-form';
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
@@ -58,6 +59,9 @@ export default async function Home() {
               </div>
             </div>
         </div>
+      </div>
+      <div className="my-12">
+        <SubscriptionForm />
       </div>
     </div>
   );
