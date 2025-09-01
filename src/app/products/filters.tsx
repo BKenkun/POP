@@ -92,11 +92,18 @@ export default function ProductFilters({
     let filtered = products;
 
     if (searchQuery) {
-        const lowercasedQuery = searchQuery.toLowerCase();
-        filtered = filtered.filter(p => 
-            p.name.toLowerCase().includes(lowercasedQuery) ||
-            p.description?.toLowerCase().includes(lowercasedQuery)
-        );
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => {
+        const inName = p.name.toLowerCase().includes(lowercasedQuery);
+        const inDescription = p.description?.toLowerCase().includes(lowercasedQuery);
+        const inBrand = p.brand?.toLowerCase().includes(lowercasedQuery);
+        const inSize = p.size?.toLowerCase().includes(lowercasedQuery);
+        const inComposition = p.composition?.toLowerCase().includes(lowercasedQuery);
+        const inTags = p.tags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
+        const inInternalTags = p.internalTags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
+
+        return inName || inDescription || inBrand || inSize || inComposition || inTags || inInternalTags;
+      });
     }
 
     if (selectedBrands.length > 0) {
