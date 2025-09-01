@@ -7,10 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 
 interface ProductDetailsProps {
   product: Product;
-  descriptionContent: string;
 }
 
-export function ProductDetails({ product, descriptionContent }: ProductDetailsProps) {
+export function ProductDetails({ product }: ProductDetailsProps) {
   const hasDetails = product.productDetails && product.productDetails.length > 0;
 
   // Parse the productDetails string into an array of key-value pairs
@@ -22,37 +21,30 @@ export function ProductDetails({ product, descriptionContent }: ProductDetailsPr
         return { key, value };
       }).filter(item => item.key && item.value)
     : [];
+    
+  if (!hasDetails) {
+    return null;
+  }
 
   return (
-    <Tabs defaultValue="description">
+    <Tabs defaultValue="details">
       <TabsList className="mb-4">
-        <TabsTrigger value="description">Descripción</TabsTrigger>
-        {hasDetails && (
-          <TabsTrigger value="details">Detalles del producto</TabsTrigger>
-        )}
+        <TabsTrigger value="details">Detalles del producto</TabsTrigger>
       </TabsList>
-      <TabsContent value="description">
-        <div
-          className="prose dark:prose-invert max-w-none text-foreground/80"
-          dangerouslySetInnerHTML={{ __html: descriptionContent }}
-        />
+      <TabsContent value="details">
+          <Card>
+              <CardContent className="p-6">
+                  <ul className="space-y-4">
+                      {detailsList.map((item, index) => (
+                          <li key={index} className="flex flex-col sm:flex-row text-sm">
+                              <strong className="w-full sm:w-1/4 font-semibold text-foreground">{item.key}:</strong>
+                              <span className="w-full sm:w-3/4 text-muted-foreground">{item.value}</span>
+                          </li>
+                      ))}
+                  </ul>
+              </CardContent>
+          </Card>
       </TabsContent>
-      {hasDetails && (
-        <TabsContent value="details">
-            <Card>
-                <CardContent className="p-6">
-                    <ul className="space-y-4">
-                        {detailsList.map((item, index) => (
-                            <li key={index} className="flex flex-col sm:flex-row text-sm">
-                                <strong className="w-full sm:w-1/4 font-semibold text-foreground">{item.key}:</strong>
-                                <span className="w-full sm:w-3/4 text-muted-foreground">{item.value}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-            </Card>
-        </TabsContent>
-      )}
     </Tabs>
   );
 }

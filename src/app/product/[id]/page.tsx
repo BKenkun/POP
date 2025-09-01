@@ -38,7 +38,17 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     ...(product.galleryImages || []),
   ];
   
-  const descriptionContent = product.longDescription || product.description || '';
+  // Clean up the description content before rendering
+  let descriptionContent = product.longDescription || product.description || '';
+  if (typeof descriptionContent === 'string') {
+      const openDivs = (descriptionContent.match(/<div/g) || []).length;
+      const closeDivs = (descriptionContent.match(/<\/div>/g) || []).length;
+      if (closeDivs > openDivs) {
+        // Basic cleanup for mismatched closing div tags
+        descriptionContent = descriptionContent.replace(/<\/div>\s*$/, '');
+      }
+  }
+  
   const hasDetails = product.productDetails && product.productDetails.length > 0;
 
   return (
@@ -50,7 +60,14 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
       
       <Separator className="my-10" />
 
-      <ProductDetails product={product} descriptionContent={descriptionContent} />
+      <div
+          className="prose dark:prose-invert max-w-none text-foreground/80"
+          dangerouslySetInnerHTML={{ __html: descriptionContent }}
+        />
+
+      <Separator className="my-10" />
+      
+      <ProductDetails product={product} />
 
       <Separator className="my-10" />
       <RelatedProducts currentProduct={product} allProducts={allProducts} />
