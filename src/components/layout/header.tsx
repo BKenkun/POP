@@ -2,9 +2,11 @@
 "use client";
 
 import Link from 'next/link';
-import { Truck, PackageCheck, Search, ShoppingBag } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { ShoppingBag } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
+import { SearchForm } from './search-form';
+import { PackageCheck } from 'lucide-react';
 
 export function Header() {
   const pathname = usePathname();
@@ -23,16 +25,13 @@ export function Header() {
             <span className="font-bold text-xl text-primary-foreground">Popper España</span>
           </Link>
            <nav className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" asChild className="text-primary-foreground">
+              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent/80 hover:text-accent-foreground">
                 <Link href="/products">
                     <ShoppingBag className="h-4 w-4 mr-2"/>
                     Ver Productos
                 </Link>
               </Button>
-               <Button variant="ghost" size="icon" className="text-primary-foreground">
-                <Search className="h-5 w-5" />
-                <span className="sr-only">Buscar</span>
-              </Button>
+               <SearchForm />
            </nav>
         </div>
         <div className="flex items-center justify-end text-sm font-medium">

@@ -10,8 +10,13 @@ export const metadata = {
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+    searchParams,
+}: {
+    searchParams: { [key: string]: string | string[] | undefined };
+}) {
     const products: Product[] = await getStripeProducts();
+    const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined;
 
     // Extract unique tags for filtering
     const allTags = new Set<string>();
@@ -26,7 +31,7 @@ export default async function ProductsPage() {
                     Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección.
                 </p>
             </div>
-            <ProductFilters products={products} uniqueTags={uniqueTags} />
+            <ProductFilters products={products} uniqueTags={uniqueTags} initialSearchQuery={searchQuery}/>
         </div>
     );
 }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,12 +15,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { X } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import ProductGrid from './product-grid';
+import { Input } from '@/components/ui/input';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 interface ProductFiltersProps {
   products: Product[];
   uniqueTags: string[];
+  initialSearchQuery?: string;
 }
 
 const internalTagMap: { [key: string]: string } = {
@@ -29,10 +32,31 @@ const internalTagMap: { [key: string]: string } = {
     'mas-vendido': 'Más Vendidos',
 };
 
-export default function ProductFilters({ products, uniqueTags }: ProductFiltersProps) {
+export default function ProductFilters({ products, uniqueTags, initialSearchQuery = '' }: ProductFiltersProps) {
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedInternalTags, setSelectedInternalTags] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState('name-asc');
+  
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setSearchQuery(initialSearchQuery);
+  }, [initialSearchQuery]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setSearchQuery(newQuery);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newQuery) {
+        params.set('search', newQuery);
+    } else {
+        params.delete('search');
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const handleTagChange = (tag: string) => {
     setSelectedTags(prev =>
@@ -53,6 +77,14 @@ export default function ProductFilters({ products, uniqueTags }: ProductFiltersP
 
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = products;
+
+    if (searchQuery) {
+        const lowercasedQuery = searchQuery.toLowerCase();
+        filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(lowercasedQuery) ||
+            p.description?.toLowerCase().includes(lowercasedQuery)
+        );
+    }
 
     if (selectedTags.length > 0) {
       filtered = filtered.filter(p =>
@@ -80,7 +112,7 @@ export default function ProductFilters({ products, uniqueTags }: ProductFiltersP
           return 0;
       }
     });
-  }, [products, selectedTags, selectedInternalTags, sortOrder]);
+  }, [products, searchQuery, selectedTags, selectedInternalTags, sortOrder]);
   
   const hasActiveFilters = selectedTags.length > 0 || selectedInternalTags.length > 0;
 
@@ -89,6 +121,22 @@ export default function ProductFilters({ products, uniqueTags }: ProductFiltersP
       <aside className="lg:col-span-1">
         <Card>
             <CardContent className="p-4 space-y-6">
+                <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Búsqueda</h3>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            type="search"
+                            placeholder="Buscar productos..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            className="pl-9"
+                        />
+                    </div>
+                </div>
+
+                <Separator />
+                
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Filtros</h3>
                     {hasActiveFilters && (
