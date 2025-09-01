@@ -38,14 +38,12 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     ...(product.galleryImages || []),
   ];
   
-  // Clean up the description content before rendering
+  // Basic cleanup for the description content to avoid hydration issues.
   let descriptionContent = product.longDescription || product.description || '';
-  if (typeof descriptionContent === 'string') {
-      const openDivs = (descriptionContent.match(/<div/g) || []).length;
-      const closeDivs = (descriptionContent.match(/<\/div>/g) || []).length;
-      if (closeDivs > openDivs) {
-        // Basic cleanup for mismatched closing div tags
-        descriptionContent = descriptionContent.replace(/<\/div>\s*$/, '');
+  if (descriptionContent) {
+      // A simple check to remove a trailing unwanted closing div tag.
+      if (descriptionContent.trim().endsWith('</div>')) {
+          descriptionContent = descriptionContent.trim().slice(0, -6);
       }
   }
   
