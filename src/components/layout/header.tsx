@@ -9,8 +9,8 @@ import { SearchForm } from './search-form';
 import { PackageCheck, Truck } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Menu, Navigation } from 'lucide-react';
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
+import { Menu } from 'lucide-react';
+import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
 
 export function Header() {
   const pathname = usePathname();
