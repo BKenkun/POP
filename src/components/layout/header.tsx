@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
-import { PackageCheck } from 'lucide-react';
+import { PackageCheck, Truck } from 'lucide-react';
 
 export function Header() {
   const pathname = usePathname();
@@ -32,10 +32,14 @@ export function Header() {
                <SearchForm />
            </nav>
         </div>
-        <div className="flex items-center justify-end text-sm font-medium">
-           <div className="hidden sm:flex items-center gap-2">
-                <PackageCheck className="h-5 w-5" />
-                <span>Envío GRATIS a partir de 40€</span>
+        <div className="hidden sm:flex items-center justify-end gap-x-4 text-xs font-medium">
+           <div className="flex items-center gap-2">
+                <PackageCheck className="h-4 w-4" />
+                <span>Envío GRATIS +40€</span>
+            </div>
+            <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                <span>Entrega 24/48h</span>
             </div>
         </div>
       </div>
