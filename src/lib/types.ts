@@ -9,7 +9,7 @@ export interface Product {
   internalTags?: string[];
   galleryImages?: string[];
   stock?: number;
-  productDetails?: Record<string, string>;
+  productDetails?: string;
 }
 
 export interface CartItem extends Product {

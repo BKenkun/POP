@@ -42,24 +42,23 @@ export async function getStripeProducts(): Promise<Product[]> {
         ? parseInt(product.metadata.stock, 10)
         : undefined;
       
-      let productDetails: Record<string, string> | undefined = undefined;
-
+      let rawProductDetails: string | undefined = undefined;
+      
       if (product.metadata.product_details) {
-        try {
-          // This regex finds the string between the first '{' and the last '}'
-          const jsonMatch = product.metadata.product_details.match(/\{[\s\S]*\}/);
-
-          if (jsonMatch) {
-            // We have a match, now we can safely parse it.
-            productDetails = JSON.parse(jsonMatch[0]);
-          }
-        } catch (e) {
-          // If parsing fails for any reason, log the error but do not crash the app.
-          console.error(`Error parsing product_details for product ${product.id}. Malformed JSON found.`, e);
-          productDetails = undefined;
-        }
+          let details = product.metadata.product_details;
+          // Clean up the string: remove json markdown, braces, and extra spaces.
+          details = details
+              .replace(/```json/g, '')
+              .replace(/```/g, '')
+              .replace(/\{/g, '')
+              .replace(/\}/g, '')
+              .replace(/"/g, '') // Remove quotes
+              .replace(/<br>/g, '\n') // Replace <br> with newlines
+              .trim();
+          
+          // Remove leading/trailing newlines that might result from cleaning
+          rawProductDetails = details.split('\n').filter(line => line.trim() !== '').join('\n');
       }
-
 
       return {
         id: product.id,
@@ -75,7 +74,7 @@ export async function getStripeProducts(): Promise<Product[]> {
             ?.split(',')
             .map((url: string) => url.trim()) || [],
         stock: stock,
-        productDetails: productDetails,
+        productDetails: rawProductDetails,
       };
     })
     .filter((p) => p.price > 0);
