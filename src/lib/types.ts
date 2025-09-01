@@ -3,6 +3,7 @@ export interface Product {
   id: string;
   name: string;
   description?: string | null;
+  longDescription?: string | null;
   price: number; // Price in cents
   imageUrl: string;
   imageHint: string;

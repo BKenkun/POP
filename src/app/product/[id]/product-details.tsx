@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +9,7 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product }: ProductDetailsProps) {
   const hasDetails = product.productDetails && product.productDetails.length > 0;
+  const descriptionContent = product.longDescription || product.description || '';
 
   // Parse the productDetails string into an array of key-value pairs
   const detailsList = hasDetails
@@ -30,7 +32,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       <TabsContent value="description">
         <div
           className="prose dark:prose-invert max-w-none text-foreground/80"
-          dangerouslySetInnerHTML={{ __html: product.description || '' }}
+          dangerouslySetInnerHTML={{ __html: descriptionContent }}
         />
       </TabsContent>
       {hasDetails && (

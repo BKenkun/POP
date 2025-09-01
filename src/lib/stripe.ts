@@ -64,6 +64,7 @@ export async function getStripeProducts(): Promise<Product[]> {
         id: product.id,
         name: product.name,
         description: product.description,
+        longDescription: product.metadata.long_description,
         price: price?.unit_amount || 0,
         imageUrl: product.images?.[0] || 'https://picsum.photos/400/400',
         imageHint: 'product bottle',
