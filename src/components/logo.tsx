@@ -40,15 +40,20 @@ export const Logo = ({ className }: { className?: string }) => (
         POPPER ESPAÑA
       </text>
 
-      {/* Layer 3: Main Text Fill (Red) with Red Outline - Centered */}
+      {/* Layer 3: Inner Stroke (Yellow) - Positioned centrally */}
       <text
         x="500"
         y="85"
-        className="logo-text fill-[#c9302c]"
-        stroke="#c9302c"
+        className="logo-text fill-none"
+        stroke="#f0ad4e"
         strokeWidth="4"
         strokeLinejoin="miter"
       >
+        POPPER ESPAÑA
+      </text>
+
+      {/* Layer 4: Main Text Fill (Red) - Centered */}
+      <text x="500" y="85" className="logo-text fill-[#c9302c]">
         POPPER ESPAÑA
       </text>
     </g>
