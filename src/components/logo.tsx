@@ -29,18 +29,18 @@ export const Logo = ({ className }: { className?: string }) => (
         y="85"
         className="logo-text fill-none"
         stroke="white"
-        strokeWidth="60"
+        strokeWidth="45"
         strokeLinejoin="round"
       >
         POPPER ESPAÑA
       </text>
 
-      {/* Layer 2: 3D Extrusion (Red) */}
-      <text x="505" y="90" className="logo-text fill-[#c9302c]">
+      {/* Layer 2: 3D Extrusion (Red) - Positioned slightly offset for shadow */}
+      <text x="502" y="87" className="logo-text fill-[#c9302c]">
         POPPER ESPAÑA
       </text>
 
-      {/* Layer 3: Main Text Fill (Yellow) with Red Outline */}
+      {/* Layer 3: Main Text Fill (Yellow) with Red Outline - Centered */}
       <text
         x="500"
         y="85"
