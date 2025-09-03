@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Send, Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface SubscriptionFormProps {
     onSubscribed?: () => void;
@@ -13,6 +13,11 @@ interface SubscriptionFormProps {
 const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -64,6 +69,11 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
         }
     };
     
+    // Render a placeholder on the server and initial client render
+    if (!isMounted) {
+        return <div className="h-[148px]" />; // Adjust height to match the form's height to prevent layout shift
+    }
+
     return (
         <div className="bg-primary/20 dark:bg-primary/10 p-8 rounded-lg">
             <div className="max-w-2xl mx-auto text-center">
