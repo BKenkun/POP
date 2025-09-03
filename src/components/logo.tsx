@@ -13,17 +13,6 @@ export const Logo = ({ className }: { className?: string }) => (
           @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
         `}
       </style>
-      <filter id="dropshadow" height="130%">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="0"/>
-        <feOffset dx="3" dy="3" result="offsetblur"/>
-        <feComponentTransfer>
-          <feFuncA type="linear" slope="0.5"/>
-        </feComponentTransfer>
-        <feMerge> 
-          <feMergeNode/>
-          <feMergeNode in="SourceGraphic"/> 
-        </feMerge>
-      </filter>
     </defs>
 
     {/* Bottle */}
