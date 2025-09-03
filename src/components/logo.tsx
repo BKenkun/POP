@@ -29,7 +29,7 @@ export const Logo = ({ className }: { className?: string }) => (
         y="85"
         className="logo-text fill-none"
         stroke="white"
-        strokeWidth="20"
+        strokeWidth="25"
         strokeLinejoin="round"
       >
         POPPER ESPAÑA
