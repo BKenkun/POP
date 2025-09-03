@@ -3,16 +3,16 @@ import React from 'react';
 
 export const Logo = ({ className }: { className?: string }) => (
   <svg
-    viewBox="0 -10 1000 170"
-    className={cn('w-auto h-16', className)}
+    viewBox="0 -15 1000 170"
+    className={cn('w-auto h-8', className)}
     xmlns="http://www.w3.org/2000/svg"
   >
     <defs>
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
           .logo-text {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'Anton', sans-serif;
             font-size: 150px;
             font-weight: 400;
             text-anchor: middle;
@@ -22,7 +22,6 @@ export const Logo = ({ className }: { className?: string }) => (
         `}
       </style>
     </defs>
-
     <g transform="skewX(-15) translate(20, 0)">
       {/* Layer 1: Sticker Outline (Thick White Stroke) */}
       <text
