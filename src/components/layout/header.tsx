@@ -50,7 +50,7 @@ export function Header() {
         </SheetTrigger>
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
-             <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+             <Link href="/" className="flex items-center space-x-2 group" onClick={() => setIsOpen(false)}>
                 <Logo />
             </Link>
           </SidebarHeader>
@@ -67,7 +67,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full bg-primary text-primary-foreground shadow-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 group">
             <Logo />
           </Link>
           <DesktopNav />
