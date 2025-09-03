@@ -19,6 +19,10 @@ export const Logo = ({ className }: { className?: string }) => (
             dominant-baseline: central;
             letter-spacing: 0.02em;
           }
+          .logo-bg-stroke { stroke: hsl(var(--background)); }
+          .logo-accent-fill { fill: hsl(var(--accent)); }
+          .logo-primary-stroke { stroke: hsl(var(--primary)); }
+          .logo-accent-stroke { stroke: hsl(var(--accent)); }
         `}
       </style>
     </defs>
@@ -27,33 +31,31 @@ export const Logo = ({ className }: { className?: string }) => (
       <text
         x="500"
         y="85"
-        className="logo-text fill-none"
-        stroke="white"
+        className="logo-text fill-none logo-bg-stroke"
         strokeWidth="30"
         strokeLinejoin="round"
       >
         POPPER ESPAÑA
       </text>
 
-      {/* Layer 2: 3D Extrusion (Red) - Positioned slightly offset for shadow */}
-      <text x="502" y="87" className="logo-text fill-[#c9302c]">
+      {/* Layer 2: 3D Extrusion (Red/Accent) - Positioned slightly offset for shadow */}
+      <text x="502" y="87" className="logo-text logo-accent-fill">
         POPPER ESPAÑA
       </text>
 
-      {/* Layer 3: Inner Stroke (Yellow) - Positioned centrally */}
+       {/* Layer 3: Inner Stroke (Yellow/Primary) - Positioned centrally */}
       <text
         x="500"
         y="85"
-        className="logo-text fill-none"
-        stroke="#f0ad4e"
+        className="logo-text fill-none logo-primary-stroke"
         strokeWidth="4"
         strokeLinejoin="miter"
       >
         POPPER ESPAÑA
       </text>
 
-      {/* Layer 4: Main Text Fill (Red) - Centered */}
-      <text x="500" y="85" className="logo-text fill-[#c9302c]">
+      {/* Layer 4: Main Text Fill (Red/Accent) - Centered */}
+      <text x="500" y="85" className="logo-text logo-accent-fill">
         POPPER ESPAÑA
       </text>
     </g>
