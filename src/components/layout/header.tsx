@@ -51,7 +51,7 @@ export function Header() {
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
              <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-                <Logo className="h-12 w-auto" />
+                <Logo className="h-10 w-auto" />
             </Link>
           </SidebarHeader>
           <SidebarContent>
@@ -68,7 +68,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
           <Link href="/" className="flex items-center space-x-2">
-            <Logo className="h-14 w-auto" />
+            <Logo className="h-10 w-auto" />
           </Link>
            <DesktopNav />
         </div>
