@@ -70,7 +70,7 @@ export function Header() {
           <Link href="/" className="flex items-center space-x-2">
             <Logo className="h-10 w-auto" />
           </Link>
-           <DesktopNav />
+          <DesktopNav />
         </div>
         <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-medium">
            <div className="hidden sm:flex items-center gap-2">
