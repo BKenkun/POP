@@ -23,14 +23,14 @@ export const Logo = ({ className }: { className?: string }) => (
     </defs>
     
     <g transform="rotate(-3 400 75)">
-      {/* White Outline/Extrusion */}
-      <text x="405" y="80" className="logo-text" fill="white" stroke="white" strokeWidth="14" strokeLinejoin="round">POPPER ESPAÑA</text>
+      {/* White Sticker Outline */}
+      <text x="400" y="75" className="logo-text" fill="white" stroke="white" strokeWidth="14" strokeLinejoin="round">POPPER ESPAÑA</text>
       {/* Red 3D Extrusion */}
-      <text x="405" y="80" className="logo-text" fill="#D9362D">POPPER ESPAÑA</text>
+      <text x="400" y="75" className="logo-text" fill="#D9362D">POPPER ESPAÑA</text>
       {/* Yellow Top Text */}
-      <text x="400" y="75" className="logo-text" fill="#FDCB3F">POPPER ESPAÑA</text>
+      <text x="398" y="72" className="logo-text" fill="#FDCB3F">POPPER ESPAÑA</text>
       {/* Dark Red Inner Stroke */}
-      <text x="400" y="75" className="logo-text" fill="none" stroke="#C12928" strokeWidth="2.5">POPPER ESPAÑA</text>
+      <text x="398" y="72" className="logo-text" fill="none" stroke="#C12928" strokeWidth="2.5">POPPER ESPAÑA</text>
     </g>
   </svg>
 );
