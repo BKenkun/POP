@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
+import { Logo } from '../logo';
 
 export function Header() {
   const pathname = usePathname();
@@ -50,7 +51,7 @@ export function Header() {
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
              <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-                <span className="font-bold text-xl text-primary-foreground">Popper España</span>
+                <Logo className="h-12 w-auto" />
             </Link>
           </SidebarHeader>
           <SidebarContent>
@@ -67,7 +68,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl text-primary-foreground">Popper España</span>
+            <Logo className="h-14 w-auto" />
           </Link>
            <DesktopNav />
         </div>
