@@ -75,17 +75,22 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full bg-primary text-primary-foreground shadow-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
-          <div className="hidden md:flex items-center gap-4">
-             <Link href="/" className="flex items-center">
-                <Logo />
-              </Link>
-               <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start">
-                <Link href="/products">
-                    Productos
+            <div className="hidden md:flex items-center gap-x-4">
+                <Link href="/" className="flex items-center">
+                    <Logo />
                 </Link>
-              </Button>
-              <SearchForm />
-          </div>
+                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start">
+                    <Link href="/products">
+                        Productos
+                    </Link>
+                </Button>
+                <SearchForm />
+            </div>
+             <div className="md:hidden">
+                 <Link href="/" className="flex items-center">
+                    <Logo />
+                  </Link>
+            </div>
         </div>
         <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-medium">
            <div className="hidden sm:flex items-center gap-2">
@@ -95,11 +100,6 @@ export function Header() {
             <div className="hidden sm:flex items-center gap-2">
                 <Truck className="h-4 w-4" />
                 <span>Entrega 24/48h</span>
-            </div>
-            <div className="md:hidden">
-                 <Link href="/" className="flex items-center">
-                    <Logo />
-                  </Link>
             </div>
             <MobileNav />
         </div>
