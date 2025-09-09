@@ -29,12 +29,12 @@ import { useIsMobile } from '@/hooks/use-mobile';
   
 
 const compositionLinks = [
-    { title: "Poppers de Amilo", composition: "Amilo" },
-    { title: "Poppers de Pentilo", composition: "Pentilo" },
-    { title: "Poppers de Propilo", composition: "Propilo" },
-    { title: "Poppers de Butanol", composition: "Butanol" },
-    { title: "Poppers al CBD", composition: "CBD" },
-    { title: "Mix de Nitritos", composition: "Mix" },
+    { title: "POPPERS DE AMILO", composition: "Amilo" },
+    { title: "POPPERS DE PENTILO", composition: "Pentilo" },
+    { title: "POPPERS DE PROPILO", composition: "Propilo" },
+    { title: "POPPERS DE BUTANOL", composition: "Butanol" },
+    { title: "POPPERS AL CBD", composition: "CBD" },
+    { title: "MIX DE NITRITOS", composition: "Mix" },
 ];
 
 interface NavigationMenuProps {
@@ -44,46 +44,48 @@ interface NavigationMenuProps {
 export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     const isMobile = useIsMobile();
 
+    const menuItemStyle = "hover:bg-primary/80 hover:text-white text-white uppercase font-bold w-full text-left";
+
     if (isMobile) {
         return (
             <div className="flex flex-col gap-2 w-full">
                 <Link href="/products" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Todos los Productos
                     </Button>
                 </Link>
                 <Link href="/products?size=10ml" passHref legacyBehavior>
-                     <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                     <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Poppers Pequeños (10ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=15ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Poppers Medianos (15ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=25ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Poppers Grandes (25ml)
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Packs de Poppers
                     </Button>
                 </Link>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-between w-full">
+                        <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-between w-full uppercase font-bold">
                             <span>Composición</span>
                             <ChevronDown className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-primary text-primary-foreground border-primary-foreground/20">
+                    <DropdownMenuContent className="w-56 bg-primary text-white border-primary-foreground/20">
                         {compositionLinks.map((link) => (
                             <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
                                 <DropdownMenuItem asChild>
-                                    <a className="hover:bg-accent hover:text-accent-foreground" onClick={onNavigate}>{link.title}</a>
+                                    <a className={menuItemStyle} onClick={onNavigate}>{link.title}</a>
                                 </DropdownMenuItem>
                             </Link>
                         ))}
@@ -91,12 +93,12 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                 </DropdownMenu>
 
                 <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Accesorios para Poppers
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start w-full" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Juguetes Eróticos
                     </Button>
                 </Link>
@@ -107,34 +109,34 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white uppercase font-bold">
                     Productos
                     <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-primary text-primary-foreground border-primary-foreground/20">
-                <DropdownMenuLabel>Por Tamaño</DropdownMenuLabel>
+            <DropdownMenuContent className="w-64 bg-primary text-white border-primary-foreground/20 p-2 space-y-1">
+                <DropdownMenuLabel className="uppercase font-bold text-white">Por Tamaño</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-primary-foreground/20"/>
-                <Link href="/products?size=10ml" passHref legacyBehavior><DropdownMenuItem asChild><a className="hover:bg-accent hover:text-accent-foreground">Poppers Pequeños (10ml)</a></DropdownMenuItem></Link>
-                <Link href="/products?size=15ml" passHref legacyBehavior><DropdownMenuItem asChild><a className="hover:bg-accent hover:text-accent-foreground">Poppers Medianos (15ml)</a></DropdownMenuItem></Link>
-                <Link href="/products?size=25ml" passHref legacyBehavior><DropdownMenuItem asChild><a className="hover:bg-accent hover:text-accent-foreground">Poppers Grandes (25ml)</a></DropdownMenuItem></Link>
+                <Link href="/products?size=10ml" passHref legacyBehavior><DropdownMenuItem asChild><a className={menuItemStyle}>Poppers Pequeños (10ml)</a></DropdownMenuItem></Link>
+                <Link href="/products?size=15ml" passHref legacyBehavior><DropdownMenuItem asChild><a className={menuItemStyle}>Poppers Medianos (15ml)</a></DropdownMenuItem></Link>
+                <Link href="/products?size=25ml" passHref legacyBehavior><DropdownMenuItem asChild><a className={menuItemStyle}>Poppers Grandes (25ml)</a></DropdownMenuItem></Link>
                 
                 <DropdownMenuSeparator className="bg-primary-foreground/20" />
                 
                 <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                    <DropdownMenuItem asChild><a className="hover:bg-accent hover:text-accent-foreground">Packs de Poppers</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a className={menuItemStyle}>Packs de Poppers</a></DropdownMenuItem>
                 </Link>
                 
                 <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground">
+                    <DropdownMenuSubTrigger className="hover:bg-primary/80 focus:bg-primary/80 data-[state=open]:bg-primary/80 text-white uppercase font-bold w-full">
                         <span>Composición</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="bg-primary text-primary-foreground border-primary-foreground/20">
+                        <DropdownMenuSubContent className="bg-primary text-white border-primary-foreground/20 p-2 space-y-1 w-56">
                             {compositionLinks.map((link) => (
                                  <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
                                     <DropdownMenuItem asChild>
-                                        <a className="hover:bg-accent hover:text-accent-foreground">{link.title}</a>
+                                        <a className={menuItemStyle}>{link.title}</a>
                                     </DropdownMenuItem>
                                 </Link>
                             ))}
@@ -145,10 +147,10 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                 <DropdownMenuSeparator className="bg-primary-foreground/20"/>
                 
                 <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                    <DropdownMenuItem asChild><a className="hover:bg-accent hover:text-accent-foreground">Accesorios para Poppers</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a className={menuItemStyle}>Accesorios para Poppers</a></DropdownMenuItem>
                 </Link>
                 <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                    <DropdownMenuItem asChild><a className="hover:bg-accent hover:text-accent-foreground">Juguetes Eróticos</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a className={menuItemStyle}>Juguetes Eróticos</a></DropdownMenuItem>
                 </Link>
             </DropdownMenuContent>
         </DropdownMenu>

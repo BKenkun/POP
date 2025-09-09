@@ -26,7 +26,7 @@ export function Header() {
   const MobileNav = () => (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+          <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-primary/80 hover:text-white">
             <Menu />
           </Button>
         </SheetTrigger>
@@ -47,7 +47,7 @@ export function Header() {
   )
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-primary text-primary-foreground shadow-md">
+    <header className="sticky top-0 z-40 w-full bg-primary text-white shadow-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
              <div className="md:hidden">
@@ -72,7 +72,9 @@ export function Header() {
                 <Truck className="h-4 w-4" />
                 <span>Entrega 24/48h</span>
             </div>
-            <MobileNav />
+            <div className="md:hidden">
+                <MobileNav />
+            </div>
         </div>
       </div>
     </header>
