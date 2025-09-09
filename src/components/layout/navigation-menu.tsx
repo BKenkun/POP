@@ -120,13 +120,23 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56 bg-primary text-white border-primary-foreground/20">
-                        {compositionLinks.map((link) => (
-                            <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
-                                <DropdownMenuItem asChild>
-                                    <a className={menuItemStyle} onClick={onNavigate}>{link.title}</a>
-                                </DropdownMenuItem>
-                            </Link>
-                        ))}
+                         <DropdownMenuSub>
+                            <DropdownMenuSubTrigger className={cn(menuItemStyle, "justify-between")}>
+                                <span>Composición</span>
+                                <ChevronDown className="h-4 w-4 -rotate-90"/>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                                <DropdownMenuSubContent className="w-56 bg-primary text-white border-primary-foreground/20">
+                                {compositionLinks.map((link) => (
+                                    <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
+                                        <DropdownMenuItem asChild>
+                                            <a className={menuItemStyle} onClick={onNavigate}>{link.title}</a>
+                                        </DropdownMenuItem>
+                                    </Link>
+                                ))}
+                                </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                        </DropdownMenuSub>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -167,22 +177,30 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                             <ListItem href="/products?internal_tag=pack" title="Packs de Poppers">
                                 Las mejores combinaciones a precios reducidos.
                             </ListItem>
+                            <li className="md:col-span-1">
+                                 <UiNavigationMenu className="w-full">
+                                    <NavigationMenuList className="w-full">
+                                        <NavigationMenuItem className="w-full">
+                                            <NavigationMenuTrigger className="text-white hover:bg-primary/90 focus:bg-primary/90 hover:text-white uppercase font-bold bg-transparent w-full justify-start p-3 data-[state=open]:bg-primary/90">
+                                                Composición
+                                            </NavigationMenuTrigger>
+                                            <NavigationMenuContent>
+                                                <ul className="grid w-[250px] gap-3 p-4 bg-primary">
+                                                    {compositionLinks.map((link) => (
+                                                        <ListItem key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} title={link.title} />
+                                                    ))}
+                                                </ul>
+                                            </NavigationMenuContent>
+                                        </NavigationMenuItem>
+                                    </NavigationMenuList>
+                                </UiNavigationMenu>
+                            </li>
                             <ListItem href="/products?internal_tag=accesorio" title="Accesorios">
                                 Inhaladores, máscaras y todo lo que necesitas.
                             </ListItem>
                              <ListItem href="/products?internal_tag=juguete" title="Juguetes Eróticos">
                                 Explora nuevas sensaciones.
                             </ListItem>
-                        </ul>
-                    </NavigationMenuContent>
-                </NavigationMenuItem>
-                 <NavigationMenuItem>
-                    <NavigationMenuTrigger className="text-white hover:bg-primary/80 hover:text-white uppercase font-bold bg-transparent focus:bg-primary/80 data-[state=open]:bg-primary/80">Composición</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                         <ul className="grid w-[300px] gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-1 bg-primary">
-                            {compositionLinks.map((link) => (
-                                <ListItem key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} title={link.title}></ListItem>
-                            ))}
                         </ul>
                     </NavigationMenuContent>
                 </NavigationMenuItem>
