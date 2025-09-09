@@ -11,22 +11,19 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuPortal,
-    DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
-import { Button } from "../ui/button";
-import { ChevronDown } from "lucide-react";
-import { useIsMobile } from '@/hooks/use-mobile';
-  
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuPortal,
+    DropdownMenuSubContent
+} from '@/components/ui/dropdown-menu';
+import { Button } from '../ui/button';
+import { ChevronDown } from 'lucide-react';
 
 const compositionLinks = [
     { title: "POPPERS DE AMILO", composition: "Amilo" },
@@ -41,9 +38,47 @@ interface NavigationMenuProps {
     onNavigate?: () => void;
 }
 
+const NavLink = ({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) => (
+    <Link href={href} passHref legacyBehavior>
+        <NavigationMenuLink 
+            className="font-bold uppercase text-white hover:bg-primary/80 block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-primary/80"
+            onClick={onClick}
+        >
+            {children}
+        </NavigationMenuLink>
+    </Link>
+);
+
+
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a">
+>(({ className, title, children, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          ref={ref}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-primary/90 focus:bg-primary/90 text-white font-bold uppercase",
+            className
+          )}
+          {...props}
+        >
+          <div className="text-sm font-bold leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-white/90 normal-case font-normal">
+            {children}
+          </p>
+        </a>
+      </NavigationMenuLink>
+    </li>
+  )
+})
+ListItem.displayName = "ListItem"
+
+
 export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     const isMobile = useIsMobile();
-
     const menuItemStyle = "hover:bg-primary/80 hover:text-white text-white uppercase font-bold w-full text-left";
 
     if (isMobile) {
@@ -107,52 +142,48 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     }
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white uppercase font-bold">
-                    Productos
-                    <ChevronDown className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-primary text-white border-primary-foreground/20 p-2 space-y-1">
-                <DropdownMenuLabel className="uppercase font-bold text-white">Por Tamaño</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-primary-foreground/20"/>
-                <Link href="/products?size=10ml" passHref legacyBehavior><DropdownMenuItem asChild><a className={menuItemStyle}>Poppers Pequeños (10ml)</a></DropdownMenuItem></Link>
-                <Link href="/products?size=15ml" passHref legacyBehavior><DropdownMenuItem asChild><a className={menuItemStyle}>Poppers Medianos (15ml)</a></DropdownMenuItem></Link>
-                <Link href="/products?size=25ml" passHref legacyBehavior><DropdownMenuItem asChild><a className={menuItemStyle}>Poppers Grandes (25ml)</a></DropdownMenuItem></Link>
-                
-                <DropdownMenuSeparator className="bg-primary-foreground/20" />
-                
-                <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                    <DropdownMenuItem asChild><a className={menuItemStyle}>Packs de Poppers</a></DropdownMenuItem>
-                </Link>
-                
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="hover:bg-primary/80 focus:bg-primary/80 data-[state=open]:bg-primary/80 text-white uppercase font-bold w-full">
-                        <span>Composición</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="bg-primary text-white border-primary-foreground/20 p-2 space-y-1 w-56">
+        <UiNavigationMenu>
+            <NavigationMenuList>
+                <NavigationMenuItem>
+                    <NavigationMenuTrigger className="text-white hover:bg-primary/80 hover:text-white uppercase font-bold bg-transparent focus:bg-primary/80 data-[state=open]:bg-primary/80">
+                         <Link href="/products" legacyBehavior passHref>
+                            <a className="py-2">Productos</a>
+                        </Link>
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                        <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] bg-primary">
+                             <ListItem href="/products?size=10ml" title="Poppers Pequeños">
+                                Botellas de 10ml, perfectas para probar.
+                            </ListItem>
+                            <ListItem href="/products?size=15ml" title="Poppers Medianos">
+                                El tamaño más popular, 15ml de potencia.
+                            </ListItem>
+                             <ListItem href="/products?size=25ml" title="Poppers Grandes">
+                                Formato ahorro de 25ml para los más exigentes.
+                            </ListItem>
+                            <ListItem href="/products?internal_tag=pack" title="Packs de Poppers">
+                                Las mejores combinaciones a precios reducidos.
+                            </ListItem>
+                            <ListItem href="/products?internal_tag=accesorio" title="Accesorios">
+                                Inhaladores, máscaras y todo lo que necesitas.
+                            </ListItem>
+                             <ListItem href="/products?internal_tag=juguete" title="Juguetes Eróticos">
+                                Explora nuevas sensaciones.
+                            </ListItem>
+                        </ul>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+                 <NavigationMenuItem>
+                    <NavigationMenuTrigger className="text-white hover:bg-primary/80 hover:text-white uppercase font-bold bg-transparent focus:bg-primary/80 data-[state=open]:bg-primary/80">Composición</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                         <ul className="grid w-[300px] gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-1 bg-primary">
                             {compositionLinks.map((link) => (
-                                 <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
-                                    <DropdownMenuItem asChild>
-                                        <a className={menuItemStyle}>{link.title}</a>
-                                    </DropdownMenuItem>
-                                </Link>
+                                <ListItem key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} title={link.title}></ListItem>
                             ))}
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                </DropdownMenuSub>
-
-                <DropdownMenuSeparator className="bg-primary-foreground/20"/>
-                
-                <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                    <DropdownMenuItem asChild><a className={menuItemStyle}>Accesorios para Poppers</a></DropdownMenuItem>
-                </Link>
-                <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                    <DropdownMenuItem asChild><a className={menuItemStyle}>Juguetes Eróticos</a></DropdownMenuItem>
-                </Link>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                        </ul>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+            </NavigationMenuList>
+        </UiNavigationMenu>
     )
 }
