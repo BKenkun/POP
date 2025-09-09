@@ -26,7 +26,7 @@ export const Logo = ({ className }: { className?: string }) => (
         `}
       </style>
     </defs>
-    <g transform="skewX(-15) translate(20, 0)">
+    <g transform="skewX(-15) translate(40, 0)">
       {/* Layer 1: Sticker Outline (Thick White Stroke) */}
       <text
         x="500"
