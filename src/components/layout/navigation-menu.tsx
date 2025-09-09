@@ -10,6 +10,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -27,11 +28,11 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const compositionLinks = [
-    { title: "POPPERS DE AMILO", composition: "Amilo" },
-    { title: "POPPERS DE PENTILO", composition: "Pentilo" },
-    { title: "POPPERS DE PROPILO", composition: "Propilo" },
-    { title: "POPPERS AL CBD", composition: "CBD" },
-    { title: "MIX DE NITRITOS", composition: "Mix" },
+    { title: "Poppers de Amilo", composition: "Amilo" },
+    { title: "Poppers de Pentilo", composition: "Pentilo" },
+    { title: "Poppers de Propilo", composition: "Propilo" },
+    { title: "Poppers al CBD", composition: "CBD" },
+    { title: "Mix de Nitritos", composition: "Mix" },
 ];
 
 interface NavigationMenuProps {
@@ -41,7 +42,7 @@ interface NavigationMenuProps {
 const NavLink = ({ href, children, onClick, className }: { href: string; children: React.ReactNode; onClick?: () => void; className?: string; }) => (
     <Link href={href} passHref legacyBehavior>
         <NavigationMenuLink 
-            className={cn("font-bold uppercase text-primary-foreground hover:bg-primary/80 block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-primary/80", className)}
+            className={cn("font-headline uppercase font-bold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground", className)}
             onClick={onClick}
         >
             {children}
@@ -51,39 +52,39 @@ const NavLink = ({ href, children, onClick, className }: { href: string; childre
 
 export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     const isMobile = useIsMobile();
-    const menuItemStyle = "hover:bg-primary/80 hover:text-primary-foreground text-primary-foreground uppercase font-bold w-full text-left";
+    const menuItemStyle = "font-headline uppercase font-bold hover:bg-accent hover:text-accent-foreground w-full text-left";
 
     if (isMobile) {
         return (
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-2 w-full text-primary-foreground">
                 <Link href="/products" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Todos los Productos
                     </Button>
                 </Link>
                 <Link href="/products?size=10ml" passHref legacyBehavior>
-                     <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                     <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Poppers Pequeños (10ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=15ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Poppers Medianos (15ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=25ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Poppers Grandes (25ml)
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Packs de Poppers
                     </Button>
                 </Link>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-between w-full uppercase font-bold">
+                        <Button variant="ghost" className="justify-between w-full uppercase font-bold font-headline">
                             <span>Composición</span>
                             <ChevronDown className="h-4 w-4" />
                         </Button>
@@ -110,12 +111,12 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                 </DropdownMenu>
 
                 <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Accesorios para Poppers
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
                         Juguetes Eróticos
                     </Button>
                 </Link>
@@ -127,7 +128,7 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
         <UiNavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <NavigationMenuTrigger className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground uppercase font-bold bg-transparent focus:bg-primary/80 data-[state=open]:bg-primary/80">
+                    <NavigationMenuTrigger className="font-headline uppercase font-bold text-primary-foreground bg-transparent">
                          <Link href="/products" legacyBehavior passHref>
                             <a className="py-2">Productos</a>
                         </Link>
@@ -142,7 +143,7 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                                  <UiNavigationMenu>
                                     <NavigationMenuList>
                                         <NavigationMenuItem>
-                                            <NavigationMenuTrigger className="text-primary-foreground hover:bg-primary/90 focus:bg-primary/90 hover:text-primary-foreground uppercase font-bold bg-transparent w-full justify-start p-3 data-[state=open]:bg-primary/90">
+                                            <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold text-primary-foreground bg-transparent w-full justify-start p-3 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
                                                 Composición
                                             </NavigationMenuTrigger>
                                             <NavigationMenuContent>
