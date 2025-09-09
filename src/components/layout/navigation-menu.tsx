@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -34,17 +33,21 @@ interface NavigationMenuComponentProps {
 
 export default function NavigationMenuComponent({ onNavigate }: NavigationMenuComponentProps) {
 
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  };
+
   return (
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <Link href="/products" passHref legacyBehavior>
-            <NavigationMenuTrigger 
-              className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}
-            >
-              Productos
-            </NavigationMenuTrigger>
-          </Link>
+           <Link href="/products" passHref legacyBehavior>
+             <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
+                PRODUCTOS
+             </NavigationMenuTrigger>
+           </Link>
           <NavigationMenuContent>
              <ul className="flex flex-col p-2 w-64 bg-primary text-primary-foreground border-r border-primary-foreground/20">
                  <ListItem href="/products?size=10ml" title="POPPERS PEQUEÑOS (10ML)" onNavigate={onNavigate} />
@@ -56,13 +59,15 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                  
                 <Collapsible asChild>
                   <li>
-                    <CollapsibleTrigger asChild>
-                      <div className={cn(
-                        'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group',
-                        'font-headline uppercase font-bold text-sm',
+                    <CollapsibleTrigger
+                      asChild
+                      className={cn(
+                        'w-full block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group',
                         'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
                         "flex items-center justify-between cursor-pointer"
-                      )}>
+                      )}
+                    >
+                      <div className="flex items-center justify-between w-full font-body font-bold uppercase text-sm">
                         <span>COMPOSICIÓN</span>
                         <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                       </div>
@@ -75,6 +80,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                                   href={`/products?composition=${encodeURIComponent(link.composition)}`}
                                   title={link.title}
                                   onNavigate={onNavigate}
+                                  isSubItem
                               />
                           ))}
                       </ul>
@@ -89,7 +95,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
   );
 }
 
-const ListItem = ({ href, title, onNavigate }: { href: string; title: string, onNavigate?: () => void; }) => {
+const ListItem = ({ href, title, onNavigate, isSubItem = false }: { href: string; title: string, onNavigate?: () => void; isSubItem?: boolean }) => {
   return (
     <li>
       <NavigationMenuLink asChild>
@@ -98,11 +104,11 @@ const ListItem = ({ href, title, onNavigate }: { href: string; title: string, on
           onClick={onNavigate}
           className={cn(
             'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
-            'font-headline uppercase font-bold text-sm',
-            'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
+            'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+             isSubItem ? 'font-body font-medium uppercase text-sm' : 'font-body font-medium uppercase text-sm'
           )}
         >
-          <div className="font-bold">{title}</div>
+          <div>{title}</div>
         </Link>
       </NavigationMenuLink>
     </li>

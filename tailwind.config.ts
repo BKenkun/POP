@@ -21,6 +21,11 @@ export default {
         headline: ['Belleza', 'sans-serif'],
         code: ['monospace'],
       },
+      fontWeight: {
+        'regular': '400',
+        'medium': '500',
+        'bold': '700',
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
