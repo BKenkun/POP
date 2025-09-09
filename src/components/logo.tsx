@@ -10,14 +10,14 @@ export const Logo = ({ className }: { className?: string }) => (
     <defs>
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
           .logo-text {
-            font-family: 'Anton', sans-serif;
-            font-size: 150px;
-            font-weight: 400;
+            font-family: 'Inter', sans-serif;
+            font-size: 120px;
+            font-weight: 900;
             text-anchor: middle;
             dominant-baseline: central;
-            letter-spacing: 0.02em;
+            letter-spacing: -0.01em;
           }
           .logo-bg-stroke { stroke: hsl(var(--background)); }
           .logo-accent-fill { fill: hsl(var(--accent)); }
@@ -32,7 +32,7 @@ export const Logo = ({ className }: { className?: string }) => (
         x="500"
         y="85"
         className="logo-text fill-none logo-bg-stroke"
-        strokeWidth="30"
+        strokeWidth="20"
         strokeLinejoin="round"
       >
         POPPER ESPAÑA
@@ -48,7 +48,7 @@ export const Logo = ({ className }: { className?: string }) => (
         x="500"
         y="85"
         className="logo-text fill-none logo-primary-stroke"
-        strokeWidth="4"
+        strokeWidth="3"
         strokeLinejoin="miter"
       >
         POPPER ESPAÑA
