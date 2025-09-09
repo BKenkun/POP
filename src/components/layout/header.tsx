@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
 import { Logo } from '../logo';
-import NavigationMenu from "./navigation-menu";
+import NavigationMenuComponent from "./navigation-menu";
 
 export function Header() {
   const pathname = usePathname();
@@ -26,7 +26,7 @@ export function Header() {
   const MobileNav = () => (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+          <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/80">
             <Menu className="text-primary-foreground"/>
           </Button>
         </SheetTrigger>
@@ -38,7 +38,7 @@ export function Header() {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="flex flex-col gap-2 p-2">
-              {/* <NavigationMenu onNavigate={() => setIsOpen(false)} /> */}
+              <NavigationMenuComponent onNavigate={() => setIsOpen(false)} />
               <SearchForm onSearch={() => setIsOpen(false)} />
             </SidebarMenu>
           </SidebarContent>
@@ -59,7 +59,7 @@ export function Header() {
                 <Link href="/" className="flex items-center">
                     <Logo />
                 </Link>
-                <NavigationMenu />
+                <NavigationMenuComponent />
                 <SearchForm />
             </div>
         </div>
