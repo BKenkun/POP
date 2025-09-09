@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -32,11 +33,6 @@ interface NavigationMenuComponentProps {
 }
 
 export default function NavigationMenuComponent({ onNavigate }: NavigationMenuComponentProps) {
-  const navLinkStyles = cn(
-    'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
-    'font-headline uppercase font-bold text-sm',
-    'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
-  );
 
   return (
     <NavigationMenu>
@@ -44,7 +40,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
         <NavigationMenuItem>
           <Link href="/products" passHref legacyBehavior>
             <NavigationMenuTrigger 
-              className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground focus:bg-accent focus:text-accent-foreground")}
+              className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}
             >
               Productos
             </NavigationMenuTrigger>
@@ -61,7 +57,12 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                 <Collapsible asChild>
                   <li>
                     <CollapsibleTrigger asChild>
-                      <div className={cn(navLinkStyles, "flex items-center justify-between cursor-pointer")}>
+                      <div className={cn(
+                        'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group',
+                        'font-headline uppercase font-bold text-sm',
+                        'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+                        "flex items-center justify-between cursor-pointer"
+                      )}>
                         <span>COMPOSICIÓN</span>
                         <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                       </div>
@@ -101,7 +102,7 @@ const ListItem = ({ href, title, onNavigate }: { href: string; title: string, on
             'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
           )}
         >
-          <div className="font-medium">{title}</div>
+          <div className="font-bold">{title}</div>
         </Link>
       </NavigationMenuLink>
     </li>

@@ -66,11 +66,11 @@ export function Header() {
         <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-bold text-primary-foreground">
            <div className="hidden sm:flex items-center gap-2 font-headline text-primary-foreground">
                 <PackageCheck className="h-4 w-4 text-primary-foreground" />
-                <span>Envío GRATIS +40€</span>
+                <span className="font-bold">Envío GRATIS +40€</span>
             </div>
             <div className="hidden sm:flex items-center gap-2 font-headline text-primary-foreground">
                 <Truck className="h-4 w-4 text-primary-foreground" />
-                <span>Entrega 24/48h</span>
+                <span className="font-bold">Entrega 24/48h</span>
             </div>
             <div className="md:hidden">
                 <MobileNav />
