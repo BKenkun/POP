@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -38,21 +37,20 @@ interface NavigationMenuProps {
 }
 
 export default function NavigationMenuComponent({ onNavigate }: NavigationMenuProps) {
-  const pathname = usePathname();
 
   const navLinkStyles = cn(
-    "font-headline uppercase font-bold w-full text-left p-2 rounded-md",
-    "text-primary-foreground bg-transparent",
+    "font-headline uppercase font-bold w-full text-left p-2 rounded-md text-sm",
+    "bg-transparent text-primary-foreground",
     "hover:bg-accent hover:text-accent-foreground",
     "focus:bg-accent focus:text-accent-foreground",
     "transition-colors duration-200"
   );
-  
+
   const subTriggerStyles = cn(
     navLinkStyles,
     "flex justify-between items-center"
   );
-
+  
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -99,7 +97,6 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuPr
                         </Link>
                     </li>
                     <li>
-                        {/* Sub-menu for Composition */}
                         <DropdownMenu>
                              <DropdownMenuTrigger asChild>
                                 <button className={subTriggerStyles}>
