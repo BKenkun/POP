@@ -10,7 +10,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -27,7 +26,6 @@ import { Button } from '../ui/button';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-
 const compositionLinks = [
     { title: "POPPERS DE AMILO", composition: "Amilo" },
     { title: "POPPERS DE PENTILO", composition: "Pentilo" },
@@ -43,7 +41,7 @@ interface NavigationMenuProps {
 const NavLink = ({ href, children, onClick, className }: { href: string; children: React.ReactNode; onClick?: () => void; className?: string; }) => (
     <Link href={href} passHref legacyBehavior>
         <NavigationMenuLink 
-            className={cn("font-bold uppercase text-white hover:bg-primary/80 block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-primary/80", className)}
+            className={cn("font-bold uppercase text-primary-foreground hover:bg-primary/80 block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-primary/80", className)}
             onClick={onClick}
         >
             {children}
@@ -53,51 +51,51 @@ const NavLink = ({ href, children, onClick, className }: { href: string; childre
 
 export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     const isMobile = useIsMobile();
-    const menuItemStyle = "hover:bg-primary/80 hover:text-white text-white uppercase font-bold w-full text-left";
+    const menuItemStyle = "hover:bg-primary/80 hover:text-primary-foreground text-primary-foreground uppercase font-bold w-full text-left";
 
     if (isMobile) {
         return (
             <div className="flex flex-col gap-2 w-full">
                 <Link href="/products" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Todos los Productos
                     </Button>
                 </Link>
                 <Link href="/products?size=10ml" passHref legacyBehavior>
-                     <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                     <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Poppers Pequeños (10ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=15ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Poppers Medianos (15ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=25ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Poppers Grandes (25ml)
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Packs de Poppers
                     </Button>
                 </Link>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-between w-full uppercase font-bold">
+                        <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-between w-full uppercase font-bold">
                             <span>Composición</span>
                             <ChevronDown className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-primary text-white border-primary-foreground/20">
+                    <DropdownMenuContent className="w-56 bg-primary text-primary-foreground border-primary-foreground/20">
                          <DropdownMenuSub>
                             <DropdownMenuSubTrigger className={cn(menuItemStyle, "justify-between")}>
                                 <span>Composición</span>
                                 <ChevronRight className="h-4 w-4"/>
                             </DropdownMenuSubTrigger>
                             <DropdownMenuPortal>
-                                <DropdownMenuSubContent className="w-56 bg-primary text-white border-primary-foreground/20">
+                                <DropdownMenuSubContent className="w-56 bg-primary text-primary-foreground border-primary-foreground/20">
                                 {compositionLinks.map((link) => (
                                     <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
                                         <DropdownMenuItem asChild>
@@ -112,12 +110,12 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                 </DropdownMenu>
 
                 <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Accesorios para Poppers
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                    <Button variant="ghost" className="text-white hover:bg-primary/80 hover:text-white justify-start w-full uppercase font-bold" onClick={onNavigate}>
+                    <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground justify-start w-full uppercase font-bold" onClick={onNavigate}>
                         Juguetes Eróticos
                     </Button>
                 </Link>
@@ -129,13 +127,13 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
         <UiNavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <NavigationMenuTrigger className="text-white hover:bg-primary/80 hover:text-white uppercase font-bold bg-transparent focus:bg-primary/80 data-[state=open]:bg-primary/80">
+                    <NavigationMenuTrigger className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground uppercase font-bold bg-transparent focus:bg-primary/80 data-[state=open]:bg-primary/80">
                          <Link href="/products" legacyBehavior passHref>
                             <a className="py-2">Productos</a>
                         </Link>
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                        <ul className="w-[300px] gap-3 p-4 bg-primary text-white">
+                        <ul className="w-[300px] gap-3 p-4 bg-primary text-primary-foreground">
                             <li><NavLink href="/products?size=10ml">Poppers Pequeños</NavLink></li>
                             <li><NavLink href="/products?size=15ml">Poppers Medianos</NavLink></li>
                             <li><NavLink href="/products?size=25ml">Poppers Grandes</NavLink></li>
@@ -144,7 +142,7 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                                  <UiNavigationMenu>
                                     <NavigationMenuList>
                                         <NavigationMenuItem>
-                                            <NavigationMenuTrigger className="text-white hover:bg-primary/90 focus:bg-primary/90 hover:text-white uppercase font-bold bg-transparent w-full justify-start p-3 data-[state=open]:bg-primary/90">
+                                            <NavigationMenuTrigger className="text-primary-foreground hover:bg-primary/90 focus:bg-primary/90 hover:text-primary-foreground uppercase font-bold bg-transparent w-full justify-start p-3 data-[state=open]:bg-primary/90">
                                                 Composición
                                             </NavigationMenuTrigger>
                                             <NavigationMenuContent>

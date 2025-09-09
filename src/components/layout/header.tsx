@@ -26,7 +26,7 @@ export function Header() {
   const MobileNav = () => (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-primary/80 hover:text-white">
+          <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
             <Menu />
           </Button>
         </SheetTrigger>
@@ -47,7 +47,7 @@ export function Header() {
   )
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-primary text-white shadow-md">
+    <header className="sticky top-0 z-40 w-full bg-primary text-white shadow-md font-headline">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
              <div className="md:hidden">
@@ -63,7 +63,7 @@ export function Header() {
                 <SearchForm />
             </div>
         </div>
-        <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-medium">
+        <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-bold text-primary-foreground">
            <div className="hidden sm:flex items-center gap-2">
                 <PackageCheck className="h-4 w-4" />
                 <span>Envío GRATIS +40€</span>
