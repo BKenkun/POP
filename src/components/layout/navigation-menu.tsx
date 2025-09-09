@@ -46,7 +46,7 @@ const NavLink = React.forwardRef<HTMLAnchorElement, React.ComponentProps<"a"> & 
         <NavigationMenuLink
           ref={ref}
           className={cn(
-            "font-headline uppercase font-bold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "font-headline uppercase font-bold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
           )}
           {...props}
@@ -62,39 +62,39 @@ NavLink.displayName = "NavLink";
 
 export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     const isMobile = useIsMobile();
-    const menuItemStyle = "font-headline uppercase font-bold hover:bg-accent hover:text-accent-foreground w-full text-left";
+    const menuItemStyle = "font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground w-full text-left justify-between";
 
     if (isMobile) {
         return (
             <div className="flex flex-col gap-2 w-full text-primary-foreground">
                 <Link href="/products" passHref legacyBehavior>
-                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Todos los Productos
                     </Button>
                 </Link>
                 <Link href="/products?size=10ml" passHref legacyBehavior>
-                     <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                     <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Poppers Pequeños (10ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=15ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Poppers Medianos (15ml)
                     </Button>
                 </Link>
                 <Link href="/products?size=25ml" passHref legacyBehavior>
-                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Poppers Grandes (25ml)
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Packs de Poppers
                     </Button>
                 </Link>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="justify-between w-full uppercase font-bold font-headline">
+                        <Button variant="ghost" className="justify-between w-full uppercase font-bold font-headline text-primary-foreground">
                             <span>Composición</span>
                             <ChevronDown className="h-4 w-4" />
                         </Button>
@@ -121,12 +121,12 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                 </DropdownMenu>
 
                 <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Accesorios para Poppers
                     </Button>
                 </Link>
                 <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline" onClick={onNavigate}>
+                    <Button variant="ghost" className="justify-start w-full uppercase font-bold font-headline text-primary-foreground" onClick={onNavigate}>
                         Juguetes Eróticos
                     </Button>
                 </Link>
@@ -138,7 +138,7 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
         <UiNavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold")}>
+                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
                          <Link href="/products" legacyBehavior passHref>
                             <a>Productos</a>
                         </Link>

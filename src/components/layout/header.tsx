@@ -27,7 +27,7 @@ export function Header() {
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
-            <Menu />
+            <Menu className="text-primary-foreground"/>
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
@@ -64,12 +64,12 @@ export function Header() {
             </div>
         </div>
         <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-bold text-primary-foreground">
-           <div className="hidden sm:flex items-center gap-2">
-                <PackageCheck className="h-4 w-4" />
+           <div className="hidden sm:flex items-center gap-2 font-headline text-primary-foreground">
+                <PackageCheck className="h-4 w-4 text-primary-foreground" />
                 <span>Envío GRATIS +40€</span>
             </div>
-            <div className="hidden sm:flex items-center gap-2">
-                <Truck className="h-4 w-4" />
+            <div className="hidden sm:flex items-center gap-2 font-headline text-primary-foreground">
+                <Truck className="h-4 w-4 text-primary-foreground" />
                 <span>Entrega 24/48h</span>
             </div>
             <div className="md:hidden">
