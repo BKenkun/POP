@@ -4,7 +4,7 @@ import React from 'react';
 export const Logo = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 -15 1000 170"
-    className={cn('w-auto h-8', className)}
+    className={cn('w-auto h-10', className)}
     xmlns="http://www.w3.org/2000/svg"
   >
     <defs>
