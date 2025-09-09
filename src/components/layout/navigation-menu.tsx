@@ -57,7 +57,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                  <ListItem href="/products?internal_tag=accesorio" title="ACCESORIOS PARA POPPERS" onNavigate={onNavigate} />
                  <ListItem href="/products?internal_tag=juguete" title="JUGUETES ERÓTICOS" onNavigate={onNavigate} />
                  
-                <Collapsible asChild>
+                <Collapsible>
                   <li>
                     <CollapsibleTrigger
                         className={cn(
@@ -88,6 +88,13 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                 </Collapsible>
              </ul>
           </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+            <Link href="/create-pack" legacyBehavior passHref>
+                <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground")}>
+                CREA TU PACK
+                </NavigationMenuLink>
+            </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
