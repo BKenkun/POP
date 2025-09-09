@@ -38,7 +38,7 @@ export function Header() {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="flex flex-col gap-2 p-2">
-              <NavigationMenu onNavigate={() => setIsOpen(false)} />
+              {/* <NavigationMenu onNavigate={() => setIsOpen(false)} /> */}
               <SearchForm onSearch={() => setIsOpen(false)} />
             </SidebarMenu>
           </SidebarContent>
