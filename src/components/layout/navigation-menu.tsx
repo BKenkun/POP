@@ -19,11 +19,11 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const compositionLinks = [
-    { title: "Poppers de Amilo", composition: "Amilo" },
-    { title: "Poppers de Pentilo", composition: "Pentilo" },
-    { title: "Poppers de Propilo", composition: "Propilo" },
-    { title: "Poppers al CBD", composition: "CBD" },
-    { title: "Mix de Nitritos", composition: "Mix" },
+    { title: "POPPERS DE AMILO", composition: "Amilo" },
+    { title: "POPPERS DE PENTILO", composition: "Pentilo" },
+    { title: "POPPERS DE PROPILO", composition: "Propilo" },
+    { title: "POPPERS AL CBD", composition: "CBD" },
+    { title: "MIX DE NITRITOS", composition: "Mix" },
 ];
 
 interface NavigationMenuProps {
@@ -51,9 +51,9 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className={triggerStyles}>
-                    <Link href="/products" legacyBehavior passHref>
-                        <a>Productos</a>
+                 <Button variant="ghost" className={triggerStyles}>
+                    <Link href="/products">
+                        PRODUCTOS
                     </Link>
                 </Button>
             </DropdownMenuTrigger>
@@ -61,30 +61,30 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                 className="bg-primary border-primary-foreground/20 text-primary-foreground w-64"
                 sideOffset={10}
             >
-                <Link href="/products?size=10ml" passHref legacyBehavior>
+                <Link href="/products?size=10ml" passHref>
                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
-                        Poppers Pequeños (10ml)
+                        POPPERS PEQUEÑOS (10ML)
                     </DropdownMenuItem>
                 </Link>
-                <Link href="/products?size=15ml" passHref legacyBehavior>
+                <Link href="/products?size=15ml" passHref>
                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
-                        Poppers Medianos (15ml)
+                        POPPERS MEDIANOS (15ML)
                     </DropdownMenuItem>
                 </Link>
-                <Link href="/products?size=25ml" passHref legacyBehavior>
+                <Link href="/products?size=25ml" passHref>
                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
-                        Poppers Grandes (25ml)
+                        POPPERS GRANDES (25ML)
                     </DropdownMenuItem>
                 </Link>
-                <Link href="/products?internal_tag=pack" passHref legacyBehavior>
+                <Link href="/products?internal_tag=pack" passHref>
                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
-                        Packs de Poppers
+                        PACKS DE POPPERS
                     </DropdownMenuItem>
                 </Link>
 
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger className={itemStyles}>
-                        <span>Composición</span>
+                        <span>COMPOSICIÓN</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
                         <DropdownMenuSubContent 
@@ -92,7 +92,7 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                             sideOffset={8}
                         >
                             {compositionLinks.map((link) => (
-                                <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref legacyBehavior>
+                                <Link key={link.title} href={`/products?composition=${encodeURIComponent(link.composition)}`} passHref>
                                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
                                         {link.title}
                                     </DropdownMenuItem>
@@ -102,14 +102,14 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
 
-                <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
+                <Link href="/products?internal_tag=accesorio" passHref>
                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
-                        Accesorios para Poppers
+                        ACCESORIOS PARA POPPERS
                     </DropdownMenuItem>
                 </Link>
-                <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
+                <Link href="/products?internal_tag=juguete" passHref>
                     <DropdownMenuItem className={itemStyles} onClick={onNavigate}>
-                        Juguetes Eróticos
+                        JUGUETES ERÓTICOS
                     </DropdownMenuItem>
                 </Link>
             </DropdownMenuContent>
