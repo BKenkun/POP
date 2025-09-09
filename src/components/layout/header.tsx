@@ -7,15 +7,14 @@ import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
 import { PackageCheck, Truck } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
 import { Logo } from '../logo';
+import NavigationMenu from "./navigation-menu";
 
 export function Header() {
   const pathname = usePathname();
-  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const isAdminPath = pathname.startsWith('/admin');
@@ -24,31 +23,6 @@ export function Header() {
     return null;
   }
   
-  const navLinks = (
-    <>
-      <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start">
-        <Link href="/products" onClick={() => setIsOpen(false)}>
-            Productos
-        </Link>
-      </Button>
-       <SearchForm onSearch={() => setIsOpen(false)} />
-    </>
-  )
-
-  const DesktopNav = () => (
-     <nav className="hidden md:flex items-center gap-4">
-        <Link href="/" className="flex items-center space-x-2 group">
-          <Logo />
-        </Link>
-        <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start">
-            <Link href="/products">
-                Productos
-            </Link>
-        </Button>
-        <SearchForm />
-     </nav>
-  )
-
   const MobileNav = () => (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
@@ -64,7 +38,8 @@ export function Header() {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="flex flex-col gap-2 p-2">
-              {navLinks}
+              <NavigationMenu onNavigate={() => setIsOpen(false)} />
+              <SearchForm onSearch={() => setIsOpen(false)} />
             </SidebarMenu>
           </SidebarContent>
         </SheetContent>
@@ -75,21 +50,17 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full bg-primary text-primary-foreground shadow-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-x-4">
-            <div className="hidden md:flex items-center gap-x-4">
-                <Link href="/" className="flex items-center">
-                    <Logo />
-                </Link>
-                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-accent hover:text-accent-foreground justify-start">
-                    <Link href="/products">
-                        Productos
-                    </Link>
-                </Button>
-                <SearchForm />
-            </div>
              <div className="md:hidden">
                  <Link href="/" className="flex items-center">
                     <Logo />
                   </Link>
+            </div>
+            <div className="hidden md:flex items-center gap-x-4">
+                <Link href="/" className="flex items-center">
+                    <Logo />
+                </Link>
+                <NavigationMenu />
+                <SearchForm />
             </div>
         </div>
         <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-medium">

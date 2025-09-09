@@ -26,13 +26,15 @@ interface ProductFiltersProps {
   uniqueBrands: string[];
   uniqueSizes: string[];
   uniqueCompositions: string[];
-  initialSearchQuery?: string;
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
 const internalTagMap: { [key: string]: string } = {
     'novedad': 'Novedades',
     'oferta': 'Ofertas',
     'mas-vendido': 'Más Vendidos',
+    'pack': 'Packs',
+    'accesorio': 'Accesorios',
 };
 
 export default function ProductFilters({ 
@@ -40,52 +42,60 @@ export default function ProductFilters({
     uniqueBrands, 
     uniqueSizes, 
     uniqueCompositions,
-    initialSearchQuery = '' 
+    searchParams
 }: ProductFiltersProps) {
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const router = useRouter();
+  const pathname = usePathname();
+  const currentParams = useSearchParams();
+
+  const [searchQuery, setSearchQuery] = useState(searchParams.search as string || '');
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedCompositions, setSelectedCompositions] = useState<string[]>([]);
   const [selectedInternalTags, setSelectedInternalTags] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState('name-asc');
   
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
   useEffect(() => {
-    setSearchQuery(initialSearchQuery);
-  }, [initialSearchQuery]);
+    const newBrands = Array.isArray(searchParams.brand) ? searchParams.brand : (searchParams.brand ? [searchParams.brand] : []);
+    const newSizes = Array.isArray(searchParams.size) ? searchParams.size : (searchParams.size ? [searchParams.size] : []);
+    const newCompositions = Array.isArray(searchParams.composition) ? searchParams.composition : (searchParams.composition ? [searchParams.composition] : []);
+    const newInternalTags = Array.isArray(searchParams.internal_tag) ? searchParams.internal_tag : (searchParams.internal_tag ? [searchParams.internal_tag] : []);
+    
+    setSelectedBrands(newBrands);
+    setSelectedSizes(newSizes);
+    setSelectedCompositions(newCompositions);
+    setSelectedInternalTags(newInternalTags);
+    setSearchQuery(searchParams.search as string || '');
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuery = e.target.value;
-    setSearchQuery(newQuery);
-    const params = new URLSearchParams(searchParams.toString());
-    if (newQuery) {
-        params.set('search', newQuery);
-    } else {
-        params.delete('search');
-    }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }
-  
-  const createToggleHandler = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
-    setter(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    );
+  }, [searchParams]);
+
+  const updateURLParams = (key: string, values: string[]) => {
+      const params = new URLSearchParams(currentParams.toString());
+      params.delete(key);
+      values.forEach(value => params.append(key, value));
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
-
-  const handleBrandChange = createToggleHandler(setSelectedBrands);
-  const handleSizeChange = createToggleHandler(setSelectedSizes);
-  const handleCompositionChange = createToggleHandler(setSelectedCompositions);
-  const handleInternalTagChange = createToggleHandler(setSelectedInternalTags);
-
+  
+  const createToggleHandler = (key: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
+    const newValues = selectedValues.includes(value) ? selectedValues.filter(v => v !== value) : [...selectedValues, value];
+    setter(newValues);
+    updateURLParams(key, newValues);
+  };
+  
+  const handleBrandChange = createToggleHandler('brand', setSelectedBrands);
+  const handleSizeChange = createToggleHandler('size', setSelectedSizes);
+  const handleCompositionChange = createToggleHandler('composition', setSelectedCompositions);
+  const handleInternalTagChange = createToggleHandler('internal_tag', setSelectedInternalTags);
+  
+  const selectedValues: string[] = [ ...selectedBrands, ...selectedSizes, ...selectedCompositions, ...selectedInternalTags];
 
   const clearFilters = () => {
     setSelectedBrands([]);
     setSelectedSizes([]);
     setSelectedCompositions([]);
     setSelectedInternalTags([]);
+    setSearchQuery('');
+    router.replace(pathname, { scroll: false });
   };
 
   const filteredAndSortedProducts = useMemo(() => {
@@ -93,27 +103,7 @@ export default function ProductFilters({
 
     if (searchQuery) {
         const lowercasedQuery = searchQuery.toLowerCase();
-        
-        // Find which internal tags match the search query (e.g., searching "Novedades" should match "novedad" tag)
-        const matchingInternalTags = Object.entries(internalTagMap)
-            .filter(([, label]) => label.toLowerCase().includes(lowercasedQuery))
-            .map(([tag]) => tag);
-            
-        filtered = filtered.filter(p => {
-            const inName = p.name.toLowerCase().includes(lowercasedQuery);
-            const inDescription = p.description?.toLowerCase().includes(lowercasedQuery);
-            const inBrand = p.brand?.toLowerCase().includes(lowercasedQuery);
-            const inSize = p.size?.toLowerCase().includes(lowercasedQuery);
-            const inComposition = p.composition?.toLowerCase().includes(lowercasedQuery);
-            const inTags = p.tags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
-            
-            // Check if any of the product's internal tags are in our list of tags that match the search query.
-            const inInternalTagsByLabel = p.internalTags?.some(tag => matchingInternalTags.includes(tag));
-            // Also check for direct match, e.g. searching for "oferta"
-            const inInternalTagsDirect = p.internalTags?.some(tag => tag.toLowerCase().includes(lowercasedQuery));
-
-            return inName || inDescription || inBrand || inSize || inComposition || inTags || inInternalTagsByLabel || inInternalTagsDirect;
-        });
+        filtered = filtered.filter(p => p.name.toLowerCase().includes(lowercasedQuery));
     }
 
     if (selectedBrands.length > 0) {
@@ -150,27 +140,28 @@ export default function ProductFilters({
     });
   }, [products, searchQuery, selectedBrands, selectedSizes, selectedCompositions, selectedInternalTags, sortOrder]);
   
-  const hasActiveFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || selectedInternalTags.length > 0;
+  const hasActiveFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || selectedInternalTags.length > 0 || searchQuery;
   
-  const FilterCheckboxGroup = ({ title, values, selectedValues, onValueChange }: {
+  const FilterCheckboxGroup = ({ title, values, selectedValues, onValueChange, paramKey }: {
     title: string;
     values: string[];
     selectedValues: string[];
     onValueChange: (value: string) => void;
+    paramKey: string;
   }) => (
     values.length > 0 && (
-      <AccordionItem value={title.toLowerCase()}>
+      <AccordionItem value={paramKey}>
         <AccordionTrigger className="text-base font-semibold">{title}</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-2">
             {values.map(value => (
               <div key={value} className="flex items-center space-x-2">
                 <Checkbox 
-                  id={`${title}-${value}`}
+                  id={`${paramKey}-${value}`}
                   checked={selectedValues.includes(value)}
                   onCheckedChange={() => onValueChange(value)}
                 />
-                <Label htmlFor={`${title}-${value}`} className="font-normal cursor-pointer">{value}</Label>
+                <Label htmlFor={`${paramKey}-${value}`} className="font-normal cursor-pointer">{value}</Label>
               </div>
             ))}
           </div>
@@ -192,7 +183,18 @@ export default function ProductFilters({
                             type="search"
                             placeholder="Buscar productos..."
                             value={searchQuery}
-                            onChange={handleSearchChange}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    const params = new URLSearchParams(currentParams.toString());
+                                    if(searchQuery) {
+                                        params.set('search', searchQuery);
+                                    } else {
+                                        params.delete('search');
+                                    }
+                                    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+                                }
+                            }}
                             className="pl-9"
                         />
                     </div>
@@ -210,7 +212,7 @@ export default function ProductFilters({
                     )}
                 </div>
 
-                <Accordion type="multiple" defaultValue={['sort', 'categories', 'brands']} className="w-full">
+                <Accordion type="multiple" defaultValue={['sort', 'categories', 'brands', 'size', 'composition']} className="w-full">
                     <AccordionItem value="sort">
                         <AccordionTrigger className="text-base font-semibold">Ordenar por</AccordionTrigger>
                         <AccordionContent>
@@ -251,6 +253,7 @@ export default function ProductFilters({
                         values={uniqueBrands}
                         selectedValues={selectedBrands}
                         onValueChange={handleBrandChange}
+                        paramKey="brand"
                     />
                     
                     <FilterCheckboxGroup 
@@ -258,6 +261,7 @@ export default function ProductFilters({
                         values={uniqueSizes}
                         selectedValues={selectedSizes}
                         onValueChange={handleSizeChange}
+                        paramKey="size"
                     />
                     
                     <FilterCheckboxGroup 
@@ -265,6 +269,7 @@ export default function ProductFilters({
                         values={uniqueCompositions}
                         selectedValues={selectedCompositions}
                         onValueChange={handleCompositionChange}
+                        paramKey="composition"
                     />
                 </Accordion>
             </CardContent>

@@ -16,8 +16,7 @@ export default async function ProductsPage({
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
     const products: Product[] = await getStripeProducts();
-    const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined;
-
+    
     // Extract unique values for filtering
     const getUniqueValues = (key: keyof Product) => {
         const allValues = new Set<string>();
@@ -25,15 +24,16 @@ export default async function ProductsPage({
             const value = p[key];
             if (typeof value === 'string' && value) {
                 allValues.add(value);
+            } else if (Array.isArray(value)) {
+                value.forEach(v => allValues.add(v));
             }
         });
-        return Array.from(allValues);
+        return Array.from(allValues).sort();
     };
 
     const uniqueBrands = getUniqueValues('brand');
     const uniqueSizes = getUniqueValues('size');
     const uniqueCompositions = getUniqueValues('composition');
-
 
     return (
         <div>
@@ -48,7 +48,7 @@ export default async function ProductsPage({
                 uniqueBrands={uniqueBrands}
                 uniqueSizes={uniqueSizes}
                 uniqueCompositions={uniqueCompositions}
-                initialSearchQuery={searchQuery}
+                searchParams={searchParams}
             />
         </div>
     );
