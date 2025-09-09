@@ -43,7 +43,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-           <NavigationMenuTrigger asChild className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
+           <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
                  <Link href="/products">
                     <span>Productos</span>
                  </Link>
