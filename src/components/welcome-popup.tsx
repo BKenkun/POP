@@ -42,7 +42,7 @@ const WelcomePopup = () => {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <Percent className="h-10 w-10 text-primary" />
           </div>
-          <DialogTitle className="text-3xl font-headline text-primary">
+          <DialogTitle className="text-3xl font-headline text-primary font-bold">
             ¡Bienvenido/a!
           </DialogTitle>
           <DialogDescription className="text-lg text-foreground/80">

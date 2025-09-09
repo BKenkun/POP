@@ -38,7 +38,7 @@ export default async function ProductsPage({
     return (
         <div>
             <div className="text-center space-y-4 mb-12">
-                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight">Nuestro Catálogo</h1>
+                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Catálogo</h1>
                 <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
                     Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección.
                 </p>

@@ -31,7 +31,7 @@ export function RelatedProducts({ currentProduct, allProducts }: RelatedProducts
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl md:text-3xl font-headline text-primary">Productos Relacionados</h2>
+      <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Productos Relacionados</h2>
       <Carousel
         opts={{
           align: 'start',

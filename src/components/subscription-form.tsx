@@ -77,7 +77,7 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     return (
         <div className="bg-primary/20 dark:bg-primary/10 p-8 rounded-lg">
             <div className="max-w-2xl mx-auto text-center">
-                <h3 className="font-semibold font-headline text-2xl mb-3 text-primary">Suscríbete a nuestro boletín</h3>
+                <h3 className="font-headline text-2xl mb-3 text-primary font-bold">Suscríbete a nuestro boletín</h3>
                 <p className="text-sm text-foreground/80 mb-6">
                 Puede cancelar su suscripción en cualquier momento. Para ello, consulte nuestra información de contacto en la declaración legal.
                 </p>

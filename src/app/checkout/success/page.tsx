@@ -22,7 +22,7 @@ export default function CheckoutSuccessPage() {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
                         <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400" />
                     </div>
-                    <CardTitle className="text-3xl font-headline text-primary">¡Gracias por tu compra!</CardTitle>
+                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Gracias por tu compra!</CardTitle>
                     <CardDescription className="text-lg text-foreground/80">
                         Tu pedido ha sido procesado con éxito.
                     </CardDescription>

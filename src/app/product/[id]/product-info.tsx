@@ -29,7 +29,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
               </Badge>
             ))}
         </div>
-        <h1 className="text-3xl md:text-4xl font-headline text-primary">
+        <h1 className="text-3xl md:text-4xl font-headline text-primary font-bold">
           {product.name}
         </h1>
         <p className="text-3xl font-bold mt-2">{formatPrice(product.price)}</p>

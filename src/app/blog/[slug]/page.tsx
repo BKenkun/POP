@@ -27,7 +27,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   return (
     <article className="max-w-3xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-headline text-primary mb-3">{post.title}</h1>
+        <h1 className="text-4xl md:text-5xl font-headline text-primary mb-3 font-bold">{post.title}</h1>
         <p className="text-muted-foreground">
           Por {post.author} el {new Date(post.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
         </p>

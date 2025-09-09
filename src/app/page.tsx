@@ -21,7 +21,7 @@ export default async function Home() {
       <WelcomePopup />
       
       <div className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight">Calidad Premium, Sensaciones Únicas</h1>
+        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Calidad Premium, Sensaciones Únicas</h1>
         <p className="mt-2 text-lg text-foreground/80 max-w-2xl mx-auto">
           Explora nuestra cuidada selección de poppers y descubre una pureza y potencia que redefine la experiencia.
         </p>
@@ -29,7 +29,7 @@ export default async function Home() {
 
       {newArrivals.length > 0 && (
         <section className="space-y-6">
-          <h2 className="text-2xl md:text-3xl font-headline text-primary">Novedades</h2>
+          <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Novedades</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {newArrivals.map(product => (
               <ProductCard key={product.id} product={product} />
@@ -40,7 +40,7 @@ export default async function Home() {
       
       {offers.length > 0 && (
          <section className="space-y-6">
-          <h2 className="text-2xl md:text-3xl font-headline text-primary">Ofertas Especiales</h2>
+          <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Ofertas Especiales</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {offers.map(product => (
               <ProductCard key={product.id} product={product} />
@@ -51,7 +51,7 @@ export default async function Home() {
 
       {bestSellers.length > 0 && (
          <section className="space-y-6">
-          <h2 className="text-2xl md:text-3xl font-headline text-primary">Lo Más Vendido</h2>
+          <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Lo Más Vendido</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {bestSellers.map(product => (
               <ProductCard key={product.id} product={product} />

@@ -15,7 +15,7 @@ export default function BlogPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center space-y-4 mb-12">
-        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight">Nuestro Blog</h1>
+        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Blog</h1>
         <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
           Descubre artículos, guías y noticias del mundo de Popper España.
         </p>

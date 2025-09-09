@@ -70,10 +70,10 @@ export default function CheckoutClientPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center">Checkout</h1>
+      <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Checkout</h1>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div>
-          <h2 className="text-2xl font-headline mb-4">Order Summary</h2>
+          <h2 className="text-2xl font-headline mb-4 font-bold">Order Summary</h2>
           <Card>
             <CardContent className="p-4 space-y-4">
               {cartItems.map((item) => (
@@ -122,7 +122,7 @@ export default function CheckoutClientPage() {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-headline mb-4">Payment Details</h2>
+          <h2 className="text-2xl font-headline mb-4 font-bold">Payment Details</h2>
           <Card>
             <CardHeader>
               <CardTitle>Total</CardTitle>
