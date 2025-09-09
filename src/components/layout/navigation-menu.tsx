@@ -66,8 +66,10 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                           "flex items-center justify-between cursor-pointer font-headline uppercase font-bold text-sm"
                         )}
                       >
-                        <span>COMPOSICIÓN</span>
-                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                       <div className="flex items-center justify-between w-full">
+                            <span>COMPOSICIÓN</span>
+                            <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                        </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                        <ul className="flex flex-col pt-2 pl-4">
