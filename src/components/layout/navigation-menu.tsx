@@ -4,25 +4,15 @@ import * as React from 'react';
 import Link from 'next/link';
 import {
   NavigationMenu,
+  NavigationMenuContent,
   NavigationMenuItem,
+  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  NavigationMenuContent,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-    DropdownMenuPortal,
-    DropdownMenuSubContent
-} from '@/components/ui/dropdown-menu';
-import { Button } from '../ui/button';
-import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChevronRight } from 'lucide-react';
 
 const compositionLinks = [
   { title: 'POPPERS DE AMILO', composition: 'Amilo' },
@@ -43,101 +33,70 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuPr
     "bg-transparent text-primary-foreground",
     "hover:bg-accent hover:text-accent-foreground",
     "focus:bg-accent focus:text-accent-foreground",
-    "transition-colors duration-200"
+    "transition-colors duration-200 flex items-center justify-between"
   );
 
-  const subTriggerStyles = cn(
-    navLinkStyles,
-    "flex justify-between items-center"
-  );
-  
   return (
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger 
-             className={cn(
-              navigationMenuTriggerStyle(),
-              'font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground'
-            )}
+             className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}
           >
-             <Link href="/products" passHref legacyBehavior>
-                <a onClick={onNavigate}>PRODUCTOS</a>
+             <Link href="/products" onClick={onNavigate}>
+                PRODUCTOS
             </Link>
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-             <div className="p-2 w-64 bg-primary border-primary-foreground/20">
-                <ul className="flex flex-col gap-1">
-                     <li>
-                        <Link href="/products?size=10ml" passHref legacyBehavior>
-                           <a onClick={onNavigate} className={navLinkStyles}>
-                                POPPERS PEQUEÑOS (10ML)
-                           </a>
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/products?size=15ml" passHref legacyBehavior>
-                             <a onClick={onNavigate} className={navLinkStyles}>
-                                POPPERS MEDIANOS (15ML)
-                             </a>
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/products?size=25ml" passHref legacyBehavior>
-                             <a onClick={onNavigate} className={navLinkStyles}>
-                                POPPERS GRANDES (25ML)
-                             </a>
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/products?internal_tag=pack" passHref legacyBehavior>
-                            <a onClick={onNavigate} className={navLinkStyles}>
-                                PACKS DE POPPERS
-                            </a>
-                        </Link>
-                    </li>
-                    <li>
-                        <DropdownMenu>
-                             <DropdownMenuTrigger asChild>
-                                <button className={subTriggerStyles}>
-                                    <span>COMPOSICIÓN</span>
-                                    <ChevronRight className="h-4 w-4" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent 
-                                sideOffset={10} 
-                                alignOffset={-5}
-                                className="bg-primary border-primary-foreground/20 text-primary-foreground w-56"
-                            >
-                                {compositionLinks.map((link) => (
-                                    <DropdownMenuItem key={link.title} asChild className={cn(navLinkStyles, 'p-2')}>
-                                        <Link href={`/products?composition=${encodeURIComponent(link.composition)}`} onClick={onNavigate}>
-                                            {link.title}
-                                        </Link>
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </li>
-                    <li>
-                        <Link href="/products?internal_tag=accesorio" passHref legacyBehavior>
-                            <a onClick={onNavigate} className={navLinkStyles}>
-                                ACCESORIOS PARA POPPERS
-                            </a>
-                        </Link>
-                    </li>
-                     <li>
-                        <Link href="/products?internal_tag=juguete" passHref legacyBehavior>
-                           <a onClick={onNavigate} className={navLinkStyles}>
-                                JUGUETES ERÓTICOS
-                           </a>
-                        </Link>
-                    </li>
-                </ul>
-             </div>
+             <ul className="flex flex-col p-2 w-64 bg-primary text-primary-foreground border-r border-primary-foreground/20">
+                 <ListItem href="/products?size=10ml" title="POPPERS PEQUEÑOS (10ML)" onNavigate={onNavigate} />
+                 <ListItem href="/products?size=15ml" title="POPPERS MEDIANOS (15ML)" onNavigate={onNavigate} />
+                 <ListItem href="/products?size=25ml" title="POPPERS GRANDES (25ML)" onNavigate={onNavigate} />
+                 <ListItem href="/products?internal_tag=pack" title="PACKS DE POPPERS" onNavigate={onNavigate} />
+                 <ListItem href="/products?internal_tag=accesorio" title="ACCESORIOS PARA POPPERS" onNavigate={onNavigate} />
+                 <ListItem href="/products?internal_tag=juguete" title="JUGUETES ERÓTICOS" onNavigate={onNavigate} />
+                 
+                <NavigationMenuItem className="list-none">
+                     <NavigationMenuTrigger className={cn(navLinkStyles, "w-full")}>
+                        <span>COMPOSICIÓN</span>
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                        <ul className="flex flex-col p-2 w-56 bg-primary text-primary-foreground">
+                            {compositionLinks.map((link) => (
+                                <ListItem
+                                    key={link.title}
+                                    href={`/products?composition=${encodeURIComponent(link.composition)}`}
+                                    title={link.title}
+                                    onNavigate={onNavigate}
+                                />
+                            ))}
+                        </ul>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
   );
 }
+
+const ListItem = ({ href, title, onNavigate }: { href: string; title: string, onNavigate?: () => void; }) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <Link
+          href={href}
+          onClick={onNavigate}
+          className={cn(
+            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
+            'font-headline uppercase font-bold text-sm',
+            'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
+          )}
+        >
+          <div className="font-medium">{title}</div>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+};
