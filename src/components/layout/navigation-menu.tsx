@@ -128,9 +128,9 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
         <UiNavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <NavigationMenuTrigger className="font-headline uppercase font-bold text-primary-foreground bg-transparent">
+                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
                          <Link href="/products" legacyBehavior passHref>
-                            <a className="py-2">Productos</a>
+                            <a>Productos</a>
                         </Link>
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
@@ -139,24 +139,18 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                             <li><NavLink href="/products?size=15ml">Poppers Medianos</NavLink></li>
                             <li><NavLink href="/products?size=25ml">Poppers Grandes</NavLink></li>
                             <li><NavLink href="/products?internal_tag=pack">Packs de Poppers</NavLink></li>
-                            <li>
-                                 <UiNavigationMenu>
-                                    <NavigationMenuList>
-                                        <NavigationMenuItem>
-                                            <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold text-primary-foreground bg-transparent w-full justify-start p-3 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
-                                                Composición
-                                            </NavigationMenuTrigger>
-                                            <NavigationMenuContent>
-                                                <ul className="grid w-[250px] gap-3 p-4 bg-primary">
-                                                    {compositionLinks.map((link) => (
-                                                        <li key={link.title}><NavLink href={`/products?composition=${encodeURIComponent(link.composition)}`} className="p-2">{link.title}</NavLink></li>
-                                                    ))}
-                                                </ul>
-                                            </NavigationMenuContent>
-                                        </NavigationMenuItem>
-                                    </NavigationMenuList>
-                                </UiNavigationMenu>
-                            </li>
+                            <NavigationMenuItem>
+                                 <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground w-full justify-start p-3 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
+                                     Composición
+                                 </NavigationMenuTrigger>
+                                 <NavigationMenuContent>
+                                     <ul className="grid w-[250px] gap-3 p-4 bg-primary text-primary-foreground">
+                                         {compositionLinks.map((link) => (
+                                             <li key={link.title}><NavLink href={`/products?composition=${encodeURIComponent(link.composition)}`} className="p-2">{link.title}</NavLink></li>
+                                         ))}
+                                     </ul>
+                                 </NavigationMenuContent>
+                             </NavigationMenuItem>
                              <li><NavLink href="/products?internal_tag=accesorio">Accesorios</NavLink></li>
                              <li><NavLink href="/products?internal_tag=juguete">Juguetes Eróticos</NavLink></li>
                         </ul>
