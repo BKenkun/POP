@@ -39,16 +39,26 @@ interface NavigationMenuProps {
     onNavigate?: () => void;
 }
 
-const NavLink = ({ href, children, onClick, className }: { href: string; children: React.ReactNode; onClick?: () => void; className?: string; }) => (
-    <Link href={href} passHref legacyBehavior>
-        <NavigationMenuLink 
-            className={cn("font-headline uppercase font-bold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground", className)}
-            onClick={onClick}
+const NavLink = React.forwardRef<HTMLAnchorElement, React.ComponentProps<"a"> & { href: string }>(
+  ({ className, children, ...props }, ref) => {
+    return (
+      <Link href={props.href} passHref legacyBehavior>
+        <NavigationMenuLink
+          ref={ref}
+          className={cn(
+            "font-headline uppercase font-bold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+          {...props}
         >
-            {children}
+          {children}
         </NavigationMenuLink>
-    </Link>
+      </Link>
+    );
+  }
 );
+NavLink.displayName = "NavLink";
+
 
 export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
     const isMobile = useIsMobile();
@@ -128,7 +138,7 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
         <UiNavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
+                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold")}>
                          <Link href="/products" legacyBehavior passHref>
                             <a>Productos</a>
                         </Link>
@@ -139,17 +149,23 @@ export default function NavigationMenu({ onNavigate }: NavigationMenuProps) {
                             <li><NavLink href="/products?size=15ml">Poppers Medianos</NavLink></li>
                             <li><NavLink href="/products?size=25ml">Poppers Grandes</NavLink></li>
                             <li><NavLink href="/products?internal_tag=pack">Packs de Poppers</NavLink></li>
-                            <NavigationMenuItem>
-                                 <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground w-full justify-start p-3 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
-                                     Composición
-                                 </NavigationMenuTrigger>
-                                 <NavigationMenuContent>
-                                     <ul className="grid w-[250px] gap-3 p-4 bg-primary text-primary-foreground">
-                                         {compositionLinks.map((link) => (
-                                             <li key={link.title}><NavLink href={`/products?composition=${encodeURIComponent(link.composition)}`} className="p-2">{link.title}</NavLink></li>
-                                         ))}
-                                     </ul>
-                                 </NavigationMenuContent>
+                            <NavigationMenuItem asChild>
+                                 <UiNavigationMenu>
+                                     <NavigationMenuList>
+                                         <NavigationMenuItem>
+                                             <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground w-full justify-start p-3 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
+                                                 Composición
+                                             </NavigationMenuTrigger>
+                                             <NavigationMenuContent>
+                                                 <ul className="grid w-[250px] gap-3 p-4 bg-primary text-primary-foreground">
+                                                     {compositionLinks.map((link) => (
+                                                         <li key={link.title}><NavLink href={`/products?composition=${encodeURIComponent(link.composition)}`} className="p-2">{link.title}</NavLink></li>
+                                                     ))}
+                                                 </ul>
+                                             </NavigationMenuContent>
+                                         </NavigationMenuItem>
+                                     </NavigationMenuList>
+                                 </UiNavigationMenu>
                              </NavigationMenuItem>
                              <li><NavLink href="/products?internal_tag=accesorio">Accesorios</NavLink></li>
                              <li><NavLink href="/products?internal_tag=juguete">Juguetes Eróticos</NavLink></li>
