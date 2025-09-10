@@ -2,6 +2,7 @@
 import { getStripeProducts } from '@/lib/stripe';
 import { Product } from '@/lib/types';
 import CustomPackBuilder from './custom-pack-builder';
+import { getUniqueValues } from '@/lib/utils';
 
 export const metadata = {
     title: 'Crea tu Pack Personalizado | Popper España',
@@ -18,6 +19,10 @@ export default async function CreatePackPage() {
         !p.internalTags?.includes('accesorio') && 
         !p.internalTags?.includes('pack')
     );
+    
+    const uniqueBrands = getUniqueValues(availableForPack, 'brand');
+    const uniqueSizes = getUniqueValues(availableForPack, 'size');
+    const uniqueCompositions = getUniqueValues(availableForPack, 'composition');
 
     return (
         <div>
@@ -27,7 +32,12 @@ export default async function CreatePackPage() {
                     Elige tus aromas favoritos de nuestro catálogo y construye el pack perfecto para ti.
                 </p>
             </div>
-            <CustomPackBuilder products={availableForPack} />
+            <CustomPackBuilder 
+                products={availableForPack}
+                uniqueBrands={uniqueBrands}
+                uniqueSizes={uniqueSizes}
+                uniqueCompositions={uniqueCompositions}
+             />
         </div>
     );
 }

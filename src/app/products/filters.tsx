@@ -26,7 +26,11 @@ interface ProductFiltersProps {
   uniqueBrands: string[];
   uniqueSizes: string[];
   uniqueCompositions: string[];
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams?: { [key: string]: string | string[] | undefined }; // Optional for reusability
+  onFilterChange?: (filteredProducts: Product[]) => void; // Optional callback
+  showSort?: boolean;
+  showCategories?: boolean;
+  showSearch?: boolean;
 }
 
 const internalTagMap: { [key: string]: string } = {
@@ -42,34 +46,43 @@ export default function ProductFilters({
     uniqueBrands, 
     uniqueSizes, 
     uniqueCompositions,
-    searchParams
+    searchParams,
+    onFilterChange,
+    showSort = true,
+    showCategories = true,
+    showSearch = true,
 }: ProductFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const currentParams = useSearchParams();
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.search as string || '');
+  // Component-local state for filters
+  const [searchQuery, setSearchQuery] = useState(searchParams?.search as string || '');
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedCompositions, setSelectedCompositions] = useState<string[]>([]);
   const [selectedInternalTags, setSelectedInternalTags] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState('name-asc');
   
+  // Effect to sync state with URL params if they exist
   useEffect(() => {
-    const newBrands = Array.isArray(searchParams.brand) ? searchParams.brand : (searchParams.brand ? [searchParams.brand] : []);
-    const newSizes = Array.isArray(searchParams.size) ? searchParams.size : (searchParams.size ? [searchParams.size] : []);
-    const newCompositions = Array.isArray(searchParams.composition) ? searchParams.composition : (searchParams.composition ? [searchParams.composition] : []);
-    const newInternalTags = Array.isArray(searchParams.internal_tag) ? searchParams.internal_tag : (searchParams.internal_tag ? [searchParams.internal_tag] : []);
-    
-    setSelectedBrands(newBrands);
-    setSelectedSizes(newSizes);
-    setSelectedCompositions(newCompositions);
-    setSelectedInternalTags(newInternalTags);
-    setSearchQuery(searchParams.search as string || '');
-
+    if (searchParams) {
+        const newBrands = Array.isArray(searchParams.brand) ? searchParams.brand : (searchParams.brand ? [searchParams.brand] : []);
+        const newSizes = Array.isArray(searchParams.size) ? searchParams.size : (searchParams.size ? [searchParams.size] : []);
+        const newCompositions = Array.isArray(searchParams.composition) ? searchParams.composition : (searchParams.composition ? [searchParams.composition] : []);
+        const newInternalTags = Array.isArray(searchParams.internal_tag) ? searchParams.internal_tag : (searchParams.internal_tag ? [searchParams.internal_tag] : []);
+        
+        setSelectedBrands(newBrands);
+        setSelectedSizes(newSizes);
+        setSelectedCompositions(newCompositions);
+        setSelectedInternalTags(newInternalTags);
+        setSearchQuery(searchParams.search as string || '');
+    }
   }, [searchParams]);
 
+  // Logic to update URL params when a filter changes
   const updateURLParams = (key: string, values: string[]) => {
+      if (!searchParams) return; // Only update URL if used on a page with searchParams
       const params = new URLSearchParams(currentParams.toString());
       params.delete(key);
       values.forEach(value => params.append(key, value));
@@ -79,7 +92,7 @@ export default function ProductFilters({
   const createToggleHandler = (selectedValues: string[], key: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
     const newValues = selectedValues.includes(value) ? selectedValues.filter(v => v !== value) : [...selectedValues, value];
     setter(newValues);
-    updateURLParams(key, newValues);
+    if(searchParams) updateURLParams(key, newValues);
   };
   
   const handleBrandChange = createToggleHandler(selectedBrands, 'brand', setSelectedBrands);
@@ -93,7 +106,7 @@ export default function ProductFilters({
     setSelectedCompositions([]);
     setSelectedInternalTags([]);
     setSearchQuery('');
-    router.replace(pathname, { scroll: false });
+    if(searchParams) router.replace(pathname, { scroll: false });
   };
 
   const filteredAndSortedProducts = useMemo(() => {
@@ -138,26 +151,17 @@ export default function ProductFilters({
     });
   }, [products, searchQuery, selectedBrands, selectedSizes, selectedCompositions, selectedInternalTags, sortOrder]);
   
-  const hasActiveSpecificFilters = useMemo(() => {
-    return selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || !!searchQuery;
-  }, [selectedBrands, selectedSizes, selectedCompositions, searchQuery]);
+  // Effect to call the onFilterChange callback when filters change
+  useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange(filteredAndSortedProducts);
+    }
+  }, [filteredAndSortedProducts, onFilterChange]);
 
 
-  const showCreatePackCard = useMemo(() => {
-      // If any specific filter (brand, size, composition, search) is active, hide the card.
-      if (hasActiveSpecificFilters) {
-        return false;
-      }
-
-      // If no category filters are selected, show the card.
-      if (selectedInternalTags.length === 0) {
-        return true;
-      }
-      
-      // If category filters are selected, show the card only if 'pack' or 'oferta' is among them.
-      return selectedInternalTags.includes('pack') || selectedInternalTags.includes('oferta');
-
-  }, [hasActiveSpecificFilters, selectedInternalTags]);
+  const hasActiveFilters = useMemo(() => {
+    return selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || selectedInternalTags.length > 0 || !!searchQuery;
+  }, [selectedBrands, selectedSizes, selectedCompositions, selectedInternalTags, searchQuery]);
   
   const FilterCheckboxGroup = ({ title, values, selectedValues, onValueChange, paramKey }: {
     title: string;
@@ -186,116 +190,128 @@ export default function ProductFilters({
       </AccordionItem>
     )
   );
+  
+  // If this is used outside a page context, render the grid directly
+  if (!onFilterChange) {
+      const showCreatePackCard = useMemo(() => {
+        const hasActiveSpecificFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || !!searchQuery;
+        if (hasActiveSpecificFilters) return false;
+        if (selectedInternalTags.length === 0) return true;
+        return selectedInternalTags.includes('pack') || selectedInternalTags.includes('oferta');
+    }, [selectedBrands, selectedSizes, selectedCompositions, searchQuery, selectedInternalTags]);
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <aside className="lg:col-span-1">
-        <Card>
-            <CardContent className="p-4 space-y-6">
-                <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">Búsqueda</h3>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                            type="search"
-                            placeholder="Buscar productos..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    const params = new URLSearchParams(currentParams.toString());
-                                    if(searchQuery) {
-                                        params.set('search', searchQuery);
-                                    } else {
-                                        params.delete('search');
-                                    }
-                                    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-                                }
-                            }}
-                            className="pl-9"
-                        />
-                    </div>
-                </div>
+     return (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <aside className="lg:col-span-1">
+                <Card>
+                    <CardContent className="p-4 space-y-6">
+                        {showSearch && <SearchFilter />}
+                        <Separator />
+                        <FiltersList />
+                    </CardContent>
+                </Card>
+            </aside>
+            <main className="lg:col-span-3">
+                <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={showCreatePackCard} />
+            </main>
+        </div>
+     );
+  }
 
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Filtros</h3>
-                    {(hasActiveSpecificFilters || selectedInternalTags.length > 0) && (
-                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
-                            <X className="mr-1 h-3 w-3" />
-                            Limpiar
-                        </Button>
-                    )}
-                </div>
-
-                <Accordion type="multiple" defaultValue={['sort', 'categories', 'brands', 'size', 'composition']} className="w-full">
-                    <AccordionItem value="sort">
-                        <AccordionTrigger className="text-base font-semibold">Ordenar por</AccordionTrigger>
-                        <AccordionContent>
-                             <Select value={sortOrder} onValueChange={setSortOrder}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar orden" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="name-asc">Nombre (A-Z)</SelectItem>
-                                    <SelectItem value="name-desc">Nombre (Z-A)</SelectItem>
-                                    <SelectItem value="price-asc">Precio (Menor a Mayor)</SelectItem>
-                                    <SelectItem value="price-desc">Precio (Mayor a Menor)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="categories">
-                        <AccordionTrigger className="text-base font-semibold">Categorías</AccordionTrigger>
-                        <AccordionContent>
-                             <div className="space-y-2">
-                                {Object.entries(internalTagMap).map(([tag, label]) => (
-                                    <div key={tag} className="flex items-center space-x-2">
-                                    <Checkbox 
-                                        id={`internal-${tag}`} 
-                                        checked={selectedInternalTags.includes(tag)}
-                                        onCheckedChange={() => handleInternalTagChange(tag)}
-                                    />
-                                    <Label htmlFor={`internal-${tag}`} className="font-normal cursor-pointer">{label}</Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-
-                    <FilterCheckboxGroup 
-                        title="Marcas"
-                        values={uniqueBrands}
-                        selectedValues={selectedBrands}
-                        onValueChange={handleBrandChange}
-                        paramKey="brand"
-                    />
-                    
-                    <FilterCheckboxGroup 
-                        title="Tamaño"
-                        values={uniqueSizes}
-                        selectedValues={selectedSizes}
-                        onValueChange={handleSizeChange}
-                        paramKey="size"
-                    />
-                    
-                    <FilterCheckboxGroup 
-                        title="Composición"
-                        values={uniqueCompositions}
-                        selectedValues={selectedCompositions}
-                        onValueChange={handleCompositionChange}
-                        paramKey="composition"
-                    />
-                </Accordion>
-            </CardContent>
-        </Card>
-      </aside>
-
-      <main className="lg:col-span-3">
-        <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={showCreatePackCard} />
-      </main>
+  // Common filter components
+  const SearchFilter = () => (
+    <div className="space-y-3">
+        <h3 className="text-lg font-semibold">Búsqueda</h3>
+        <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+                type="search"
+                placeholder="Buscar productos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchParams) {
+                        const params = new URLSearchParams(currentParams.toString());
+                        if(searchQuery) {
+                            params.set('search', searchQuery);
+                        } else {
+                            params.delete('search');
+                        }
+                        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+                    }
+                }}
+                className="pl-9"
+            />
+        </div>
     </div>
+  );
+
+  const FiltersList = () => (
+    <>
+        <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Filtros</h3>
+            {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                    <X className="mr-1 h-3 w-3" />
+                    Limpiar
+                </Button>
+            )}
+        </div>
+        <Accordion type="multiple" defaultValue={['sort', 'categories', 'brand', 'size', 'composition']} className="w-full">
+            {showSort && (
+                 <AccordionItem value="sort">
+                    <AccordionTrigger className="text-base font-semibold">Ordenar por</AccordionTrigger>
+                    <AccordionContent>
+                        <Select value={sortOrder} onValueChange={setSortOrder}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar orden" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="name-asc">Nombre (A-Z)</SelectItem>
+                                <SelectItem value="name-desc">Nombre (Z-A)</SelectItem>
+                                <SelectItem value="price-asc">Precio (Menor a Mayor)</SelectItem>
+                                <SelectItem value="price-desc">Precio (Mayor a Menor)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </AccordionContent>
+                </AccordionItem>
+            )}
+            
+            {showCategories && (
+                <AccordionItem value="categories">
+                    <AccordionTrigger className="text-base font-semibold">Categorías</AccordionTrigger>
+                    <AccordionContent>
+                        <div className="space-y-2">
+                            {Object.entries(internalTagMap).map(([tag, label]) => (
+                                <div key={tag} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={`internal-${tag}`} 
+                                    checked={selectedInternalTags.includes(tag)}
+                                    onCheckedChange={() => handleInternalTagChange(tag)}
+                                />
+                                <Label htmlFor={`internal-${tag}`} className="font-normal cursor-pointer">{label}</Label>
+                                </div>
+                            ))}
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            )}
+
+            <FilterCheckboxGroup title="Marcas" values={uniqueBrands} selectedValues={selectedBrands} onValueChange={handleBrandChange} paramKey="brand" />
+            <FilterCheckboxGroup title="Tamaño" values={uniqueSizes} selectedValues={selectedSizes} onValueChange={handleSizeChange} paramKey="size" />
+            <FilterCheckboxGroup title="Composición" values={uniqueCompositions} selectedValues={selectedCompositions} onValueChange={handleCompositionChange} paramKey="composition" />
+        </Accordion>
+    </>
+  )
+
+  // If used with a callback, render only the filter UI
+  return (
+    <Card>
+        <CardContent className="p-4 space-y-6">
+            {showSearch && <SearchFilter />}
+            {(showSearch && (showCategories || showSort || uniqueBrands.length > 0)) && <Separator />}
+            <FiltersList />
+        </CardContent>
+    </Card>
   );
 }

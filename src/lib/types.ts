@@ -21,9 +21,24 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
+export interface PackItem {
+    id: string;
+    price: number;
+    quantity: number;
+    size?: string;
+}
+
 // A simpler type for passing pack info to the server action
 export interface PackItemBrief {
     id: string;
     name: string;
     quantity: number;
+}
+
+export type PackCalculationInput = PackItem[];
+
+export interface PackCalculationOutput {
+  originalTotal: number;
+  discountedTotal: number;
+  savings: number;
 }

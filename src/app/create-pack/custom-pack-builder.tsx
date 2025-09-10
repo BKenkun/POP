@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Product } from '@/lib/types';
+import { Product, PackItem, PackCalculationInput, PackCalculationOutput } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,31 +13,29 @@ import { Plus, Minus, Package, Trash2, X, Loader2, CreditCard } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/product-card';
-import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
+import { calculatePackPrice } from '@/ai/flows/calculate-pack-price-flow';
 import { createCustomPackCheckoutAction } from '@/app/actions/checkout';
 import { useRouter } from 'next/navigation';
+import ProductFilters from '@/app/products/filters';
 
 interface CustomPackBuilderProps {
   products: Product[];
-}
-
-export interface PackItem {
-  id: string;
-  price: number;
-  quantity: number;
-  size?: string;
+  uniqueBrands: string[];
+  uniqueSizes: string[];
+  uniqueCompositions: string[];
 }
 
 const MAX_PACK_ITEMS = 18;
 const MAX_UNITS_PER_PRODUCT = 6;
 
-export default function CustomPackBuilder({ products }: CustomPackBuilderProps) {
+export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes, uniqueCompositions }: CustomPackBuilderProps) {
   const [packItems, setPackItems] = useState<PackItem[]>([]);
   const { toast } = useToast();
   const router = useRouter();
   const [priceDetails, setPriceDetails] = useState<PackCalculationOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
 
   const totalPackQuantity = packItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -60,13 +58,18 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
 
   useEffect(() => {
     const handler = setTimeout(() => {
-        updatePrice(packItems);
+        const packInput: PackCalculationInput = packItems.map(item => ({
+            id: item.id,
+            price: item.price,
+            quantity: item.quantity,
+            size: item.size
+        }));
+        updatePrice(packInput);
     }, 500); // Debounce API calls
     return () => clearTimeout(handler);
   }, [packItems, updatePrice]);
 
   const handleUpdateQuantity = (product: Product, newQuantity: number) => {
-    
     setPackItems((prev) => {
         let updatedPack: PackItem[];
         const existingItem = prev.find((item) => item.id === product.id);
@@ -103,7 +106,7 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                     item.id === product.id ? { ...item, quantity: newQuantity } : item
                 );
             } else {
-                const { name, imageUrl, imageHint, ...restOfProduct } = product;
+                 const { name, imageUrl, imageHint, description, longDescription, tags, internalTags, productDetails, stock, ...restOfProduct } = product;
                 updatedPack = [...prev, { ...restOfProduct, quantity: newQuantity }];
             }
         }
@@ -159,9 +162,22 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
         setIsRedirecting(false);
     }
   };
-
+  
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <aside className="lg:col-span-1 lg:sticky lg:top-24 h-fit">
+          <ProductFilters
+            products={products}
+            uniqueBrands={uniqueBrands}
+            uniqueSizes={uniqueSizes}
+            uniqueCompositions={uniqueCompositions}
+            onFilterChange={setFilteredProducts}
+            showSort={false}
+            showCategories={false}
+            showSearch={true}
+          />
+      </aside>
+
       <div className="lg:col-span-2">
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">1. Elige tus productos</h2>
@@ -170,9 +186,9 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                 <p className="text-sm text-muted-foreground">productos en tu pack</p>
             </div>
         </div>
-        <ScrollArea className="h-[60vh] pr-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {products.map((product) => {
+        <ScrollArea className="h-[70vh] pr-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+            {filteredProducts.map((product) => {
               const packItem = packItems.find((item) => item.id === product.id);
               const quantityInPack = packItem?.quantity || 0;
               const isAgotado = product.stock === 0;
@@ -289,7 +305,7 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                                     </div>
                                   </>  
                                 )}
-                                {priceDetails.savings <= 0 && (
+                                {priceDetails.savings <= 0 && priceDetails.originalTotal > 0 && (
                                      <div className="text-xs text-center text-muted-foreground pt-2">
                                         Añade productos hasta superar 70€ para desbloquear descuentos.
                                     </div>

@@ -2,6 +2,7 @@
 import { getStripeProducts } from '@/lib/stripe';
 import { Product } from '@/lib/types';
 import ProductFilters from './filters';
+import { getUniqueValues } from '@/lib/utils';
 
 export const metadata = {
     title: 'Todos los Productos | Popper España',
@@ -18,22 +19,9 @@ export default async function ProductsPage({
     const products: Product[] = await getStripeProducts();
     
     // Extract unique values for filtering
-    const getUniqueValues = (key: keyof Product) => {
-        const allValues = new Set<string>();
-        products.forEach(p => {
-            const value = p[key];
-            if (typeof value === 'string' && value) {
-                allValues.add(value);
-            } else if (Array.isArray(value)) {
-                value.forEach(v => allValues.add(v));
-            }
-        });
-        return Array.from(allValues).sort();
-    };
-
-    const uniqueBrands = getUniqueValues('brand');
-    const uniqueSizes = getUniqueValues('size');
-    const uniqueCompositions = getUniqueValues('composition');
+    const uniqueBrands = getUniqueValues(products, 'brand');
+    const uniqueSizes = getUniqueValues(products, 'size');
+    const uniqueCompositions = getUniqueValues(products, 'composition');
 
     return (
         <div>
