@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product-card';
-import { calculatePackPrice } from '@/ai/flows/calculate-pack-price-flow';
+import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
 
 interface CustomPackBuilderProps {
   products: Product[];
@@ -29,17 +29,18 @@ export interface PackItem {
 }
 
 const MAX_PACK_ITEMS = 18;
+const MAX_UNITS_PER_PRODUCT = 6;
 
 export default function CustomPackBuilder({ products }: CustomPackBuilderProps) {
   const [packItems, setPackItems] = useState<PackItem[]>([]);
   const { addCustomPackToCart } = useCart();
   const { toast } = useToast();
-  const [priceDetails, setPriceDetails] = useState<{ originalTotal: number, discountedTotal: number, savings: number } | null>(null);
+  const [priceDetails, setPriceDetails] = useState<PackCalculationOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
   const totalPackQuantity = packItems.reduce((total, item) => total + item.quantity, 0);
 
-  const updatePrice = useCallback(async (currentPack: PackItem[]) => {
+  const updatePrice = useCallback(async (currentPack: PackCalculationInput) => {
       if (currentPack.length === 0) {
           setPriceDetails(null);
           return;
@@ -72,6 +73,11 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
         if (newQuantity <= 0) {
             updatedPack = prev.filter((item) => item.id !== product.id);
         } else {
+             if (newQuantity > MAX_UNITS_PER_PRODUCT) {
+                toast({ title: 'Límite por producto', description: `No puedes añadir más de ${MAX_UNITS_PER_PRODUCT} unidades del mismo producto.`, variant: 'destructive'});
+                return prev;
+            }
+
             const isAgotado = product.stock === 0;
             if(isAgotado) {
                 toast({ title: "Producto Agotado", description: `${product.name} no está disponible actualmente.`, variant: "destructive" });
@@ -238,16 +244,27 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                             <>
                                 <div className="flex justify-between text-muted-foreground">
                                     <span>Precio Original:</span>
-                                    <span className="line-through">{formatPrice(priceDetails.originalTotal)}</span>
+                                    <span className={priceDetails.savings > 0 ? 'line-through' : ''}>
+                                        {formatPrice(priceDetails.originalTotal)}
+                                    </span>
                                 </div>
-                                <div className="flex justify-between text-destructive font-bold">
-                                    <span>Tu Ahorro:</span>
-                                    <span>-{formatPrice(priceDetails.savings)}</span>
-                                </div>
-                                <div className="flex justify-between font-bold text-lg text-primary">
-                                    <span>Total del Pack:</span>
-                                    <span>{formatPrice(priceDetails.discountedTotal)}</span>
-                                </div>
+                                {priceDetails.savings > 0 && (
+                                  <>
+                                    <div className="flex justify-between text-destructive font-bold">
+                                        <span>Tu Ahorro:</span>
+                                        <span>-{formatPrice(priceDetails.savings)}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-lg text-primary">
+                                        <span>Total del Pack:</span>
+                                        <span>{formatPrice(priceDetails.discountedTotal)}</span>
+                                    </div>
+                                  </>  
+                                )}
+                                {priceDetails.savings <= 0 && (
+                                     <div className="text-xs text-center text-muted-foreground pt-2">
+                                        Añade productos hasta superar 70€ para desbloquear descuentos.
+                                    </div>
+                                )}
                             </>
                         )}
                         <Button size="lg" onClick={handleAddToCart} disabled={isCalculating || !priceDetails}>

@@ -33,6 +33,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
+      // Disallow adding regular items if a custom pack is already in the cart.
+      if (prevItems.some(item => item.id === 'custom-pack')) {
+          toast({
+              title: "No se pueden añadir más productos",
+              description: "Los packs personalizados deben comprarse por separado. Finaliza tu compra o elimina el pack del carrito para añadir otros productos.",
+              variant: "destructive",
+          });
+          return prevItems;
+      }
+
       const existingItem = prevItems.find(item => item.id === product.id);
       
       const newQuantity = existingItem ? existingItem.quantity + quantity : quantity;

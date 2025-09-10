@@ -18,11 +18,11 @@ const PackItemSchema = z.object({
   size: z.string().optional(),
 });
 
-const PackCalculationInputSchema = z.array(PackItemSchema);
-type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
+export const PackCalculationInputSchema = z.array(PackItemSchema);
+export type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
 
 
-const PackCalculationOutputSchema = z.object({
+export const PackCalculationOutputSchema = z.object({
   originalTotal: z.number(),
   discountedTotal: z.number(),
   savings: z.number(),
@@ -43,35 +43,44 @@ const calculatePackPriceFlow = ai.defineFlow(
   },
   async (items) => {
     let originalTotal = 0;
-    let totalDiscount = 0;
+    let discountedTotal = 0;
+    const MINIMUM_FOR_DISCOUNT = 7000; // 70 euros in cents
 
     items.forEach(item => {
       originalTotal += item.price * item.quantity;
-      const priceInEuros = item.price / 100;
-      let discountPerUnit = 0;
-
-      if (priceInEuros >= 4 && priceInEuros <= 6) {
-        discountPerUnit = 100; // 1 euro in cents
-      } else if (priceInEuros >= 7 && priceInEuros <= 8) {
-        discountPerUnit = 150; // 1.5 euros in cents
-      } else if (priceInEuros >= 9 && priceInEuros <= 11) {
-        discountPerUnit = 200; // 2 euros in cents
-      } else if (priceInEuros >= 12 && priceInEuros <= 15) {
-        discountPerUnit = 300; // 3 euros in cents
-      } else if (priceInEuros > 15) {
-        discountPerUnit = 400; // 4 euros in cents
-      }
-      
-      totalDiscount += discountPerUnit * item.quantity;
     });
 
-    const discountedTotal = Math.max(0, originalTotal - totalDiscount);
+    if (originalTotal >= MINIMUM_FOR_DISCOUNT) {
+        items.forEach(item => {
+            const priceInEuros = item.price / 100;
+            let discountPercent = 0;
+
+            if (priceInEuros >= 4 && priceInEuros <= 6) {
+                discountPercent = 0.02; // 2%
+            } else if (priceInEuros >= 7 && priceInEuros <= 8) {
+                discountPercent = 0.05; // 5%
+            } else if (priceInEuros >= 9 && priceInEuros <= 11) {
+                discountPercent = 0.06; // 6%
+            } else if (priceInEuros >= 12 && priceInEuros <= 15) {
+                discountPercent = 0.07; // 7%
+            } else if (priceInEuros > 15) {
+                discountPercent = 0.09; // 9%
+            }
+            
+            const discountedItemPrice = item.price * (1 - discountPercent);
+            discountedTotal += discountedItemPrice * item.quantity;
+        });
+    } else {
+        // If total is less than 70€, no discount is applied.
+        discountedTotal = originalTotal;
+    }
+    
     const savings = originalTotal - discountedTotal;
 
     return {
       originalTotal,
-      discountedTotal,
-      savings,
+      discountedTotal: Math.round(discountedTotal),
+      savings: Math.round(savings),
     };
   }
 );
