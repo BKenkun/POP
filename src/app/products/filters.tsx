@@ -190,33 +190,6 @@ export default function ProductFilters({
       </AccordionItem>
     )
   );
-  
-  // If this is used outside a page context, render the grid directly
-  if (!onFilterChange) {
-      const showCreatePackCard = useMemo(() => {
-        const hasActiveSpecificFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || !!searchQuery;
-        if (hasActiveSpecificFilters) return false;
-        if (selectedInternalTags.length === 0) return true;
-        return selectedInternalTags.includes('pack') || selectedInternalTags.includes('oferta');
-    }, [selectedBrands, selectedSizes, selectedCompositions, searchQuery, selectedInternalTags]);
-
-     return (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <aside className="lg:col-span-1">
-                <Card>
-                    <CardContent className="p-4 space-y-6">
-                        {showSearch && <SearchFilter />}
-                        <Separator />
-                        <FiltersList />
-                    </CardContent>
-                </Card>
-            </aside>
-            <main className="lg:col-span-3">
-                <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={showCreatePackCard} />
-            </main>
-        </div>
-     );
-  }
 
   // Common filter components
   const SearchFilter = () => (
@@ -302,7 +275,34 @@ export default function ProductFilters({
             <FilterCheckboxGroup title="Composición" values={uniqueCompositions} selectedValues={selectedCompositions} onValueChange={handleCompositionChange} paramKey="composition" />
         </Accordion>
     </>
-  )
+  );
+
+  // If this is used outside a page context, render the grid directly
+  if (!onFilterChange) {
+      const showCreatePackCard = useMemo(() => {
+        const hasActiveSpecificFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || !!searchQuery;
+        if (hasActiveSpecificFilters) return false;
+        if (selectedInternalTags.length === 0) return true;
+        return selectedInternalTags.includes('pack') || selectedInternalTags.includes('oferta');
+    }, [selectedBrands, selectedSizes, selectedCompositions, searchQuery, selectedInternalTags]);
+
+     return (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <aside className="lg:col-span-1">
+                <Card>
+                    <CardContent className="p-4 space-y-6">
+                        {showSearch && <SearchFilter />}
+                        <Separator />
+                        <FiltersList />
+                    </CardContent>
+                </Card>
+            </aside>
+            <main className="lg:col-span-3">
+                <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={showCreatePackCard} />
+            </main>
+        </div>
+     );
+  }
 
   // If used with a callback, render only the filter UI
   return (
