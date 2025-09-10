@@ -19,7 +19,7 @@ export function CreatePackCard() {
             </CardHeader>
             <CardContent className="flex-grow p-5 space-y-2 text-center">
                 <CardTitle className="text-xl font-bold leading-snug tracking-normal text-primary transition-colors">
-                    Crea tu Propio Pack
+                    Crea tu Propio Pack de Poppers
                 </CardTitle>
                 <CardDescription className="text-foreground/70">
                     Elige tus productos favoritos y obtén un descuento especial. ¡A tu gusto!
