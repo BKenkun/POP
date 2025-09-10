@@ -18,11 +18,11 @@ const PackItemSchema = z.object({
   size: z.string().optional(),
 });
 
-export const PackCalculationInputSchema = z.array(PackItemSchema);
+const PackCalculationInputSchema = z.array(PackItemSchema);
 export type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
 
 
-export const PackCalculationOutputSchema = z.object({
+const PackCalculationOutputSchema = z.object({
   originalTotal: z.number(),
   discountedTotal: z.number(),
   savings: z.number(),
