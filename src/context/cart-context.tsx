@@ -5,17 +5,9 @@ import type { CartItem, Product } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
-export interface PackItem {
-  id: string;
-  price: number;
-  quantity: number;
-  size?: string;
-}
-
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
-  addCustomPackToCart: (packItems: PackItem[], discountedPrice: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -33,16 +25,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
-      // Disallow adding regular items if a custom pack is already in the cart.
-      if (prevItems.some(item => item.id === 'custom-pack')) {
-          toast({
-              title: "No se pueden añadir más productos",
-              description: "Los packs personalizados deben comprarse por separado. Finaliza tu compra o elimina el pack del carrito para añadir otros productos.",
-              variant: "destructive",
-          });
-          return prevItems;
-      }
-
       const existingItem = prevItems.find(item => item.id === product.id);
       
       const newQuantity = existingItem ? existingItem.quantity + quantity : quantity;
@@ -70,36 +52,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addCustomPackToCart = (packItems: PackItem[], discountedPrice: number) => {
-      const totalQuantity = packItems.reduce((sum, item) => sum + item.quantity, 0);
-      const packDescription = packItems.map(item => `${item.quantity}x ${item.id}`).join(', '); // Simple description for now
-      
-      const customPackItem: CartItem = {
-          id: 'custom-pack',
-          name: `Pack Personalizado (${totalQuantity} uds)`,
-          description: packDescription,
-          price: discountedPrice,
-          imageUrl: 'https://picsum.photos/seed/pack/400/400',
-          imageHint: 'custom pack',
-          quantity: 1 // A pack is a single item in the cart
-      };
-
-      setCartItems(prevItems => {
-          // A custom pack cannot be added with other items.
-          const hasRegularItems = prevItems.some(item => item.id !== 'custom-pack');
-          if (hasRegularItems) {
-            toast({
-                title: "No se puede combinar el pack",
-                description: "Los packs personalizados deben comprarse por separado. Por favor, vacía tu carrito o finaliza la compra actual primero.",
-                variant: "destructive",
-            });
-            return prevItems;
-          }
-          const otherItems = prevItems.filter(item => item.id !== 'custom-pack');
-          return [...otherItems, customPackItem];
-      });
-  };
-
   const removeFromCart = (productId: string) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
     toast({
@@ -109,13 +61,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-     if (productId === 'custom-pack') {
-        if (quantity <= 0) {
-            removeFromCart(productId);
-        }
-        return;
-    }
-
     if (quantity <= 0) {
       removeFromCart(productId);
     } else {
@@ -146,11 +91,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const cartTotal = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
 
   const { volumeDiscount, totalWithDiscount } = useMemo(() => {
-    // Volume discounts do not apply to custom packs
-    if (cartItems.some(item => item.id === 'custom-pack')) {
-        return { volumeDiscount: 0, totalWithDiscount: cartTotal };
-    }
-
     let discountPercent = 0;
     if (cartCount >= 144) {
       discountPercent = 0.33;
@@ -172,13 +112,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const finalTotal = cartTotal - discountAmount;
     
     return { volumeDiscount: discountAmount, totalWithDiscount: finalTotal };
-  }, [cartItems, cartCount, cartTotal]);
+  }, [cartCount, cartTotal]);
 
 
   const value = {
     cartItems,
     addToCart,
-    addCustomPackToCart,
     removeFromCart,
     updateQuantity,
     clearCart,

@@ -7,15 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
-import { Plus, Minus, Package, ShoppingCart, Trash2, X, Loader2 } from 'lucide-react';
+import { Plus, Minus, Package, Trash2, X, Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product-card';
 import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
+import { createCustomPackCheckoutAction } from '@/app/actions/checkout';
+import { useRouter } from 'next/navigation';
 
 interface CustomPackBuilderProps {
   products: Product[];
@@ -33,10 +33,11 @@ const MAX_UNITS_PER_PRODUCT = 6;
 
 export default function CustomPackBuilder({ products }: CustomPackBuilderProps) {
   const [packItems, setPackItems] = useState<PackItem[]>([]);
-  const { addCustomPackToCart } = useCart();
   const { toast } = useToast();
+  const router = useRouter();
   const [priceDetails, setPriceDetails] = useState<PackCalculationOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const totalPackQuantity = packItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -110,7 +111,7 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
     });
   };
   
-  const handleAddToCart = () => {
+  const handleCheckout = async () => {
     if (packItems.length === 0 || !priceDetails || priceDetails.discountedTotal === 0) {
       toast({
         title: 'Pack vacío',
@@ -120,15 +121,43 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
       return;
     }
 
-    addCustomPackToCart(packItems, priceDetails.discountedTotal);
-
+    setIsRedirecting(true);
     toast({
-      title: '¡Pack añadido al carrito!',
-      description: 'Hemos añadido tu pack personalizado al carrito de compra.',
+        title: 'Redirigiendo al pago...',
+        description: 'Por favor, espera mientras preparamos tu compra segura.',
     });
 
-    setPackItems([]);
-    setPriceDetails(null);
+    try {
+        const packItemsForAction = packItems.map(item => {
+            const productInfo = products.find(p => p.id === item.id);
+            return {
+                id: item.id,
+                name: productInfo?.name || 'Unknown Product',
+                quantity: item.quantity,
+            };
+        });
+
+        const { sessionUrl, error } = await createCustomPackCheckoutAction(
+            packItemsForAction,
+            priceDetails.discountedTotal
+        );
+
+        if (error || !sessionUrl) {
+            throw new Error(error || 'No se pudo crear la sesión de pago.');
+        }
+        
+        // Redirect to Stripe checkout
+        router.push(sessionUrl);
+
+    } catch (error: any) {
+        console.error("Checkout Error:", error);
+        toast({
+            title: 'Error en el Pago',
+            description: error.message || 'Ocurrió un error. Por favor, inténtalo de nuevo.',
+            variant: 'destructive',
+        });
+        setIsRedirecting(false);
+    }
   };
 
   return (
@@ -233,14 +262,14 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                             <span>{totalPackQuantity} / {MAX_PACK_ITEMS}</span>
                         </div>
                         
-                        {isCalculating && (
+                        {(isCalculating || isRedirecting) && (
                              <div className="flex items-center justify-center gap-2 text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Calculando descuento...</span>
+                                <span>{isRedirecting ? 'Procesando pago...' : 'Calculando descuento...'}</span>
                             </div>
                         )}
 
-                        {priceDetails && !isCalculating && (
+                        {priceDetails && !isCalculating && !isRedirecting && (
                             <>
                                 <div className="flex justify-between text-muted-foreground">
                                     <span>Precio Original:</span>
@@ -267,9 +296,9 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                                 )}
                             </>
                         )}
-                        <Button size="lg" onClick={handleAddToCart} disabled={isCalculating || !priceDetails}>
-                            <ShoppingCart className="mr-2" />
-                            Añadir Pack al Carrito
+                        <Button size="lg" onClick={handleCheckout} disabled={isCalculating || !priceDetails || isRedirecting}>
+                            <CreditCard className="mr-2" />
+                            {isRedirecting ? 'Redirigiendo...' : 'Comprar Pack Ahora'}
                         </Button>
                     </CardFooter>
                 </>
