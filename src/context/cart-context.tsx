@@ -4,10 +4,12 @@
 import type { CartItem, Product } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import type { PackItem } from '@/ai/flows/calculate-pack-price-flow';
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
+  addCustomPackToCart: (packItems: PackItem[], discountedPrice: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -50,6 +52,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const addCustomPackToCart = (packItems: PackItem[], discountedPrice: number) => {
+      const packDescription = packItems.map(item => `${item.quantity}x ${item.id}`).join(', '); // Simple description for now
+      
+      const customPackItem: CartItem = {
+          id: 'custom-pack',
+          name: 'Pack Personalizado',
+          description: packDescription,
+          price: discountedPrice,
+          imageUrl: 'https://picsum.photos/seed/pack/400/400',
+          imageHint: 'custom pack',
+          quantity: 1
+      };
+
+      setCartItems(prevItems => {
+          const otherItems = prevItems.filter(item => item.id !== 'custom-pack');
+          return [...otherItems, customPackItem];
+      });
+  };
+
   const removeFromCart = (productId: string) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
     toast({
@@ -59,6 +80,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+     if (productId === 'custom-pack') {
+        // Custom packs can only be removed, not have their quantity updated.
+        if (quantity <= 0) {
+            removeFromCart(productId);
+        }
+        return;
+    }
+
     if (quantity <= 0) {
       removeFromCart(productId);
     } else {
@@ -92,6 +121,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     cartItems,
     addToCart,
+    addCustomPackToCart,
     removeFromCart,
     updateQuantity,
     clearCart,

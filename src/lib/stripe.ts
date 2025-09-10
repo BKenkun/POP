@@ -149,3 +149,49 @@ export async function createCheckoutSession(
     return { sessionId: null, sessionUrl: null, error: error.message };
   }
 }
+
+export async function createPackCheckoutSession(
+  pack: CartItem
+): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
+  try {
+    const stripe = getStripeInstance();
+    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+            {
+                price_data: {
+                    currency: 'eur',
+                    product_data: {
+                        name: pack.name,
+                        images: [pack.imageUrl],
+                        description: `Contenido del pack: ${pack.description || 'Varios productos'}`
+                    },
+                    unit_amount: pack.price, // The dynamically calculated price
+                },
+                quantity: 1,
+            },
+        ],
+        mode: 'payment',
+        success_url: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${YOUR_DOMAIN}/create-pack`, // Go back to pack builder on cancel
+        billing_address_collection: 'required',
+        shipping_address_collection: {
+            allowed_countries: ['ES'],
+        },
+        // We don't update stock here as it's complex. 
+        // This would require parsing the description or adding more metadata.
+    });
+
+     if (!session.url) {
+      return { sessionId: null, sessionUrl: null, error: 'Could not create checkout session URL.' };
+    }
+    
+    return { sessionId: session.id, sessionUrl: session.url };
+
+  } catch (error: any) {
+    console.error('Error creating Stripe pack checkout session:', error);
+    return { sessionId: null, sessionUrl: null, error: error.message };
+  }
+}
