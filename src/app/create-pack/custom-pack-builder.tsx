@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState }from 'react';
 import { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,39 +10,80 @@ import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
-import { PlusCircle, MinusCircle, Package, ShoppingCart, X, Trash2 } from 'lucide-react';
+import { Plus, Minus, Package, ShoppingCart, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { ProductCard } from '@/components/product-card';
 
 interface CustomPackBuilderProps {
   products: Product[];
 }
 
+interface PackItem extends Product {
+  quantity: number;
+}
+
+const MAX_PACK_ITEMS = 18;
+
 export default function CustomPackBuilder({ products }: CustomPackBuilderProps) {
-  const [packItems, setPackItems] = useState<Product[]>([]);
+  const [packItems, setPackItems] = useState<PackItem[]>([]);
   const { addToCart } = useCart();
   const { toast } = useToast();
 
-  const handleToggleItem = (product: Product) => {
-    setPackItems((prevItems) => {
-      const isAgotado = product.stock === 0;
-      if(isAgotado) {
+  const totalPackQuantity = packItems.reduce((total, item) => total + item.quantity, 0);
+  const packTotal = packItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  const handleUpdateQuantity = (product: Product, newQuantity: number) => {
+    
+    if (newQuantity <= 0) {
+      setPackItems((prev) => prev.filter((item) => item.id !== product.id));
+      return;
+    }
+    
+    const isAgotado = product.stock === 0;
+    if(isAgotado) {
         toast({
             title: "Producto Agotado",
             description: `${product.name} no está disponible actualmente.`,
             variant: "destructive"
         });
-        return prevItems;
-      }
-      const existing = prevItems.find((item) => item.id === product.id);
-      if (existing) {
-        return prevItems.filter((item) => item.id !== product.id);
+        return;
+    }
+
+    if (product.stock && newQuantity > product.stock) {
+        toast({
+            title: 'Stock insuficiente',
+            description: `Solo quedan ${product.stock} unidades de ${product.name}.`,
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    const currentQuantityInPack = packItems.find(item => item.id === product.id)?.quantity || 0;
+    const quantityDifference = newQuantity - currentQuantityInPack;
+    
+    if (totalPackQuantity + quantityDifference > MAX_PACK_ITEMS) {
+         toast({
+            title: 'Límite del pack alcanzado',
+            description: `No puedes añadir más de ${MAX_PACK_ITEMS} productos a tu pack.`,
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    setPackItems((prev) => {
+      const existingItem = prev.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: newQuantity } : item
+        );
       } else {
-        return [...prevItems, product];
+        return [...prev, { ...product, quantity: newQuantity }];
       }
     });
   };
-
+  
   const handleAddToCart = () => {
     if (packItems.length === 0) {
       toast({
@@ -54,7 +95,7 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
     }
 
     packItems.forEach((item) => {
-      addToCart(item);
+      addToCart(item, item.quantity);
     });
 
     toast({
@@ -65,65 +106,51 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
     setPackItems([]);
   };
 
-  const packTotal = packItems.reduce((total, item) => total + item.price, 0);
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2">
-        <h2 className="text-2xl font-bold mb-4">1. Elige tus productos</h2>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">1. Elige tus productos</h2>
+            <div className="text-right">
+                <p className="font-bold text-lg">{totalPackQuantity} / {MAX_PACK_ITEMS}</p>
+                <p className="text-sm text-muted-foreground">productos en tu pack</p>
+            </div>
+        </div>
         <ScrollArea className="h-[60vh] pr-4">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {products.map((product) => {
-              const isSelected = packItems.some((item) => item.id === product.id);
+              const packItem = packItems.find((item) => item.id === product.id);
+              const quantityInPack = packItem?.quantity || 0;
               const isAgotado = product.stock === 0;
+
               return (
-                <Card
-                  key={product.id}
-                  onClick={() => handleToggleItem(product)}
-                  className={cn(
-                    'cursor-pointer transition-all border-2',
-                    isSelected ? 'border-primary shadow-lg' : 'border-border/60 hover:shadow-md',
-                    isAgotado && 'opacity-50 cursor-not-allowed bg-muted/30'
-                  )}
+                <ProductCard 
+                    key={product.id} 
+                    product={product}
+                    className={cn(quantityInPack > 0 && 'border-primary border-2 shadow-lg')}
                 >
-                  <div className="relative">
-                    <div className="relative h-48 w-full">
-                       <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-4"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        data-ai-hint={product.imageHint}
-                      />
+                    <div className="p-4 pt-0">
+                         {isAgotado ? (
+                             <Button disabled className="w-full">
+                                <X className="mr-2"/> Agotado
+                             </Button>
+                         ) : quantityInPack > 0 ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <Button size="icon" variant="outline" onClick={() => handleUpdateQuantity(product, quantityInPack - 1)}>
+                                    <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="text-xl font-bold w-12 text-center">{quantityInPack}</span>
+                                <Button size="icon" variant="outline" onClick={() => handleUpdateQuantity(product, quantityInPack + 1)}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button className="w-full" variant="outline" onClick={() => handleUpdateQuantity(product, 1)}>
+                                <Plus className="mr-2"/>Añadir
+                            </Button>
+                        )}
                     </div>
-                     <div
-                      className={cn(
-                        'absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full border-2',
-                        isSelected
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-muted-foreground/50 bg-background'
-                      )}
-                    >
-                      {isSelected ? (
-                        <MinusCircle className="h-4 w-4" />
-                      ) : (
-                        <PlusCircle className="h-4 w-4" />
-                      )}
-                    </div>
-                     {isAgotado && (
-                        <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
-                            <span className="font-bold text-destructive">AGOTADO</span>
-                        </div>
-                    )}
-                  </div>
-                  <CardHeader>
-                    <CardTitle className="text-base font-medium leading-tight">{product.name}</CardTitle>
-                  </CardHeader>
-                  <CardFooter>
-                    <p className="text-lg font-bold text-primary">{formatPrice(product.price)}</p>
-                  </CardFooter>
-                </Card>
+                </ProductCard>
               );
             })}
           </div>
@@ -154,9 +181,11 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm font-medium">{item.name}</p>
-                                        <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {item.quantity} x {formatPrice(item.price)}
+                                        </p>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => handleToggleItem(item)}>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => handleUpdateQuantity(item, 0)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -169,6 +198,10 @@ export default function CustomPackBuilder({ products }: CustomPackBuilderProps) 
                 <>
                     <Separator />
                     <CardFooter className="flex-col items-stretch gap-4 pt-6">
+                         <div className="flex justify-between font-bold">
+                            <span>Unidades Totales:</span>
+                            <span>{totalPackQuantity} / {MAX_PACK_ITEMS}</span>
+                        </div>
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total del Pack:</span>
                             <span>{formatPrice(packTotal)}</span>

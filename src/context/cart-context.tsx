@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { CartItem, Product } from '@/lib/types';
@@ -6,7 +7,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo } from '
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -20,28 +21,32 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
-      if (existingItem) {
-        // Check if adding another item exceeds stock
-        if (product.stock !== undefined && existingItem.quantity >= product.stock) {
+      
+      const newQuantity = existingItem ? existingItem.quantity + quantity : quantity;
+
+      if (product.stock !== undefined && newQuantity > product.stock) {
           toast({
             title: "Stock limit reached",
-            description: `You cannot add more of ${product.name}.`,
+            description: `Cannot add ${quantity} more of ${product.name}. Only ${product.stock - (existingItem?.quantity || 0)} left.`,
             variant: "destructive"
           });
           return prevItems;
-        }
+      }
+      
+      if (existingItem) {
         return prevItems.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: newQuantity } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prevItems, { ...product, quantity: quantity }];
     });
+
     toast({
       title: "Added to cart",
-      description: `${product.name} is now in your cart.`,
+      description: `${quantity} x ${product.name} added to your cart.`,
     });
   };
 
