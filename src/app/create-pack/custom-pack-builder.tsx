@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Product, PackItem, PackCalculationInput, PackCalculationOutput } from '@/lib/types';
+import { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,10 +13,17 @@ import { Plus, Minus, Package, Trash2, X, Loader2, CreditCard } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/product-card';
-import { calculatePackPrice } from '@/ai/flows/calculate-pack-price-flow';
+import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
 import { createCustomPackCheckoutAction } from '@/app/actions/checkout';
 import { useRouter } from 'next/navigation';
 import ProductFilters from '@/app/products/filters';
+
+interface PackItem {
+    id: string;
+    price: number;
+    quantity: number;
+    size?: string;
+}
 
 interface CustomPackBuilderProps {
   products: Product[];
