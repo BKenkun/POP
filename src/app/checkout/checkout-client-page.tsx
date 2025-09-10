@@ -14,14 +14,14 @@ import { useRouter } from 'next/navigation';
 import { createCheckoutSessionAction } from '@/app/actions/checkout';
 
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount } = useCart();
+  const { cartItems, cartTotal, cartCount, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
-  const taxAmount = cartTotal * 0.08; // 8% tax
-  const total = cartTotal + shippingCost + taxAmount;
+  const taxAmount = totalWithDiscount * 0.08; // 8% tax on the discounted total
+  const finalTotal = totalWithDiscount + shippingCost + taxAmount;
   
   useEffect(() => {
     // Redirect to home if cart is empty on page load
@@ -132,6 +132,12 @@ export default function CheckoutClientPage() {
                 <span>Subtotal</span>
                 <span>{formatPrice(cartTotal)}</span>
               </div>
+              {volumeDiscount > 0 && (
+                 <div className="flex justify-between text-destructive">
+                    <span>Descuento por volumen</span>
+                    <span>-{formatPrice(volumeDiscount)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Shipping</span>
                  <span>{shippingCost === 0 ? 'Free' : formatPrice(shippingCost)}</span>
@@ -143,7 +149,7 @@ export default function CheckoutClientPage() {
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span>{formatPrice(total)}</span>
+                <span>{formatPrice(finalTotal)}</span>
               </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch gap-4">

@@ -21,6 +21,8 @@ interface CartContextType {
   clearCart: () => void;
   cartCount: number;
   cartTotal: number;
+  volumeDiscount: number;
+  totalWithDiscount: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -59,19 +61,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addCustomPackToCart = (packItems: PackItem[], discountedPrice: number) => {
+      const totalQuantity = packItems.reduce((sum, item) => sum + item.quantity, 0);
       const packDescription = packItems.map(item => `${item.quantity}x ${item.id}`).join(', '); // Simple description for now
       
       const customPackItem: CartItem = {
           id: 'custom-pack',
-          name: 'Pack Personalizado',
+          name: `Pack Personalizado (${totalQuantity} uds)`,
           description: packDescription,
           price: discountedPrice,
           imageUrl: 'https://picsum.photos/seed/pack/400/400',
           imageHint: 'custom pack',
-          quantity: 1
+          quantity: 1 // A pack is a single item in the cart
       };
 
       setCartItems(prevItems => {
+          // A custom pack cannot be added with other items.
+          const hasRegularItems = prevItems.some(item => item.id !== 'custom-pack');
+          if (hasRegularItems) {
+            toast({
+                title: "No se puede combinar el pack",
+                description: "Los packs personalizados deben comprarse por separado. Por favor, vacía tu carrito o finaliza la compra actual primero.",
+                variant: "destructive",
+            });
+            return prevItems;
+          }
           const otherItems = prevItems.filter(item => item.id !== 'custom-pack');
           return [...otherItems, customPackItem];
       });
@@ -87,7 +100,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const updateQuantity = (productId: string, quantity: number) => {
      if (productId === 'custom-pack') {
-        // Custom packs can only be removed, not have their quantity updated.
         if (quantity <= 0) {
             removeFromCart(productId);
         }
@@ -100,7 +112,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setCartItems(prevItems =>
         prevItems.map(item => {
           if (item.id === productId) {
-             // Check against stock when updating quantity
             if (item.stock !== undefined && quantity > item.stock) {
                 toast({
                     title: "Stock limit reached",
@@ -124,6 +135,36 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const cartCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const cartTotal = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
 
+  const { volumeDiscount, totalWithDiscount } = useMemo(() => {
+    // Volume discounts do not apply to custom packs
+    if (cartItems.some(item => item.id === 'custom-pack')) {
+        return { volumeDiscount: 0, totalWithDiscount: cartTotal };
+    }
+
+    let discountPercent = 0;
+    if (cartCount >= 144) {
+      discountPercent = 0.33;
+    } else if (cartCount >= 72) {
+      discountPercent = 0.28;
+    } else if (cartCount >= 36) {
+      discountPercent = 0.21;
+    } else if (cartCount >= 18) {
+      discountPercent = 0.18;
+    } else if (cartCount >= 12) {
+      discountPercent = 0.12;
+    } else if (cartCount >= 6) {
+      discountPercent = 0.06;
+    } else if (cartCount >= 3) {
+      discountPercent = 0.03;
+    }
+
+    const discountAmount = cartTotal * discountPercent;
+    const finalTotal = cartTotal - discountAmount;
+    
+    return { volumeDiscount: discountAmount, totalWithDiscount: finalTotal };
+  }, [cartItems, cartCount, cartTotal]);
+
+
   const value = {
     cartItems,
     addToCart,
@@ -132,7 +173,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     updateQuantity,
     clearCart,
     cartCount,
-    cartTotal
+    cartTotal,
+    volumeDiscount,
+    totalWithDiscount,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

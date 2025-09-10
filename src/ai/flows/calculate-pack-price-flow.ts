@@ -11,7 +11,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Input Schema: A list of items with id, price, quantity, and size.
 const PackItemSchema = z.object({
   id: z.string(),
   price: z.number(), // Price in cents
@@ -23,7 +22,6 @@ const PackCalculationInputSchema = z.array(PackItemSchema);
 type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
 
 
-// Output Schema: The original total, the discounted total, and the savings.
 const PackCalculationOutputSchema = z.object({
   originalTotal: z.number(),
   discountedTotal: z.number(),
@@ -32,7 +30,6 @@ const PackCalculationOutputSchema = z.object({
 export type PackCalculationOutput = z.infer<typeof PackCalculationOutputSchema>;
 
 
-// Exported function to be called from the client component.
 export async function calculatePackPrice(input: PackCalculationInput): Promise<PackCalculationOutput> {
   return calculatePackPriceFlow(input);
 }
@@ -46,36 +43,29 @@ const calculatePackPriceFlow = ai.defineFlow(
   },
   async (items) => {
     let originalTotal = 0;
-    let weightedDiscountSum = 0;
-    let totalQuantity = 0;
-
-    const sizeDiscounts: { [key: string]: number } = {
-      '10ml': 0.18, // 18% discount for 10ml
-      '15ml': 0.12, // 12% discount for 15ml
-      '25ml': 0.08, // 8% discount for 25ml
-    };
+    let totalDiscount = 0;
 
     items.forEach(item => {
-      const itemTotal = item.price * item.quantity;
-      originalTotal += itemTotal;
-      totalQuantity += item.quantity;
+      originalTotal += item.price * item.quantity;
+      const priceInEuros = item.price / 100;
+      let discountPerUnit = 0;
 
-      const sizeKey = item.size || '10ml'; // Default to 10ml if size is not present
-      const discountRate = sizeDiscounts[sizeKey] || sizeDiscounts['10ml'];
+      if (priceInEuros >= 4 && priceInEuros <= 6) {
+        discountPerUnit = 100; // 1 euro in cents
+      } else if (priceInEuros >= 7 && priceInEuros <= 8) {
+        discountPerUnit = 150; // 1.5 euros in cents
+      } else if (priceInEuros >= 9 && priceInEuros <= 11) {
+        discountPerUnit = 200; // 2 euros in cents
+      } else if (priceInEuros >= 12 && priceInEuros <= 15) {
+        discountPerUnit = 300; // 3 euros in cents
+      } else if (priceInEuros > 15) {
+        discountPerUnit = 400; // 4 euros in cents
+      }
       
-      // The discount for this item is its total value multiplied by its discount rate.
-      weightedDiscountSum += itemTotal * discountRate;
+      totalDiscount += discountPerUnit * item.quantity;
     });
 
-    if (totalQuantity === 0) {
-      return { originalTotal: 0, discountedTotal: 0, savings: 0 };
-    }
-
-    // The final discount is the average of the weighted discounts.
-    const averageDiscountRate = originalTotal / weightedDiscountSum;
-    const totalDiscount = originalTotal * averageDiscountRate;
-    
-    const discountedTotal = Math.round(originalTotal - totalDiscount);
+    const discountedTotal = Math.max(0, originalTotal - totalDiscount);
     const savings = originalTotal - discountedTotal;
 
     return {
