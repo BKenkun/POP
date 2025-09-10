@@ -138,7 +138,17 @@ export default function ProductFilters({
     });
   }, [products, searchQuery, selectedBrands, selectedSizes, selectedCompositions, selectedInternalTags, sortOrder]);
   
-  const hasActiveFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || selectedInternalTags.length > 0 || searchQuery;
+  const hasActiveFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || searchQuery;
+
+  const showCreatePackCard = useMemo(() => {
+      // Show if no specific filters are applied, or if only "pack" or "oferta" category filters are selected.
+      const hasOnlyGeneralCategoryFilters = selectedInternalTags.length > 0 && selectedInternalTags.every(t => ['pack', 'oferta'].includes(t));
+      
+      if (!hasActiveFilters && selectedInternalTags.length === 0) return true; // No filters at all
+      if (!hasActiveFilters && hasOnlyGeneralCategoryFilters) return true; // Only pack/oferta filters
+
+      return false;
+  }, [hasActiveFilters, selectedInternalTags]);
   
   const FilterCheckboxGroup = ({ title, values, selectedValues, onValueChange, paramKey }: {
     title: string;
@@ -202,7 +212,7 @@ export default function ProductFilters({
                 
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Filtros</h3>
-                    {hasActiveFilters && (
+                    {(hasActiveFilters || selectedInternalTags.length > 0) && (
                         <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
                             <X className="mr-1 h-3 w-3" />
                             Limpiar
@@ -275,7 +285,7 @@ export default function ProductFilters({
       </aside>
 
       <main className="lg:col-span-3">
-        <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={!hasActiveFilters} />
+        <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={showCreatePackCard} />
       </main>
     </div>
   );
