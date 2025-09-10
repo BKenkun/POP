@@ -12,16 +12,16 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 // Input Schema: A list of items with id, price, quantity, and size.
-export const PackItemSchema = z.object({
+const PackItemSchema = z.object({
   id: z.string(),
   price: z.number(), // Price in cents
   quantity: z.number(),
   size: z.string().optional(),
 });
-export type PackItem = z.infer<typeof PackItemSchema>;
 
 const PackCalculationInputSchema = z.array(PackItemSchema);
-export type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
+type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
+
 
 // Output Schema: The original total, the discounted total, and the savings.
 const PackCalculationOutputSchema = z.object({
@@ -72,7 +72,7 @@ const calculatePackPriceFlow = ai.defineFlow(
     }
 
     // The final discount is the average of the weighted discounts.
-    const averageDiscountRate = weightedDiscountSum / originalTotal;
+    const averageDiscountRate = originalTotal / weightedDiscountSum;
     const totalDiscount = originalTotal * averageDiscountRate;
     
     const discountedTotal = Math.round(originalTotal - totalDiscount);

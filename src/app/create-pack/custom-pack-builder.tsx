@@ -15,10 +15,17 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product-card';
-import { calculatePackPrice, PackItem } from '@/ai/flows/calculate-pack-price-flow';
+import { calculatePackPrice } from '@/ai/flows/calculate-pack-price-flow';
 
 interface CustomPackBuilderProps {
   products: Product[];
+}
+
+export interface PackItem {
+  id: string;
+  price: number;
+  quantity: number;
+  size?: string;
 }
 
 const MAX_PACK_ITEMS = 18;

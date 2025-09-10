@@ -4,7 +4,13 @@
 import type { CartItem, Product } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import type { PackItem } from '@/ai/flows/calculate-pack-price-flow';
+
+export interface PackItem {
+  id: string;
+  price: number;
+  quantity: number;
+  size?: string;
+}
 
 interface CartContextType {
   cartItems: CartItem[];
