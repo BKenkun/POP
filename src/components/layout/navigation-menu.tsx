@@ -90,7 +90,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationMenuItem>
-            <Link href="/create-pack" legacyBehavior passHref>
+            <Link href="/create-pack">
                 <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground")}>
                 CREA TU PACK
                 </NavigationMenuLink>
