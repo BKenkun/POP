@@ -1,12 +1,11 @@
 
 'use client';
 
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackagePlus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 export function CreatePackCard() {
   return (
@@ -14,6 +13,10 @@ export function CreatePackCard() {
         <Link href="/create-pack" className="flex-grow flex flex-col">
             <CardHeader className="p-0 relative">
                  <div className="relative h-64 w-full flex items-center justify-center bg-primary/10">
+                    <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                        <Badge variant="destructive">Oferta</Badge>
+                        <Badge variant="secondary">Pack</Badge>
+                    </div>
                     <PackagePlus className="h-20 w-20 text-primary/60 transition-transform group-hover:scale-110" strokeWidth={1.5}/>
                 </div>
             </CardHeader>
