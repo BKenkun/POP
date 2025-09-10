@@ -76,18 +76,16 @@ export default function ProductFilters({
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
   
-  const createToggleHandler = (key: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
+  const createToggleHandler = (selectedValues: string[], key: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
     const newValues = selectedValues.includes(value) ? selectedValues.filter(v => v !== value) : [...selectedValues, value];
     setter(newValues);
     updateURLParams(key, newValues);
   };
   
-  const handleBrandChange = createToggleHandler('brand', setSelectedBrands);
-  const handleSizeChange = createToggleHandler('size', setSelectedSizes);
-  const handleCompositionChange = createToggleHandler('composition', setSelectedCompositions);
-  const handleInternalTagChange = createToggleHandler('internal_tag', setSelectedInternalTags);
-  
-  const selectedValues: string[] = [ ...selectedBrands, ...selectedSizes, ...selectedCompositions, ...selectedInternalTags];
+  const handleBrandChange = createToggleHandler(selectedBrands, 'brand', setSelectedBrands);
+  const handleSizeChange = createToggleHandler(selectedSizes, 'size', setSelectedSizes);
+  const handleCompositionChange = createToggleHandler(selectedCompositions, 'composition', setSelectedCompositions);
+  const handleInternalTagChange = createToggleHandler(selectedInternalTags, 'internal_tag', setSelectedInternalTags);
 
   const clearFilters = () => {
     setSelectedBrands([]);
@@ -277,7 +275,7 @@ export default function ProductFilters({
       </aside>
 
       <main className="lg:col-span-3">
-        <ProductGrid products={filteredAndSortedProducts} />
+        <ProductGrid products={filteredAndSortedProducts} showCreatePackCard={!hasActiveFilters} />
       </main>
     </div>
   );
