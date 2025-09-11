@@ -16,14 +16,13 @@ interface ProductCardProps {
   product: Product;
   className?: string;
   children?: React.ReactNode;
-  onImageClick?: () => void; // New prop for custom click behavior on image
+  onImageClick?: () => void;
 }
 
 export function ProductCard({ product, className, children, onImageClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const isSoldOut = product.stock === 0;
 
-  // If an onImageClick handler is provided, the link does not wrap the image.
   const ImageWrapper = onImageClick ? 'div' : Link;
   const imageWrapperProps = onImageClick 
     ? { onClick: onImageClick, className: 'cursor-pointer' }
@@ -61,7 +60,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
 
             <CardContent className="flex-grow p-5 space-y-2">
               <Link href={`/product/${product.id}`}>
-                  <CardTitle className="text-xl font-medium leading-snug tracking-normal group-hover:text-primary transition-colors">
+                  <CardTitle className="text-xl font-medium leading-snug tracking-normal group-hover:text-destructive transition-colors">
                       {product.name}
                   </CardTitle>
               </Link>
