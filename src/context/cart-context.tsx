@@ -102,14 +102,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         discountPercent = 0.15;
     } else if (cartCount >= 36) {
         discountPercent = 0.12;
-    } else if (cartCount >= 18) {
+    } else if (cartCount >= 19) {
         discountPercent = 0.10;
     } else if (cartCount >= 12) {
-        discountPercent = 0.08;
-    } else if (cartCount >= 6) {
         discountPercent = 0.05;
-    } else if (cartCount >= 3) {
+    } else if (cartCount >= 6) {
         discountPercent = 0.03;
+    } else if (cartCount >= 3) {
+        discountPercent = 0.02;
     }
 
     const discountAmount = cartTotal * discountPercent;

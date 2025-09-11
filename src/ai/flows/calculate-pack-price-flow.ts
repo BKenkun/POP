@@ -56,15 +56,15 @@ const calculatePackPriceFlow = ai.defineFlow(
             let discountPercent = 0;
 
             if (priceInEuros >= 4 && priceInEuros <= 6) {
-                discountPercent = 0.02; // 2%
+                discountPercent = 0.03; // 3%
             } else if (priceInEuros >= 7 && priceInEuros <= 8) {
-                discountPercent = 0.05; // 5%
-            } else if (priceInEuros >= 9 && priceInEuros <= 11) {
                 discountPercent = 0.06; // 6%
-            } else if (priceInEuros >= 12 && priceInEuros <= 15) {
+            } else if (priceInEuros >= 9 && priceInEuros <= 11) {
                 discountPercent = 0.07; // 7%
+            } else if (priceInEuros >= 12 && priceInEuros <= 15) {
+                discountPercent = 0.08; // 8%
             } else if (priceInEuros > 15) {
-                discountPercent = 0.09; // 9%
+                discountPercent = 0.10; // 10%
             }
             
             const discountedItemPrice = item.price * (1 - discountPercent);
