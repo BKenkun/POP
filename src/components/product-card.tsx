@@ -16,45 +16,58 @@ interface ProductCardProps {
   product: Product;
   className?: string;
   children?: React.ReactNode;
+  onImageClick?: () => void; // New prop for custom click behavior on image
 }
 
-export function ProductCard({ product, className, children }: ProductCardProps) {
+export function ProductCard({ product, className, children, onImageClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const isSoldOut = product.stock === 0;
 
+  // If an onImageClick handler is provided, the link does not wrap the image.
+  const ImageWrapper = onImageClick ? 'div' : Link;
+  const imageWrapperProps = onImageClick 
+    ? { onClick: onImageClick, className: 'cursor-pointer' }
+    : { href: `/product/${product.id}` };
+
   const cardContent = (
      <Card className={cn("group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border/60 h-full", className)}>
-        <Link href={`/product/${product.id}`} className="flex-grow flex flex-col">
-            <CardHeader className="p-0 relative">
-            <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Eye className="text-white h-10 w-10" />
-            </div>
-            <div className="relative h-64 w-full">
-                <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-contain p-4"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                data-ai-hint={product.imageHint}
-                />
-                {isSoldOut && (
-                <Badge variant="destructive" className="absolute bottom-4 right-4 text-sm z-20">Agotado</Badge>
-                )}
-                <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-                    {product.tags?.map((tag) => (
-                        <Badge key={tag} variant="secondary">{tag}</Badge>
-                    ))}
-                </div>
-            </div>
-            </CardHeader>
+        <div className="flex-grow flex flex-col">
+            {/* @ts-ignore */}
+            <ImageWrapper {...imageWrapperProps}>
+                <CardHeader className="p-0 relative">
+                    <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Eye className="text-white h-10 w-10" />
+                    </div>
+                    <div className="relative h-64 w-full">
+                        <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-contain p-4"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        data-ai-hint={product.imageHint}
+                        />
+                        {isSoldOut && (
+                        <Badge variant="destructive" className="absolute bottom-4 right-4 text-sm z-20">Agotado</Badge>
+                        )}
+                        <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                            {product.tags?.map((tag) => (
+                                <Badge key={tag} variant="secondary">{tag}</Badge>
+                            ))}
+                        </div>
+                    </div>
+                </CardHeader>
+            </ImageWrapper>
+
             <CardContent className="flex-grow p-5 space-y-2">
-            <CardTitle className="text-xl font-medium leading-snug tracking-normal group-hover:text-primary transition-colors">
-                {product.name}
-            </CardTitle>
-            <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
+              <Link href={`/product/${product.id}`}>
+                  <CardTitle className="text-xl font-medium leading-snug tracking-normal group-hover:text-primary transition-colors">
+                      {product.name}
+                  </CardTitle>
+              </Link>
+              <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
             </CardContent>
-        </Link>
+        </div>
         {children ? (
             children
         ) : (

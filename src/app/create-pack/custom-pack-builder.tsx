@@ -79,8 +79,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
   const handleUpdateQuantity = (product: Product, newQuantity: number) => {
     const existingItem = packItems.find((item) => item.id === product.id);
     const currentQuantityInPack = existingItem?.quantity || 0;
-    const quantityDifference = newQuantity - currentQuantityInPack;
-
+    
     // --- Validations first ---
     if (newQuantity > 0) {
         if (newQuantity > MAX_UNITS_PER_PRODUCT) {
@@ -99,6 +98,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
             return;
         }
 
+        const quantityDifference = newQuantity - currentQuantityInPack;
         if (totalPackQuantity + quantityDifference > MAX_PACK_ITEMS) {
             toast({ title: 'Límite del pack alcanzado', description: `No puedes añadir más de ${MAX_PACK_ITEMS} productos a tu pack.`, variant: 'destructive'});
             return;
@@ -111,7 +111,8 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
             return prev.filter((item) => item.id !== product.id);
         }
         
-        if (existingItem) {
+        const existingItemInPrev = prev.find(item => item.id === product.id);
+        if (existingItemInPrev) {
             return prev.map((item) =>
                 item.id === product.id ? { ...item, quantity: newQuantity } : item
             );
@@ -206,6 +207,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                     key={product.id} 
                     product={product}
                     className={cn(quantityInPack > 0 && 'border-primary border-2 shadow-lg')}
+                    onImageClick={() => handleUpdateQuantity(product, 1)}
                 >
                     <div className="p-4 pt-0">
                          {isAgotado ? (
