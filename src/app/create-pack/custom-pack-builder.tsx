@@ -75,49 +75,50 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     }, 500); // Debounce API calls
     return () => clearTimeout(handler);
   }, [packItems, updatePrice]);
-
+  
   const handleUpdateQuantity = (product: Product, newQuantity: number) => {
-    setPackItems((prev) => {
-        let updatedPack: PackItem[];
-        const existingItem = prev.find((item) => item.id === product.id);
+    const existingItem = packItems.find((item) => item.id === product.id);
+    const currentQuantityInPack = existingItem?.quantity || 0;
+    const quantityDifference = newQuantity - currentQuantityInPack;
 
-        if (newQuantity <= 0) {
-            updatedPack = prev.filter((item) => item.id !== product.id);
-        } else {
-             if (newQuantity > MAX_UNITS_PER_PRODUCT) {
-                toast({ title: 'Límite por producto', description: `No puedes añadir más de ${MAX_UNITS_PER_PRODUCT} unidades del mismo producto.`, variant: 'destructive'});
-                return prev;
-            }
-
-            const isAgotado = product.stock === 0;
-            if(isAgotado) {
-                toast({ title: "Producto Agotado", description: `${product.name} no está disponible actualmente.`, variant: "destructive" });
-                return prev;
-            }
-
-            if (product.stock && newQuantity > product.stock) {
-                toast({ title: 'Stock insuficiente', description: `Solo quedan ${product.stock} unidades de ${product.name}.`, variant: 'destructive' });
-                return prev;
-            }
-            
-            const currentQuantityInPack = existingItem?.quantity || 0;
-            const quantityDifference = newQuantity - currentQuantityInPack;
-            
-            if (totalPackQuantity + quantityDifference > MAX_PACK_ITEMS) {
-                toast({ title: 'Límite del pack alcanzado', description: `No puedes añadir más de ${MAX_PACK_ITEMS} productos a tu pack.`, variant: 'destructive'});
-                return prev;
-            }
-            
-            if (existingItem) {
-                updatedPack = prev.map((item) =>
-                    item.id === product.id ? { ...item, quantity: newQuantity } : item
-                );
-            } else {
-                 const { name, imageUrl, imageHint, description, longDescription, tags, internalTags, productDetails, stock, ...restOfProduct } = product;
-                updatedPack = [...prev, { ...restOfProduct, quantity: newQuantity }];
-            }
+    // --- Validations first ---
+    if (newQuantity > 0) {
+        if (newQuantity > MAX_UNITS_PER_PRODUCT) {
+            toast({ title: 'Límite por producto', description: `No puedes añadir más de ${MAX_UNITS_PER_PRODUCT} unidades del mismo producto.`, variant: 'destructive'});
+            return;
         }
-        return updatedPack;
+
+        const isAgotado = product.stock === 0;
+        if(isAgotado) {
+            toast({ title: "Producto Agotado", description: `${product.name} no está disponible actualmente.`, variant: "destructive" });
+            return;
+        }
+
+        if (product.stock && newQuantity > product.stock) {
+            toast({ title: 'Stock insuficiente', description: `Solo quedan ${product.stock} unidades de ${product.name}.`, variant: 'destructive' });
+            return;
+        }
+
+        if (totalPackQuantity + quantityDifference > MAX_PACK_ITEMS) {
+            toast({ title: 'Límite del pack alcanzado', description: `No puedes añadir más de ${MAX_PACK_ITEMS} productos a tu pack.`, variant: 'destructive'});
+            return;
+        }
+    }
+
+    // --- State update ---
+    setPackItems((prev) => {
+        if (newQuantity <= 0) {
+            return prev.filter((item) => item.id !== product.id);
+        }
+        
+        if (existingItem) {
+            return prev.map((item) =>
+                item.id === product.id ? { ...item, quantity: newQuantity } : item
+            );
+        } else {
+            const { name, imageUrl, imageHint, description, longDescription, tags, internalTags, productDetails, stock, ...restOfProduct } = product;
+            return [...prev, { ...restOfProduct, quantity: newQuantity }];
+        }
     });
   };
   
@@ -331,3 +332,5 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     </div>
   );
 }
+
+    
