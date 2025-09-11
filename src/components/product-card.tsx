@@ -60,7 +60,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
 
             <CardContent className="flex-grow p-5 space-y-2">
               <Link href={`/product/${product.id}`}>
-                  <CardTitle className="text-xl font-medium leading-snug tracking-normal group-hover:text-destructive transition-colors">
+                  <CardTitle className="text-xl font-medium leading-snug tracking-normal group-hover:text-primary hover:text-destructive transition-colors">
                       {product.name}
                   </CardTitle>
               </Link>
