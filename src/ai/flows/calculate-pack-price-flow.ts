@@ -42,40 +42,25 @@ const calculatePackPriceFlow = ai.defineFlow(
     outputSchema: PackCalculationOutputSchema,
   },
   async (items) => {
-    let originalTotal = 0;
-    let discountedTotal = 0;
+    const originalTotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+    const totalQuantity = items.reduce((total, item) => total + item.quantity, 0);
+    
     const MINIMUM_FOR_DISCOUNT = 7000; // 70 euros in cents
-
-    items.forEach(item => {
-      originalTotal += item.price * item.quantity;
-    });
+    let discountPercent = 0;
 
     if (originalTotal >= MINIMUM_FOR_DISCOUNT) {
-        items.forEach(item => {
-            const priceInEuros = item.price / 100;
-            let discountPercent = 0;
-
-            if (priceInEuros >= 4 && priceInEuros <= 6) {
-                discountPercent = 0.03; // 3%
-            } else if (priceInEuros >= 7 && priceInEuros <= 8) {
-                discountPercent = 0.06; // 6%
-            } else if (priceInEuros >= 9 && priceInEuros <= 11) {
-                discountPercent = 0.07; // 7%
-            } else if (priceInEuros >= 12 && priceInEuros <= 15) {
-                discountPercent = 0.08; // 8%
-            } else if (priceInEuros > 15) {
-                discountPercent = 0.10; // 10%
-            }
-            
-            const discountedItemPrice = item.price * (1 - discountPercent);
-            discountedTotal += discountedItemPrice * item.quantity;
-        });
-    } else {
-        // If total is less than 70€, no discount is applied.
-        discountedTotal = originalTotal;
+        if (totalQuantity <= 5) {
+            discountPercent = 0.05; // 5%
+        } else if (totalQuantity >= 6 && totalQuantity <= 11) {
+            discountPercent = 0.08; // 8%
+        } else if (totalQuantity >= 12 && totalQuantity <= 18) {
+            discountPercent = 0.12; // 12%
+        }
+        // No discount for more than 18 items in the pack builder, per the strategy
     }
-    
-    const savings = originalTotal - discountedTotal;
+
+    const savings = originalTotal * discountPercent;
+    const discountedTotal = originalTotal - savings;
 
     return {
       originalTotal,
