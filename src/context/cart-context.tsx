@@ -93,23 +93,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { volumeDiscount, totalWithDiscount } = useMemo(() => {
     let discountPercent = 0;
     if (cartCount >= 200) {
-        discountPercent = 0.29;
+        discountPercent = 0.29; // 29%
     } else if (cartCount >= 180) {
-        discountPercent = 0.26;
+        discountPercent = 0.26; // 26%
     } else if (cartCount >= 144) {
-        discountPercent = 0.21;
+        discountPercent = 0.21; // 21%
     } else if (cartCount >= 72) {
-        discountPercent = 0.15;
+        discountPercent = 0.15; // 15%
     } else if (cartCount >= 36) {
-        discountPercent = 0.12;
+        discountPercent = 0.12; // 12%
     } else if (cartCount >= 19) {
-        discountPercent = 0.10;
+        discountPercent = 0.09; // 9%
     } else if (cartCount >= 12) {
-        discountPercent = 0.05;
+        discountPercent = 0.06; // 6%
     } else if (cartCount >= 6) {
-        discountPercent = 0.03;
+        discountPercent = 0.03; // 3%
     } else if (cartCount >= 3) {
-        discountPercent = 0.02;
+        discountPercent = 0.02; // 2%
     }
 
     const discountAmount = cartTotal * discountPercent;
