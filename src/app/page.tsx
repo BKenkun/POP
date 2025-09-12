@@ -4,11 +4,7 @@ import { getStripeProducts } from '@/lib/stripe';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import SubscriptionForm from '@/components/subscription-form';
-import dynamic from 'next/dynamic';
-
-const WelcomePopup = dynamic(() => import('@/components/welcome-popup'), {
-  ssr: false,
-});
+import WelcomePopupLoader from '@/components/welcome-popup-loader';
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
@@ -22,7 +18,7 @@ export default async function Home() {
   
   return (
     <div className="space-y-16">
-      <WelcomePopup />
+      <WelcomePopupLoader />
       
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Calidad Premium, Sensaciones Únicas</h1>
