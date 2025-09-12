@@ -23,6 +23,17 @@ const getStripeInstance = (): Stripe => {
   return stripe;
 };
 
+// Helper function to ensure URL has a protocol
+const normalizeImageUrl = (url: string): string => {
+  if (!url) return 'https://picsum.photos/400/400';
+  if (url.startsWith('http')) {
+    return url;
+  }
+  // If it's a protocol-relative URL, add https. Otherwise, treat it as a domain path.
+  return `https://${url.replace(/^\/\//, '')}`;
+};
+
+
 export async function getStripeProducts(): Promise<Product[]> {
   const stripe = getStripeInstance();
   const productsResponse = await stripe.products.list({
@@ -76,14 +87,14 @@ export async function getStripeProducts(): Promise<Product[]> {
         description: product.description,
         longDescription: longDescription,
         price: price?.unit_amount || 0,
-        imageUrl: product.images?.[0] || 'https://picsum.photos/400/400',
+        imageUrl: normalizeImageUrl(product.images?.[0]),
         imageHint: 'product bottle',
         tags: product.metadata.tags?.split(',').map((t: string) => t.trim()) || [],
         internalTags: product.metadata.internal_tags?.split(',').map((t: string) => t.trim()) || [],
         galleryImages:
           product.metadata.gallery_images
             ?.split(',')
-            .map((url: string) => url.trim()) || [],
+            .map((url: string) => normalizeImageUrl(url.trim())) || [],
         stock: stock,
         productDetails: rawProductDetails,
         brand: product.metadata.brand,

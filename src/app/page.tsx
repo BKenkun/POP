@@ -4,7 +4,11 @@ import { getStripeProducts } from '@/lib/stripe';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import SubscriptionForm from '@/components/subscription-form';
-import WelcomePopup from '@/components/welcome-popup';
+import dynamic from 'next/dynamic';
+
+const WelcomePopup = dynamic(() => import('@/components/welcome-popup'), {
+  ssr: false,
+});
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
