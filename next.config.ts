@@ -64,6 +64,12 @@ const nextConfig: NextConfig = {
         hostname: 'http2.mlstatic.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'monpapier.fr',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
