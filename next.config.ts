@@ -58,6 +58,12 @@ const nextConfig: NextConfig = {
         hostname: 'www.abcparty.nl',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'http2.mlstatic.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
