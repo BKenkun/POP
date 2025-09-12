@@ -52,6 +52,12 @@ const nextConfig: NextConfig = {
         hostname: 'mypoppers.eu',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.abcparty.nl',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
