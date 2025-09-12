@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https_beta',
         hostname: 'files.stripe.com',
         port: '',
         pathname: '/**',
@@ -68,6 +68,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'monpapier.fr',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.mistersmoke.com',
         port: '',
         pathname: '/**',
       }
