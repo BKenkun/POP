@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
 
   if (!KLAVIYO_API_KEY || !KLAVIYO_LIST_ID) {
     console.warn("Klaviyo API Key or List ID is not set in environment variables. Returning success without subscribing.");
-    // Return a success response in dev environments if keys are missing
     if (process.env.NODE_ENV === 'development') {
        return NextResponse.json({ message: 'Subscription successful (simulation).' });
     }
@@ -21,7 +20,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await fetch('https://a.klaviyo.com/api/profile-subscription-bulk/', {
+    const response = await fetch('https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs/', {
       method: 'POST',
       headers: {
         Authorization: `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
@@ -31,7 +30,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         data: {
-          type: 'profile-subscription-bulk',
+          type: 'profile-subscription-bulk-create-job',
           attributes: {
             list_id: KLAVIYO_LIST_ID,
             subscriptions: [
@@ -53,8 +52,8 @@ export async function POST(req: NextRequest) {
         const errorMessage = errorData.errors?.[0]?.detail || 'Could not subscribe to the newsletter.';
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
-
-    // The API returns a 202 Accepted response on success, we don't need to parse a body
+    
+    // The API returns a 202 Accepted response on success
     return new NextResponse(null, { status: 202 });
 
   } catch (error: any) {
