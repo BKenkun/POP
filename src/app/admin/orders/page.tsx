@@ -25,7 +25,6 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // collectionGroup query to get all 'orders' collections from all users
     const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
@@ -38,12 +37,13 @@ export default function AdminOrdersPage() {
         } as Order);
       });
       setOrders(allOrders);
-      setLoading(false);
+      setLoading(false); // Ensure loading is set to false even if there are no orders
     }, (error) => {
       console.error("Error fetching all orders:", error);
-      setLoading(false);
+      setLoading(false); // Also on error
     });
 
+    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
