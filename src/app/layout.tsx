@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -6,7 +7,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
 import FloatingCartButton from '@/components/floating-cart-button';
-import { use } from 'react';
+import FloatingAccountButton from '@/components/floating-account-button';
 
 export const metadata: Metadata = {
   title: 'Popper España',
@@ -36,6 +37,7 @@ export default function RootLayout({
           </div>
           <Toaster />
           <SalesNotification />
+          <FloatingAccountButton />
           <FloatingCartButton />
         </Providers>
       </body>
