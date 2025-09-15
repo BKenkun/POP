@@ -6,21 +6,14 @@ import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { CartSheet } from '@/components/cart-sheet';
-import { usePathname } from 'next/navigation';
 
 export default function FloatingCartButton() {
   const { cartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const pathname = usePathname();
-
-  // No mostrar el botón en las rutas de administrador
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="relative">
         <Button
           variant="default"
           size="icon"

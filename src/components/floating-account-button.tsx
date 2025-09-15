@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,21 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LayoutDashboard, Package, MapPin, LogOut, LogIn } from 'lucide-react';
+import { User, LayoutDashboard, Package, MapPin, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 
 export default function FloatingAccountButton() {
-  const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  // No mostrar el botón en las rutas de administrador
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
-  
   const handleLogout = (e: Event) => {
     e.preventDefault();
     logout();
@@ -39,12 +33,11 @@ export default function FloatingAccountButton() {
     }
   }
 
-  // Check if it's the simulated admin user
   const isSimulatedAdmin = user?.uid === 'admin_user';
 
   return (
     <div
-      className="fixed bottom-[7.5rem] right-6 z-50"
+      className="relative"
       onMouseEnter={() => user && setIsOpen(true)}
       onMouseLeave={() => user && setIsOpen(false)}
     >
@@ -61,7 +54,7 @@ export default function FloatingAccountButton() {
           </Button>
         </DropdownMenuTrigger>
         {user && (
-            <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuContent className="w-56 mb-2" align="end" side="top">
             <DropdownMenuLabel>{isSimulatedAdmin ? 'Admin (Vista Cliente)' : 'Mi Cuenta'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

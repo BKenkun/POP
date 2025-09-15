@@ -8,9 +8,7 @@ import { Providers } from '@/context/providers';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
-import FloatingCartButton from '@/components/floating-cart-button';
-import FloatingAccountButton from '@/components/floating-account-button';
-import FloatingCbdButton from '@/components/floating-cbd-button';
+import FloatingActionButtons from '@/components/floating-action-buttons';
 import { usePathname } from 'next/navigation';
 
 const metadata: Metadata = {
@@ -65,9 +63,7 @@ export default function RootLayout({
           </div>
           <Toaster />
           <SalesNotification />
-          <FloatingCbdButton />
-          <FloatingAccountButton />
-          <FloatingCartButton />
+          <FloatingActionButtons />
         </Providers>
       </body>
     </html>
