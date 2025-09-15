@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp, getDoc, updateDoc, increment } from 'firebase/firestore';
 import type { Order, OrderItem, ShippingAddress } from './types';
 import type Stripe from 'stripe';
 
@@ -69,4 +69,29 @@ export async function createOrder(session: Stripe.Checkout.Session, lineItems: S
     // Optionally, re-throw the error to be handled by the caller (e.g., the webhook)
     throw error;
   }
+}
+
+/**
+ * Updates a user's loyalty points.
+ * @param userId The ID of the user.
+ * @param pointsToAdd The number of points to add. Can be negative to subtract points.
+ */
+export async function updateUserLoyaltyPoints(userId: string, pointsToAdd: number): Promise<void> {
+    if (!userId || pointsToAdd === 0) return;
+
+    const userDocRef = doc(db, 'users', userId);
+
+    try {
+        // We use increment to safely add points to the existing value.
+        // If the field doesn't exist, Firestore initializes it to the increment value.
+        await updateDoc(userDocRef, {
+            loyaltyPoints: increment(pointsToAdd)
+        });
+        console.log(`✅ Awarded ${pointsToAdd} loyalty points to user ${userId}.`);
+    } catch (error) {
+        // If the document might not exist, you could use setDoc with merge:true
+        // But increment is generally safer for counters.
+        console.error(`❌ Failed to update loyalty points for user ${userId}:`, error);
+        // We don't re-throw, as failing to add points shouldn't block the order process.
+    }
 }

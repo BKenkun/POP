@@ -6,22 +6,14 @@ import { CardTitle, CardDescription, CardHeader, CardContent, Card } from "@/com
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
-// Placeholder for order type
-interface Order {
-    id: string;
-    date: string;
-    status: string;
-    total: string;
-}
+import { formatPrice } from "@/lib/utils";
+import { Gift } from "lucide-react";
 
 export default function AccountDashboardPage() {
   const { user } = useAuth();
   const [userName, setUserName] = useState(user?.displayName || user?.email?.split('@')[0] || "Usuario");
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const userEmail = user?.email || "No email provided";
-
-  // Placeholder data for recent order, you can replace this with real data fetching
-  const recentOrder: Order | null = null; // Set to null initially or fetch real data
 
   useEffect(() => {
     if (user) {
@@ -30,10 +22,16 @@ export default function AccountDashboardPage() {
         if (data?.displayName) {
           setUserName(data.displayName);
         }
+        if (data?.loyaltyPoints) {
+            setLoyaltyPoints(data.loyaltyPoints);
+        }
       });
       return () => unsub();
     }
   }, [user]);
+  
+  // 100 points = 2€ discount
+  const pointsValue = (loyaltyPoints / 100) * 200;
 
   return (
     <div className="space-y-6">
@@ -56,20 +54,18 @@ export default function AccountDashboardPage() {
             </Card>
             <Card>
             <CardHeader>
-                <CardTitle>Último Pedido</CardTitle>
-                 <CardDescription>Resumen de tu compra más reciente.</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                    <Gift className="h-5 w-5 text-primary"/>
+                    Puntos de Fidelidad
+                </CardTitle>
+                 <CardDescription>Gana puntos con cada compra.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-                {recentOrder ? (
-                    <>
-                        <p><span className="font-semibold">Pedido Nº:</span> {recentOrder.id}</p>
-                        <p><span className="font-semibold">Fecha:</span> {recentOrder.date}</p>
-                        <p><span className="font-semibold">Total:</span> {recentOrder.total}</p>
-                        <p><span className="font-semibold">Estado:</span> <span className="text-green-600 font-medium">{recentOrder.status}</span></p>
-                    </>
-                ) : (
-                    <p className="text-muted-foreground">No tienes pedidos recientes.</p>
-                )}
+            <CardContent className="space-y-2 text-center">
+               <p className="text-4xl font-bold text-primary">{loyaltyPoints}</p>
+               <p className="font-semibold text-muted-foreground">Puntos Acumulados</p>
+               <p className="text-sm">
+                Tu saldo equivale a un descuento de <span className="font-bold">{formatPrice(pointsValue)}</span>.
+               </p>
             </CardContent>
             </Card>
         </div>

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { createOrder } from '@/lib/orders';
+import { createOrder, updateUserLoyaltyPoints } from '@/lib/orders';
 
 // Initialize Stripe outside of the request handler
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -60,11 +60,18 @@ export async function POST(req: NextRequest) {
         // - Update product stock
         
         // Step 1: Create the order in Firestore.
-        // This function will throw an error if it fails, which will be caught below.
         await createOrder(session, lineItems.data);
 
+        // Step 2: Award loyalty points
+        const userId = session.metadata?.userId;
+        const totalSpent = session.amount_total || 0; // Total in cents
+        if (userId && totalSpent > 0) {
+            // 1 point for every 1 euro spent. amount_total is in cents.
+            const pointsEarned = Math.floor(totalSpent / 100);
+            await updateUserLoyaltyPoints(userId, pointsEarned);
+        }
 
-        // Step 2: Update stock levels
+        // Step 3: Update stock levels
         const isCustomPack = session.metadata?.isCustomPack === 'true';
 
         if (isCustomPack) {
@@ -98,4 +105,3 @@ export async function POST(req: NextRequest) {
   // Acknowledge receipt of the event
   return NextResponse.json({ received: true });
 }
-
