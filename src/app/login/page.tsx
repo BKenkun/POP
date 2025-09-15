@@ -29,19 +29,26 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     
-    // Check for special admin override first by calling the server action
-    const adminCheckResult = await adminLoginAction({ email, password });
-    if (adminCheckResult.success) {
-        loginAsAdminCustomer();
-        toast({
-            title: 'Inicio de sesión como administrador',
-            description: 'Explorando la vista de cliente.',
-        });
-        router.push('/account');
-        setLoading(false);
-        return;
+    // Step 1: Attempt to log in as admin via the special client view
+    try {
+        const adminCheckResult = await adminLoginAction({ email, password });
+        if (adminCheckResult.success) {
+            loginAsAdminCustomer();
+            toast({
+                title: 'Inicio de sesión como administrador',
+                description: 'Explorando la vista de cliente.',
+            });
+            router.push('/account');
+            setLoading(false);
+            return; // Important: exit the function if admin login is successful
+        }
+    } catch (serverActionError) {
+        console.error("Error during admin check server action:", serverActionError);
+        // We can let it fall through to regular login, but good to log this.
     }
 
+
+    // Step 2: If admin login fails, proceed with standard Firebase authentication for regular users.
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
@@ -50,10 +57,12 @@ export default function LoginPage() {
       });
       router.push('/account');
     } catch (err: any) {
-      setError('Email o contraseña incorrectos. Por favor, inténtalo de nuevo.');
+      // This error message is for regular user login failure
+      const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      setError(errorMessage);
       toast({
         title: 'Error al iniciar sesión',
-        description: 'Comprueba tus credenciales e inténtalo de nuevo.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
