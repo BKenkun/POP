@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
+import { adminLoginAction } from '../actions/admin-auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,8 +29,9 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     
-    // Special admin override
-    if (email === 'en_rike@pimp.com' && password === '/(IYUKMN$7(I)=rb8') {
+    // Check for special admin override first by calling the server action
+    const adminCheckResult = await adminLoginAction({ email, password });
+    if (adminCheckResult.success) {
         loginAsAdminCustomer();
         toast({
             title: 'Inicio de sesión como administrador',

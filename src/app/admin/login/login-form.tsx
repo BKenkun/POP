@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { adminLoginAction } from '@/app/actions/admin-auth';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -16,20 +18,23 @@ export default function LoginForm() {
   const [error, setError] = useState('');
 
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (email === 'en_rike@pimp.com' && password === '/(IYUKMN$7(I)=rb8') {
+    
+    const result = await adminLoginAction({ email, password });
+
+    if (result.success) {
         toast({
             title: 'Login Successful',
             description: 'Redirecting to the admin dashboard...',
         });
         router.push('/admin');
     } else {
-        setError('Invalid email or password.');
+        setError(result.error || 'Invalid email or password.');
         toast({
             title: 'Login Failed',
-            description: 'Please check your credentials and try again.',
+            description: result.error || 'Please check your credentials and try again.',
             variant: 'destructive',
         });
     }
