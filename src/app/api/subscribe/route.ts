@@ -67,10 +67,22 @@ export async function POST(req: NextRequest) {
         const errorData = await response.json();
         console.error("Klaviyo API Error:", JSON.stringify(errorData, null, 2));
         const errorMessage = errorData.errors?.[0]?.detail || 'Could not subscribe to the newsletter.';
+        
+        // Handle the "already subscribed" case gracefully
+        if (errorMessage.includes('is already subscribed') || errorMessage.includes('duplicate profile')) {
+          return NextResponse.json({ message: 'Este correo electrónico ya estaba suscrito.' });
+        }
+
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
     
-    return NextResponse.json({ message: 'Subscription request accepted.' }, { status: 202 });
+    // Status 202 means the job was accepted
+    if (response.status === 202) {
+       return NextResponse.json({ message: '¡Gracias por suscribirte! Revisa tu bandeja de entrada.' });
+    }
+    
+    const data = await response.json();
+    return NextResponse.json({ message: 'Subscription successful!', data });
 
   } catch (error: any) {
     console.error('Error subscribing to newsletter:', error);
