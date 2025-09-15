@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
@@ -18,31 +19,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(`https://a.klaviyo.com/api/profiles/`, {
+    const response = await fetch(`https://a.klaviyo.com/api/v2/list/${KLAVIYO_LIST_ID}/subscribe`, {
       method: 'POST',
       headers: {
-        'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
+        'api-key': KLAVIYO_API_KEY,
         'accept': 'application/json',
         'content-type': 'application/json',
-        'revision': '2024-07-15' 
       },
       body: JSON.stringify({
-        data: {
-          type: 'profile',
-          attributes: {
-            email: email,
-          },
-          relationships: {
-            lists: {
-              data: [
-                {
-                  type: 'list',
-                  id: KLAVIYO_LIST_ID
-                }
-              ]
-            }
-          }
-        }
+        profiles: [
+            { email: email }
+        ]
       })
     });
     
@@ -50,11 +37,11 @@ export async function POST(req: NextRequest) {
         const errorData = await response.json();
         console.error("Klaviyo API Error:", errorData);
         // Extract a user-friendly error message if available
-        const errorMessage = errorData.errors?.[0]?.detail || 'Could not subscribe to the newsletter.';
+        const errorMessage = errorData.message || 'Could not subscribe to the newsletter.';
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
 
-    return NextResponse.json({ message: 'Successfully subscribed to the newsletter.' }, { status: 201 });
+    return NextResponse.json({ message: 'Successfully subscribed to the newsletter.' }, { status: 200 });
 
   } catch (error: any) {
     console.error('Error subscribing to newsletter:', error);
