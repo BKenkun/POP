@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Product } from '@/lib/types';
+import { Product, PackItemBrief } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -143,7 +143,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     });
 
     try {
-        const packItemsForAction = packItems.map(item => {
+        const packItemsForAction: PackItemBrief[] = packItems.map(item => {
             const productInfo = products.find(p => p.id === item.id);
             return {
                 id: item.id,

@@ -1,7 +1,7 @@
 
 
 import Stripe from 'stripe';
-import type { Product, CartItem } from './types';
+import type { Product, CartItem, PackItemBrief } from './types';
 
 // This is the global instance of Stripe, initialized once.
 let stripe: Stripe | null = null;
@@ -176,11 +176,18 @@ export async function createCheckoutSession(
 
 export async function createPackCheckoutSession(
   pack: CartItem,
+  packItems: PackItemBrief[],
   userId?: string,
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
   try {
     const stripe = getStripeInstance();
     const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+
+    // Serialize the pack contents to store in metadata
+    const packContents = packItems.reduce((acc, item) => {
+        acc[item.id] = item.quantity;
+        return acc;
+    }, {} as { [key: string]: number });
 
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -192,10 +199,6 @@ export async function createPackCheckoutSession(
                         name: pack.name,
                         images: [pack.imageUrl],
                         description: `Contenido del pack: ${pack.description || 'Varios productos'}`
-                        // Note: stock management for packs is complex.
-                        // We are not passing individual product IDs here, so webhooks won't
-                        // be able to update stock for pack components automatically.
-                        // This would require a more advanced setup.
                     },
                     unit_amount: pack.price, // The dynamically calculated price
                 },
@@ -211,6 +214,7 @@ export async function createPackCheckoutSession(
         },
         metadata: {
             isCustomPack: 'true',
+            packContents: JSON.stringify(packContents), // Store pack contents
             ...(userId && { userId }),
         },
          // Pass customer email if user is logged in

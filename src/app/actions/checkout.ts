@@ -32,8 +32,6 @@ export async function createCustomPackCheckoutAction(
         quantity: 1, // A pack is a single item in checkout terms
     };
     
-    // We can't use the standard checkout session creator because stock management
-    // for individual pack items is complex and not handled by this simplified logic.
-    // So we call a specific function for it.
-    return createPackCheckoutSession(customPackForCheckout, userId);
+    // Pass the detailed pack items to the checkout session creator
+    return createPackCheckoutSession(customPackForCheckout, packItems, userId);
 }

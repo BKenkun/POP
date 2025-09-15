@@ -11,6 +11,27 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
+// Helper function to update stock for a single product
+async function updateStock(productId: string, quantitySold: number) {
+    try {
+        const product = await stripe.products.retrieve(productId);
+        if (product && product.metadata.stock) {
+            const currentStock = parseInt(product.metadata.stock, 10);
+            if (!isNaN(currentStock)) {
+                const newStock = Math.max(0, currentStock - quantitySold);
+                await stripe.products.update(productId, {
+                    metadata: { ...product.metadata, stock: newStock.toString() },
+                });
+                console.log(`✅ Stock updated for product ${product.name} (${productId}). New stock: ${newStock}`);
+            }
+        }
+    } catch (error) {
+        console.error(`❌ Failed to update stock for product ${productId}:`, error);
+        // We don't re-throw here to allow other stock updates to proceed
+    }
+}
+
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = headers().get('stripe-signature') as string;
@@ -43,31 +64,26 @@ export async function POST(req: NextRequest) {
         await createOrder(session, lineItems.data);
 
 
-        // Step 2: Update stock levels (if order creation was successful)
-        for (const item of lineItems.data) {
-            const product = item.price?.product as Stripe.Product;
-            const quantitySold = item.quantity || 0;
-            
-            // We can only update stock for products that came from our catalog
-            // and have the productId in their metadata.
-            // This excludes custom packs.
-            const isCustomPack = session.metadata?.isCustomPack === 'true';
+        // Step 2: Update stock levels
+        const isCustomPack = session.metadata?.isCustomPack === 'true';
 
-            if (product && product.metadata.stock && !isCustomPack) {
-                const currentStock = parseInt(product.metadata.stock, 10);
+        if (isCustomPack) {
+            // Logic for custom packs
+            const packContents = JSON.parse(session.metadata?.packContents || '{}');
+            for (const productId in packContents) {
+                const quantitySold = packContents[productId];
+                await updateStock(productId, quantitySold);
+            }
+        } else {
+            // Logic for regular products
+            for (const item of lineItems.data) {
+                const product = item.price?.product as Stripe.Product;
+                // The actual product ID is stored in the product's metadata by our checkout function
+                const productId = product.metadata.productId; 
+                const quantitySold = item.quantity || 0;
                 
-                if (!isNaN(currentStock)) {
-                    const newStock = Math.max(0, currentStock - quantitySold);
-                    
-                    // Update the product's stock in Stripe metadata
-                    await stripe.products.update(product.id, {
-                        metadata: {
-                            ...product.metadata,
-                            stock: newStock.toString(),
-                        },
-                    });
-
-                    console.log(`✅ Stock updated for product ${product.name} (${product.id}). New stock: ${newStock}`);
+                if (productId && quantitySold > 0) {
+                    await updateStock(productId, quantitySold);
                 }
             }
         }
@@ -82,3 +98,4 @@ export async function POST(req: NextRequest) {
   // Acknowledge receipt of the event
   return NextResponse.json({ received: true });
 }
+
