@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, ShoppingBag } from "lucide-react";
+import { Loader2, ShoppingBag, Eye } from "lucide-react";
 import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
+import Link from "next/link";
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -113,8 +114,11 @@ export default function OrdersPage() {
                     </TableCell>
                     <TableCell className="text-right">{formatPrice(order.total)}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="outline" size="sm" disabled>
-                            Ver Detalles
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/account/orders/${order.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Ver Detalles
+                            </Link>
                         </Button>
                     </TableCell>
                     </TableRow>
