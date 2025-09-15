@@ -54,7 +54,7 @@ export default function AdminSidebar() {
             </Link>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <Link href="/" passHref target="_blank">
+            <Link href="/" passHref>
               <SidebarMenuButton>
                 <Store />
                 <span>Back to Shop</span>
