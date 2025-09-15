@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -12,10 +11,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { loginAsAdminCustomer } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,11 +29,12 @@ export default function LoginPage() {
     
     // Special admin override
     if (email === 'en_rike@pimp.com' && password === '/(IYUKMN$7(I)=rb8') {
+        loginAsAdminCustomer();
         toast({
             title: 'Inicio de sesión como administrador',
             description: 'Explorando la vista de cliente.',
         });
-        router.push('/account'); // Corrected redirect to the user account panel
+        router.push('/account');
         setLoading(false);
         return;
     }

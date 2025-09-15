@@ -39,6 +39,9 @@ export default function FloatingAccountButton() {
     }
   }
 
+  // Check if it's the simulated admin user
+  const isSimulatedAdmin = user?.uid === 'admin_user';
+
   return (
     <div
       className="fixed bottom-24 right-6 z-50"
@@ -59,7 +62,7 @@ export default function FloatingAccountButton() {
         </DropdownMenuTrigger>
         {user && (
             <DropdownMenuContent className="w-56" align="end">
-            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuLabel>{isSimulatedAdmin ? 'Admin (Vista Cliente)' : 'Mi Cuenta'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
