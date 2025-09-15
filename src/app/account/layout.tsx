@@ -1,0 +1,29 @@
+
+import { ReactNode } from 'react';
+import AccountSidebar from './_components/account-sidebar';
+import { Card } from '@/components/ui/card';
+
+export default function AccountLayout({ children }: { children: ReactNode }) {
+  return (
+    <div>
+        <div className="text-center space-y-4 mb-12">
+            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Mi Cuenta</h1>
+            <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
+                Gestiona tu información personal, pedidos y direcciones.
+            </p>
+        </div>
+        <div className="grid md:grid-cols-4 gap-8">
+            <aside className="md:col-span-1">
+                <AccountSidebar />
+            </aside>
+            <main className="md:col-span-3">
+                 <Card>
+                    <div className="p-6 md:p-8">
+                        {children}
+                    </div>
+                </Card>
+            </main>
+        </div>
+    </div>
+  );
+}

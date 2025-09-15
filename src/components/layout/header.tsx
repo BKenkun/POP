@@ -6,12 +6,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
-import { PackageCheck, Truck } from 'lucide-react';
+import { PackageCheck, Truck, User, LogOut, LayoutDashboard, Package, MapPin } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
 import { Logo } from '../logo';
 import NavigationMenuComponent from "./navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const pathname = usePathname();
@@ -46,6 +55,46 @@ export function Header() {
       </Sheet>
   )
 
+  const UserMenu = () => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+           <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+              <User className="text-primary-foreground"/>
+              <span className="sr-only">User Menu</span>
+           </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link href="/account">
+                  <LayoutDashboard className="mr-2" />
+                  <span>Panel de Usuario</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                 <Link href="/account/orders">
+                    <Package className="mr-2" />
+                    <span>Pedidos</span>
+                 </Link>
+              </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                 <Link href="/account/addresses">
+                    <MapPin className="mr-2" />
+                    <span>Direcciones</span>
+                 </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+                <LogOut className="mr-2" />
+                <span>Cerrar Sesión</span>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <header className="sticky top-0 z-40 w-full bg-primary text-white shadow-md font-headline">
       <div className="container flex h-16 items-center justify-between">
@@ -63,7 +112,7 @@ export function Header() {
                 <SearchForm />
             </div>
         </div>
-        <div className="flex items-center justify-end gap-x-1 sm:gap-x-4 text-xs font-bold text-primary-foreground">
+        <div className="flex items-center justify-end gap-x-1 sm:gap-x-2 text-xs font-bold text-primary-foreground">
            <div className="hidden sm:flex items-center gap-2 font-body text-sm font-medium text-primary-foreground">
                 <PackageCheck className="h-4 w-4 text-primary-foreground" />
                 <span>Envío GRATIS +40€</span>
@@ -72,6 +121,7 @@ export function Header() {
                 <Truck className="h-4 w-4 text-primary-foreground" />
                 <span>Entrega 24/48h</span>
             </div>
+             <UserMenu />
             <div className="md:hidden">
                 <MobileNav />
             </div>
@@ -80,3 +130,4 @@ export function Header() {
     </header>
   );
 }
+
