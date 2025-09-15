@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2, Package, Eye } from "lucide-react";
 import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function AdminOrdersPage() {
@@ -69,12 +69,13 @@ export default function AdminOrdersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">All Orders</h1>
+        <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
       </div>
       
       <Card>
         <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
+            <CardTitle>Pedidos Recientes</CardTitle>
+            <CardDescription>Aquí se listan todas las compras de tus clientes.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (
@@ -84,25 +85,25 @@ export default function AdminOrdersPage() {
             ) : orders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
-                    <h3 className="mt-4 text-lg font-semibold">No Orders Yet</h3>
-                    <p className="text-muted-foreground">New orders will appear here as they come in.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
+                    <p className="text-muted-foreground">Los nuevos pedidos aparecerán aquí cuando lleguen.</p>
                 </div>
             ) : (
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Nº Pedido</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Estado</TableHead>
                         <TableHead className="text-right">Total</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
                     {orders.map((order) => (
                         <TableRow key={order.id}>
-                        <TableCell className="font-medium">#{order.id.substring(order.id.length - 7)}</TableCell>
+                        <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
                         <TableCell>{new Date(order.createdAt).toLocaleDateString('es-ES')}</TableCell>
                         <TableCell>{order.customerName}</TableCell>
                         <TableCell>
@@ -115,7 +116,7 @@ export default function AdminOrdersPage() {
                            <Button asChild variant="outline" size="sm">
                                 <Link href={`/admin/orders/${order.id}`}>
                                     <Eye className="mr-2 h-4 w-4" />
-                                    View
+                                    Ver
                                 </Link>
                             </Button>
                         </TableCell>

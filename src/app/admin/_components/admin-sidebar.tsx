@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -40,7 +41,7 @@ export default function AdminSidebar() {
             <Link href="/admin/orders" passHref>
               <SidebarMenuButton isActive={pathname.startsWith('/admin/orders')}>
                 <Package />
-                <span>Orders</span>
+                <span>Pedidos</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
