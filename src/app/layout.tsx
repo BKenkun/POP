@@ -12,7 +12,7 @@ import FloatingActionButtons from '@/components/floating-action-buttons';
 import { usePathname } from 'next/navigation';
 
 const metadata: Metadata = {
-  title: 'Popper España',
+  title: 'Popper Online',
   description: 'La tienda oficial de productos Popper en España.',
 };
 

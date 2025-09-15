@@ -5,7 +5,7 @@ import CustomPackBuilder from './custom-pack-builder';
 import { getUniqueValues } from '@/lib/utils';
 
 export const metadata = {
-    title: 'Crea tu Pack Personalizado | Popper España',
+    title: 'Crea tu Pack Personalizado | Popper Online',
     description: 'Selecciona tus productos favoritos y crea tu propio pack de poppers. Descuentos por cantidad y combinaciones únicas.',
 };
 

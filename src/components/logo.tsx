@@ -36,12 +36,12 @@ export const Logo = ({ className }: { className?: string }) => (
         strokeWidth="20"
         strokeLinejoin="round"
       >
-        POPPER ESPAÑA
+        POPPER ONLINE
       </text>
 
       {/* Layer 2: 3D Extrusion (Red/Accent) - Positioned slightly offset for shadow */}
       <text x="502" y="87" className="logo-text logo-accent-fill">
-        POPPER ESPAÑA
+        POPPER ONLINE
       </text>
 
        {/* Layer 3: Inner Stroke (Yellow/Primary) - Positioned centrally */}
@@ -52,12 +52,12 @@ export const Logo = ({ className }: { className?: string }) => (
         strokeWidth="3"
         strokeLinejoin="miter"
       >
-        POPPER ESPAÑA
+        POPPER ONLINE
       </text>
 
       {/* Layer 4: Main Text Fill (Red/Accent) - Centered */}
       <text x="500" y="85" className="logo-text logo-accent-fill">
-        POPPER ESPAÑA
+        POPPER ONLINE
       </text>
     </g>
   </svg>

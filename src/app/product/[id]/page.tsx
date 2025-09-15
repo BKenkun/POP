@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     };
   }
   return {
-    title: `${product.name} | Popper España`,
+    title: `${product.name} | Popper Online`,
     description: product.description || `Detalles sobre ${product.name}`,
   };
 }

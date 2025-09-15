@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
 export const metadata = {
-  title: 'Blog | Popper España',
+  title: 'Blog | Popper Online',
   description: 'Artículos, noticias y consejos sobre nuestros productos.',
 };
 
@@ -17,7 +17,7 @@ export default function BlogPage() {
       <div className="text-center space-y-4 mb-12">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Blog</h1>
         <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-          Descubre artículos, guías y noticias del mundo de Popper España.
+          Descubre artículos, guías y noticias del mundo de Popper Online.
         </p>
       </div>
 

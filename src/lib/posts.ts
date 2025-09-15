@@ -38,7 +38,7 @@ export interface Comment {
         <p>Es crucial usar los poppers con responsabilidad. Nunca ingieras el líquido y evita el contacto directo con la piel. Úsalos en un área bien ventilada y nunca los combines con medicamentos para la disfunción eréctil como la Viagra, ya que puede causar una caída peligrosa de la presión arterial.</p>
       `,
       imageUrl: 'https://picsum.photos/800/400?random=10',
-      author: 'El equipo de Popper España',
+      author: 'El equipo de Popper Online',
       date: '2024-07-20T10:00:00Z',
       comments: [
         { id: 'c1', author: 'Carlos G.', content: '¡Muy informativo! Gracias por la guía.', date: '2024-07-21T12:00:00Z' },

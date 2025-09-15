@@ -5,7 +5,7 @@ import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
 
 export const metadata = {
-    title: 'Todos los Productos | Popper España',
+    title: 'Todos los Productos | Popper Online',
     description: 'Explora nuestro catálogo completo de poppers. Filtra por marca, categoría y ordena por precio o popularidad.',
 };
 

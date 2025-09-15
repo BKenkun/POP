@@ -48,7 +48,7 @@ export function Footer() {
         <div className="container">
             <div className="mb-8">
                 <p className="text-sm text-center md:text-left text-muted-foreground mb-6">
-                    <span className="font-bold text-foreground">Popper España:</span> Tu tienda de confianza para aromas de calidad superior.
+                    <span className="font-bold text-foreground">Popper Online:</span> Tu tienda de confianza para aromas de calidad superior.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                    <LinkColumn title="Información" links={footerLinks.slice(0, 5)} />
@@ -59,7 +59,7 @@ export function Footer() {
 
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
-                &copy; {new Date().getFullYear()} Popper España. T
+                &copy; {new Date().getFullYear()} Popper Online. T
                 {pathname.startsWith('/blog') ? (
                     <Link href="/admin/login">o</Link>
                 ) : (

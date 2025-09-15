@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         data: {
           type: 'profile-subscription-bulk-create-job',
           attributes: {
-            custom_source: 'Popper Espana Website',
+            custom_source: 'Popper Online Website',
             profiles: {
               data: [
                 {

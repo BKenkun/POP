@@ -12,12 +12,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     };
   }
   return {
-    title: `${post.title} | Blog de Popper España`,
+    title: `${post.title} | Blog de Popper Online`,
     description: post.excerpt,
   };
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = posts.find((p) => p.slug === params.slug);
 
   if (!post) {
