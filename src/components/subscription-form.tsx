@@ -12,6 +12,7 @@ interface SubscriptionFormProps {
 
 const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     const { toast } = useToast();
+    const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
@@ -22,8 +23,7 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
-        const email = e.currentTarget.email.value;
-
+        
         if(!email) {
             toast({
                 title: "Error",
@@ -54,7 +54,7 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
                 title: "¡Gracias por suscribirte!",
                 description: "Pronto recibirás nuestras mejores ofertas.",
             });
-            e.currentTarget.reset();
+            setEmail(''); // Reset the input field
             if (onSubscribed) {
                 onSubscribed();
             }
@@ -84,7 +84,16 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
                 Puede cancelar su suscripción en cualquier momento. Para ello, consulte nuestra información de contacto en la declaración legal.
                 </p>
                 <form onSubmit={handleSubmit} className="flex w-full max-w-md mx-auto items-center space-x-2">
-                    <Input name="email" type="email" placeholder="Introduce tu email..." className="flex-1 bg-background dark:bg-card" required disabled={loading}/>
+                    <Input 
+                        name="email" 
+                        type="email" 
+                        placeholder="Introduce tu email..." 
+                        className="flex-1 bg-background dark:bg-card" 
+                        required 
+                        disabled={loading}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
                     <Button type="submit" variant="destructive" disabled={loading}>
                         {loading ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
