@@ -10,6 +10,7 @@ import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
 import FloatingCartButton from '@/components/floating-cart-button';
 import FloatingAccountButton from '@/components/floating-account-button';
+import FloatingCbdButton from '@/components/floating-cbd-button';
 import { usePathname } from 'next/navigation';
 
 const metadata: Metadata = {
@@ -64,6 +65,7 @@ export default function RootLayout({
           </div>
           <Toaster />
           <SalesNotification />
+          <FloatingCbdButton />
           <FloatingAccountButton />
           <FloatingCartButton />
         </Providers>

@@ -44,7 +44,7 @@ export default function FloatingAccountButton() {
 
   return (
     <div
-      className="fixed bottom-24 right-6 z-50"
+      className="fixed bottom-[7.5rem] right-6 z-50"
       onMouseEnter={() => user && setIsOpen(true)}
       onMouseLeave={() => user && setIsOpen(false)}
     >
