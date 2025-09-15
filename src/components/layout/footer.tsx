@@ -61,7 +61,7 @@ export function Footer() {
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper España. T
                 {pathname.startsWith('/blog') ? (
-                    <Link href="/admin/login" className="hover:text-primary">o</Link>
+                    <Link href="/admin/login">o</Link>
                 ) : (
                     'o'
                 )}
