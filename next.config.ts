@@ -82,6 +82,12 @@ const nextConfig: NextConfig = {
         hostname: 'majorsmoker.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'm.media-amazon.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
