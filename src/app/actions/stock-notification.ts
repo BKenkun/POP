@@ -2,6 +2,8 @@
 'use server';
 
 import { z } from 'zod';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const stockNotificationSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
@@ -22,28 +24,24 @@ export async function subscribeToStockNotification(
 
   const { email, productId } = validation.data;
 
-  // --- Lógica de la Base de Datos (Simulada por ahora) ---
-  // En una implementación real, aquí guardarías la información en Firestore,
-  // por ejemplo, en una colección `stockSubscriptions`.
-  //
-  // Ejemplo con Firestore (requeriría importar `db` de `@/lib/firebase`):
-  /*
+  // --- Lógica de la Base de Datos (Implementación Real) ---
+  // Guardamos la información en la colección `stockSubscriptions`.
+  // El ID del documento combina el ID del producto y el email para evitar duplicados.
   try {
-    const subscriptionRef = doc(db, 'stockSubscriptions', `${productId}_${email}`);
+    const subscriptionRef = doc(db, 'stockSubscriptions', `${productId}_${email.toLowerCase()}`);
     await setDoc(subscriptionRef, {
       productId: productId,
-      email: email,
+      email: email.toLowerCase(),
       createdAt: serverTimestamp(),
       notified: false, // Para controlar si ya se ha enviado la notificación
-    });
+    }, { merge: true }); // Usamos merge por si ya existe, para no sobreescribir la fecha de creación original
   } catch (dbError) {
     console.error("Error saving stock notification to Firestore:", dbError);
     return { success: false, error: 'No se pudo guardar tu solicitud en la base de datos.' };
   }
-  */
   
-  console.log(`SIMULACIÓN: El usuario con email ${email} se ha suscrito a las notificaciones de stock para el producto ${productId}.`);
+  console.log(`Petición de stock guardada: El usuario con email ${email} quiere el producto ${productId}.`);
 
-  // Devolvemos éxito porque la parte visible para el usuario está completa.
+  // Devolvemos éxito porque la petición del usuario se ha guardado correctamente.
   return { success: true };
 }
