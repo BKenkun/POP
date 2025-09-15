@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
         'accept': 'application/json',
         'content-type': 'application/json',
-        'revision': '2023-02-22'
+        'revision': '2024-07-15'
       },
       body: JSON.stringify({
         data: {
@@ -52,11 +52,12 @@ export async function POST(req: NextRequest) {
       })
     });
     
+    // Klaviyo returns 202 Accepted on success for this endpoint
     if (!response.ok && response.status !== 202) {
         const errorData = await response.json();
-        console.error("Klaviyo API Error:", errorData);
+        console.error("Klaviyo API Error:", JSON.stringify(errorData, null, 2));
         // Extract a user-friendly error message if available
-        const errorMessage = errorData.detail || 'Could not subscribe to the newsletter.';
+        const errorMessage = errorData.errors?.[0]?.detail || 'Could not subscribe to the newsletter.';
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
 

@@ -46,7 +46,8 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Something went wrong.');
+                // Use the detailed error message from the API response
+                throw new Error(data.message || 'Something went wrong on the server.');
             }
 
             toast({
@@ -61,6 +62,7 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
         } catch (error: any) {
              toast({
                 title: "Subscription Failed",
+                // Display the specific error message
                 description: error.message || "Could not subscribe. Please try again later.",
                 variant: "destructive",
             });
