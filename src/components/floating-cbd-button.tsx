@@ -22,13 +22,12 @@ export default function FloatingCbdButton() {
     <Button
       asChild
       variant="secondary"
-      className="relative h-24 w-24 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white"
+      className="relative h-24 w-24 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-3"
       aria-label="Visita nuestra tienda de CBD"
     >
       <Link href="https://comprarcbdonline.com" target="_blank" rel="noopener noreferrer">
-        <MarijuanaLeafIcon className="h-22 w-22" />
+        <MarijuanaLeafIcon className="h-full w-full" />
       </Link>
     </Button>
   );
 }
-
