@@ -4,7 +4,6 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// SVG for Marijuana Leaf
 const MarijuanaLeafIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg 
         xmlns="http://www.w3.org/2000/svg" 
@@ -22,7 +21,7 @@ export default function FloatingCbdButton() {
     <Button
       asChild
       variant="secondary"
-      className="relative h-24 w-24 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-3"
+      className="relative h-20 w-20 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-3"
       aria-label="Visita nuestra tienda de CBD"
     >
       <Link href="https://comprarcbdonline.com" target="_blank" rel="noopener noreferrer">
