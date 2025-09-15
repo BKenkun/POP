@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
+import { createOrder } from '@/lib/orders';
 
 // Initialize Stripe outside of the request handler
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -27,24 +28,32 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    // This is where you would fulfill the order:
-    // - Save order details to your database (e.g., Firestore)
-    // - Send a confirmation email
-    // - Update product stock
-    
-    // For now, let's focus on updating stock
     try {
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
             expand: ['data.price.product']
         });
+        
+        // This is where you would fulfill the order:
+        // - Save order details to your database (e.g., Firestore)
+        // - Send a confirmation email
+        // - Update product stock
+        
+        // Step 1: Create the order in Firestore.
+        // This function will throw an error if it fails, which will be caught below.
+        await createOrder(session, lineItems.data);
 
+
+        // Step 2: Update stock levels (if order creation was successful)
         for (const item of lineItems.data) {
             const product = item.price?.product as Stripe.Product;
             const quantitySold = item.quantity || 0;
             
             // We can only update stock for products that came from our catalog
             // and have the productId in their metadata.
-            if (product && product.metadata.stock) {
+            // This excludes custom packs.
+            const isCustomPack = session.metadata?.isCustomPack === 'true';
+
+            if (product && product.metadata.stock && !isCustomPack) {
                 const currentStock = parseInt(product.metadata.stock, 10);
                 
                 if (!isNaN(currentStock)) {
@@ -63,11 +72,10 @@ export async function POST(req: NextRequest) {
             }
         }
     } catch (error: any) {
-        console.error('Error updating product stock:', error);
-        // We don't want to fail the entire webhook for a stock update error,
-        // but we should log it.
-        // In a production app, you might send this to an error tracking service.
-        return NextResponse.json({ error: 'Internal server error while updating stock.' }, { status: 500 });
+        console.error('Error processing checkout session:', error);
+        // If order creation or stock update fails, return an error.
+        // Stripe will automatically retry the webhook.
+        return NextResponse.json({ error: `Webhook handler failed: ${error.message}` }, { status: 500 });
     }
   }
 
