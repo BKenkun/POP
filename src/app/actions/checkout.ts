@@ -17,6 +17,7 @@ export async function createCustomPackCheckoutAction(
     discountedPrice: number
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
     const totalQuantity = packItems.reduce((sum, item) => sum + item.quantity, 0);
+    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     
     // Create a virtual cart item representing the pack
     const customPackForCheckout: CartItem = {
@@ -24,7 +25,7 @@ export async function createCustomPackCheckoutAction(
         name: `Pack Personalizado (${totalQuantity} uds)`,
         description: packItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
         price: discountedPrice,
-        imageUrl: 'https://picsum.photos/seed/pack/400/400',
+        imageUrl: `${YOUR_DOMAIN}/pack-default.png`,
         imageHint: 'custom pack',
         quantity: 1, // A pack is a single item
     };

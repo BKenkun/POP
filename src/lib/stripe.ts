@@ -25,7 +25,8 @@ const getStripeInstance = (): Stripe => {
 
 // Helper function to ensure URL has a protocol
 const normalizeImageUrl = (url: string): string => {
-  if (!url) return 'https://picsum.photos/400/400';
+  const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  if (!url) return `${YOUR_DOMAIN}/product-placeholder.png`;
   if (url.startsWith('http')) {
     return url;
   }
