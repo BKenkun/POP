@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +18,7 @@ import Link from 'next/link';
 
 export default function FloatingAccountButton() {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
   const isAdminPath = pathname.startsWith('/admin');
 
@@ -25,8 +27,12 @@ export default function FloatingAccountButton() {
   }
 
   return (
-    <div className="fixed bottom-24 right-6 z-50">
-      <DropdownMenu>
+    <div
+      className="fixed bottom-24 right-6 z-50"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="default"
