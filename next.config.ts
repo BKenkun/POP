@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https_beta',
+        protocol: 'https',
         hostname: 'files.stripe.com',
         port: '',
         pathname: '/**',
