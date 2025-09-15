@@ -22,10 +22,14 @@ export default function FloatingCbdButton() {
       asChild
       variant="secondary"
 <<<<<<< HEAD
+<<<<<<< HEAD
       className="relative h-20 w-20 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-3"
 =======
       className="relative h-16 w-16 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-2"
 >>>>>>> 618e2e3 (vale el boton que te dirige a comprarcbdonline.com debe ser un poco mas)
+=======
+      className="relative h-16 w-16 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-2 transition-transform hover:scale-110"
+>>>>>>> 17df5f2 (vale el boton verde estaría bien que al pasar el cursor creciera un peli)
       aria-label="Visita nuestra tienda de CBD"
     >
       <Link href="https://comprarcbdonline.com" target="_blank" rel="noopener noreferrer">
