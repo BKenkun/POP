@@ -21,7 +21,9 @@ export default function AccountSidebar() {
     <Card>
         <nav className="flex flex-col gap-1 p-2">
             {navLinks.map((link) => {
-                const isActive = pathname === link.href;
+                const isActive = link.href === '/account' 
+                    ? pathname === link.href 
+                    : pathname.startsWith(link.href);
                 return (
                 <Link key={link.href} href={link.href} passHref>
                     <Button
@@ -42,4 +44,3 @@ export default function AccountSidebar() {
     </Card>
   );
 }
-
