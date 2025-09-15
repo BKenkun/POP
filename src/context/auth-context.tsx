@@ -1,20 +1,21 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 // Define a type for our simulated admin user
 type SimulatedUser = {
   uid: string;
   email: string;
   displayName: string;
-  isAnonymous: boolean; // Add properties to match Firebase User type
+  isAnonymous: boolean;
   emailVerified: boolean;
   providerData: any[];
-  // Add any other properties your app might use from the User object
 };
 
 interface AuthContextType {
@@ -22,6 +23,8 @@ interface AuthContextType {
   loading: boolean;
   logout: () => void;
   loginAsAdminCustomer: () => void;
+  loyaltyPoints: number;
+  setLoyaltyPoints: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,12 +33,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdminAsCustomer, setIsAdminAsCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       if (!isAdminAsCustomer) {
-        setUser(user);
+        setUser(authUser);
+        if (authUser) {
+          const userDocRef = doc(db, "users", authUser.uid);
+          const unsubSnapshot = onSnapshot(userDocRef, (doc) => {
+            setLoyaltyPoints(doc.data()?.loyaltyPoints || 0);
+          });
+          return () => unsubSnapshot();
+        } else {
+            setLoyaltyPoints(0);
+        }
       }
       setLoading(false);
     });
@@ -47,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (isAdminAsCustomer) {
         setIsAdminAsCustomer(false);
+        setUser(null); // Clear simulated user
       } else {
         await firebaseSignOut(auth);
       }
@@ -58,10 +72,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsAdminCustomer = () => {
     setIsAdminAsCustomer(true);
-    setLoading(false); // Ensure loading is false
+    setLoading(false);
+    setLoyaltyPoints(1000); // Give some points to test with
   };
 
-  // Determine the final user object to provide
   const providedUser = isAdminAsCustomer 
     ? { 
         uid: 'admin_user', 
@@ -73,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     : user;
 
-  const value = { user: providedUser, loading, logout, loginAsAdminCustomer };
+  const value = { user: providedUser, loading, logout, loginAsAdminCustomer, loyaltyPoints, setLoyaltyPoints };
 
   if (loading && !providedUser) {
     return (

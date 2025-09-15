@@ -7,9 +7,10 @@ import { CartItem, PackItemBrief } from '@/lib/types';
 // This action is for the main shopping cart
 export async function createCheckoutSessionAction(
     items: CartItem[],
-    userId?: string
+    userId: string | undefined,
+    pointsToRedeem: number = 0,
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
-     return createCheckoutSession(items, userId);
+     return createCheckoutSession(items, userId, pointsToRedeem);
 }
 
 // This is a new, separate action specifically for the custom pack builder

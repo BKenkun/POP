@@ -54,21 +54,25 @@ export async function POST(req: NextRequest) {
             expand: ['data.price.product']
         });
         
-        // This is where you would fulfill the order:
-        // - Save order details to your database (e.g., Firestore)
-        // - Send a confirmation email
-        // - Update product stock
-        
         // Step 1: Create the order in Firestore.
         await createOrder(session, lineItems.data);
 
-        // Step 2: Award loyalty points
+        // Step 2: Handle loyalty points
         const userId = session.metadata?.userId;
         const totalSpent = session.amount_total || 0; // Total in cents
-        if (userId && totalSpent > 0) {
-            // 1 point for every 1 euro spent. amount_total is in cents.
-            const pointsEarned = Math.floor(totalSpent / 100);
-            await updateUserLoyaltyPoints(userId, pointsEarned);
+        const pointsRedeemed = parseInt(session.metadata?.pointsRedeemed || '0', 10);
+
+        if (userId) {
+            // Subtract redeemed points
+            if (pointsRedeemed > 0) {
+                await updateUserLoyaltyPoints(userId, -pointsRedeemed);
+            }
+            
+            // Award new points based on money spent
+            if (totalSpent > 0) {
+                const pointsEarned = Math.floor(totalSpent / 100);
+                await updateUserLoyaltyPoints(userId, pointsEarned);
+            }
         }
 
         // Step 3: Update stock levels
@@ -85,7 +89,6 @@ export async function POST(req: NextRequest) {
             // Logic for regular products
             for (const item of lineItems.data) {
                 const product = item.price?.product as Stripe.Product;
-                // The actual product ID is stored in the product's metadata by our checkout function
                 const productId = product.metadata.productId; 
                 const quantitySold = item.quantity || 0;
                 
@@ -96,8 +99,6 @@ export async function POST(req: NextRequest) {
         }
     } catch (error: any) {
         console.error('Error processing checkout session:', error);
-        // If order creation or stock update fails, return an error.
-        // Stripe will automatically retry the webhook.
         return NextResponse.json({ error: `Webhook handler failed: ${error.message}` }, { status: 500 });
     }
   }

@@ -1,5 +1,4 @@
 
-
 import Stripe from 'stripe';
 import type { Product, CartItem, PackItemBrief } from './types';
 
@@ -112,33 +111,42 @@ export async function getStripeProducts(): Promise<Product[]> {
 export async function createCheckoutSession(
   items: CartItem[],
   userId?: string,
+  pointsToRedeem: number = 0
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
   try {
     const stripe = getStripeInstance();
-    const line_items = items.map((item) => {
-      // For real products, we'd use item.priceId if we had it.
-      // Since we don't, we pass the price data directly.
-      // This is less ideal for production but works for this setup.
-      return {
+    
+    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    
+    // Create a coupon for the loyalty points discount
+    let couponId: string | undefined = undefined;
+    const pointsDiscountAmount = pointsToRedeem * 2; // 100 points = 2€, so 1 point = 2 cents
+
+    if (pointsDiscountAmount > 0) {
+        const coupon = await stripe.coupons.create({
+            amount_off: pointsDiscountAmount,
+            currency: 'eur',
+            duration: 'once',
+            name: `Descuento fidelidad (${pointsToRedeem} pts)`,
+        });
+        couponId = coupon.id;
+    }
+
+    const line_items = items.map((item) => ({
         price_data: {
-          currency: 'eur',
-          product_data: {
-            name: item.name,
-            images: item.imageUrl ? [item.imageUrl] : [],
-            description: item.description,
-            // Pass product ID to metadata for stock updates via webhook
-            metadata: {
-              productId: item.id,
+            currency: 'eur',
+            product_data: {
+                name: item.name,
+                images: item.imageUrl ? [item.imageUrl] : [],
+                description: item.description,
+                metadata: {
+                    productId: item.id,
+                },
             },
-          },
-          unit_amount: item.price, // Price in cents
+            unit_amount: item.price,
         },
         quantity: item.quantity,
-      };
-    });
-
-    const YOUR_DOMAIN =
-      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    }));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -148,14 +156,14 @@ export async function createCheckoutSession(
       cancel_url: `${YOUR_DOMAIN}/`,
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['ES'], // Only allow shipping to Spain
+        allowed_countries: ['ES'],
       },
-      // Pass userId to the session metadata
       metadata: {
         ...(userId && { userId }),
+        pointsRedeemed: pointsToRedeem.toString(),
       },
-      // Pass customer email if user is logged in
-      ...(userId && { customer_email: undefined }), // Let Stripe handle email on its page
+      ...(userId && { customer_email: undefined }),
+      ...(couponId && { discounts: [{ coupon: couponId }] }),
     });
 
     if (!session.url) {

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useCart } from '@/context/cart-context';
@@ -7,31 +6,44 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, ShoppingBag, ShieldCheck, CreditCard, Clock, Box } from 'lucide-react';
+import { Lock, ShoppingBag, ShieldCheck, CreditCard, Clock, Box, Gift, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCheckoutSessionAction } from '@/app/actions/checkout';
 import { useAuth } from '@/context/auth-context';
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, volumeDiscount, totalWithDiscount } = useCart();
-  const { user } = useAuth();
+  const { user, loyaltyPoints } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [applyPoints, setApplyPoints] = useState(false);
 
-  // Shipping is free for orders over 40€
-  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€ in cents
-  const taxAmount = totalWithDiscount * 0.08; // Example: 8% tax on the discounted total
-  const finalTotal = totalWithDiscount + shippingCost + taxAmount;
+  // Constants for calculations
+  const shippingCost = totalWithDiscount > 4000 ? 0 : 500;
+  const taxRate = 0.08; // 8%
+
+  // Calculate loyalty points discount
+  const pointsValue = loyaltyPoints * 2; // 1 point = 2 cents
+  const loyaltyDiscount = useMemo(() => {
+    if (!applyPoints || !user) return 0;
+    // Discount cannot be greater than the subtotal with volume discount
+    return Math.min(pointsValue, totalWithDiscount);
+  }, [applyPoints, user, pointsValue, totalWithDiscount]);
+
+  // Calculate final totals
+  const subtotalAfterLoyalty = totalWithDiscount - loyaltyDiscount;
+  const taxAmount = subtotalAfterLoyalty * taxRate;
+  const finalTotal = subtotalAfterLoyalty + shippingCost + taxAmount;
   
   useEffect(() => {
-    // Redirect to home if cart is empty on page load
     if (cartCount === 0 && !loading) {
-       // A small delay prevents abrupt redirects before the user sees the page
        setTimeout(() => router.push('/'), 100);
     }
   }, [cartCount, router, loading]);
@@ -39,28 +51,30 @@ export default function CheckoutClientPage() {
   const handlePayment = async () => {
     setLoading(true);
     toast({
-        title: 'Redirecting to payment...',
-        description: 'Please wait while we prepare your secure checkout.',
+        title: 'Redirigiendo al pago...',
+        description: 'Por favor, espera mientras preparamos tu compra segura.',
     });
 
     try {
+        const pointsToRedeem = applyPoints ? Math.floor(loyaltyDiscount / 2) : 0;
+        
         const { sessionUrl, error: sessionError } = await createCheckoutSessionAction(
             cartItems,
-            user?.uid // Pass the user ID to the action
+            user?.uid,
+            pointsToRedeem
         );
 
         if (sessionError || !sessionUrl) {
             throw new Error(sessionError || 'Could not create checkout session.');
         }
 
-        // Redirect to Stripe's checkout page
         window.location.href = sessionUrl;
         
     } catch (error: any) {
         console.error("Payment Error: ", error);
         toast({
-            title: 'Payment Failed',
-            description: error.message || 'Something went wrong. Please try again later.',
+            title: 'Error en el Pago',
+            description: error.message || 'Ocurrió un error. Por favor, inténtalo de nuevo.',
             variant: 'destructive',
         });
         setLoading(false);
@@ -147,6 +161,35 @@ export default function CheckoutClientPage() {
                     <span>-{formatPrice(volumeDiscount)}</span>
                 </div>
               )}
+               <Separator />
+               <div className="flex justify-between font-semibold">
+                <span>Subtotal con descuento</span>
+                <span>{formatPrice(totalWithDiscount)}</span>
+              </div>
+              
+              {user && loyaltyPoints > 0 && (
+                 <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm bg-secondary/30">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="loyalty-points" className="flex items-center gap-2">
+                            <Gift className="h-4 w-4 text-primary"/>
+                            <span>Aplicar {loyaltyPoints} puntos ({formatPrice(pointsValue)})</span>
+                        </Label>
+                        <p className="text-xs text-muted-foreground">Usa tus puntos para obtener un descuento.</p>
+                    </div>
+                    <Switch
+                        id="loyalty-points"
+                        checked={applyPoints}
+                        onCheckedChange={setApplyPoints}
+                    />
+                </div>
+              )}
+              {loyaltyDiscount > 0 && (
+                <div className="flex justify-between text-destructive">
+                    <span>Descuento por puntos</span>
+                    <span>-{formatPrice(loyaltyDiscount)}</span>
+                </div>
+              )}
+              
               <div className="flex justify-between">
                 <span>Shipping</span>
                  <span>{shippingCost === 0 ? 'Free' : formatPrice(shippingCost)}</span>
@@ -163,8 +206,8 @@ export default function CheckoutClientPage() {
             </CardContent>
             <CardFooter className="flex-col items-stretch gap-4">
               <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handlePayment} disabled={loading || cartCount === 0}>
-                <Lock className="mr-2 h-4 w-4" />
-                {loading ? 'Processing...' : 'Proceed to Payment'}
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Lock className="mr-2 h-4 w-4" /> }
+                {loading ? 'Procesando...' : `Pagar ${formatPrice(finalTotal)}`}
               </Button>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <p>Secure payments powered by Stripe</p>
