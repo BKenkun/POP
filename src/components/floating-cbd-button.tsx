@@ -26,8 +26,9 @@ export default function FloatingCbdButton() {
       aria-label="Visita nuestra tienda de CBD"
     >
       <Link href="https://comprarcbdonline.com" target="_blank" rel="noopener noreferrer">
-        <MarijuanaLeafIcon className="h-20 w-20" />
+        <MarijuanaLeafIcon className="h-22 w-22" />
       </Link>
     </Button>
   );
 }
+
