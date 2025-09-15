@@ -2,6 +2,9 @@
 'use server';
 
 import { z } from 'zod';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const loginSchema = z.object({
   email: z.string().email(),
