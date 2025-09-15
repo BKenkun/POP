@@ -6,15 +6,17 @@ import { CartItem, PackItemBrief } from '@/lib/types';
 
 // This action is for the main shopping cart
 export async function createCheckoutSessionAction(
-    items: CartItem[]
+    items: CartItem[],
+    userId?: string
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
-     return createCheckoutSession(items);
+     return createCheckoutSession(items, userId);
 }
 
 // This is a new, separate action specifically for the custom pack builder
 export async function createCustomPackCheckoutAction(
     packItems: PackItemBrief[],
-    discountedPrice: number
+    discountedPrice: number,
+    userId?: string
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
     const totalQuantity = packItems.reduce((sum, item) => sum + item.quantity, 0);
     const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
@@ -33,5 +35,5 @@ export async function createCustomPackCheckoutAction(
     // We can't use the standard checkout session creator because stock management
     // for individual pack items is complex and not handled by this simplified logic.
     // So we call a specific function for it.
-    return createPackCheckoutSession(customPackForCheckout);
+    return createPackCheckoutSession(customPackForCheckout, userId);
 }

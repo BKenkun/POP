@@ -1,4 +1,5 @@
 
+
 import Stripe from 'stripe';
 import type { Product, CartItem } from './types';
 
@@ -109,7 +110,8 @@ export async function getStripeProducts(): Promise<Product[]> {
 }
 
 export async function createCheckoutSession(
-  items: CartItem[]
+  items: CartItem[],
+  userId?: string,
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
   try {
     const stripe = getStripeInstance();
@@ -148,6 +150,12 @@ export async function createCheckoutSession(
       shipping_address_collection: {
         allowed_countries: ['ES'], // Only allow shipping to Spain
       },
+      // Pass userId to the session metadata
+      metadata: {
+        ...(userId && { userId }),
+      },
+      // Pass customer email if user is logged in
+      ...(userId && { customer_email: undefined }), // Let Stripe handle email on its page
     });
 
     if (!session.url) {
@@ -167,7 +175,8 @@ export async function createCheckoutSession(
 
 
 export async function createPackCheckoutSession(
-  pack: CartItem
+  pack: CartItem,
+  userId?: string,
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
   try {
     const stripe = getStripeInstance();
@@ -200,6 +209,12 @@ export async function createPackCheckoutSession(
         shipping_address_collection: {
             allowed_countries: ['ES'],
         },
+        metadata: {
+            isCustomPack: 'true',
+            ...(userId && { userId }),
+        },
+         // Pass customer email if user is logged in
+        ...(userId && { customer_email: undefined }),
     });
 
      if (!session.url) {

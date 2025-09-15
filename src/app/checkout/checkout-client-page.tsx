@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useCart } from '@/context/cart-context';
@@ -13,9 +14,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCheckoutSessionAction } from '@/app/actions/checkout';
+import { useAuth } from '@/context/auth-context';
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, volumeDiscount, totalWithDiscount } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -41,7 +44,10 @@ export default function CheckoutClientPage() {
     });
 
     try {
-        const { sessionUrl, error: sessionError } = await createCheckoutSessionAction(cartItems);
+        const { sessionUrl, error: sessionError } = await createCheckoutSessionAction(
+            cartItems,
+            user?.uid // Pass the user ID to the action
+        );
 
         if (sessionError || !sessionUrl) {
             throw new Error(sessionError || 'Could not create checkout session.');
