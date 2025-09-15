@@ -2,9 +2,6 @@
 'use server';
 
 import { z } from 'zod';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -20,6 +17,7 @@ export async function adminLoginAction(credentials: z.infer<typeof loginSchema>)
   
   const { email, password } = parsedCredentials.data;
 
+  // Next.js automatically loads .env files. No need for dotenv.
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
