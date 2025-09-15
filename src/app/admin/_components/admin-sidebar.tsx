@@ -11,7 +11,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, LogOut, Store } from 'lucide-react';
+import { Home, Newspaper, LogOut, Store, Package } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -33,6 +33,14 @@ export default function AdminSidebar() {
               <SidebarMenuButton isActive={pathname === '/admin'}>
                 <Home />
                 <span>Dashboard</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Link href="/admin/orders" passHref>
+              <SidebarMenuButton isActive={pathname.startsWith('/admin/orders')}>
+                <Package />
+                <span>Orders</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
