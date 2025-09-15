@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import { createOrder, updateUserLoyaltyPoints } from '@/lib/orders';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+
 
 // Initialize Stripe outside of the request handler
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
-  // Handle the checkout.session.completed event
+  // --- Handle checkout.session.completed event ---
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
@@ -89,7 +92,8 @@ export async function POST(req: NextRequest) {
             // Logic for regular products
             for (const item of lineItems.data) {
                 const product = item.price?.product as Stripe.Product;
-                const productId = product.metadata.productId; 
+                // In checkout sessions, the product ID is on the product object itself
+                const productId = product.id; 
                 const quantitySold = item.quantity || 0;
                 
                 if (productId && quantitySold > 0) {
@@ -102,6 +106,58 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Webhook handler failed: ${error.message}` }, { status: 500 });
     }
   }
+
+  // --- Handle product.updated event for stock notifications ---
+  if (event.type === 'product.updated') {
+    const product = event.data.object as Stripe.Product;
+    const previousAttributes = event.data.previous_attributes as Stripe.Product | undefined;
+
+    const oldStockStr = previousAttributes?.metadata?.stock;
+    const newStockStr = product.metadata.stock;
+
+    if (oldStockStr !== undefined && newStockStr !== undefined) {
+        const oldStock = parseInt(oldStockStr, 10);
+        const newStock = parseInt(newStockStr, 10);
+
+        // Check if product has been restocked (from 0 to > 0)
+        if (oldStock === 0 && newStock > 0) {
+            console.log(`✅ Product restocked: ${product.name} (ID: ${product.id}). New stock: ${newStock}`);
+
+            try {
+                // Find all pending notifications for this product
+                const subscriptionsRef = collection(db, 'stockSubscriptions');
+                const q = query(subscriptionsRef, where('productId', '==', product.id), where('notified', '==', false));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const batch = writeBatch(db);
+                    const emailsToSend: string[] = [];
+
+                    querySnapshot.forEach(doc => {
+                        emailsToSend.push(doc.data().email);
+                        // Mark as notified so we don't send it again
+                        batch.update(doc.ref, { notified: true });
+                    });
+                    
+                    // --- Email sending simulation ---
+                    console.log(`INFO: Found ${emailsToSend.length} subscribers for ${product.name}. Preparing to send emails.`);
+                    for (const email of emailsToSend) {
+                        // In a real app, you'd call your email service here.
+                        // Example: await sendRestockEmail(email, product);
+                        console.log(`INFO: Simulating sending restock email to ${email} for product ${product.name}.`);
+                    }
+
+                    // Commit the batch update to mark all as notified
+                    await batch.commit();
+                    console.log(`✅ Successfully processed and marked ${emailsToSend.length} notifications as sent.`);
+                }
+            } catch (dbError) {
+                 console.error(`❌ Error processing stock notifications for product ${product.id}:`, dbError);
+            }
+        }
+    }
+  }
+
 
   // Acknowledge receipt of the event
   return NextResponse.json({ received: true });
