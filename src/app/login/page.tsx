@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -31,7 +32,7 @@ export default function LoginPage() {
             title: 'Inicio de sesión como administrador',
             description: 'Explorando la vista de cliente.',
         });
-        router.push('/admin'); // Let's send the admin to the admin panel directly
+        router.push('/account'); // Corrected redirect to the user account panel
         setLoading(false);
         return;
     }
