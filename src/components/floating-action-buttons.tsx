@@ -15,11 +15,17 @@ export default function FloatingActionButtons() {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
-            <FloatingCbdButton />
-            <div className="flex flex-col gap-3">
-                <FloatingAccountButton />
-                <FloatingCartButton />
+        <div className="fixed bottom-6 right-6 z-50">
+            <div className="relative h-[124px] w-[124px]">
+                <div className="absolute top-1/2 -translate-y-1/2 left-0">
+                    <FloatingCbdButton />
+                </div>
+                <div className="absolute top-0 right-0">
+                    <FloatingAccountButton />
+                </div>
+                <div className="absolute bottom-0 right-0">
+                    <FloatingCartButton />
+                </div>
             </div>
         </div>
     );
