@@ -15,11 +15,25 @@ const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const hasVisited = localStorage.getItem('hasVisitedPopperStore');
-    if (!hasVisited) {
+    const lastVisit = localStorage.getItem('lastPopperStoreVisit');
+    const now = new Date().getTime();
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+
+    let shouldShowPopup = false;
+    
+    if (!lastVisit) {
+      shouldShowPopup = true;
+    } else {
+      const lastVisitTime = parseInt(lastVisit, 10);
+      if (now - lastVisitTime > oneDayInMs) {
+        shouldShowPopup = true;
+      }
+    }
+
+    if (shouldShowPopup) {
       const timer = setTimeout(() => {
         setIsOpen(true);
-        localStorage.setItem('hasVisitedPopperStore', 'true');
+        localStorage.setItem('lastPopperStoreVisit', now.toString());
       }, 2000);
       return () => clearTimeout(timer);
     }
