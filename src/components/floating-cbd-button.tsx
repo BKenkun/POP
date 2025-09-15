@@ -35,18 +35,11 @@ export default function FloatingCbdButton() {
     <Button
       asChild
       variant="secondary"
-      className="relative h-16 w-16 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white p-2 transition-transform hover:scale-110"
+      className="relative h-16 w-16 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white transition-transform hover:scale-110 flex items-center justify-center text-xl font-bold"
       aria-label="Visita nuestra tienda de CBD"
     >
       <Link href="https://comprarcbdonline.com" target="_blank" rel="noopener noreferrer">
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-9 w-9"
-        >
-            <path d="M20.24,8.32a.5.5,0,0,0-.3-.49l-5.22-2.24-2.24,5.22a.5.5,0,0,0,.49.7h.1a.5.5,0,0,0,.49-.3l2-4.67,2.83,1.22-3.1,7.24a.5.5,0,0,0,.15.58.52.52,0,0,0,.29.11.5.5,0,0,0,.44-.26l3.36-7.85Zm-13,10.23,2.44-5.68-1.5-3.5a.5.5,0,0,0-.64-.26L4.7,10l-1.3,3a.5.5,0,0,0,.08.55.52.52,0,0,0,.3.14.5.5,0,0,0,.41-.21l1-2.28,1,2.33-1.63,3.8a.5.5,0,0,0,.29.63.53.53,0,0,0,.34.06.5.5,0,0,0,.44-.26Zm8.81.45,1.62-3.78-4.13-1.77-4.12,1.77,1.62,3.78a.5.5,0,0,0,.93,0l1.12-2.61,1.12,2.61a.5.5,0,0,0,.93,0Zm-4-15.55.75,1.75a.5.5,0,0,0,.64.26l2.84-1.22-1.22,2.83a.5.5,0,0,0,.15.58.52.52,0,0,0,.29.11h0a.5.5,0,0,0,.44-.26l1.75-.75-2.24-5.22a.5.5,0,0,0-.7-.2h0a.5.5,0,0,0-.3.49Z" />
-        </svg>
+        CBD
       </Link>
     </Button>
   );
