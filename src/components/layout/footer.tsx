@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 
 export function Footer() {
     const pathname = usePathname();
-    const isAdminPath = pathname.startsWith('/admin');
-
-    if (isAdminPath && pathname.includes('/login')) {
+    
+    // No renderizar el footer en las rutas de admin
+    if (pathname.startsWith('/admin')) {
       return null;
     }
     
@@ -67,11 +67,6 @@ export function Footer() {
                 )}
                 dos los derechos reservados.
                 </p>
-                {isAdminPath && (
-                     <Link href="/admin" className="text-sm text-muted-foreground hover:text-primary">
-                        Admin Panel
-                    </Link>
-                )}
             </div>
         </div>
       </footer>

@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 
 const LoginForm = dynamic(() => import('./login-form'), { ssr: false });
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="w-full max-w-sm">

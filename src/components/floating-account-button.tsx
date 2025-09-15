@@ -23,9 +23,8 @@ export default function FloatingAccountButton() {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  const isAdminPath = pathname.startsWith('/admin');
-
-  if (isAdminPath) {
+  // No mostrar el botón en las rutas de administrador
+  if (pathname.startsWith('/admin')) {
     return null;
   }
   

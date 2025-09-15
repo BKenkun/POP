@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -12,9 +13,8 @@ export default function FloatingCartButton() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const pathname = usePathname();
 
-  const isAdminPath = pathname.startsWith('/admin');
-
-  if (isAdminPath) {
+  // No mostrar el botón en las rutas de administrador
+  if (pathname.startsWith('/admin')) {
     return null;
   }
 

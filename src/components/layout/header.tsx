@@ -17,9 +17,8 @@ export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const isAdminPath = pathname.startsWith('/admin');
-
-  if (isAdminPath) {
+  // No renderizar el header en las rutas de admin
+  if (pathname.startsWith('/admin')) {
     return null;
   }
   
