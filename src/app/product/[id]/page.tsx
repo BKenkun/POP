@@ -13,7 +13,8 @@ async function getProduct(id: string): Promise<Product | undefined> {
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+  const resolvedParams = await params;
+  const product = await getProduct(resolvedParams.id);
   if (!product) {
     return {
       title: 'Producto no encontrado',
@@ -26,8 +27,9 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+  const resolvedParams = await params;
   const allProducts = await getStripeProducts();
-  const product = allProducts.find((p) => p.id === params.id);
+  const product = allProducts.find((p) => p.id === resolvedParams.id);
 
   if (!product) {
     notFound();
