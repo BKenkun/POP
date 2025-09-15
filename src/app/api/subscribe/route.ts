@@ -17,21 +17,42 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(`https://a.klaviyo.com/api/v2/list/${KLAVIYO_LIST_ID}/subscribe`, {
+    const response = await fetch(`https://a.klaviyo.com/api/profiles/`, {
       method: 'POST',
       headers: {
+        'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
         'accept': 'application/json',
         'content-type': 'application/json',
+        'revision': '2023-02-22'
       },
       body: JSON.stringify({
-        api_key: KLAVIYO_API_KEY,
-        profiles: [
-            { email: email }
-        ]
+        data: {
+          type: 'profile',
+          attributes: {
+            email: email,
+            subscriptions: {
+              email: {
+                marketing: {
+                  consent: 'SUBSCRIBED',
+                },
+              },
+            },
+          },
+          relationships: {
+            lists: {
+              data: [
+                {
+                  type: 'list',
+                  id: KLAVIYO_LIST_ID
+                }
+              ]
+            }
+          }
+        }
       })
     });
     
-    if (!response.ok) {
+    if (!response.ok && response.status !== 202) {
         const errorData = await response.json();
         console.error("Klaviyo API Error:", errorData);
         // Extract a user-friendly error message if available
