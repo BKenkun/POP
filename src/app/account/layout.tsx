@@ -1,9 +1,31 @@
 
-import { ReactNode } from 'react';
+'use client';
+
+import { ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 import AccountSidebar from './_components/account-sidebar';
 import { Card } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div>
         <div className="text-center space-y-4 mb-12">

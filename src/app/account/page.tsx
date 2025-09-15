@@ -1,16 +1,22 @@
 
+'use client';
+
+import { useAuth } from "@/context/auth-context";
 import { CardTitle, CardDescription, CardHeader, CardContent, Card } from "@/components/ui/card"
 
 export default function AccountDashboardPage() {
-  // Placeholder data
-  const userName = "Juan Pérez";
-  const userEmail = "juan.perez@email.com";
+  const { user } = useAuth();
+
+  // Placeholder data for recent order
   const recentOrder = {
     id: "ES1005",
     date: "15 de Julio, 2024",
     status: "Entregado",
     total: "45.50€"
   };
+
+  const userName = user?.displayName || user?.email?.split('@')[0] || "Usuario";
+  const userEmail = user?.email || "No email provided";
 
   return (
     <div className="space-y-6">

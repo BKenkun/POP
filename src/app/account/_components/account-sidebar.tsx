@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Package, MapPin, LogOut } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { useAuth } from '@/context/auth-context';
 
 const navLinks = [
   { href: '/account', label: 'Panel de Usuario', icon: LayoutDashboard },
@@ -16,6 +17,12 @@ const navLinks = [
 
 export default function AccountSidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
+
+  const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      logout();
+  }
 
   return (
     <Card>
@@ -36,7 +43,7 @@ export default function AccountSidebar() {
                 </Link>
                 );
             })}
-            <Button variant="ghost" className="w-full justify-start">
+            <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Cerrar Sesión
             </Button>
