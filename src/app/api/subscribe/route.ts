@@ -32,20 +32,32 @@ export async function POST(req: NextRequest) {
         data: {
           type: 'profile-subscription-bulk-create-job',
           attributes: {
-            list_id: KLAVIYO_LIST_ID,
-            // The key is 'profiles', not 'subscriptions' for this endpoint
-            profiles: [
-              {
-                email: email,
-                subscriptions: {
-                    email: {
+            custom_source: 'Popper Espana Website',
+            profiles: {
+              data: [
+                {
+                  type: 'profile',
+                  attributes: {
+                    email: email,
+                    subscriptions: {
+                      email: {
                         marketing: {
-                            consent: "SUBSCRIBED"
-                        }
-                    }
-                }
+                          consent: 'SUBSCRIBED',
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          relationships: {
+            list: {
+              data: {
+                type: 'list',
+                id: KLAVIYO_LIST_ID,
               },
-            ],
+            },
           },
         },
       }),
@@ -58,7 +70,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
     
-    // The API returns a 202 Accepted response on success
     return NextResponse.json({ message: 'Subscription request accepted.' }, { status: 202 });
 
   } catch (error: any) {
