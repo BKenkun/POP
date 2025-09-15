@@ -17,47 +17,22 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(`https://a.klaviyo.com/api/profiles/`, {
+    const response = await fetch(`https://a.klaviyo.com/api/v2/list/${KLAVIYO_LIST_ID}/subscribe`, {
       method: 'POST',
       headers: {
-        'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
-        'accept': 'application/json',
-        'content-type': 'application/json',
-        'revision': '2024-07-15'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        data: {
-          type: 'profile',
-          attributes: {
-            email: email,
-            subscriptions: {
-              email: {
-                marketing: {
-                  consent: 'SUBSCRIBED',
-                },
-              },
-            },
-          },
-          relationships: {
-            lists: {
-              data: [
-                {
-                  type: 'list',
-                  id: KLAVIYO_LIST_ID
-                }
-              ]
-            }
-          }
-        }
-      })
+        api_key: KLAVIYO_API_KEY,
+        profiles: [{ email: email }],
+      }),
     });
     
-    // Klaviyo returns 202 Accepted on success for this endpoint
-    if (!response.ok && response.status !== 202) {
+    if (!response.ok) {
         const errorData = await response.json();
         console.error("Klaviyo API Error:", JSON.stringify(errorData, null, 2));
-        // Extract a user-friendly error message if available
-        const errorMessage = errorData.errors?.[0]?.detail || 'Could not subscribe to the newsletter.';
+        const errorMessage = errorData.detail || 'Could not subscribe to the newsletter.';
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
 
