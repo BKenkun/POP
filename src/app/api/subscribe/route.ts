@@ -13,8 +13,6 @@ export async function POST(req: NextRequest) {
 
   if (!KLAVIYO_API_KEY || !KLAVIYO_LIST_ID) {
     console.warn("Klaviyo API Key or List ID is not set in environment variables. Returning success without subscribing.");
-    // In a real scenario, you might want to throw an error.
-    // For this demo, we'll return a success response to not block the UI.
     return NextResponse.json({ message: 'Subscription successful (simulation).' });
   }
 
@@ -22,11 +20,11 @@ export async function POST(req: NextRequest) {
     const response = await fetch(`https://a.klaviyo.com/api/v2/list/${KLAVIYO_LIST_ID}/subscribe`, {
       method: 'POST',
       headers: {
-        'api-key': KLAVIYO_API_KEY,
         'accept': 'application/json',
         'content-type': 'application/json',
       },
       body: JSON.stringify({
+        api_key: KLAVIYO_API_KEY,
         profiles: [
             { email: email }
         ]
@@ -37,7 +35,7 @@ export async function POST(req: NextRequest) {
         const errorData = await response.json();
         console.error("Klaviyo API Error:", errorData);
         // Extract a user-friendly error message if available
-        const errorMessage = errorData.message || 'Could not subscribe to the newsletter.';
+        const errorMessage = errorData.detail || 'Could not subscribe to the newsletter.';
         return NextResponse.json({ message: errorMessage }, { status: response.status });
     }
 
