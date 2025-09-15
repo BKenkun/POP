@@ -33,12 +33,17 @@ export async function POST(req: NextRequest) {
           type: 'profile-subscription-bulk-create-job',
           attributes: {
             list_id: KLAVIYO_LIST_ID,
-            subscriptions: [
+            // The key is 'profiles', not 'subscriptions' for this endpoint
+            profiles: [
               {
-                channels: {
-                  email: ['MARKETING'],
-                },
                 email: email,
+                subscriptions: {
+                    email: {
+                        marketing: {
+                            consent: "SUBSCRIBED"
+                        }
+                    }
+                }
               },
             ],
           },
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
     
     // The API returns a 202 Accepted response on success
-    return new NextResponse(null, { status: 202 });
+    return NextResponse.json({ message: 'Subscription request accepted.' }, { status: 202 });
 
   } catch (error: any) {
     console.error('Error subscribing to newsletter:', error);
