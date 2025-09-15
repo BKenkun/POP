@@ -24,7 +24,6 @@ interface AuthContextType {
   logout: () => void;
   loginAsAdminCustomer: () => void;
   loyaltyPoints: number;
-  setLoyaltyPoints: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,10 +60,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (isAdminAsCustomer) {
         setIsAdminAsCustomer(false);
         setUser(null); // Clear simulated user
+        router.push('/');
       } else {
         await firebaseSignOut(auth);
+        router.push('/');
       }
-      router.push('/');
     } catch (error) {
       console.error("Error signing out: ", error);
     }
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     : user;
 
-  const value = { user: providedUser, loading, logout, loginAsAdminCustomer, loyaltyPoints, setLoyaltyPoints };
+  const value = { user: providedUser, loading, logout, loginAsAdminCustomer, loyaltyPoints };
 
   if (loading && !providedUser) {
     return (
