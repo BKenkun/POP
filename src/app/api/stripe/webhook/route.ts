@@ -27,6 +27,12 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
+    // This is where you would fulfill the order:
+    // - Save order details to your database (e.g., Firestore)
+    // - Send a confirmation email
+    // - Update product stock
+    
+    // For now, let's focus on updating stock
     try {
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
             expand: ['data.price.product']
@@ -36,12 +42,15 @@ export async function POST(req: NextRequest) {
             const product = item.price?.product as Stripe.Product;
             const quantitySold = item.quantity || 0;
             
+            // We can only update stock for products that came from our catalog
+            // and have the productId in their metadata.
             if (product && product.metadata.stock) {
                 const currentStock = parseInt(product.metadata.stock, 10);
                 
                 if (!isNaN(currentStock)) {
                     const newStock = Math.max(0, currentStock - quantitySold);
                     
+                    // Update the product's stock in Stripe metadata
                     await stripe.products.update(product.id, {
                         metadata: {
                             ...product.metadata,
@@ -55,9 +64,13 @@ export async function POST(req: NextRequest) {
         }
     } catch (error: any) {
         console.error('Error updating product stock:', error);
+        // We don't want to fail the entire webhook for a stock update error,
+        // but we should log it.
+        // In a production app, you might send this to an error tracking service.
         return NextResponse.json({ error: 'Internal server error while updating stock.' }, { status: 500 });
     }
   }
 
+  // Acknowledge receipt of the event
   return NextResponse.json({ received: true });
 }

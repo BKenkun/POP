@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCart } from '@/context/cart-context';
@@ -19,13 +20,15 @@ export default function CheckoutClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€, free over 40€
-  const taxAmount = totalWithDiscount * 0.08; // 8% tax on the discounted total
+  // Shipping is free for orders over 40€
+  const shippingCost = cartTotal > 4000 ? 0 : 500; // 5.00€ in cents
+  const taxAmount = totalWithDiscount * 0.08; // Example: 8% tax on the discounted total
   const finalTotal = totalWithDiscount + shippingCost + taxAmount;
   
   useEffect(() => {
     // Redirect to home if cart is empty on page load
     if (cartCount === 0 && !loading) {
+       // A small delay prevents abrupt redirects before the user sees the page
        setTimeout(() => router.push('/'), 100);
     }
   }, [cartCount, router, loading]);

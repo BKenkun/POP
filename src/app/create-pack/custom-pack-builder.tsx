@@ -159,7 +159,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
         }
         
         // Redirect to Stripe checkout
-        router.push(sessionUrl);
+        window.location.href = sessionUrl;
 
     } catch (error: any) {
         console.error("Checkout Error:", error);

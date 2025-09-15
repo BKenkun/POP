@@ -114,6 +114,9 @@ export async function createCheckoutSession(
   try {
     const stripe = getStripeInstance();
     const line_items = items.map((item) => {
+      // For real products, we'd use item.priceId if we had it.
+      // Since we don't, we pass the price data directly.
+      // This is less ideal for production but works for this setup.
       return {
         price_data: {
           currency: 'eur',
@@ -121,7 +124,7 @@ export async function createCheckoutSession(
             name: item.name,
             images: item.imageUrl ? [item.imageUrl] : [],
             description: item.description,
-            // Pass product ID to metadata for stock updates
+            // Pass product ID to metadata for stock updates via webhook
             metadata: {
               productId: item.id,
             },
@@ -143,7 +146,7 @@ export async function createCheckoutSession(
       cancel_url: `${YOUR_DOMAIN}/`,
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['ES'],
+        allowed_countries: ['ES'], // Only allow shipping to Spain
       },
     });
 
@@ -162,6 +165,7 @@ export async function createCheckoutSession(
   }
 }
 
+
 export async function createPackCheckoutSession(
   pack: CartItem
 ): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
@@ -179,6 +183,10 @@ export async function createPackCheckoutSession(
                         name: pack.name,
                         images: [pack.imageUrl],
                         description: `Contenido del pack: ${pack.description || 'Varios productos'}`
+                        // Note: stock management for packs is complex.
+                        // We are not passing individual product IDs here, so webhooks won't
+                        // be able to update stock for pack components automatically.
+                        // This would require a more advanced setup.
                     },
                     unit_amount: pack.price, // The dynamically calculated price
                 },
@@ -192,8 +200,6 @@ export async function createPackCheckoutSession(
         shipping_address_collection: {
             allowed_countries: ['ES'],
         },
-        // We don't update stock here as it's complex. 
-        // This would require parsing the description or adding more metadata.
     });
 
      if (!session.url) {

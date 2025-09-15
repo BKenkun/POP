@@ -24,6 +24,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   const addToCart = (product: Product, quantity: number = 1) => {
+    if (product.stock === 0) {
+        toast({ title: "Agotado", description: `${product.name} no está disponible.`, variant: "destructive" });
+        return;
+    }
+      
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
       
@@ -31,8 +36,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (product.stock !== undefined && newQuantity > product.stock) {
           toast({
-            title: "Stock limit reached",
-            description: `Cannot add ${quantity} more of ${product.name}. Only ${product.stock - (existingItem?.quantity || 0)} left.`,
+            title: "Límite de stock alcanzado",
+            description: `No se pueden añadir más unidades de ${product.name}. Solo quedan ${product.stock - (existingItem?.quantity || 0)}.`,
             variant: "destructive"
           });
           return prevItems;
@@ -47,16 +52,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
 
     toast({
-      title: "Added to cart",
-      description: `${quantity} x ${product.name} added to your cart.`,
+      title: "Añadido al carrito",
+      description: `${quantity} x ${product.name} se ha añadido a tu carrito.`,
     });
   };
 
   const removeFromCart = (productId: string) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
     toast({
-        title: "Item removed",
-        description: "The item has been removed from your cart.",
+        title: "Producto eliminado",
+        description: "El producto ha sido eliminado de tu carrito.",
     });
   };
 
@@ -69,8 +74,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           if (item.id === productId) {
             if (item.stock !== undefined && quantity > item.stock) {
                 toast({
-                    title: "Stock limit reached",
-                    description: `Only ${item.stock} units of ${item.name} available.`,
+                    title: "Límite de stock alcanzado",
+                    description: `Solo hay ${item.stock} unidades de ${item.name} disponibles.`,
                     variant: "destructive"
                 });
                 return { ...item, quantity: item.stock };

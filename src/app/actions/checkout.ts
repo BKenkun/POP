@@ -25,10 +25,13 @@ export async function createCustomPackCheckoutAction(
         name: `Pack Personalizado (${totalQuantity} uds)`,
         description: packItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
         price: discountedPrice,
-        imageUrl: `${YOUR_DOMAIN}/pack-default.png`,
+        imageUrl: `${YOUR_DOMAIN}/pack-default.png`, // Placeholder image for packs
         imageHint: 'custom pack',
-        quantity: 1, // A pack is a single item
+        quantity: 1, // A pack is a single item in checkout terms
     };
     
+    // We can't use the standard checkout session creator because stock management
+    // for individual pack items is complex and not handled by this simplified logic.
+    // So we call a specific function for it.
     return createPackCheckoutSession(customPackForCheckout);
 }
