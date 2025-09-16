@@ -6,7 +6,6 @@ import { z } from 'zod';
 const stockNotificationSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
   productId: z.string().min(1, { message: 'El ID del producto es requerido.' }),
-  variantId: z.string().optional(), // Klaviyo uses variant ID, which for us is the same as product ID
 });
 
 export async function subscribeToStockNotification(
@@ -21,7 +20,6 @@ export async function subscribeToStockNotification(
   }
 
   const { email, productId } = validation.data;
-  const variantId = productId; // In our case, the Stripe Product ID is the variant identifier.
 
   const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
   if (!KLAVIYO_API_KEY) {
@@ -43,7 +41,7 @@ export async function subscribeToStockNotification(
                   data: {
                       type: 'catalog-variant',
                       // Klaviyo's foreign key for the product is `$stripe:::{PRODUCT_ID}`
-                      id: `$stripe:::${variantId}`
+                      id: `$stripe:::${productId}`
                   }
               }
           }
