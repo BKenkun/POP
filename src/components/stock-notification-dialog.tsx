@@ -37,6 +37,16 @@ export function StockNotificationDialog({ product, children }: StockNotification
         e.preventDefault();
         setLoading(true);
 
+        if (!product?.id) {
+            toast({
+                title: 'Error',
+                description: 'El ID del producto no está disponible. Inténtalo de nuevo.',
+                variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+        }
+
         const result = await subscribeToStockNotification({ productId: product.id, email });
 
         if (result.success) {
