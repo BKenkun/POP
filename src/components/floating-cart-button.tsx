@@ -17,13 +17,13 @@ export default function FloatingCartButton() {
         <Button
           variant="default"
           size="icon"
-          className="relative h-14 w-14 rounded-full shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground transition-transform hover:scale-110"
+          className="relative h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-accent text-primary-foreground hover:text-accent-foreground transition-transform hover:scale-110"
           aria-label="Open cart"
           onClick={() => setIsCartOpen(true)}
         >
           <ShoppingCart className="h-7 w-7" />
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
               {cartCount}
             </span>
           )}
