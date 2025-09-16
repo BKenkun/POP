@@ -8,9 +8,10 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Eye, XCircle } from 'lucide-react';
+import { ShoppingCart, Eye, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { StockNotificationDialog } from '@/components/stock-notification-dialog';
 
 interface ProductCardProps {
   product: Product;
@@ -61,7 +62,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                     </Link>
                 )}
                  {isSoldOut && (
-                    <Badge variant="destructive" className="absolute bottom-4 right-4 text-sm z-20">Agotado</Badge>
+                    <Badge variant="secondary" className="absolute bottom-4 left-4 text-sm z-20">Agotado</Badge>
                 )}
                 <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
                     {product.tags?.map((tag) => (
@@ -84,27 +85,33 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
             children
         ) : (
             <CardFooter className="p-5 pt-0">
-                <Button
-                size="lg"
-                className="w-full"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    addToCart(product);
-                }}
-                disabled={isSoldOut}
-                >
                 {isSoldOut ? (
-                    <>
-                    <XCircle className="mr-2 h-5 w-5" />
-                    Agotado
-                    </>
+                    <StockNotificationDialog product={product}>
+                        <Button
+                            variant="destructive"
+                            className="w-12 h-12 p-0 rounded-full hover:w-full hover:bg-primary group/notify-btn transition-all duration-300 ease-in-out"
+                        >
+                            <span className="flex items-center justify-center">
+                                <Bell className="h-5 w-5 text-white transition-all group-hover/notify-btn:mr-2 group-hover/notify-btn:text-black" />
+                                <span className="w-0 overflow-hidden text-black font-bold whitespace-nowrap transition-all duration-300 group-hover/notify-btn:w-16">
+                                    Avísame
+                                </span>
+                            </span>
+                        </Button>
+                    </StockNotificationDialog>
                 ) : (
-                    <>
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    Añadir al carrito
-                    </>
+                    <Button
+                        size="lg"
+                        className="w-full"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(product);
+                        }}
+                    >
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        Añadir al carrito
+                    </Button>
                 )}
-                </Button>
             </CardFooter>
         )}
     </Card>
