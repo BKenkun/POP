@@ -89,15 +89,15 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-<<<<<<< HEAD
        {
         protocol: 'https',
         hostname: 'encrypted-tbn0.gstatic.com',
-=======
+        port: '',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: 'poppers-discount.fr',
->>>>>>> 5dc7c48 (Try fixing this error: `Runtime Error: Error: Invalid src prop (https://)
         port: '',
         pathname: '/**',
       }
