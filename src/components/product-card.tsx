@@ -86,19 +86,28 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
         ) : (
             <CardFooter className="p-5 pt-0">
                 {isSoldOut ? (
-                    <StockNotificationDialog product={product}>
+                    <div className="group/footer-buttons flex items-center w-full gap-2">
                         <Button
-                            variant="destructive"
-                            className="w-12 h-12 p-0 rounded-full hover:w-full hover:bg-primary group/notify-btn transition-all duration-300 ease-in-out"
+                            variant="outline"
+                            className="w-full transition-all duration-300 ease-in-out group-hover/footer-buttons:w-1/2"
+                            disabled
                         >
-                            <span className="flex items-center justify-center">
-                                <Bell className="h-5 w-5 text-white transition-all group-hover/notify-btn:mr-2 group-hover/notify-btn:text-black" />
-                                <span className="w-0 overflow-hidden text-black font-bold whitespace-nowrap transition-all duration-300 group-hover/notify-btn:w-16">
-                                    Avísame
-                                </span>
-                            </span>
+                            Agotado
                         </Button>
-                    </StockNotificationDialog>
+                        <StockNotificationDialog product={product}>
+                            <Button
+                                variant="destructive"
+                                className="p-0 rounded-full transition-all duration-300 ease-in-out w-12 h-12 flex-shrink-0 group-hover/footer-buttons:w-1/2 group-hover/footer-buttons:bg-primary group-hover/footer-buttons:rounded-md"
+                            >
+                                <span className="flex items-center justify-center">
+                                    <Bell className="h-5 w-5 text-white transition-all duration-300 group-hover/footer-buttons:mr-2 group-hover/footer-buttons:text-black" />
+                                    <span className="w-0 overflow-hidden text-black font-bold whitespace-nowrap transition-all duration-300 group-hover/footer-buttons:w-16">
+                                        Avísame
+                                    </span>
+                                </span>
+                            </Button>
+                        </StockNotificationDialog>
+                    </div>
                 ) : (
                     <Button
                         size="lg"
