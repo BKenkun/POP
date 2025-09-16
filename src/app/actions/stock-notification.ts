@@ -2,8 +2,6 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // Now we need the priceId as well
 const stockNotificationSchema = z.object({
