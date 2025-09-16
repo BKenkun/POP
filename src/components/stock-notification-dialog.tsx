@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { subscribeToStockNotification } from '@/app/actions/stock-notification';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2 } from 'lucide-react';
 
@@ -37,36 +36,43 @@ export function StockNotificationDialog({ product, children }: StockNotification
         e.preventDefault();
         setLoading(true);
 
-        if (!product?.id || !product?.priceId) {
+        if (!product?.priceId || !email) {
             toast({
                 title: 'Error',
-                description: 'La información del producto no está completa. Inténtalo de nuevo.',
+                description: 'Falta información del producto o el email. Inténtalo de nuevo.',
                 variant: 'destructive',
             });
             setLoading(false);
             return;
         }
 
-        const result = await subscribeToStockNotification({ 
-            productId: product.id, 
-            priceId: product.priceId, 
-            email 
-        });
-
-        if (result.success) {
-            toast({
-                title: '¡Te avisaremos!',
-                description: `Recibirás un correo en ${email} en cuanto ${product.name} vuelva a estar disponible.`,
+        try {
+            const response = await fetch('/api/stock-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, priceId: product.priceId }),
             });
-            setIsOpen(false);
-        } else {
-            toast({
+
+            const result = await response.json();
+
+            if (result.success) {
+                toast({
+                    title: '¡Te avisaremos!',
+                    description: `Recibirás un correo en ${email} en cuanto ${product.name} vuelva a estar disponible.`,
+                });
+                setIsOpen(false);
+            } else {
+                throw new Error(result.message || 'No se pudo procesar tu solicitud.');
+            }
+        } catch (error: any) {
+             toast({
                 title: 'Error',
-                description: result.error || 'No se pudo procesar tu solicitud.',
+                description: error.message || 'Ocurrió un error inesperado.',
                 variant: 'destructive',
             });
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (

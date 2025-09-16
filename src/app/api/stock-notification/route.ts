@@ -1,24 +1,19 @@
 
-'use server';
-
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-// Now we need the priceId as well
 const stockNotificationSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
-  productId: z.string().min(1), // keep for reference
   priceId: z.string().min(1, { message: 'El ID de la variante es requerido.' }),
 });
 
-export async function subscribeToStockNotification(
-    data: z.infer<typeof stockNotificationSchema>
-): Promise<{ success: boolean, error?: string }> {
-  
-  const validation = stockNotificationSchema.safeParse(data);
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const validation = stockNotificationSchema.safeParse(body);
 
   if (!validation.success) {
     const firstError = validation.error.errors[0]?.message || 'Datos inválidos.';
-    return { success: false, error: firstError };
+    return NextResponse.json({ success: false, message: firstError }, { status: 400 });
   }
 
   const { email, priceId } = validation.data;
@@ -26,11 +21,9 @@ export async function subscribeToStockNotification(
   const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
   if (!KLAVIYO_API_KEY) {
       console.warn("Klaviyo API Key is not set. Cannot subscribe to back in stock.");
-      return { success: false, error: 'La configuración del servicio de notificaciones no está disponible.' };
+      return NextResponse.json({ success: false, message: 'La configuración del servicio de notificaciones no está disponible.' }, { status: 500 });
   }
 
-  // This is the payload for Klaviyo's native Back in Stock API
-  // It requires the VARIANT ID, which in Stripe is the PRICE ID.
   const payload = {
       data: {
           type: 'back-in-stock-subscription',
@@ -43,7 +36,6 @@ export async function subscribeToStockNotification(
               variant: {
                   data: {
                       type: 'catalog-variant',
-                      // Klaviyo's foreign key for the product variant is `$stripe:::{PRICE_ID}`
                       id: `$stripe:::${priceId}`
                   }
               }
@@ -65,16 +57,15 @@ export async function subscribeToStockNotification(
       
       if (response.status === 202) {
           console.log(`✅ Successfully subscribed ${email} to back-in-stock for price ${priceId}.`);
-          return { success: true };
+          return NextResponse.json({ success: true });
       } else {
           const errorData = await response.json();
           console.error(`❌ Klaviyo API Error for Back in Stock subscription:`, JSON.stringify(errorData, null, 2));
-          // Provide a more specific error if possible
           const detail = errorData.errors?.[0]?.detail || 'No se pudo registrar la solicitud de notificación.';
-          return { success: false, error: detail };
+          return NextResponse.json({ success: false, message: detail }, { status: response.status });
       }
   } catch (error) {
       console.error("❌ Failed to send subscription to Klaviyo:", error);
-      return { success: false, error: 'Ocurrió un error de red al intentar registrar la notificación.' };
+      return NextResponse.json({ success: false, message: 'Ocurrió un error de red al intentar registrar la notificación.' }, { status: 500 });
   }
 }
