@@ -37,17 +37,21 @@ export function StockNotificationDialog({ product, children }: StockNotification
         e.preventDefault();
         setLoading(true);
 
-        if (!product?.id) {
+        if (!product?.id || !product?.priceId) {
             toast({
                 title: 'Error',
-                description: 'El ID del producto no está disponible. Inténtalo de nuevo.',
+                description: 'La información del producto no está completa. Inténtalo de nuevo.',
                 variant: 'destructive',
             });
             setLoading(false);
             return;
         }
 
-        const result = await subscribeToStockNotification({ productId: product.id, email });
+        const result = await subscribeToStockNotification({ 
+            productId: product.id, 
+            priceId: product.priceId, 
+            email 
+        });
 
         if (result.success) {
             toast({

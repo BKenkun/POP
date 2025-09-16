@@ -2,6 +2,7 @@
 
 export interface Product {
   id: string;
+  priceId?: string; // Add priceId here
   name: string;
   description?: string | null;
   longDescription?: string | null;

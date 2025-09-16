@@ -84,6 +84,7 @@ export async function getStripeProducts(): Promise<Product[]> {
 
       return {
         id: product.id,
+        priceId: price?.id, // Get the price ID
         name: product.name,
         description: product.description,
         longDescription: longDescription,

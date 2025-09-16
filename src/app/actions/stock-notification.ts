@@ -2,10 +2,14 @@
 'use server';
 
 import { z } from 'zod';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
+// Now we need the priceId as well
 const stockNotificationSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
-  productId: z.string().min(1, { message: 'El ID del producto es requerido.' }),
+  productId: z.string().min(1), // keep for reference
+  priceId: z.string().min(1, { message: 'El ID de la variante es requerido.' }),
 });
 
 export async function subscribeToStockNotification(
@@ -19,7 +23,7 @@ export async function subscribeToStockNotification(
     return { success: false, error: firstError };
   }
 
-  const { email, productId } = validation.data;
+  const { email, priceId } = validation.data;
 
   const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
   if (!KLAVIYO_API_KEY) {
@@ -28,6 +32,7 @@ export async function subscribeToStockNotification(
   }
 
   // This is the payload for Klaviyo's native Back in Stock API
+  // It requires the VARIANT ID, which in Stripe is the PRICE ID.
   const payload = {
       data: {
           type: 'back-in-stock-subscription',
@@ -40,8 +45,8 @@ export async function subscribeToStockNotification(
               variant: {
                   data: {
                       type: 'catalog-variant',
-                      // Klaviyo's foreign key for the product is `$stripe:::{PRODUCT_ID}`
-                      id: `$stripe:::${productId}`
+                      // Klaviyo's foreign key for the product variant is `$stripe:::{PRICE_ID}`
+                      id: `$stripe:::${priceId}`
                   }
               }
           }
@@ -59,15 +64,16 @@ export async function subscribeToStockNotification(
           },
           body: JSON.stringify(payload)
       });
-
-      // A 202 status code means the request was accepted.
+      
       if (response.status === 202) {
-          console.log(`✅ Successfully subscribed ${email} to back-in-stock notification for product ${productId}.`);
+          console.log(`✅ Successfully subscribed ${email} to back-in-stock for price ${priceId}.`);
           return { success: true };
       } else {
           const errorData = await response.json();
           console.error(`❌ Klaviyo API Error for Back in Stock subscription:`, JSON.stringify(errorData, null, 2));
-          return { success: false, error: 'No se pudo registrar la solicitud de notificación.' };
+          // Provide a more specific error if possible
+          const detail = errorData.errors?.[0]?.detail || 'No se pudo registrar la solicitud de notificación.';
+          return { success: false, error: detail };
       }
   } catch (error) {
       console.error("❌ Failed to send subscription to Klaviyo:", error);
