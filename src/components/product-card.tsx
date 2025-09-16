@@ -97,10 +97,10 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                         <StockNotificationDialog product={product}>
                             <Button
                                 variant="default"
-                                className="p-0 rounded-full transition-all duration-300 ease-in-out w-12 h-12 flex-shrink-0 group-hover/footer-buttons:w-1/2 group-hover/footer-buttons:bg-accent group-hover/footer-buttons:rounded-md"
+                                className="p-0 rounded-full transition-all duration-300 ease-in-out w-12 h-12 flex-shrink-0 group-hover/footer-buttons:w-1/2 group-hover/footer-buttons:rounded-md"
                             >
                                 <span className="flex items-center justify-center">
-                                    <Bell className="h-5 w-5 text-primary-foreground transition-all duration-300 group-hover/footer-buttons:mr-2" />
+                                    <Bell className="h-5 w-5 text-primary-foreground transition-all duration-300 group-hover/footer-buttons:mr-2 group-hover/footer-buttons:text-accent-foreground" />
                                     <span className="w-0 overflow-hidden text-accent-foreground font-bold whitespace-nowrap transition-all duration-300 group-hover/footer-buttons:w-16">
                                         Avísame
                                     </span>
