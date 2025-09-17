@@ -20,12 +20,16 @@ const benefits = [
 ];
 
 export default function SubscriptionPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isSubscribed } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
 
     const handleSubscription = async () => {
+        if (isSubscribed) {
+            router.push('/account/subscription');
+            return;
+        }
         if (!user) {
             router.push('/login?redirect=/subscription');
             return;
@@ -55,6 +59,10 @@ export default function SubscriptionPage() {
             setLoading(false);
         }
     }
+    
+    const ctaText = isSubscribed ? 'Gestionar Mi Dosis' : (user ? 'Unirme al Club Ahora' : 'Inicia Sesión para Unirte');
+    const finalCtaText = isSubscribed ? 'Ir a mi Panel' : (user ? 'Unirme por 40€/mes' : 'Inicia Sesión para Unirte');
+
 
     return (
         <div className="space-y-16">
@@ -93,17 +101,17 @@ export default function SubscriptionPage() {
                                 ) : (
                                     <User className="mr-2 h-5 w-5" />
                                 )}
-                                {loading ? 'Procesando...' : (user ? 'Unirme al Club Ahora' : 'Inicia Sesión para Unirte')}
+                                {loading ? 'Procesando...' : ctaText}
                             </Button>
                         </CardContent>
                     </div>
                     <div className="relative h-80 md:h-full order-1 md:order-2">
                         <Image
                             src="https://picsum.photos/seed/poppersclub/800/1000"
-                            alt="Caja de suscripción mensual de poppers"
+                            alt="Varios botes de popper para la caja de suscripción mensual"
                             fill
                             className="object-cover"
-                            data-ai-hint="subscription box lifestyle"
+                            data-ai-hint="popper bottles"
                         />
                          <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-background via-background/70 md:via-background/50 to-transparent" />
                     </div>
@@ -189,12 +197,10 @@ export default function SubscriptionPage() {
                     ) : (
                        <ArrowRight className="mr-2 h-6 w-6" />
                     )}
-                    {loading ? 'Procesando...' : (user ? 'Unirme por 40€/mes' : 'Inicia Sesión para Unirte')}
+                    {loading ? 'Procesando...' : finalCtaText}
                 </Button>
             </div>
 
         </div>
     );
 }
-
-    
