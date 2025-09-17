@@ -60,8 +60,8 @@ export default function SubscriptionPage() {
         }
     }
     
-    const ctaText = isSubscribed ? 'Gestionar Mi Dosis' : (user ? 'Unirme al Club Ahora' : 'Inicia Sesión para Unirte');
-    const finalCtaText = isSubscribed ? 'Ir a mi Panel' : (user ? 'Unirme por 40€/mes' : 'Inicia Sesión para Unirte');
+    const ctaText = isSubscribed ? 'Gestionar Mi Dosis' : 'Unirme al Club';
+    const finalCtaText = isSubscribed ? 'Ir a mi Panel' : 'Unirme al Club por 40€/mes';
 
 
     return (
