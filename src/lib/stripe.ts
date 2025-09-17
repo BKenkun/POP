@@ -243,4 +243,31 @@ export async function createPackCheckoutSession(
   }
 }
 
+export async function createSubscriptionCheckout(userId: string, userEmail: string): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
+    try {
+        const stripe = getStripeInstance();
+        const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+        // HARDCODED PRICE ID FOR "DOSIS MENSUAL" SUBSCRIPTION - 4 poppers/month for 35€
+        const subscriptionPriceId = 'price_1PgP4ARfSUu85QwBv2O3LHYd';
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                { price: subscriptionPriceId, quantity: 1 },
+            ],
+            mode: 'subscription',
+            success_url: `${YOUR_DOMAIN}/account?subscription_success=true`,
+            cancel_url: `${YOUR_DOMAIN}/subscription`,
+            customer_email: userEmail,
+            metadata: {
+                userId: userId,
+            },
+        });
+        
+        return { sessionId: session.id, sessionUrl: session.url };
+    } catch (error: any) {
+        console.error('Error creating Stripe subscription checkout:', error);
+        return { sessionId: null, sessionUrl: null, error: error.message };
+    }
+}
     

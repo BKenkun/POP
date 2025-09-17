@@ -4,17 +4,14 @@ import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import { createOrder, updateUserLoyaltyPoints } from '@/lib/orders';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
-
-// Initialize Stripe outside of the request handler
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-// Helper function to update stock for a single product
 async function updateStock(productId: string, quantitySold: number) {
     try {
         const product = await stripe.products.retrieve(productId);
@@ -30,7 +27,29 @@ async function updateStock(productId: string, quantitySold: number) {
         }
     } catch (error) {
         console.error(`❌ Failed to update stock for product ${productId}:`, error);
-        // We don't re-throw here to allow other stock updates to proceed
+    }
+}
+
+async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
+    const userId = session.metadata?.userId;
+    const stripeCustomerId = session.customer;
+    const stripeSubscriptionId = session.subscription;
+
+    if (!userId || !stripeCustomerId || !stripeSubscriptionId) {
+        console.error('❌ Missing data in subscription session:', { userId, stripeCustomerId, stripeSubscriptionId });
+        return;
+    }
+
+    const userDocRef = doc(db, 'users', userId);
+    try {
+        await setDoc(userDocRef, {
+            stripeCustomerId: stripeCustomerId,
+            stripeSubscriptionId: stripeSubscriptionId,
+            isSubscribed: true,
+        }, { merge: true });
+        console.log(`✅ User ${userId} subscribed. Customer ID: ${stripeCustomerId}`);
+    } catch (error) {
+        console.error(`❌ Failed to update user ${userId} with subscription data:`, error);
     }
 }
 
@@ -48,51 +67,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
-  // --- Handle checkout.session.completed event ---
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    try {
+    if (session.mode === 'subscription') {
+      await handleSubscriptionCreated(session);
+    } else if (session.mode === 'payment') {
+      try {
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
             expand: ['data.price.product']
         });
         
-        // Step 1: Create the order in Firestore.
         await createOrder(session, lineItems.data);
 
-        // Step 2: Handle loyalty points
         const userId = session.metadata?.userId;
-        const totalSpent = session.amount_total || 0; // Total in cents
+        const totalSpent = session.amount_total || 0;
         const pointsRedeemed = parseInt(session.metadata?.pointsRedeemed || '0', 10);
 
         if (userId) {
-            // Subtract redeemed points
             if (pointsRedeemed > 0) {
                 await updateUserLoyaltyPoints(userId, -pointsRedeemed);
             }
-            
-            // Award new points based on money spent
             if (totalSpent > 0) {
                 const pointsEarned = Math.floor(totalSpent / 100);
                 await updateUserLoyaltyPoints(userId, pointsEarned);
             }
         }
 
-        // Step 3: Update stock levels
         const isCustomPack = session.metadata?.isCustomPack === 'true';
 
         if (isCustomPack) {
-            // Logic for custom packs
             const packContents = JSON.parse(session.metadata?.packContents || '{}');
             for (const productId in packContents) {
                 const quantitySold = packContents[productId];
                 await updateStock(productId, quantitySold);
             }
         } else {
-            // Logic for regular products
             for (const item of lineItems.data) {
                 const product = item.price?.product as Stripe.Product;
-                // In checkout sessions, the product ID is on the product object itself
                 const productId = product.id; 
                 const quantitySold = item.quantity || 0;
                 
@@ -101,14 +113,15 @@ export async function POST(req: NextRequest) {
                 }
             }
         }
-    } catch (error: any) {
-        console.error('Error processing checkout session:', error);
+      } catch (error: any) {
+        console.error('Error processing checkout.session.completed (payment):', error);
         return NextResponse.json({ error: `Webhook handler failed: ${error.message}` }, { status: 500 });
+      }
     }
   }
+  
+  // TODO: Add handler for `invoice.payment_succeeded` to create monthly orders.
+  // TODO: Add handler for `customer.subscription.deleted` to update user's `isSubscribed` status.
 
-  // All product.updated logic is now removed. Klaviyo handles this natively.
-
-  // Acknowledge receipt of the event
   return NextResponse.json({ received: true });
 }

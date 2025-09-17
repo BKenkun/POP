@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useAuth } from '@/context/auth-context';
 
 const compositionLinks = [
   { title: 'POPPERS DE AMILO', composition: 'Amilo' },
@@ -34,11 +35,15 @@ interface NavigationMenuComponentProps {
 }
 
 export default function NavigationMenuComponent({ onNavigate }: NavigationMenuComponentProps) {
+  const { user, isSubscribed } = useAuth();
+  
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (onNavigate) {
       onNavigate();
     }
   };
+
+  const subscriptionUrl = isSubscribed ? "/account/subscription" : "/subscription";
 
   return (
     <NavigationMenu>
@@ -99,7 +104,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
         </NavigationMenuItem>
         <NavigationMenuItem>
             <Button asChild variant="destructive" size="sm" className="font-headline uppercase font-bold text-sm h-8">
-                <Link href="#"> 
+                <Link href={subscriptionUrl}> 
                     Dosis Mensual
                 </Link>
             </Button>

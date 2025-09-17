@@ -24,6 +24,7 @@ interface AuthContextType {
   logout: () => void;
   loginAsAdminCustomer: () => void;
   loyaltyPoints: number;
+  isSubscribed: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdminAsCustomer, setIsAdminAsCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -42,11 +44,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (authUser) {
           const userDocRef = doc(db, "users", authUser.uid);
           const unsubSnapshot = onSnapshot(userDocRef, (doc) => {
-            setLoyaltyPoints(doc.data()?.loyaltyPoints || 0);
+            const data = doc.data();
+            setLoyaltyPoints(data?.loyaltyPoints || 0);
+            setIsSubscribed(!!data?.isSubscribed);
           });
           return () => unsubSnapshot();
         } else {
             setLoyaltyPoints(0);
+            setIsSubscribed(false);
         }
       }
       setLoading(false);
@@ -60,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (isAdminAsCustomer) {
         setIsAdminAsCustomer(false);
         setUser(null); // Clear simulated user
+        setIsSubscribed(false);
         router.push('/');
       } else {
         await firebaseSignOut(auth);
@@ -74,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAdminAsCustomer(true);
     setLoading(false);
     setLoyaltyPoints(1000); // Give some points to test with
+    setIsSubscribed(true); // Simulate subscription for admin
   };
 
   const providedUser = isAdminAsCustomer 
@@ -87,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     : user;
 
-  const value = { user: providedUser, loading, logout, loginAsAdminCustomer, loyaltyPoints };
+  const value = { user: providedUser, loading, logout, loginAsAdminCustomer, loyaltyPoints, isSubscribed };
 
   if (loading && !providedUser) {
     return (

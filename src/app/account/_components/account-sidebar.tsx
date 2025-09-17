@@ -5,24 +5,25 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, MapPin, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, MapPin, LogOut, HeartPulse } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
 
-const navLinks = [
-  { href: '/account', label: 'Panel de Usuario', icon: LayoutDashboard },
-  { href: '/account/orders', label: 'Pedidos', icon: Package },
-  { href: '/account/addresses', label: 'Direcciones', icon: MapPin },
-];
-
 export default function AccountSidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, isSubscribed } = useAuth();
 
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       logout();
   }
+
+  const navLinks = [
+    { href: '/account', label: 'Panel de Usuario', icon: LayoutDashboard },
+    { href: '/account/orders', label: 'Pedidos', icon: Package },
+    ...(isSubscribed ? [{ href: '/account/subscription', label: 'Mi Suscripción', icon: HeartPulse }] : []),
+    { href: '/account/addresses', label: 'Direcciones', icon: MapPin },
+  ];
 
   return (
     <Card>

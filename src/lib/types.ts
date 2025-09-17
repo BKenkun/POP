@@ -75,3 +75,18 @@ export interface Order {
   customerEmail: string;
   shippingAddress: ShippingAddress | null;
 }
+
+// --- NEW SUBSCRIPTION TYPES ---
+
+export interface MonthlySelection {
+    [key: string]: string; // e.g., { popper1: 'prod_xxxx', popper2: 'prod_yyyy', ... }
+}
+
+// This type will be stored in Firestore under the user's document
+export interface UserSubscription {
+    stripeSubscriptionId: string;
+    stripeCustomerId: string;
+    status: 'active' | 'cancelled' | 'past_due';
+    currentPeriodEnd: Date;
+    monthlySelection: MonthlySelection;
+}

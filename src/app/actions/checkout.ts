@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createCheckoutSession, createPackCheckoutSession } from '@/lib/stripe';
+import { createCheckoutSession, createPackCheckoutSession, createSubscriptionCheckout } from '@/lib/stripe';
 import { CartItem, PackItemBrief } from '@/lib/types';
 
 // This action is for the main shopping cart
@@ -35,4 +35,13 @@ export async function createCustomPackCheckoutAction(
     
     // Pass the detailed pack items to the checkout session creator
     return createPackCheckoutSession(customPackForCheckout, packItems, userId);
+}
+
+
+// Action to create a checkout for the monthly subscription
+export async function createSubscriptionCheckoutAction(
+    userId: string,
+    userEmail: string,
+): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
+    return createSubscriptionCheckout(userId, userEmail);
 }
