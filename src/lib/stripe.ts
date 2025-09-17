@@ -40,7 +40,7 @@ export async function getStripeProducts(): Promise<Product[]> {
   const stripe = getStripeInstance();
   const productsResponse = await stripe.products.list({
     active: true,
-    limit: 20,
+    limit: 100, // Increased limit to fetch more products
     expand: ['data.default_price'],
   });
 
@@ -49,6 +49,8 @@ export async function getStripeProducts(): Promise<Product[]> {
   }
 
   const availableProducts: Product[] = productsResponse.data
+    // Filter first to only process relevant products
+    .filter((product: any) => product.metadata.web === 'popper')
     .map((product: any) => {
       const price = product.default_price;
       const stock = product.metadata.stock
@@ -248,7 +250,7 @@ export async function createSubscriptionCheckout(userId: string, userEmail: stri
         const stripe = getStripeInstance();
         const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
         // HARDCODED PRICE ID FOR "DOSIS MENSUAL" SUBSCRIPTION - 5 poppers, 1 accessory, 1 gift for 44€/month
-        const subscriptionPriceId = 'price_1PgzDuRfSUu85QwBqCqWxS35';
+        const subscriptionPriceId = 'price_1PgxNQRfSUu85QwBvW9b9pwt';
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
