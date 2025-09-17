@@ -247,8 +247,8 @@ export async function createSubscriptionCheckout(userId: string, userEmail: stri
     try {
         const stripe = getStripeInstance();
         const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-        // HARDCODED PRICE ID FOR "DOSIS MENSUAL" SUBSCRIPTION - 4 poppers/month for 35€
-        const subscriptionPriceId = 'price_1PgP4ARfSUu85QwBv2O3LHYd';
+        // HARDCODED PRICE ID FOR "DOSIS MENSUAL" SUBSCRIPTION - 5 poppers, 1 accessory, 1 gift for 40€/month
+        const subscriptionPriceId = 'price_1Pgj1uRfSUu85QwBqfL0K4yE';
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -256,7 +256,7 @@ export async function createSubscriptionCheckout(userId: string, userEmail: stri
                 { price: subscriptionPriceId, quantity: 1 },
             ],
             mode: 'subscription',
-            success_url: `${YOUR_DOMAIN}/account?subscription_success=true`,
+            success_url: `${YOUR_DOMAIN}/account/subscription?subscription_success=true`,
             cancel_url: `${YOUR_DOMAIN}/subscription`,
             customer_email: userEmail,
             metadata: {

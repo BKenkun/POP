@@ -4,16 +4,18 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
-import { CheckCircle, Gift, Package, Sparkles, User, Loader2 } from 'lucide-react';
+import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSubscriptionCheckoutAction } from '../actions/checkout';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 const benefits = [
-    { icon: Package, text: "4 poppers de tu elección cada mes" },
-    { icon: Sparkles, text: "Precio por unidad insuperable (solo 8,75€/ud.)" },
+    { icon: Package, text: "5 poppers de tu elección cada mes" },
+    { icon: Sparkles, text: "1 accesorio para poppers" },
     { icon: Gift, text: "Un regalo sorpresa en cada caja" },
+    { icon: Truck, text: "Envío gratuito incluido"},
     { icon: CheckCircle, text: "Cancela cuando quieras, sin compromiso" },
 ];
 
@@ -66,7 +68,7 @@ export default function SubscriptionPage() {
             <Card className="bg-primary/5 border-primary/20 shadow-xl">
                 <CardHeader className="text-center">
                     <CardTitle className="text-3xl font-bold">Tu Caja Mensual</CardTitle>
-                    <p className="text-muted-foreground">Valorada en más de 55€</p>
+                    <p className="text-muted-foreground">Valorada en más de 65€</p>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-8 items-center">
                     <div className="space-y-4">
@@ -81,7 +83,7 @@ export default function SubscriptionPage() {
                         </ul>
                     </div>
                     <div className="bg-card p-8 rounded-lg text-center shadow-lg space-y-4">
-                        <p className="text-5xl font-bold text-primary">35€</p>
+                        <p className="text-5xl font-bold text-primary">40€</p>
                         <p className="font-semibold text-muted-foreground">/ mes</p>
                         <Button
                             size="lg"
@@ -111,8 +113,8 @@ export default function SubscriptionPage() {
                     </div>
                      <div className="space-y-2">
                         <p className="font-bold text-primary text-4xl">2</p>
-                        <h4 className="font-semibold">Elige tus Poppers</h4>
-                        <p className="text-sm">Cada mes, desde tu panel de usuario, podrás elegir los 4 poppers para tu próxima caja.</p>
+                        <h4 className="font-semibold">Elige tus Productos</h4>
+                        <p className="text-sm">Cada mes, desde tu panel de usuario, podrás elegir los poppers y el accesorio para tu próxima caja.</p>
                     </div>
                      <div className="space-y-2">
                         <p className="font-bold text-primary text-4xl">3</p>
