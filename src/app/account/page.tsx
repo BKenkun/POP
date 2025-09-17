@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { formatPrice } from "@/lib/utils";
-import { Gift, HeartPulse, CheckCircle } from "lucide-react";
+import { Gift, HeartPulse, CheckCircle, PackagePlus, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -45,19 +45,30 @@ export default function AccountDashboardPage() {
         </div>
 
         {isSubscribed && (
-            <Card className="border-primary">
+            <Card className="border-primary border-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                        <CheckCircle className="h-6 w-6 text-green-500"/>
-                        <span>¡Formas parte del Club Dosis Mensual!</span>
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                        <PackagePlus className="h-6 w-6"/>
+                        <span>Gestionar Dosis Mensual</span>
                     </CardTitle>
                     <CardDescription>
-                        Tu suscripción está activa. Gestiona tus preferencias y revisa tu próximo envío.
+                       Eres miembro del Club. Personaliza tu caja de este mes y gestiona tu suscripción.
                     </CardDescription>
                 </CardHeader>
+                 <CardContent>
+                    <p className="font-semibold">
+                        Estado: <span className="text-green-600 font-bold">Activa</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Tu próxima caja está esperando a que la personalices.
+                    </p>
+                </CardContent>
                 <CardFooter>
                     <Button asChild>
-                        <Link href="/account/subscription">Gestionar mi Suscripción</Link>
+                        <Link href="/account/subscription">
+                            <Settings className="mr-2" />
+                            Personalizar mi caja de este mes
+                        </Link>
                     </Button>
                 </CardFooter>
             </Card>
