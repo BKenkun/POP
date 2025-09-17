@@ -2,15 +2,17 @@
 'use client';
 
 import { useAuth } from "@/context/auth-context";
-import { CardTitle, CardDescription, CardHeader, CardContent, Card } from "@/components/ui/card"
+import { CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter } from "@/components/ui/card"
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { formatPrice } from "@/lib/utils";
-import { Gift } from "lucide-react";
+import { Gift, HeartPulse, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function AccountDashboardPage() {
-  const { user } = useAuth();
+  const { user, isSubscribed } = useAuth();
   const [userName, setUserName] = useState(user?.displayName || user?.email?.split('@')[0] || "Usuario");
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const userEmail = user?.email || "No email provided";
@@ -41,6 +43,26 @@ export default function AccountDashboardPage() {
                 Bienvenido de nuevo, {userName}. Aquí tienes un resumen de tu actividad.
             </p>
         </div>
+
+        {isSubscribed && (
+            <Card className="border-primary">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-500"/>
+                        <span>¡Formas parte del Club Dosis Mensual!</span>
+                    </CardTitle>
+                    <CardDescription>
+                        Tu suscripción está activa. Gestiona tus preferencias y revisa tu próximo envío.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                    <Button asChild>
+                        <Link href="/account/subscription">Gestionar mi Suscripción</Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
             <CardHeader>
