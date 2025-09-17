@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const compositionLinks = [
   { title: 'POPPERS DE AMILO', composition: 'Amilo' },
@@ -95,6 +96,13 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
                     CREA TU PACK
                 </Link>
             </NavigationMenuLink>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+            <Button asChild variant="destructive" size="sm" className="font-headline uppercase font-bold text-sm h-8">
+                <Link href="#"> 
+                    Dosis Mensual
+                </Link>
+            </Button>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>

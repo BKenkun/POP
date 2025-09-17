@@ -62,13 +62,13 @@ export function Header() {
                 <SearchForm />
             </div>
         </div>
-        <div className="flex items-center justify-end gap-x-1 sm:gap-x-2 text-xs font-bold text-primary-foreground">
-           <div className="hidden sm:flex items-center gap-2 font-body text-sm font-medium text-primary-foreground">
-                <PackageCheck className="h-4 w-4 text-primary-foreground" />
+        <div className="flex items-center justify-end gap-x-2 sm:gap-x-3 text-xs text-primary-foreground">
+           <div className="hidden sm:flex items-center gap-1.5 font-body text-[10px] font-medium text-primary-foreground">
+                <PackageCheck className="h-3 w-3 text-primary-foreground" />
                 <span>Envío GRATIS +40€</span>
             </div>
-            <div className="hidden sm:flex items-center gap-2 font-body text-sm font-medium text-primary-foreground">
-                <Truck className="h-4 w-4 text-primary-foreground" />
+            <div className="hidden sm:flex items-center gap-1.5 font-body text-[10px] font-medium text-primary-foreground">
+                <Truck className="h-3 w-3 text-primary-foreground" />
                 <span>Entrega 24/48h</span>
             </div>
             <div className="md:hidden">
