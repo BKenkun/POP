@@ -2,14 +2,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
-import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck } from 'lucide-react';
+import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck, Settings, CalendarClock, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSubscriptionCheckoutAction } from '../actions/checkout';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 
 const benefits = [
     { icon: Package, text: "5 poppers de tu elección cada mes" },
@@ -57,72 +57,144 @@ export default function SubscriptionPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="text-center space-y-4 mb-12">
+        <div className="space-y-16">
+            {/* Sección 1: Título Principal (Hero) */}
+            <div className="text-center space-y-4">
                 <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Club Dosis Mensual</h1>
-                <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                    Recibe tus poppers favoritos en casa cada mes, ahorrando dinero y sin preocupaciones. ¡La forma más inteligente de disfrutar!
+                <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
+                    Accede a nuestro club exclusivo y recibe tus poppers favoritos en casa cada mes, ahorrando dinero y sin preocupaciones. ¡La forma más inteligente de disfrutar!
                 </p>
             </div>
 
-            <Card className="bg-primary/5 border-primary/20 shadow-xl">
-                <CardHeader className="text-center">
-                    <CardTitle className="text-3xl font-bold">Tu Caja Mensual</CardTitle>
-                    <p className="text-muted-foreground">Valorada en más de 65€</p>
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-8 items-center">
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-semibold">¿Qué incluye el club?</h3>
-                        <ul className="space-y-3">
-                            {benefits.map((item, index) => (
-                                <li key={index} className="flex items-center gap-3">
-                                    <item.icon className="h-6 w-6 text-primary flex-shrink-0" />
-                                    <span className="text-foreground/90">{item.text}</span>
-                                </li>
-                            ))}
-                        </ul>
+            {/* Sección 2: Tarjeta de Oferta Principal */}
+            <Card className="max-w-4xl mx-auto overflow-hidden shadow-xl border-2 border-primary">
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                    <div className="p-8 order-2 md:order-1 flex flex-col justify-center">
+                        <CardHeader className="p-0 mb-6">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Sparkles className="h-8 w-8 text-primary" />
+                                <h2 className="text-3xl font-headline font-bold text-primary">Tu Plan de Placer Mensual</h2>
+                            </div>
+                            <CardDescription className="text-base">
+                                Una experiencia completa, entregada discretamente en tu puerta cada mes.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="mb-6">
+                                <span className="text-5xl font-bold text-primary">40€</span>
+                                <span className="text-lg text-muted-foreground">/mes</span>
+                            </div>
+                            <p className="text-muted-foreground font-medium mb-6">
+                                Ahorra más de un 35%. Cancela cuando quieras, sin compromiso.
+                            </p>
+                            <Button size="lg" className="w-full font-bold bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
+                                {loading ? (
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                ) : (
+                                    <User className="mr-2 h-5 w-5" />
+                                )}
+                                {loading ? 'Procesando...' : (user ? 'Unirme al Club Ahora' : 'Inicia Sesión para Unirte')}
+                            </Button>
+                        </CardContent>
                     </div>
-                    <div className="bg-card p-8 rounded-lg text-center shadow-lg space-y-4">
-                        <p className="text-5xl font-bold text-primary">40€</p>
-                        <p className="font-semibold text-muted-foreground">/ mes</p>
-                        <Button
-                            size="lg"
-                            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                            onClick={handleSubscription}
-                            disabled={authLoading || loading}
-                        >
-                            {loading ? (
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            ) : (
-                                <User className="mr-2 h-5 w-5" />
-                            )}
-                            {loading ? 'Procesando...' : (user ? 'Unirme al Club Ahora' : 'Inicia Sesión para Unirte')}
-                        </Button>
-                         <p className="text-xs text-muted-foreground">Serás redirigido a Stripe para un pago seguro.</p>
+                    <div className="relative h-80 md:h-full order-1 md:order-2">
+                        <Image
+                            src="https://picsum.photos/seed/poppersclub/800/1000"
+                            alt="Caja de suscripción mensual de poppers"
+                            fill
+                            className="object-cover"
+                            data-ai-hint="subscription box lifestyle"
+                        />
+                         <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-background via-background/70 md:via-background/50 to-transparent" />
                     </div>
-                </CardContent>
+                </div>
             </Card>
 
-            <div className="mt-12 text-center text-muted-foreground space-y-4">
-                <h3 className="text-xl font-semibold text-foreground">¿Cómo funciona?</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="space-y-2">
-                        <p className="font-bold text-primary text-4xl">1</p>
-                        <h4 className="font-semibold">Suscríbete</h4>
-                        <p className="text-sm">Únete al club con un solo clic. El pago es 100% seguro con Stripe.</p>
+             {/* Sección 3: ¿Cómo Funciona el Club? */}
+            <div className="text-center">
+                 <h2 className="text-3xl md:text-4xl font-headline text-primary font-bold mb-4">¿Cómo Funciona el Club?</h2>
+                 <p className="text-lg text-foreground/80 max-w-3xl mx-auto mb-12">
+                    Unirse es fácil y rápido. En solo tres pasos estarás disfrutando de tus beneficios exclusivos.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <div className="flex flex-col items-center space-y-4">
+                        <div className="flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 border-2 border-primary/20">
+                           <User className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">1. Suscríbete</h3>
+                        <p className="text-muted-foreground">Únete al club con un pago seguro a través de Stripe. Es rápido y 100% fiable.</p>
                     </div>
-                     <div className="space-y-2">
-                        <p className="font-bold text-primary text-4xl">2</p>
-                        <h4 className="font-semibold">Elige tus Productos</h4>
-                        <p className="text-sm">Cada mes, desde tu panel de usuario, podrás elegir los poppers y el accesorio para tu próxima caja.</p>
+                     <div className="flex flex-col items-center space-y-4">
+                        <div className="flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 border-2 border-primary/20">
+                           <Settings className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">2. Personaliza tu Caja</h3>
+                         <p className="text-muted-foreground">Desde tu panel de usuario, elige los poppers y el accesorio que quieres recibir cada mes.</p>
                     </div>
-                     <div className="space-y-2">
-                        <p className="font-bold text-primary text-4xl">3</p>
-                        <h4 className="font-semibold">Disfruta y Ahorra</h4>
-                        <p className="text-sm">Recibe tu pedido discretamente en casa y disfruta del mejor precio garantizado.</p>
+                     <div className="flex flex-col items-center space-y-4">
+                        <div className="flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 border-2 border-primary/20">
+                            <Gift className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">3. Disfruta y Ahorra</h3>
+                        <p className="text-muted-foreground">Recibe tu caja discretamente en casa y disfruta del mejor precio garantizado.</p>
                     </div>
                 </div>
             </div>
+            
+            {/* Sección 6: Contenido de la Dosis Mensual */}
+            <div className="text-center">
+                 <h2 className="text-3xl md:text-4xl font-headline text-primary font-bold mb-12">Tu Dosis Mensual Incluye</h2>
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <Card>
+                        <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+                             <div className="flex-shrink-0 h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Package className="h-10 w-10 text-primary"/>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-primary mb-2 text-center md:text-left">5 Poppers a tu Elección</h3>
+                                <p className="text-muted-foreground text-center md:text-left">Explora nuestro catálogo y elige tus 5 aromas favoritos cada mes. ¡Ideal para descubrir novedades o asegurar tus clásicos!</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+                             <div className="flex-shrink-0 h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Sparkles className="h-10 w-10 text-primary"/>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-primary mb-2 text-center md:text-left">1 Accesorio Práctico</h3>
+                                <p className="text-muted-foreground text-center md:text-left">Recibe un accesorio útil para mejorar tu experiencia, como inhaladores, limpiadores o tapones especiales.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+                             <div className="flex-shrink-0 h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Gift className="h-10 w-10 text-primary"/>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-primary mb-2 text-center md:text-left">1 Regalo Sorpresa</h3>
+                                <p className="text-muted-foreground text-center md:text-left">Nos encanta sorprenderte. Cada mes incluiremos un pequeño detalle extra solo para los miembros del club.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Sección 7: Llamada a la Acción Final (CTA) */}
+            <div className="text-center">
+                <Button size="lg" className="font-bold text-lg h-14 px-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
+                    {loading ? (
+                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    ) : (
+                       <ArrowRight className="mr-2 h-6 w-6" />
+                    )}
+                    {loading ? 'Procesando...' : (user ? 'Unirme por 40€/mes' : 'Inicia Sesión para Unirte')}
+                </Button>
+            </div>
+
         </div>
     );
 }
+
+    
