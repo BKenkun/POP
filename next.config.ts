@@ -2,7 +2,10 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  env: {
+    ADMIN_EMAIL: 'maryandpopper@gmail.com',
+    ADMIN_PASSWORD: '/(IYUKMN$7(I)=rb8',
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -74,40 +77,4 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.mistersmoke.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'majorsmoker.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'm.media-amazon.com',
-        port: '',
-        pathname: '/**',
-      },
-       {
-        protocol: 'https',
-        hostname: 'encrypted-tbn0.gstatic.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'poppers-discount.fr',
-        port: '',
-        pathname: '/**',
-      }
-    ],
-  },
-  devIndicators: {
-    allowedDevOrigins: [
-        '*.cloudworkstations.dev',
-    ],
-  },
-};
-
-export default nextConfig;
+        port
