@@ -85,17 +85,15 @@ export default function SubscriptionPage() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="mb-6">
-                                <span className="text-5xl font-bold text-primary">40€</span>
+                                <span className="text-5xl font-bold text-primary">44€</span>
                                 <span className="text-lg text-muted-foreground">/mes</span>
                             </div>
                             <p className="text-muted-foreground font-medium mb-6">
                                 Ahorra más de un 35%. Cancela cuando quieras, sin compromiso.
                             </p>
                             <Button size="lg" className="w-full font-bold bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
-                                {loading ? (
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                ) : null}
-                                {loading ? 'Procesando...' : 'Unirme al Club'}
+                                {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                                {loading ? 'Procesando...' : (isSubscribed ? 'Gestionar Suscripción' : 'Unirme al Club')}
                             </Button>
                         </CardContent>
                     </div>
@@ -189,7 +187,7 @@ export default function SubscriptionPage() {
                     {loading ? (
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                     ) : null}
-                    {loading ? 'Procesando...' : 'Unirme al Club por 40€/mes'}
+                    {loading ? 'Procesando...' : (isSubscribed ? 'Ir a mi Suscripción' : 'Unirme al Club por 44€/mes')}
                 </Button>
             </div>
 
