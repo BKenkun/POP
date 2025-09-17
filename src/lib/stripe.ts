@@ -11,9 +11,9 @@ const getStripeInstance = (): Stripe => {
   }
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
-    // This will now clearly fail if the key is not in .env.local
+    // This will now clearly fail if the key is not set
     throw new Error(
-      'STRIPE_SECRET_KEY environment variable is not set. Please create a .env.local file and add it.'
+      'STRIPE_SECRET_KEY environment variable is not set. Please ensure it is available in the environment.'
     );
   }
   stripe = new Stripe(secretKey, {
