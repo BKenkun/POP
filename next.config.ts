@@ -77,4 +77,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.mistersmoke.com',
-        port
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+};
+
+export default nextConfig;
