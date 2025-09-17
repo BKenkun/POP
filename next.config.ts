@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   env: {
     ADMIN_EMAIL: 'maryandpopper@gmail.com',
     ADMIN_PASSWORD: '/(IYUKMN$7(I)=rb8',
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    KLAVIYO_API_KEY: process.env.KLAVIYO_API_KEY,
+    KLAVIYO_LIST_ID: process.env.KLAVIYO_LIST_ID,
   },
   typescript: {
     ignoreBuildErrors: true,
