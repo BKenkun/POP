@@ -17,18 +17,18 @@ export async function adminLoginAction(credentials: z.infer<typeof loginSchema>)
   
   const { email, password } = parsedCredentials.data;
 
-  // Next.js automatically loads .env files. No need for dotenv.
+  // Next.js automatically loads .env.local files.
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (!adminEmail || !adminPassword) {
-    console.error('Admin credentials are not set in environment variables.');
-    return { success: false, error: 'Server configuration error.' };
+    console.error('ERROR: Admin credentials not found in environment variables. Check your .env.local file and restart the server.');
+    return { success: false, error: 'Error de configuración del servidor. Las credenciales de administrador no están configuradas.' };
   }
 
   if (email === adminEmail && password === adminPassword) {
     return { success: true };
   }
 
-  return { success: false, error: 'Invalid email or password.' };
+  return { success: false, error: 'Email o contraseña incorrectos.' };
 }
