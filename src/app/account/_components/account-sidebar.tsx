@@ -21,8 +21,8 @@ export default function AccountSidebar() {
   const navLinks = [
     { href: '/account', label: 'Panel de Usuario', icon: LayoutDashboard },
     { href: '/account/orders', label: 'Pedidos', icon: Package },
-    ...(isSubscribed ? [{ href: '/account/subscription', label: 'Dosis Mensual', icon: HeartPulse }] : []),
     { href: '/account/addresses', label: 'Direcciones', icon: MapPin },
+    ...(isSubscribed ? [{ href: '/account/subscription', label: 'Dosis Mensual', icon: HeartPulse }] : []),
   ];
 
   return (
