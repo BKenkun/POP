@@ -4,7 +4,7 @@ import type {NextConfig} from 'next';
 const nextConfig: NextConfig = {
   env: {
     ADMIN_EMAIL: 'maryandpopper@gmail.com',
-    ADMIN_PASSWORD: '/(IYUKMN$7(I)=rb8',
+    ADMIN_PASSWORD: 'Jk#8@z!pLq&9$vR*sWb2',
   },
   typescript: {
     ignoreBuildErrors: true,
