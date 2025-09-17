@@ -60,10 +60,6 @@ export default function SubscriptionPage() {
         }
     }
     
-    const ctaText = isSubscribed ? 'Gestionar Mi Dosis' : 'Unirme al Club';
-    const finalCtaText = isSubscribed ? 'Ir a mi Panel' : 'Unirme al Club por 40€/mes';
-
-
     return (
         <div className="space-y-16">
             {/* Sección 1: Título Principal (Hero) */}
@@ -98,10 +94,8 @@ export default function SubscriptionPage() {
                             <Button size="lg" className="w-full font-bold bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
                                 {loading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                ) : (
-                                    <User className="mr-2 h-5 w-5" />
-                                )}
-                                {loading ? 'Procesando...' : ctaText}
+                                ) : null}
+                                {loading ? 'Procesando...' : 'Unirme al Club'}
                             </Button>
                         </CardContent>
                     </div>
@@ -194,10 +188,8 @@ export default function SubscriptionPage() {
                 <Button size="lg" className="font-bold text-lg h-14 px-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
                     {loading ? (
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                    ) : (
-                       <ArrowRight className="mr-2 h-6 w-6" />
-                    )}
-                    {loading ? 'Procesando...' : finalCtaText}
+                    ) : null}
+                    {loading ? 'Procesando...' : 'Unirme al Club por 40€/mes'}
                 </Button>
             </div>
 
