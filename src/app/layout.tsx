@@ -10,6 +10,7 @@ import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
 import FloatingActionButtons from '@/components/floating-action-buttons';
 import { usePathname } from 'next/navigation';
+import Script from 'next/script';
 
 const metadata: Metadata = {
   title: 'Popper Online',
@@ -51,6 +52,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "tc3cngb8to");
+          `}
+        </Script>
       </head>
       <body className="font-body antialiased">
         <Providers>
