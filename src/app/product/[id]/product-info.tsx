@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useCart } from '@/context/cart-context';
 import { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
@@ -9,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, ShieldCheck, Truck, Box, Bell } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { StockNotificationDialog } from '@/components/stock-notification-dialog';
+import { QuantitySelector } from '@/components/quantity-selector';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductInfoProps {
   product: Product;
@@ -16,7 +19,28 @@ interface ProductInfoProps {
 
 export function ProductInfo({ product }: ProductInfoProps) {
   const { addToCart } = useCart();
+  const { toast } = useToast();
+  const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+  };
+  
+  const handleQuantityChange = (newQuantity: number) => {
+      if (product.stock !== undefined && newQuantity > product.stock) {
+          toast({
+              title: "Stock insuficiente",
+              description: `Solo quedan ${product.stock} unidades de este producto.`,
+              variant: "destructive"
+          });
+          setQuantity(product.stock);
+      } else if (newQuantity < 1) {
+          setQuantity(1);
+      } else {
+          setQuantity(newQuantity);
+      }
+  };
 
   return (
     <div className="flex flex-col space-y-6">
@@ -40,24 +64,30 @@ export function ProductInfo({ product }: ProductInfoProps) {
         )}
       </div>
       
-        {isSoldOut ? (
-            <StockNotificationDialog product={product}>
-                 <Button size="lg" variant="outline">
-                    <Bell className="mr-2 h-5 w-5" />
-                    Avísame cuando vuelva
-                </Button>
-            </StockNotificationDialog>
-        ) : (
-             <Button
-                size="lg"
-                onClick={() => addToCart(product)}
-                disabled={isSoldOut}
-            >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Añadir al carrito
-            </Button>
-        )}
-
+      {isSoldOut ? (
+          <StockNotificationDialog product={product}>
+               <Button size="lg" variant="outline">
+                  <Bell className="mr-2 h-5 w-5" />
+                  Avísame cuando vuelva
+              </Button>
+          </StockNotificationDialog>
+      ) : (
+          <div className="flex items-center gap-4">
+              <QuantitySelector
+                  quantity={quantity}
+                  onQuantityChange={handleQuantityChange}
+                  maxStock={product.stock}
+              />
+              <Button
+                  size="lg"
+                  onClick={handleAddToCart}
+                  className="flex-1"
+              >
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Añadir al carrito
+              </Button>
+          </div>
+      )}
 
       <Separator />
 

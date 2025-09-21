@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -8,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Minus, Plus, Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
+import { Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { QuantitySelector } from './quantity-selector';
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -59,26 +61,12 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                       <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
                       <div className="mt-2 flex items-center gap-2">
                          {item.id !== 'custom-pack' ? (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-6 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
+                            <QuantitySelector
+                                quantity={item.quantity}
+                                onQuantityChange={(newQuantity) => updateQuantity(item.id, newQuantity)}
+                                maxStock={item.stock}
+                            />
+                         ) : (
                            <span className="text-sm text-muted-foreground">Cantidad: {item.quantity}</span>
                         )}
                       </div>
