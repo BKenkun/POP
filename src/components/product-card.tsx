@@ -12,6 +12,9 @@ import { ShoppingCart, Eye, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { StockNotificationDialog } from '@/components/stock-notification-dialog';
+import { useState } from 'react';
+import { QuantitySelector } from './quantity-selector';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -22,7 +25,29 @@ interface ProductCardProps {
 
 export function ProductCard({ product, className, children, onImageClick }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { toast } = useToast();
+  const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
+
+   const handleQuantityChange = (newQuantity: number) => {
+      if (product.stock !== undefined && newQuantity > product.stock) {
+          toast({
+              title: "Stock insuficiente",
+              description: `Solo quedan ${product.stock} unidades de este producto.`,
+              variant: "destructive"
+          });
+          setQuantity(product.stock);
+      } else if (newQuantity < 1) {
+          setQuantity(1);
+      } else {
+          setQuantity(newQuantity);
+      }
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(product, quantity);
+  }
 
   const cardContent = (
     <Card className={cn("group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border/60 h-full", className)}>
@@ -109,17 +134,21 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                         </StockNotificationDialog>
                     </div>
                 ) : (
-                    <Button
-                        size="lg"
-                        className="w-full"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(product);
-                        }}
-                    >
-                        <ShoppingCart className="mr-2 h-5 w-5" />
-                        Añadir al carrito
-                    </Button>
+                    <div className="flex items-center gap-2 w-full">
+                        <QuantitySelector 
+                            quantity={quantity}
+                            onQuantityChange={handleQuantityChange}
+                            maxStock={product.stock}
+                        />
+                        <Button
+                            size="lg"
+                            className="w-full flex-1"
+                            onClick={handleAddToCart}
+                        >
+                            <ShoppingCart className="mr-2 h-5 w-5" />
+                            Añadir
+                        </Button>
+                    </div>
                 )}
             </CardFooter>
         )}
