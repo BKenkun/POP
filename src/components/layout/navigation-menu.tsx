@@ -103,7 +103,7 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
             </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-            <Button asChild variant="destructive" size="sm" className="font-headline uppercase font-bold text-sm h-8">
+            <Button asChild variant="destructive" className="font-headline uppercase font-bold text-sm h-10 px-3">
                 <Link href={subscriptionUrl}> 
                     Dosis Mensual
                 </Link>
