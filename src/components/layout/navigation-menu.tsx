@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuth } from '@/context/auth-context';
+import { SearchForm } from './search-form';
+import { Separator } from '../ui/separator';
 
 const compositionLinks = [
   { title: 'POPPERS DE AMILO', composition: 'Amilo' },
@@ -31,6 +33,7 @@ const compositionLinks = [
 ];
 
 const productLinks = [
+    { href: "/products", title: "TODOS LOS PRODUCTOS" },
     { href: "/products?size=10ml", title: "POPPERS PEQUEÑOS (10ML)" },
     { href: "/products?size=15ml", title: "POPPERS MEDIANOS (15ML)" },
     { href: "/products?size=25ml", title: "POPPERS GRANDES (25ML)" },
@@ -51,48 +54,42 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false }
 
   if (isMobile) {
       return (
-          <div className="flex flex-col gap-1 w-full">
-              <Collapsible>
-                  <CollapsibleTrigger asChild>
-                     <Button variant="ghost" className="w-full justify-between font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
-                        <span>Productos</span>
-                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                      <div className="flex flex-col gap-1 pl-4 mt-1">
-                          {productLinks.map(link => (
-                              <Button key={link.href} variant="ghost" asChild className="w-full justify-start font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
-                                  <Link href={link.href} onClick={onNavigate}>{link.title}</Link>
-                              </Button>
-                          ))}
-                           <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="ghost" className="w-full justify-between font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
-                                        <span>Composición</span>
-                                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                                    </Button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                    <div className="flex flex-col gap-1 pl-4 mt-1">
-                                        {compositionLinks.map(link => (
-                                             <Button key={link.composition} variant="ghost" asChild className="w-full justify-start font-body font-light uppercase text-xs text-primary-foreground hover:bg-accent hover:text-accent-foreground">
-                                                <Link href={`/products?composition=${encodeURIComponent(link.composition)}`} onClick={onNavigate}>{link.title}</Link>
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </CollapsibleContent>
-                           </Collapsible>
-                      </div>
-                  </CollapsibleContent>
-              </Collapsible>
+          <div className="flex flex-col gap-2 w-full">
+              {productLinks.map(link => (
+                  <Button key={link.href} variant="ghost" asChild className="w-full justify-start font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link href={link.href} onClick={onNavigate}>{link.title}</Link>
+                  </Button>
+              ))}
+               <Collapsible>
+                    <CollapsibleTrigger asChild>
+                        <Button variant="ghost" className="w-full justify-between font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                            <span>Composición</span>
+                            <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                        </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <div className="flex flex-col gap-1 pl-4 mt-1">
+                            {compositionLinks.map(link => (
+                                    <Button key={link.composition} variant="ghost" asChild className="w-full justify-start font-body font-light uppercase text-xs text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                                    <Link href={`/products?composition=${encodeURIComponent(link.composition)}`} onClick={onNavigate}>{link.title}</Link>
+                                </Button>
+                            ))}
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
               
+              <Separator className="my-2 bg-primary-foreground/20" />
+
                <Button variant="ghost" asChild className="w-full justify-start font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
                   <Link href="/create-pack" onClick={onNavigate}>Crea tu Pack</Link>
               </Button>
               <Button variant="destructive" asChild className="w-full justify-start font-headline uppercase font-bold">
                   <Link href={subscriptionUrl} onClick={onNavigate}>Dosis Mensual</Link>
               </Button>
+
+              <div className="mt-2">
+                 <SearchForm onSearch={onNavigate} />
+              </div>
           </div>
       );
   }
@@ -108,7 +105,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false }
            </NavigationMenuTrigger>
           <NavigationMenuContent>
              <ul className="flex flex-col p-2 w-64 bg-primary text-primary-foreground border-r border-primary-foreground/20">
-                 {productLinks.map(link => (
+                 {productLinks.slice(1).map(link => ( // Slice to exclude "TODOS LOS PRODUCTOS"
                     <ListItem key={link.href} href={link.href} title={link.title} onNavigate={onNavigate} />
                  ))}
                  
