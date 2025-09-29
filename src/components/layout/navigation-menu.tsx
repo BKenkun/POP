@@ -30,20 +30,72 @@ const compositionLinks = [
   { title: 'MIX DE NITRITOS', composition: 'Mix' },
 ];
 
+const productLinks = [
+    { href: "/products?size=10ml", title: "POPPERS PEQUEÑOS (10ML)" },
+    { href: "/products?size=15ml", title: "POPPERS MEDIANOS (15ML)" },
+    { href: "/products?size=25ml", title: "POPPERS GRANDES (25ML)" },
+    { href: "/products?internal_tag=pack", title: "PACKS DE POPPERS" },
+    { href: "/products?internal_tag=accesorio", title: "ACCESORIOS PARA POPPERS" },
+    { href: "/products?internal_tag=juguete", title: "JUGUETES ERÓTICOS" },
+];
+
 interface NavigationMenuComponentProps {
   onNavigate?: () => void;
+  isMobile?: boolean;
 }
 
-export default function NavigationMenuComponent({ onNavigate }: NavigationMenuComponentProps) {
+export default function NavigationMenuComponent({ onNavigate, isMobile = false }: NavigationMenuComponentProps) {
   const { user, isSubscribed } = useAuth();
   
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (onNavigate) {
-      onNavigate();
-    }
-  };
-
   const subscriptionUrl = isSubscribed ? "/account/subscription" : "/subscription";
+
+  if (isMobile) {
+      return (
+          <div className="flex flex-col gap-1 w-full">
+              <Collapsible>
+                  <CollapsibleTrigger asChild>
+                     <Button variant="ghost" className="w-full justify-between font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                        <span>Productos</span>
+                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                      <div className="flex flex-col gap-1 pl-4 mt-1">
+                          {productLinks.map(link => (
+                              <Button key={link.href} variant="ghost" asChild className="w-full justify-start font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                                  <Link href={link.href} onClick={onNavigate}>{link.title}</Link>
+                              </Button>
+                          ))}
+                           <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" className="w-full justify-between font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                                        <span>Composición</span>
+                                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                                    </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <div className="flex flex-col gap-1 pl-4 mt-1">
+                                        {compositionLinks.map(link => (
+                                             <Button key={link.composition} variant="ghost" asChild className="w-full justify-start font-body font-light uppercase text-xs text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                                                <Link href={`/products?composition=${encodeURIComponent(link.composition)}`} onClick={onNavigate}>{link.title}</Link>
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </CollapsibleContent>
+                           </Collapsible>
+                      </div>
+                  </CollapsibleContent>
+              </Collapsible>
+              
+               <Button variant="ghost" asChild className="w-full justify-start font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
+                  <Link href="/create-pack" onClick={onNavigate}>Crea tu Pack</Link>
+              </Button>
+              <Button variant="destructive" asChild className="w-full justify-start font-headline uppercase font-bold">
+                  <Link href={subscriptionUrl} onClick={onNavigate}>Dosis Mensual</Link>
+              </Button>
+          </div>
+      );
+  }
 
   return (
     <NavigationMenu>
@@ -56,12 +108,9 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
            </NavigationMenuTrigger>
           <NavigationMenuContent>
              <ul className="flex flex-col p-2 w-64 bg-primary text-primary-foreground border-r border-primary-foreground/20">
-                 <ListItem href="/products?size=10ml" title="POPPERS PEQUEÑOS (10ML)" onNavigate={onNavigate} />
-                 <ListItem href="/products?size=15ml" title="POPPERS MEDIANOS (15ML)" onNavigate={onNavigate} />
-                 <ListItem href="/products?size=25ml" title="POPPERS GRANDES (25ML)" onNavigate={onNavigate} />
-                 <ListItem href="/products?internal_tag=pack" title="PACKS DE POPPERS" onNavigate={onNavigate} />
-                 <ListItem href="/products?internal_tag=accesorio" title="ACCESORIOS PARA POPPERS" onNavigate={onNavigate} />
-                 <ListItem href="/products?internal_tag=juguete" title="JUGUETES ERÓTICOS" onNavigate={onNavigate} />
+                 {productLinks.map(link => (
+                    <ListItem key={link.href} href={link.href} title={link.title} onNavigate={onNavigate} />
+                 ))}
                  
                 <Collapsible>
                   <li>
@@ -96,14 +145,14 @@ export default function NavigationMenuComponent({ onNavigate }: NavigationMenuCo
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationMenuItem>
-            <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground")}>
+            <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), "h-10 font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground")}>
                 <Link href="/create-pack">
                     CREA TU PACK
                 </Link>
             </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-            <Button asChild variant="destructive" className="font-headline uppercase font-bold text-sm h-10 px-3">
+            <Button asChild variant="destructive" className="h-10 font-headline uppercase font-bold text-sm px-3">
                 <Link href={subscriptionUrl}> 
                     Dosis Mensual
                 </Link>

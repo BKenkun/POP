@@ -30,7 +30,7 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
-          <SheetTitle className="sr-only">Menú de Navegación Principal</SheetTitle>
+           <SheetTitle className="sr-only">Menú de Navegación Principal</SheetTitle>
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
              <Link href="/" className="flex items-center space-x-2 group" onClick={() => setIsOpen(false)}>
                 <Logo />
@@ -38,7 +38,7 @@ export function Header() {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="flex flex-col gap-2 p-2">
-              <NavigationMenuComponent onNavigate={() => setIsOpen(false)} />
+              <NavigationMenuComponent onNavigate={() => setIsOpen(false)} isMobile={true} />
               <SearchForm onSearch={() => setIsOpen(false)} />
             </SidebarMenu>
           </SidebarContent>
