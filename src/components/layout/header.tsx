@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
 import { PackageCheck, Truck } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
 import { Logo } from '../logo';
@@ -30,6 +30,7 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
+          <SheetTitle className="sr-only">Menú de Navegación Principal</SheetTitle>
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
              <Link href="/" className="flex items-center space-x-2 group" onClick={() => setIsOpen(false)}>
                 <Logo />
