@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldCheck, Info, Gavel, AlertTriangle, UserCheck, Package } from 'lucide-react';
+import { ShieldCheck, Info, Gavel, AlertTriangle, UserCheck, Package, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -98,6 +98,15 @@ export default function LeatherCleanersInfoPage() {
                 </Alert>
             </CardContent>
         </Card>
+
+        <div className="text-center pt-4">
+            <Button asChild size="lg">
+                <Link href="/products">
+                    Explorar Catálogo
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
     </div>
   );
 }
