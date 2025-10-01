@@ -30,8 +30,8 @@ export default function ResolucionLitigiosPage() {
             <CardContent className="space-y-4 text-muted-foreground">
                 <p>De acuerdo con el Decreto-Ley no. 24/2014 del 14 de febrero, tienes <strong>14 días naturales</strong> después de recibir tu pedido para proceder con la rescisión del contrato y la devolución de la mercancía. Para ello, debes comunicarnos tu decisión mediante una declaración inequívoca (por ejemplo, una carta o un correo electrónico a <a href="mailto:info@comprarpopperonline.com" className="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).</p>
                 <p>Una vez comunicada tu decisión, dispones de otros 14 días para devolver los productos. Es importante destacar que <strong>los costes de la devolución de los bienes corren por tu cuenta.</strong></p>
-                <p>Tras recibir la mercancía devuelta (o una prueba de su envío), te reembolsaremos todos los pagos recibidos, a excepción de los costes adicionales si elegiste un método de envío más caro que el estándar que ofrecemos. Nos reservamos el derecho a retener el reembolso hasta recibir los productos.</p>
-                <p>Debes conservar los bienes para poder devolverlos en condiciones de uso adecuadas. Eres responsable de cualquier depreciación del valor si la manipulación de los productos excede lo necesario para inspeccionar su naturaleza y funcionamiento.</p>
+                 <p>Debes conservar los bienes para poder devolverlos en condiciones de uso adecuadas. Para que una devolución sea aceptada, los productos deben retornarse <strong>sin abrir, sin usar, con todos sus precintos de seguridad intactos y en su embalaje original.</strong> Eres responsable de cualquier depreciación del valor si la manipulación de los productos excede lo necesario para inspeccionar su naturaleza y funcionamiento.</p>
+                <p>Tras recibir la mercancía devuelta y comprobar su estado, te reembolsaremos todos los pagos recibidos, a excepción de los costes adicionales si elegiste un método de envío más caro que el estándar que ofrecemos. Nos reservamos el derecho a retener el reembolso hasta recibir los productos y verificar que cumplen las condiciones de devolución.</p>
             </CardContent>
         </Card>
 
@@ -42,8 +42,9 @@ export default function ResolucionLitigiosPage() {
                 <p className="font-semibold mt-2">No se aceptarán devoluciones en las siguientes situaciones:</p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
                     <li>Suministro de productos sellados que no pueden devolverse por razones de <strong>protección de la salud o de higiene</strong> y que han sido abiertos después de la entrega.</li>
-                    <li>Suministro de productos como cosméticos, artículos de cuidado personal, ropa interior o cualquier producto de uso íntimo.</li>
+                    <li>Suministro de productos como cosméticos, artículos de cuidado personal, <strong>ropa interior o cualquier producto de uso íntimo</strong>.</li>
                     <li>Grabaciones de audio/vídeo o software a los que se les haya quitado el sello de inviolabilidad.</li>
+                    <li>El cliente, como <strong>importador final</strong>, es el único responsable de asegurar que el producto es legal en su país. Costes de aduana, aranceles o confiscaciones son responsabilidad exclusiva del cliente, sin derecho a reembolso.</li>
                 </ul>
             </AlertDescription>
         </Alert>
@@ -99,4 +100,3 @@ export default function ResolucionLitigiosPage() {
     </div>
   );
 }
-
