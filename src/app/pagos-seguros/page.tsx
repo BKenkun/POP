@@ -28,7 +28,7 @@ export default function PagosSegurosPage() {
                 <div className="p-4 bg-secondary/50 rounded-lg space-y-2">
                     <h3 className="font-semibold flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-green-600"/>Tu Información Está Protegida</h3>
                     <p className="text-sm text-muted-foreground">
-                        Cuando realizas un pago, tus datos son encriptados y enviados directamente a los servidores seguros de Stripe. <strong>Nosotros nunca vemos, almacenamos ni tenemos acceso a los detalles de tu tarjeta de crédito o débito.</strong> Esto elimina cualquier riesgo y te ofrece total tranquilidad.
+                        Cuando realizas un pago, tus datos son encriptados y enviados directamente a los servidores seguros de Stripe mediante una conexión SSL. <strong>Nosotros nunca vemos, almacenamos ni tenemos acceso a los detalles de tu tarjeta de crédito o débito.</strong> Esto elimina cualquier riesgo y te ofrece total tranquilidad.
                     </p>
                 </div>
                  <p className="text-sm text-muted-foreground font-medium text-center pt-4">
@@ -41,7 +41,7 @@ export default function PagosSegurosPage() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-3">
                     <CreditCard className="h-6 w-6 text-primary"/>
-                    <span>Métodos de Pago Aceptados</span>
+                    <span>Métodos de Pago y Discreción</span>
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -68,7 +68,6 @@ export default function PagosSegurosPage() {
             </CardHeader>
             <CardContent>
                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Descargo de Responsabilidad del Procesador de Pagos</AlertTitle>
                     <AlertDescription>
                         <p>Al utilizar un proveedor de pagos externo como Stripe, el procesamiento de tu pago está sujeto a los términos, condiciones y políticas de privacidad de dicha entidad. Si bien haremos todo lo posible para ayudarte a resolver cualquier problema, la responsabilidad final sobre la transacción de pago recae en el proveedor de servicios.</p>
