@@ -4,22 +4,28 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users, Star, HelpCircle, Package, ShieldCheck, Truck, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getStripeProducts } from '@/lib/stripe';
+import { Product } from '@/lib/types';
 
 export const metadata = {
     title: 'Tienda Popper – Venta de los Mejores Aromas | Popper Online',
     description: 'Bienvenido a la mejor tienda de poppers en España. Descubre una gran variedad de poppers, con las mejores ofertas y los precios más bajos.',
 };
 
-const brands = [
-    "Jungle Juice Platinum",
-    "Amsterdam",
-    "Mega Rush 25ml",
-    "Super Rush 10ml",
-    "Rise Up Extreme Formula 10ml",
-    "El Toro Premium Tube Pentyl 24ml"
-];
+// Revalidate every time to get a new random list
+export const revalidate = 0; 
 
-export default function TiendaPopperPage() {
+// Function to shuffle an array and take the first N items
+const getShuffledItems = (array: Product[], numItems: number): Product[] => {
+    const shuffled = [...array].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, numItems);
+};
+
+
+export default async function TiendaPopperPage() {
+    const allProducts = await getStripeProducts();
+    const randomProducts = getShuffledItems(allProducts, 6);
+
   return (
     <div className="max-w-4xl mx-auto space-y-12">
         <div className="text-center space-y-4">
@@ -84,9 +90,9 @@ export default function TiendaPopperPage() {
         <div className="text-center space-y-4">
             <h2 className="text-2xl font-bold text-primary">Las Mejores Marcas para los Mejores Clientes</h2>
             <div className="flex flex-wrap justify-center gap-3">
-                {brands.map(brand => (
-                    <Button key={brand} variant="secondary" asChild>
-                        <Link href={`/products?search=${encodeURIComponent(brand)}`}>{brand}</Link>
+                {randomProducts.map(product => (
+                    <Button key={product.id} variant="secondary" asChild>
+                        <Link href={`/product/${product.id}`}>{product.name}</Link>
                     </Button>
                 ))}
             </div>
