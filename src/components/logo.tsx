@@ -9,11 +9,11 @@ export const Logo = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
   >
     <defs>
+      {/* We can't import fonts directly in SVG, but next/font in the layout makes it available */}
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
           .logo-text {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-inter), sans-serif;
             font-size: 120px;
             font-weight: 900;
             text-anchor: middle;
