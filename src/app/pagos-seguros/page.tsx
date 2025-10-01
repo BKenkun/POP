@@ -1,8 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldCheck, CreditCard, Lock, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, CreditCard, Lock, AlertTriangle, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function PagosSegurosPage() {
   return (
@@ -76,6 +78,14 @@ export default function PagosSegurosPage() {
                 </Alert>
             </CardContent>
         </Card>
+        <div className="text-center pt-4">
+            <Button asChild size="lg">
+                <Link href="/products">
+                    Explorar Catálogo
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
     </div>
   );
 }

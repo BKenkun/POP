@@ -1,7 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const legalInfo = [
     { label: 'Titular del Sitio Web:', value: 'MARY AND POPPER' },
@@ -46,6 +48,14 @@ export default function InformacionLegalPage() {
                     Nos reservamos el derecho a cancelar cualquier pedido si se realiza desde una ubicación cuya legalidad es cuestionable o si sospechamos que se omitirá un uso legal del producto.
                 </AlertDescription>
             </Alert>
+        </div>
+         <div className="text-center pt-4">
+            <Button asChild size="lg">
+                <Link href="/products">
+                    Explorar Catálogo
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
         </div>
     </div>
   );

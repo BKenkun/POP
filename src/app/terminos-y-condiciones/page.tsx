@@ -1,5 +1,8 @@
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function TerminosYCondicionesPage() {
   return (
@@ -66,6 +69,14 @@ export default function TerminosYCondicionesPage() {
                 <p>Si alguna cláusula de las presentes Condiciones fuese declarada nula o inaplicable por una autoridad competente o tribunal, la validez del resto de las cláusulas no se verá afectada, manteniéndose el Contrato en vigor en sus demás términos. El Vendedor se compromete a sustituir la cláusula nula o inaplicable por otra de efecto legal y económico equivalente.</p>
             </CardContent>
         </Card>
+        <div className="text-center pt-4">
+            <Button asChild size="lg">
+                <Link href="/products">
+                    Explorar Catálogo
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
     </div>
   );
 }
