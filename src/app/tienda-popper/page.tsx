@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getStripeProducts } from '@/lib/stripe';
 import { Product } from '@/lib/types';
+import { products as fallbackProducts } from '@/lib/products';
 
 export const metadata = {
     title: 'Tienda Popper – Venta de los Mejores Aromas | Popper Online',
@@ -24,7 +25,15 @@ const getShuffledItems = (array: Product[], numItems: number): Product[] => {
 
 
 export default async function TiendaPopperPage() {
-    const allProducts = await getStripeProducts();
+    let allProducts = await getStripeProducts();
+
+    // Fallback logic to ensure we have enough products to display
+    if (allProducts.length < 6) {
+        const fallbackIds = new Set(allProducts.map(p => p.id));
+        const additionalProducts = fallbackProducts.filter(p => !fallbackIds.has(p.id));
+        allProducts = [...allProducts, ...additionalProducts];
+    }
+    
     const randomProducts = getShuffledItems(allProducts, 6);
 
   return (
