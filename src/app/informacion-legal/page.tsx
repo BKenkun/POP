@@ -14,13 +14,9 @@ const legalInfo = [
 export default function InformacionLegalPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-        <div className="text-center space-y-4 mb-12">
-            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Información Legal</h1>
-        </div>
-
         <Card>
             <CardHeader>
-                <CardTitle>Datos del Titular</CardTitle>
+                <CardTitle>Información Legal</CardTitle>
             </CardHeader>
             <CardContent>
                 <dl className="space-y-4">
