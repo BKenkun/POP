@@ -70,8 +70,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https'
-        ,
+        protocol: 'https',
         hostname: 'www.mistersmoke.com',
         port: '',
         pathname: '/**',
