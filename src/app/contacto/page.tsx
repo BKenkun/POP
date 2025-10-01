@@ -68,6 +68,36 @@ export default function ContactPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+             <div className="space-y-8">
+                 <Card className="bg-secondary/50 border-border">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-primary"/>Email de Contacto</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">Para consultas generales, envíanos un correo a:</p>
+                        <a href="mailto:info@comprarpopperonline.com" className="font-semibold text-primary hover:underline">
+                            info@comprarpopperonline.com
+                        </a>
+                    </CardContent>
+                </Card>
+                 <Card className="bg-secondary/50 border-border">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary"/>Información Legal</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                       <div>
+                           <h4 className="font-semibold text-foreground flex items-center gap-2"><Building className="h-4 w-4"/>Titular</h4>
+                           <p className="text-muted-foreground">MARY AND POPPER</p>
+                           <p className="text-muted-foreground">ABN: 37 588 057 135</p>
+                       </div>
+                       <div>
+                           <h4 className="font-semibold text-foreground">Dirección</h4>
+                           <p className="text-muted-foreground">U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA</p>
+                       </div>
+                    </CardContent>
+                </Card>
+            </div>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Enviar un mensaje</CardTitle>
@@ -135,36 +165,6 @@ export default function ContactPage() {
                     </Form>
                 </CardContent>
             </Card>
-
-            <div className="space-y-8">
-                 <Card className="bg-secondary/50 border-border">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-primary"/>Email de Contacto</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">Para consultas generales, envíanos un correo a:</p>
-                        <a href="mailto:info@comprarpopperonline.com" className="font-semibold text-primary hover:underline">
-                            info@comprarpopperonline.com
-                        </a>
-                    </CardContent>
-                </Card>
-                 <Card className="bg-secondary/50 border-border">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary"/>Información Legal</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                       <div>
-                           <h4 className="font-semibold text-foreground flex items-center gap-2"><Building className="h-4 w-4"/>Titular</h4>
-                           <p className="text-muted-foreground">MARY AND POPPER</p>
-                           <p className="text-muted-foreground">ABN: 37 588 057 135</p>
-                       </div>
-                       <div>
-                           <h4 className="font-semibold text-foreground">Dirección</h4>
-                           <p className="text-muted-foreground">U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA</p>
-                       </div>
-                    </CardContent>
-                </Card>
-            </div>
         </div>
     </div>
   );
