@@ -1,6 +1,7 @@
 
 import type {NextConfig} from 'next';
 
+// Forcing a server restart to recognize new routes.
 const nextConfig: NextConfig = {
   env: {
     ADMIN_EMAIL: 'maryandpopper@gmail.com',
