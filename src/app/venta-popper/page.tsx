@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShoppingCart, Package, ShieldCheck, Info, ChevronRight, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Package, ShieldCheck, Info, ChevronRight, AlertTriangle, Truck, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,7 +30,7 @@ export default function VentaPopperPage() {
         <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl font-headline text-primary tracking-tight font-bold">Venta de Popper: Calidad, Seguridad y Legislación</h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                En nuestra tienda online, nos dedicamos a ofrecer Poppers de alta calidad para usos técnicos, cosméticos y aromáticos, garantizando que cada producto cumpla con la legislación vigente.
+                Nuestra tienda en línea de referencia está dedicada a ofrecer Poppers de alta calidad para usos técnicos, cosméticos y aromáticos, garantizando que cada producto cumpla con la legislación vigente.
             </p>
         </div>
 
@@ -42,11 +42,13 @@ export default function VentaPopperPage() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+                <h3 className="font-semibold">Definición Detallada</h3>
                 <p className="text-muted-foreground">
-                    El término "popper" se refiere popularmente a los nitritos de alquilo (amilo, pentilo o propilo). Son compuestos químicos volátiles que en nuestra tienda se comercializan exclusivamente como <strong>limpiadores de cuero, solventes o ambientadores técnicos</strong>.
+                    El término "popper" se refiere popularmente a los nitritos de alquilo (amilo, pentilo o propilo). Son compuestos químicos volátiles que en nuestra tienda se comercializan exclusivamente como <strong>limpiadores de cuero, solventes o ambientadores técnicos</strong>. Su función es la de un solvente y no están diseñados, ni deben usarse, para el consumo humano.
                 </p>
+                <h3 className="font-semibold">Usos Oficiales Permitidos (¡No Recreativos!)</h3>
                 <p className="text-muted-foreground">
-                   Su función es la de un solvente y no están diseñados, ni deben usarse, para el consumo humano. Los usos oficiales permitidos son:
+                   Para garantizar el cumplimiento de nuestras condiciones de venta, todos nuestros productos tienen las siguientes aplicaciones legales:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li><strong>Uso Técnico/Ambientador:</strong> Para la limpieza profesional de superficies o cuero.</li>
@@ -58,9 +60,9 @@ export default function VentaPopperPage() {
 
         <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Advertencia Crucial: Uso Recreativo Estrictamente Prohibido</AlertTitle>
+            <AlertTitle>Advertencia Crucial: Uso Recreativo Prohibido</AlertTitle>
             <AlertDescription>
-                Se prohíbe y desaconseja expresamente el consumo humano o el uso recreativo de cualquiera de nuestros productos. El incumplimiento de esta advertencia es responsabilidad exclusiva del cliente y puede ser perjudicial para la salud.
+                Se prohíbe y desaconseja expresamente el consumo humano o el uso recreativo de cualquiera de nuestros productos. El incumplimiento de esta advertencia es responsabilidad exclusiva del cliente. Este uso contraviene nuestras Condiciones Generales de Venta y puede ser perjudicial para la salud.
             </AlertDescription>
         </Alert>
 
@@ -74,7 +76,7 @@ export default function VentaPopperPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Composición</TableHead>
+                                <TableHead>Variedad o Fórmula</TableHead>
                                 <TableHead>Descripción Detallada</TableHead>
                                 <TableHead>Aplicación Técnica Sugerida</TableHead>
                             </TableRow>
@@ -89,6 +91,38 @@ export default function VentaPopperPage() {
                             ))}
                         </TableBody>
                     </Table>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Servicios de la Tienda: Confidencialidad y Eficiencia</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <p className="text-muted-foreground">Le garantizamos una experiencia de compra sencilla y segura, respaldada por nuestro compromiso con la discreción y la velocidad:</p>
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div className="flex items-start gap-4">
+                        <Package className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                        <div>
+                            <h4 className="font-semibold">Envío Rápido y Totalmente Discreto</h4>
+                            <p className="text-sm text-muted-foreground">Todos los productos se envían en un paquete sin referencias externas. Los pedidos pagados antes de las 12:00 en días hábiles se envían el mismo día.</p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                        <ShieldCheck className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                        <div>
+                            <h4 className="font-semibold">Legalidad y Logística</h4>
+                            <p className="text-sm text-muted-foreground">Solo vendemos artículos que cumplen con la normativa. Su pedido se gestiona desde Francia para asegurar una logística eficiente en la UE.</p>
+                        </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                        <Rocket className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                        <div>
+                            <h4 className="font-semibold">Precios Competitivos</h4>
+                            <p className="text-sm text-muted-foreground">Gracias a la relación directa con fabricantes, ofrecemos precios inmejorables, ofertas por volumen y paquetes de ahorro.</p>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
         </Card>
