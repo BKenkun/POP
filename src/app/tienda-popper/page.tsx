@@ -132,13 +132,9 @@ export default async function TiendaPopperPage() {
                 <CardDescription>Ponte en contacto con nuestro equipo de expertos.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-6">
-                <div className="flex items-center gap-2">
-                    <Phone className="h-5 w-5 text-primary"/>
-                    <a href="tel:+33677392398" className="font-semibold hover:text-primary">(+33) 677 392 398</a>
-                </div>
                  <div className="flex items-center gap-2">
                     <Mail className="h-5 w-5 text-primary"/>
-                    <a href="mailto:geral@poppers-espana.es" className="font-semibold hover:text-primary">geral@poppers-espana.es</a>
+                    <a href="mailto:info@comprarpopperonline.com" className="font-semibold hover:text-primary">info@comprarpopperonline.com</a>
                 </div>
             </CardContent>
         </Card>
