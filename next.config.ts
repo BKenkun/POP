@@ -34,12 +34,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'www.poppers-espana.es',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'www.euro-poppers.eu',
         port: '',
         pathname: '/**',

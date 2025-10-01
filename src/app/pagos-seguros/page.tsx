@@ -47,7 +47,7 @@ export default function PagosSegurosPage() {
             <CardContent className="space-y-4">
                 <p className="text-muted-foreground">Aceptamos las principales tarjetas de crédito y débito para tu comodidad:</p>
                 <div className="flex items-center justify-center gap-4 py-4">
-                    <Image src="https://www.poppers-espana.es/img/cms/visa-mastercard-amex.jpg" alt="Visa, Mastercard, Amex" width={200} height={50} />
+                    <Image src="https://files.stripe.com/links/MDB8YWNjdF8xUzJCUVJQZlNVdTg1UXdCfGZsX3Rlc3RfN2VXVGd1aWxCU2dhZGRDc3V0SnBSRVVY00L65s28aT" alt="Visa, Mastercard, Amex" width={250} height={50} />
                 </div>
                  <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
