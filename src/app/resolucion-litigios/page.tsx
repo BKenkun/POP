@@ -29,8 +29,8 @@ export default function ResolucionLitigiosPage() {
             </CardHeader>
             <CardContent className="space-y-4 text-muted-foreground">
                 <p>De acuerdo con el Decreto-Ley no. 24/2014 del 14 de febrero, tienes <strong>14 días naturales</strong> después de recibir tu pedido para proceder con la rescisión del contrato y la devolución de la mercancía. Para ello, debes comunicarnos tu decisión mediante una declaración inequívoca (por ejemplo, una carta o un correo electrónico a <a href="mailto:info@comprarpopperonline.com" className="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).</p>
-                <p>Una vez comunicada tu decisión, dispones de otros 14 días para devolver los productos. Es importante destacar que <strong>los costes de la devolución de los bienes corren por tu cuenta.</strong></p>
-                 <p>Debes conservar los bienes para poder devolverlos en condiciones de uso adecuadas. Para que una devolución sea aceptada, los productos deben retornarse <strong>sin abrir, sin usar, con todos sus precintos de seguridad intactos y en su embalaje original.</strong> Eres responsable de cualquier depreciación del valor si la manipulación de los productos excede lo necesario para inspeccionar su naturaleza y funcionamiento.</p>
+                <p>Una vez comunicada tu decisión, dispones de otros 14 días para devolver los productos. Es importante destacar que <strong>los costes de la devolución de los bienes corren íntegramente por tu cuenta.</strong></p>
+                 <p>Debes conservar los bienes para poder devolverlos en condiciones de uso adecuadas. Para que una devolución sea aceptada, los productos deben retornarse <strong>perfectamente sellados, sin abrir, sin usar, con todos sus precintos de seguridad intactos y en su embalaje original.</strong> Eres responsable de cualquier depreciación del valor si la manipulación de los productos excede lo necesario para una inspección puramente visual de su naturaleza.</p>
                 <p>Tras recibir la mercancía devuelta y comprobar su estado, te reembolsaremos todos los pagos recibidos, a excepción de los costes adicionales si elegiste un método de envío más caro que el estándar que ofrecemos. Nos reservamos el derecho a retener el reembolso hasta recibir los productos y verificar que cumplen las condiciones de devolución.</p>
             </CardContent>
         </Card>
@@ -39,12 +39,12 @@ export default function ResolucionLitigiosPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Exclusión del Derecho de Resolución</AlertTitle>
             <AlertDescription>
-                <p className="font-semibold mt-2">No se aceptarán devoluciones en las siguientes situaciones:</p>
+                <p className="font-semibold mt-2">No se aceptarán devoluciones en las siguientes situaciones, de acuerdo con la ley:</p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Suministro de productos sellados que no pueden devolverse por razones de <strong>protección de la salud o de higiene</strong> y que han sido abiertos después de la entrega.</li>
-                    <li>Suministro de productos como cosméticos, artículos de cuidado personal, <strong>ropa interior o cualquier producto de uso íntimo</strong>.</li>
+                    <li>Suministro de productos sellados que no pueden devolverse por razones de <strong>protección de la salud o de higiene</strong> y que han sido abiertos o desprecintados después de la entrega.</li>
+                    <li>Suministro de productos como cosméticos, artículos de cuidado personal, <strong>ropa interior o cualquier producto de uso íntimo</strong> cuyo embalaje haya sido comprometido.</li>
                     <li>Grabaciones de audio/vídeo o software a los que se les haya quitado el sello de inviolabilidad.</li>
-                    <li>El cliente, como <strong>importador final</strong>, es el único responsable de asegurar que el producto es legal en su país. Costes de aduana, aranceles o confiscaciones son responsabilidad exclusiva del cliente, sin derecho a reembolso.</li>
+                    <li>El cliente, como <strong>importador final</strong>, es el único responsable de asegurar que el producto es legal en su país. Costes de aduana, aranceles o confiscaciones son responsabilidad exclusiva del cliente y esto no dará derecho a reembolso.</li>
                 </ul>
             </AlertDescription>
         </Alert>
@@ -80,8 +80,8 @@ export default function ResolucionLitigiosPage() {
 
                 <h3 className="font-bold text-foreground pt-4">Pasos para la Mediación</h3>
                  <ol className="list-decimal list-inside space-y-2">
-                    <li>Envía una queja por escrito al profesional (preferiblemente por correo certificado o email para tener constancia).</li>
-                    <li>Si no recibes una respuesta satisfactoria en un plazo razonable, puedes iniciar el procedimiento de mediación a través de la web del mediador.</li>
+                    <li>Antes de cualquier mediación, debes enviarnos una queja por escrito (preferiblemente por correo electrónico para tener constancia).</li>
+                    <li>Si no recibes una respuesta satisfactoria de nuestra parte en un plazo razonable, puedes iniciar el procedimiento de mediación a través de la web del mediador.</li>
                     <li>El mediador te informará de la recepción de tu expediente y dispondrá de 90 días para proponer una solución. Ambas partes son libres de aceptarla o rechazarla.</li>
                 </ol>
                 <p>Para cualquier queja o consulta inicial, puedes contactarnos en <a href="mailto:info@comprarpopperonline.com" className="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.</p>
