@@ -57,19 +57,16 @@ export default function CookieConsentBanner() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-t border-border p-4">
-        <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-              <Cookie className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-              <div className="text-sm">
-                  <h3 className="font-semibold text-foreground">Este sitio web utiliza cookies</h3>
-                  <p className="text-muted-foreground">Usamos cookies para mejorar tu experiencia, analizar el tráfico y personalizar el contenido. Puedes gestionar tus preferencias en cualquier momento.</p>
-              </div>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-t border-border p-2">
+        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Cookie className="h-5 w-5 text-primary flex-shrink-0" />
+              <p>Utilizamos cookies para mejorar tu experiencia. Puedes gestionar tus preferencias.</p>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2">
-            <Button variant="ghost" onClick={() => setIsOpen(true)}>Personalizar</Button>
-            <Button variant="outline" onClick={handleRejectAll}>Rechazar</Button>
-            <Button onClick={handleAcceptAll}>Aceptar Todas</Button>
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>Personalizar</Button>
+            <Button variant="outline" size="sm" onClick={handleRejectAll}>Rechazar</Button>
+            <Button size="sm" onClick={handleAcceptAll}>Aceptar Todas</Button>
           </div>
         </div>
       </div>
@@ -122,3 +119,4 @@ export default function CookieConsentBanner() {
     </>
   );
 }
+
