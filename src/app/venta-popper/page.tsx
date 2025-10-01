@@ -30,7 +30,7 @@ export default function VentaPopperPage() {
         <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl font-headline text-primary tracking-tight font-bold">Venta de Popper: Calidad, Seguridad y Legislación</h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                En MARY AND POPPER, nos dedicamos a ofrecer Poppers de alta calidad para usos técnicos, cosméticos y aromáticos, garantizando que cada producto cumpla con la legislación vigente.
+                En nuestra tienda online, nos dedicamos a ofrecer Poppers de alta calidad para usos técnicos, cosméticos y aromáticos, garantizando que cada producto cumpla con la legislación vigente.
             </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function VentaPopperPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Advertencia Crucial: Uso Recreativo Estrictamente Prohibido</AlertTitle>
             <AlertDescription>
-                MARY AND POPPER prohíbe y desaconseja expresamente el consumo humano o el uso recreativo de cualquiera de nuestros productos. El incumplimiento de esta advertencia es responsabilidad exclusiva del cliente y puede ser perjudicial para la salud.
+                Se prohíbe y desaconseja expresamente el consumo humano o el uso recreativo de cualquiera de nuestros productos. El incumplimiento de esta advertencia es responsabilidad exclusiva del cliente y puede ser perjudicial para la salud.
             </AlertDescription>
         </Alert>
 
