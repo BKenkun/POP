@@ -46,8 +46,8 @@ export default function PagosSegurosPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <p className="text-muted-foreground">Aceptamos las principales tarjetas de crédito y débito para tu comodidad:</p>
-                <div className="flex items-center justify-center gap-4 py-4">
-                    <Image src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368ebb-m.svg" alt="Visa, Mastercard, Amex" width={250} height={50} />
+                <div className="flex items-center justify-center py-4">
+                    <Image src="https://files.stripe.com/links/MDB8YWNjdF8xUzJCUVJQZlNVeTg1UXdCfGZsX3Rlc3RfRlZKajRkbTUzUWd4a0thUmzBTR3NlMDkwMEhmQzVLU0c1" alt="Visa, Mastercard, Amex" width={250} height={40} className="object-contain" />
                 </div>
                  <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
