@@ -13,17 +13,30 @@ import { Separator } from './ui/separator';
 export default function CookieConsentBanner() {
   const { consent, setConsent } = useCookieConsent();
   const [isClient, setIsClient] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Initialize preferences for the dialog. Default to all true for a better UX, encouraging acceptance.
+  const [preferences, setPreferences] = useState({
+    necessary: true,
+    analytics: true,
+    marketing: true,
+  });
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [preferences, setPreferences] = useState(consent);
-
+  // When opening the dialog, if consent has been set previously, show the saved state.
+  // Otherwise, show the default (all true).
   useEffect(() => {
-    setPreferences(consent);
-  }, [consent]);
+      if (isOpen) {
+          if(consent.necessary) { // If consent has been given previously
+            setPreferences(consent);
+          } else { // First time opening the dialog
+            setPreferences({ necessary: true, analytics: true, marketing: true });
+          }
+      }
+  }, [isOpen, consent]);
 
   const handleAcceptAll = () => {
     setConsent({ necessary: true, analytics: true, marketing: true });
