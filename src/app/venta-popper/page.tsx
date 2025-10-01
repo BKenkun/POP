@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShoppingCart, Package, ShieldCheck, Info, ChevronRight, AlertTriangle, Truck, Rocket } from 'lucide-react';
+import { ShoppingCart, Package, ShieldCheck, Info, ChevronRight, AlertTriangle, Truck, Rocket, Gavel } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -127,6 +127,30 @@ export default function VentaPopperPage() {
             </CardContent>
         </Card>
         
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Gavel className="h-6 w-6"/>
+                    Legalidad, Envío y Responsabilidad del Cliente
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                    Nuestros productos se gestionan y envían desde Francia, donde la venta de poppers como limpiadores de cuero o ambientadores es legal. Esto nos permite asegurar una logística eficiente en la Unión Europea. Sin embargo, es fundamental que como cliente conozca sus responsabilidades.
+                </p>
+
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Advertencia sobre el Uso y la Responsabilidad de Importación</AlertTitle>
+                    <AlertDescription className="space-y-2">
+                        <p><strong>Uso Previsto:</strong> La venta de nuestros productos es exclusivamente para usos técnicos, cosméticos o aromáticos. El consumo humano y el uso recreativo están estrictamente prohibidos.</p>
+                        <p><strong>Responsabilidad del Cliente como Importador:</strong> Usted, como cliente, actúa como el importador final del producto. Es su responsabilidad asegurarse de que el producto es legal en su país de destino. Cualquier coste de aduana, arancel, impuesto de importación, o la confiscación del paquete será asumido exclusivamente por usted, sin derecho a reembolso por nuestra parte.</p>
+                        <p><strong>Derecho de Cancelación:</strong> Nos reservamos el derecho a cancelar cualquier pedido si tenemos sospechas de que se hará un uso indebido del producto o si se envía a una ubicación donde su legalidad sea cuestionable.</p>
+                    </AlertDescription>
+                </Alert>
+            </CardContent>
+        </Card>
+
         <div className="text-center pt-4">
             <Button asChild size="lg">
                 <Link href="/products">
