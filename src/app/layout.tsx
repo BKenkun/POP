@@ -1,7 +1,6 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from '@/context/providers';
@@ -15,10 +14,12 @@ import { useCookieConsent } from '@/context/cookie-context';
 import CookieConsentBanner from '@/components/cookie-consent-banner';
 import { useEffect } from 'react';
 
-const metadata: Metadata = {
-  title: 'Popper Online',
-  description: 'La tienda oficial de productos Popper en España.',
-};
+// metadata object should not be here in a client component layout. 
+// It should be in page.tsx files or a server component layout.
+// export const metadata: Metadata = {
+//   title: 'Popper Online',
+//   description: 'La tienda oficial de productos Popper en España.',
+// };
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
@@ -71,6 +72,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <title>Popper Online</title>
+        <meta name="description" content="La tienda oficial de productos Popper en España." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
