@@ -29,7 +29,6 @@ export default async function TiendaPopperPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-12">
         <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Tienda Popper – Venta de los Mejores Aromas</h1>
             <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
                 Bienvenido a la mejor tienda de poppers en España. Descubre aquí la gran variedad de poppers, siempre con las mejores ofertas y los precios más bajos.
             </p>
