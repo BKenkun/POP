@@ -15,7 +15,7 @@ export function Footer() {
     const footerLinks = [
         { href: "/informacion-legal", text: "Información legal" },
         { href: "/terminos-y-condiciones", text: "Termos y Condiciones Generales" },
-        { href: "/venta-popper", text: "Venta Popper" },
+        { href: "/venta-popper", text: "Venta de Popper" },
         { href: "/pagos-seguros", text: "Pagos seguros" },
         { href: "/popper-info", text: "Popper todo lo que debes saber" },
         { href: "/leather-cleaners-info", text: "Leather Cleaners Información" },
