@@ -80,6 +80,12 @@ const nextConfig: NextConfig = {
         hostname: 'poppers-discount.fr',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.svgrepo.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
