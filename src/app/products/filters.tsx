@@ -56,30 +56,22 @@ export default function ProductFilters({
   const pathname = usePathname();
   const currentParams = useSearchParams();
 
+  const getInitialState = <T extends string>(paramName: string, defaultValue: T[] = []): T[] => {
+    if (!searchParams) return defaultValue;
+    const paramValue = searchParams[paramName];
+    if (Array.isArray(paramValue)) return paramValue as T[];
+    if (typeof paramValue === 'string') return [paramValue as T];
+    return defaultValue;
+  }
+
   // Component-local state for filters
   const [searchQuery, setSearchQuery] = useState(searchParams?.search as string || '');
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedCompositions, setSelectedCompositions] = useState<string[]>([]);
-  const [selectedInternalTags, setSelectedInternalTags] = useState<string[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(getInitialState('brand'));
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(getInitialState('size'));
+  const [selectedCompositions, setSelectedCompositions] = useState<string[]>(getInitialState('composition'));
+  const [selectedInternalTags, setSelectedInternalTags] = useState<string[]>(getInitialState('internal_tag'));
   const [sortOrder, setSortOrder] = useState('name-asc');
   
-  // Effect to sync state with URL params if they exist
-  useEffect(() => {
-    if (searchParams) {
-        const newBrands = Array.isArray(searchParams.brand) ? searchParams.brand : (searchParams.brand ? [searchParams.brand] : []);
-        const newSizes = Array.isArray(searchParams.size) ? searchParams.size : (searchParams.size ? [searchParams.size] : []);
-        const newCompositions = Array.isArray(searchParams.composition) ? searchParams.composition : (searchParams.composition ? [searchParams.composition] : []);
-        const newInternalTags = Array.isArray(searchParams.internal_tag) ? searchParams.internal_tag : (searchParams.internal_tag ? [searchParams.internal_tag] : []);
-        
-        setSelectedBrands(newBrands);
-        setSelectedSizes(newSizes);
-        setSelectedCompositions(newCompositions);
-        setSelectedInternalTags(newInternalTags);
-        setSearchQuery(searchParams.search as string || '');
-    }
-  }, [searchParams]);
-
   // Logic to update URL params when a filter changes
   const updateURLParams = (key: string, values: string[]) => {
       if (!searchParams) return; // Only update URL if used on a page with searchParams
