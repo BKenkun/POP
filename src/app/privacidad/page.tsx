@@ -33,7 +33,7 @@ export default function PrivacidadPage() {
                 <CardTitle>1. ¿Quién es el responsable del tratamiento de tus datos?</CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground">
-                <p>El responsable del tratamiento de tus datos es <strong>MARY AND POPPER</strong> (ABN 37 588 057 135), con domicilio en U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA. Puedes contactarnos en cualquier momento en: <a href="mailto:info@comprarcbdonline.com" className="text-primary font-semibold hover:underline">info@comprarcbdonline.com</a>.</p>
+                <p>El responsable del tratamiento de tus datos es <strong>MARY AND POPPER</strong> (ABN 37 588 057 135), con domicilio en U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA. Puedes contactarnos en cualquier momento en: <a href="mailto:info@comprarpopperonline.com" className="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.</p>
             </CardContent>
         </Card>
 
@@ -118,7 +118,7 @@ export default function PrivacidadPage() {
                     <li><strong>Oponerte</strong> al tratamiento de tus datos para fines de marketing.</li>
                     <li>Solicitar la <strong>portabilidad</strong> de tus datos.</li>
                 </ul>
-                 <p className="pt-2">Puedes ejercer estos derechos en cualquier momento contactándonos en <a href="mailto:info@comprarcbdonline.com" className="text-primary font-semibold hover:underline">info@comprarcbdonline.com</a>.</p>
+                 <p className="pt-2">Puedes ejercer estos derechos en cualquier momento contactándonos en <a href="mailto:info@comprarpopperonline.com" className="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.</p>
             </CardContent>
         </Card>
     </div>

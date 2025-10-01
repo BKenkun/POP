@@ -134,7 +134,7 @@ export default async function TiendaPopperPage() {
             <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-6">
                  <div className="flex items-center gap-2">
                     <Mail className="h-5 w-5 text-primary"/>
-                    <a href="mailto:info@comprarcbdonline.com" className="font-semibold hover:text-primary">info@comprarcbdonline.com</a>
+                    <a href="mailto:info@comprarpopperonline.com" className="font-semibold hover:text-primary">info@comprarpopperonline.com</a>
                 </div>
             </CardContent>
         </Card>

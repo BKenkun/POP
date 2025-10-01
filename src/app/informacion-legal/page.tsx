@@ -9,7 +9,7 @@ const legalInfo = [
     { label: 'Titular del Sitio Web:', value: 'MARY AND POPPER' },
     { label: 'ABN:', value: 'Australian Business Number (ABN) 37 588 057 135' },
     { label: 'Dirección:', value: 'U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA' },
-    { label: 'Contacto:', value: 'info@comprarcbdonline.com' },
+    { label: 'Contacto:', value: 'info@comprarpopperonline.com' },
     { label: 'Logística y Distribución:', value: 'Los pedidos se gestionan y envían desde Francia. Para cumplir con los máximos estándares regulatorios de la Unión Europea, solo se envían a países cuyo uso es legal.' },
 ];
 
