@@ -1,7 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, Database, BarChart2, Mail, CreditCard } from 'lucide-react';
+import { Shield, Database, BarChart2, Mail, CreditCard, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export const metadata = {
     title: 'Privacidad y Protección de Datos | Popper Online',
@@ -121,6 +123,15 @@ export default function PrivacidadPage() {
                  <p className="pt-2">Puedes ejercer estos derechos en cualquier momento contactándonos en <a href="mailto:info@comprarpopperonline.com" className="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.</p>
             </CardContent>
         </Card>
+
+        <div className="text-center pt-4">
+            <Button asChild size="lg">
+                <Link href="/products">
+                    Explorar Catálogo
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
     </div>
   );
 }
