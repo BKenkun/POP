@@ -17,6 +17,7 @@ export const revalidate = 0;
 
 // Function to shuffle an array and take the first N items
 const getShuffledItems = (array: Product[], numItems: number): Product[] => {
+    if (!array || array.length === 0) return [];
     const shuffled = [...array].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, numItems);
 };
@@ -86,16 +87,18 @@ export default async function TiendaPopperPage() {
             </CardContent>
         </Card>
         
-        <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold text-primary">Las Mejores Marcas para los Mejores Clientes</h2>
-            <div className="flex flex-wrap justify-center gap-3">
-                {randomProducts.map(product => (
-                    <Button key={product.id} variant="secondary" asChild>
-                        <Link href={`/product/${product.id}`}>{product.name}</Link>
-                    </Button>
-                ))}
+        {randomProducts.length > 0 && (
+            <div className="text-center space-y-4">
+                <h2 className="text-2xl font-bold text-primary">Las Mejores Marcas para los Mejores Clientes</h2>
+                <div className="flex flex-wrap justify-center gap-3">
+                    {randomProducts.map(product => (
+                        <Button key={product.id} variant="secondary" asChild>
+                            <Link href={`/product/${product.id}`}>{product.name}</Link>
+                        </Button>
+                    ))}
+                </div>
             </div>
-        </div>
+        )}
 
         <Card>
             <CardHeader>
