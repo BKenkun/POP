@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Users, Star, HelpCircle, Package, ShieldCheck, Truck, Phone, Mail } from 'lucide-react';
+import { Users, Star, HelpCircle, Package, ShieldCheck, Truck, Phone, Mail, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getStripeProducts } from '@/lib/stripe';
@@ -134,10 +134,19 @@ export default async function TiendaPopperPage() {
             <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-6">
                  <div className="flex items-center gap-2">
                     <Mail className="h-5 w-5 text-primary"/>
-                    <a href="mailto:info@comprarpopperonline.com" className="font-semibold hover:text-primary">info@comprarpopperonline.com</a>
+                    <a href="mailto:info@comprarcbdonline.com" className="font-semibold hover:text-primary">info@comprarcbdonline.com</a>
                 </div>
             </CardContent>
         </Card>
+        
+        <div className="text-center pt-4">
+            <Button asChild size="lg">
+                <Link href="/products">
+                    Explorar Catálogo
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
 
     </div>
   );
