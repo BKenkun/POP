@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const providedUser = isAdminAsCustomer 
     ? { 
         uid: 'admin_user', 
-        email: 'en_rike@pimp.com',
+        email: 'info@comprarpopperonline.com',
         displayName: 'Admin (Cliente)',
         isAnonymous: false,
         emailVerified: true,

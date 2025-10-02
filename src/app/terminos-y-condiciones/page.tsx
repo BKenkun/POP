@@ -13,7 +13,7 @@ export default function TerminosYCondicionesPage() {
             </CardHeader>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none text-foreground/80 space-y-4">
                 <p>
-                    Bienvenido a www.comprarcbdonline.com. Le pedimos que lea atentamente las Condiciones Generales, nuestra Política de Cookies y nuestra Política de Privacidad, ya que éstas regulan su acceso y uso de este sitio.
+                    Bienvenido a www.comprarpopperonline.com. Le pedimos que lea atentamente las Condiciones Generales, nuestra Política de Cookies y nuestra Política de Privacidad, ya que éstas regulan su acceso y uso de este sitio.
                 </p>
                 <p>
                     Tanto el uso como las ventas realizadas a través de la tienda online suponen la aceptación por parte del Cliente de los Términos y Condiciones, nuestra Política de Cookies y nuestra Política de Privacidad que se establecen en cumplimiento de la legislación aplicable.
@@ -61,7 +61,7 @@ export default function TerminosYCondicionesPage() {
                     U 2 58 MAIN ST<br/>
                     OSBORNE PARK WA 6017<br/>
                     AUSTRALIA<br/>
-                    Contacto para Quejas/Soporte: info@comprarcbdonline.com<br/>
+                    Contacto para Quejas/Soporte: info@comprarpopperonline.com<br/>
                     Contacto para Notificaciones Legales (Ejercicios de Desistimiento, etc.): Cualquier comunicación de naturaleza legal o ejercicio de derechos contractuales deberá realizarse por correo electrónico al contacto de soporte e, idealmente, ser respaldada mediante correo postal certificado a la dirección registrada en Australia.
                 </p>
 
