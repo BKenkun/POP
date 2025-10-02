@@ -11,7 +11,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 // Define a type for our simulated admin user
 type SimulatedUser = {
   uid: string;
-  email: string;
+  email: string | null;
   displayName: string;
   isAnonymous: boolean;
   emailVerified: boolean;
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const providedUser = isAdminAsCustomer 
     ? { 
         uid: 'admin_user', 
-        email: 'info@comprarpopperonline.com',
+        email: process.env.ADMIN_EMAIL || null,
         displayName: 'Admin (Cliente)',
         isAnonymous: false,
         emailVerified: true,
