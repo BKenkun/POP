@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ShoppingCart, Loader2, Edit, Archive, ArchiveRestore } from 'lucide-react';
+import { PlusCircle, ShoppingCart, Loader2, Edit, Archive, ArchiveRestore, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPrice } from '@/lib/utils';
@@ -10,6 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/types';
 import { useEffect, useState, useMemo } from 'react';
 import { cbdProducts } from '@/lib/cbd-products';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,14 +56,28 @@ export default function AdminProductsPage() {
     loadProducts();
   }, []);
   
-  const handleToggleActive = (productId: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, active: newStatus } : p));
-    toast({
-        title: `Producto ${newStatus ? 'Activado' : 'Archivado'}`,
-        description: "El estado del producto ha sido actualizado (simulación).",
-    });
+  const handleToggleActive = (productId: string) => {
+    setProducts(prev => prev.map(p => {
+        if (p.id === productId) {
+            const newStatus = p.active === false; // Toggle the status
+            toast({
+                title: `Producto ${newStatus ? 'Activado' : 'Archivado'}`,
+                description: `"${p.name}" ha sido movido a la sección correspondiente (simulación).`,
+            });
+            return { ...p, active: newStatus };
+        }
+        return p;
+    }));
   };
+
+  const handleDelete = (productId: string, productName: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    toast({
+        title: "Producto Eliminado (Simulación)",
+        description: `El producto "${productName}" ha sido eliminado.`,
+        variant: "destructive",
+    });
+  }
 
   const { activeProducts, archivedProducts } = useMemo(() => {
     return products.reduce(
@@ -99,7 +122,7 @@ export default function AdminProductsPage() {
                             <div className="flex items-center gap-2">
                                 <Switch
                                     checked={product.active !== false}
-                                    onCheckedChange={(checked) => handleToggleActive(product.id, product.active !== false)}
+                                    onCheckedChange={() => handleToggleActive(product.id)}
                                     aria-label="Activar o archivar producto"
                                 />
                                 <Badge variant={product.active === false ? 'outline' : 'default'}>
@@ -115,19 +138,54 @@ export default function AdminProductsPage() {
                             {product.stock ?? 'Ilimitado'}
                         </Badge>
                         </TableCell>
-                        <TableCell className="text-right space-x-2">
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={`/admin/products/edit/${product.id}`}>
-                            <Edit className="mr-2 h-4 w-4" /> Editar
-                            </Link>
-                        </Button>
-                        <Button variant="secondary" size="sm" onClick={() => handleToggleActive(product.id, product.active !== false)}>
-                            {product.active !== false ? (
-                                <><Archive className="mr-2 h-4 w-4" /> Archivar</>
-                            ) : (
-                                <><ArchiveRestore className="mr-2 h-4 w-4" /> Desarchivar</>
-                            )}
-                        </Button>
+                        <TableCell className="text-right">
+                           <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <span className="sr-only">Abrir menú</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                        <DropdownMenuItem asChild>
+                                             <Link href={`/admin/products/edit/${product.id}`}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Editar</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleToggleActive(product.id)}>
+                                            {product.active !== false ? (
+                                                <><Archive className="mr-2 h-4 w-4" /><span>Archivar</span></>
+                                            ) : (
+                                                <><ArchiveRestore className="mr-2 h-4 w-4" /><span>Desarchivar</span></>
+                                            )}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                         <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Eliminar</span>
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el producto (simulación).
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(product.id, product.name)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                            Sí, eliminar
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </TableCell>
                     </TableRow>
                     ))}
