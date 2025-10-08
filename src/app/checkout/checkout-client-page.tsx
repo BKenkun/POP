@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createReservationAction } from '@/app/actions/create-reservation';
+import { Label } from '@/components/ui/label';
 
 const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
@@ -233,3 +234,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
