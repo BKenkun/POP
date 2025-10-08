@@ -1,8 +1,8 @@
 
-import { getStripeProducts } from '@/lib/stripe';
 import { Product } from '@/lib/types';
 import CustomPackBuilder from './custom-pack-builder';
 import { getUniqueValues } from '@/lib/utils';
+import { cbdProducts } from '@/lib/cbd-products';
 
 export const metadata = {
     title: 'Crea tu Pack Personalizado | Popper Online',
@@ -12,7 +12,7 @@ export const metadata = {
 export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function CreatePackPage() {
-    const products: Product[] = await getStripeProducts();
+    const products: Product[] = cbdProducts;
     
     // Filter out products that are accessories or packs themselves
     const availableForPack = products.filter(p => 

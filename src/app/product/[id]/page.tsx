@@ -1,4 +1,4 @@
-import { getStripeProducts } from '@/lib/stripe';
+
 import { notFound } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { ProductGallery } from './product-gallery';
@@ -6,9 +6,10 @@ import { ProductInfo } from './product-info';
 import { ProductDetails } from './product-details';
 import { Separator } from '@/components/ui/separator';
 import { RelatedProducts } from './related-products';
+import { cbdProducts } from '@/lib/cbd-products';
 
 async function getProduct(id: string): Promise<Product | undefined> {
-  const products = await getStripeProducts();
+  const products = cbdProducts;
   return products.find((p) => p.id === id);
 }
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   const resolvedParams = await params;
-  const allProducts = await getStripeProducts();
+  const allProducts = cbdProducts;
   const product = allProducts.find((p) => p.id === resolvedParams.id);
 
   if (!product) {

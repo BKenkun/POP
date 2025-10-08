@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { createStripePortalAction } from "@/app/actions/manage-subscription";
 import SubscriptionTimeline from "./_components/subscription-timeline";
 import MonthlyBoxSelector from "./_components/monthly-box-selector";
-import { getStripeProducts } from "@/lib/stripe";
 import { Product } from "@/lib/types";
+import { cbdProducts } from "@/lib/cbd-products";
 
 export default function SubscriptionManagementPage() {
     const { user, isSubscribed, loading: authLoading } = useAuth();
@@ -34,8 +34,8 @@ export default function SubscriptionManagementPage() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const fetchedProducts = await getStripeProducts();
-                setProducts(fetchedProducts);
+                // Fetch products from local mock data
+                setProducts(cbdProducts);
             } catch (error) {
                 console.error("Failed to fetch products for subscription page", error);
                 toast({
@@ -129,4 +129,3 @@ export default function SubscriptionManagementPage() {
         </div>
     )
 }
-

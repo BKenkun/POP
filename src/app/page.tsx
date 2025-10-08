@@ -1,16 +1,16 @@
 
 import { ProductCard } from '@/components/product-card';
-import { getStripeProducts } from '@/lib/stripe';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import SubscriptionForm from '@/components/subscription-form';
 import WelcomePopupLoader from '@/components/welcome-popup-loader';
+import { cbdProducts } from '@/lib/cbd-products';
 
 
 export const revalidate = 60; // Revalidate the page every 60 seconds
 
 export default async function Home() {
-  const allProducts: Product[] = await getStripeProducts();
+  const allProducts: Product[] = cbdProducts;
 
   const newArrivals = allProducts.filter(p => p.internalTags?.includes('novedad'));
   const bestSellers = allProducts.filter(p => p.internalTags?.includes('mas-vendido'));

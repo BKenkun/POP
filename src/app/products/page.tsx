@@ -1,10 +1,10 @@
 
-import { getStripeProducts } from '@/lib/stripe';
 import { Product } from '@/lib/types';
 import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cbdProducts } from '@/lib/cbd-products';
 
 export const metadata = {
     title: 'Todos los Productos | Popper Online',
@@ -50,7 +50,7 @@ export default async function ProductsPage({
 }: {
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
-    const products: Product[] = await getStripeProducts();
+    const products: Product[] = cbdProducts;
     
     return (
         <div>
