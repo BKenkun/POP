@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ShoppingCart, Loader2, Edit, Archive, Unarchive } from 'lucide-react';
+import { PlusCircle, ShoppingCart, Loader2, Edit, Archive, ArchiveRestore } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPrice } from '@/lib/utils';
@@ -125,7 +125,7 @@ export default function AdminProductsPage() {
                             {product.active !== false ? (
                                 <><Archive className="mr-2 h-4 w-4" /> Archivar</>
                             ) : (
-                                <><Unarchive className="mr-2 h-4 w-4" /> Desarchivar</>
+                                <><ArchiveRestore className="mr-2 h-4 w-4" /> Desarchivar</>
                             )}
                         </Button>
                         </TableCell>
