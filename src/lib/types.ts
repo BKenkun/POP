@@ -19,6 +19,7 @@ export interface Product {
   brand?: string;
   size?: string;
   composition?: string;
+  url?: string;
 }
 
 export interface CartItem extends Product {

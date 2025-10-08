@@ -32,12 +32,14 @@ const productSchema = z.object({
   longDescription: z.string().optional(),
   productDetails: z.string().optional(),
   brand: z.string().optional(),
-  composition: z.string().optional(),
   size: z.string().optional(),
+  composition: z.string().optional(),
   imageUrl: z.string().url('Debe ser una URL válida.'),
   galleryImages: z.string().optional(),
   tags: z.string().optional(),
   internalTags: z.string().optional(),
+  web: z.string().optional(), // Added for web portal filtering
+  url: z.string().url('Debe ser una URL válida.').optional().or(z.literal('')),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -73,12 +75,14 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
       longDescription: product?.longDescription || '',
       productDetails: product?.productDetails || '',
       brand: product?.brand || '',
-      composition: product?.composition || '',
       size: product?.size || '',
+      composition: product?.composition || '',
       imageUrl: product?.imageUrl || '',
       galleryImages: product?.galleryImages?.join(', ') || '',
       tags: product?.tags?.join(', ') || '',
       internalTags: product?.internalTags?.join(', ') || '',
+      web: product?.internalTags?.includes('popper') ? 'popper' : '',
+      url: product?.url || '',
     },
   });
 
@@ -110,8 +114,8 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                 )} />
                 <FormField control={form.control} name="longDescription" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descripción Larga</FormLabel>
-                    <FormDescription>Puedes usar etiquetas HTML básicas para dar formato.</FormDescription>
+                    <FormLabel>Descripción Larga (HTML)</FormLabel>
+                    <FormDescription>Permite añadir una descripción extensa con formato HTML, superando los límites de un solo campo de Stripe. Los fragmentos se unen en orden numérico (ej: long_description_1, _2...).</FormDescription>
                     <FormControl><Textarea rows={8} {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </CardContent>
@@ -124,7 +128,8 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                     )} />
                      <FormField control={form.control} name="galleryImages" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>URLs de la Galería (separadas por comas)</FormLabel>
+                            <FormLabel>URLs de la Galería</FormLabel>
+                            <FormDescription>Añade más imágenes a la vista detallada del producto, separadas por comas.</FormDescription>
                             <FormControl><Textarea {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
@@ -154,7 +159,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                   <FormItem>
                     <FormLabel>SKU (Número de Referencia)</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
-                    <FormDescription>Debe ser único para cada producto.</FormDescription>
+                    <FormDescription>Debe ser único para cada producto. Usa 'P' para Poppers y 'C' para CBD.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -162,38 +167,54 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                   <FormItem><FormLabel>Precio (en céntimos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="stock" render={({ field }) => (
-                    <FormItem><FormLabel>Stock Disponible</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Stock Disponible</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Si es 0, se mostrará como "Agotado".</FormDescription><FormMessage /></FormItem>
                 )} />
               </CardContent>
             </Card>
             <Card className="border-primary/50">
-              <CardHeader><CardTitle>Organización</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Organización y Filtros</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                 <FormField control={form.control} name="web" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Portal Web</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormDescription>Define en qué portal aparecerá. Usar 'popper' para esta tienda o 'CBD' para la otra.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                  <FormField control={form.control} name="brand" render={({ field }) => (
-                    <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Agrupa productos por marca. Ejemplo: Rush</FormDescription><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="size" render={({ field }) => (
-                    <FormItem><FormLabel>Tamaño</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Tamaño</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Agrupa productos por volumen. Ejemplo: 10ml, 25ml</FormDescription><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="composition" render={({ field }) => (
-                    <FormItem><FormLabel>Composición</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Composición</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Agrupa productos por composición química. Ejemplo: Amilo, Pentilo</FormDescription><FormMessage /></FormItem>
                 )} />
               </CardContent>
             </Card>
             <Card className="border-primary/50">
-                <CardHeader><CardTitle>Etiquetas y Detalles</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Etiquetas y Detalles Adicionales</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <FormField control={form.control} name="tags" render={({ field }) => (
-                        <FormItem><FormLabel>Etiquetas Visibles (separadas por comas)</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Ej: Nuevo, Edición Limitada</FormDescription><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Etiquetas Visibles</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Muestra insignias visuales en el producto. Separadas por comas. Ej: Nuevo, Edición Limitada</FormDescription><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="internalTags" render={({ field }) => (
-                        <FormItem><FormLabel>Categorías Internas (separadas por comas)</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Ej: mas-vendido, oferta, accesorio</FormDescription><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Categorías Internas</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Controla dónde aparece el producto. Separadas por comas. Ej: novedad, mas-vendido, oferta, pack, accesorio, juguete</FormDescription><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="productDetails" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Detalles del Producto (clave: valor)</FormLabel>
-                            <FormDescription>Cada detalle en una nueva línea. Ej: "Aroma: Frutal".</FormDescription>
+                            <FormLabel>Detalles del Producto</FormLabel>
+                            <FormDescription>Muestra una lista de características. Cada detalle en una nueva línea (Clave: Valor). Ej: "Aroma: Frutal".</FormDescription>
                             <FormControl><Textarea rows={5} {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="url" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>URL de Origen</FormLabel>
+                            <FormControl><Input type="url" {...field} /></FormControl>
+                            <FormDescription>Enlace al producto original en otra web (proveedor, etc.) para referencia interna.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
                     )} />
                 </CardContent>
             </Card>
