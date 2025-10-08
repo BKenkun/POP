@@ -45,7 +45,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     <div className="min-h-screen animate-in fade-in duration-500">
       <SidebarProvider>
         {/* This is the floating trigger that appears when the sidebar is collapsed */}
-        <div className="fixed left-2 top-2 z-20 hidden md:block group-data-[state=collapsed]/sidebar-wrapper:block">
+        <div className="fixed left-2 top-2 z-20 hidden md:block group-data-[state=expanded]/sidebar-wrapper:hidden">
             <SidebarTrigger />
         </div>
         <Sidebar>
