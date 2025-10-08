@@ -17,6 +17,10 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { formatPrice } from "@/lib/utils";
+import { useState } from "react";
+import { DateRange } from "react-day-picker";
+import { addDays } from "date-fns";
+import { DateRangePicker } from "./_components/date-range-picker";
 
 const chartData = [
   { month: "May", revenue: 186 },
@@ -55,17 +59,24 @@ const topClients = [
 
 export default function AdminDashboardPage() {
   const lowStockCount = 5; // Example value
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -29),
+    to: new Date(),
+  });
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Resumen general de tu tienda.</p>
         </div>
-         <Button>
-            Ver Reportes
-        </Button>
+         <div className="flex items-center gap-2">
+            <DateRangePicker date={dateRange} setDate={setDateRange} />
+            <Button>
+                Ver Reportes
+            </Button>
+        </div>
       </div>
 
       {/* Main Chart */}
