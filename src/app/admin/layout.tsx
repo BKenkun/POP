@@ -9,6 +9,7 @@ import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
+import { ThemeProvider } from '@/context/theme-provider';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAdminAuth();
@@ -62,12 +63,18 @@ export default function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  const pathname = usePathname();
 
   return (
-    <AdminAuthProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-        <Toaster />
-    </AdminAuthProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <AdminAuthProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+          <Toaster />
+      </AdminAuthProvider>
+    </ThemeProvider>
   );
 }
