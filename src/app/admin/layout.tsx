@@ -8,6 +8,7 @@ import AdminSidebar from "./_components/admin-sidebar";
 import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
+import ThemeToggleButton from './_components/theme-toggle-button';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAdminAuth();
@@ -48,6 +49,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <ThemeToggleButton />
     </div>
   );
 }
