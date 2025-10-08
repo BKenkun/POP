@@ -38,8 +38,8 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar>
+    <>
+      <Sidebar variant="sidebar" collapsible="icon">
         <AdminSidebar />
       </Sidebar>
       
@@ -56,7 +56,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
           </div>
       </SidebarInset>
       <ThemeToggleButton />
-    </div>
+    </>
   );
 }
 
