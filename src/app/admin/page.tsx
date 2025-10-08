@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
                  <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `€${value}`} />
-                <Tooltip
+                <ChartTooltip
                     cursor={false}
                     content={<ChartTooltipContent indicator="line" />}
                 />
