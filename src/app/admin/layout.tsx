@@ -49,14 +49,16 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
         <Sidebar>
           <AdminSidebar />
         </Sidebar>
+        
+        {/* This is the floating trigger that appears when the sidebar is collapsed */}
+        <div className={cn(
+            "fixed left-2 top-2 z-20 hidden transition-opacity",
+            isCollapsed ? "md:block opacity-100" : "opacity-0 pointer-events-none"
+        )}>
+            <SidebarTrigger />
+        </div>
+        
         <SidebarInset>
-             {/* This is the floating trigger that appears when the sidebar is collapsed */}
-            <div className={cn(
-                "fixed left-2 top-2 z-20 hidden md:block transition-opacity",
-                isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}>
-                <SidebarTrigger />
-            </div>
             <div className="p-4 md:p-8">
               {children}
             </div>
