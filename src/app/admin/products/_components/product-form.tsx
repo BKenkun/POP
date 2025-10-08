@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Save } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { cbdProducts } from '@/lib/cbd-products';
@@ -98,9 +98,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Column */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
             <Card>
               <CardHeader><CardTitle>Información Principal</CardTitle></CardHeader>
               <CardContent className="space-y-4">
@@ -133,10 +131,6 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                     )} />
                 </CardContent>
             </Card>
-          </div>
-          
-          {/* Sidebar Column */}
-          <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Estado del Producto</CardTitle>
@@ -203,7 +197,6 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                     )} />
                 </CardContent>
             </Card>
-          </div>
         </div>
         <div className="flex justify-end gap-2">
           <Button type="submit">
