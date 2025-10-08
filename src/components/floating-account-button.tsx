@@ -46,7 +46,7 @@ export default function FloatingAccountButton() {
           <Button
             variant="default"
             size="icon"
-            className="relative h-14 w-14 rounded-full shadow-lg transition-transform hover:scale-110"
+            className="relative h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:bg-destructive hover:text-destructive-foreground"
             aria-label="Open user menu"
             onClick={handleAccountClick}
           >
