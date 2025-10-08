@@ -7,7 +7,7 @@ import type { Product } from './types';
 export const cbdProducts: Product[] = [
   {
     id: 'cbd_prod_001',
-    sku: 'POP-A1B2C3',
+    sku: 'PAB2C3',
     name: 'Aceite CBD 10%',
     price: 3999,
     description: 'Nuestro aceite de espectro completo más popular, ideal para el bienestar diario.',
@@ -21,7 +21,7 @@ export const cbdProducts: Product[] = [
   },
   {
     id: 'cbd_prod_002',
-    sku: 'POP-D4E5F6',
+    sku: 'PD4E5F',
     name: 'Flores CBD "Amnesia"',
     price: 999,
     description: 'Flores aromáticas con un perfil cítrico y terroso. Cultivo interior.',
@@ -35,7 +35,7 @@ export const cbdProducts: Product[] = [
   },
   {
     id: 'cbd_prod_003',
-    sku: 'POP-G7H8I9',
+    sku: 'PG7H8I',
     name: 'Crema CBD Efecto Frío',
     price: 2499,
     description: 'Crema tópica para alivio muscular con mentol y CBD.',
@@ -49,7 +49,7 @@ export const cbdProducts: Product[] = [
   },
   {
     id: 'cbd_prod_004',
-    sku: 'POP-J1K2L3',
+    sku: 'PJ1K2L',
     name: 'Vape Desechable CBD',
     price: 1999,
     description: 'Vape listo para usar con sabor a frutos rojos. Sin nicotina.',
@@ -63,7 +63,7 @@ export const cbdProducts: Product[] = [
   },
   {
     id: 'cbd_prod_005',
-    sku: 'POP-M4N5P6',
+    sku: 'PM4N5P',
     name: 'Aceite CBD 20%',
     price: 5999,
     description: 'Doble concentración para usuarios que buscan un efecto más potente.',
@@ -77,7 +77,7 @@ export const cbdProducts: Product[] = [
   },
    {
     id: 'cbd_prod_006',
-    sku: 'POP-Q7R8S9',
+    sku: 'PQ7R8S',
     name: 'Flores CBD "Gelato"',
     price: 1099,
     description: 'Aroma dulce y cremoso que recuerda al postre italiano. Cultivo hidropónico.',

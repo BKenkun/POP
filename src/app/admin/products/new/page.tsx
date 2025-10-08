@@ -14,7 +14,7 @@ export default function NewProductPage() {
   const handleSave = (data: Product) => {
     const newProduct: Product = {
       ...data,
-      sku: data.sku || generateSKU('POP-'), // Generate SKU if it wasn't somehow provided
+      sku: data.sku || generateSKU('P'), // Generate SKU if it wasn't somehow provided
       active: data.active === undefined ? true : data.active,
     };
     
@@ -32,7 +32,7 @@ export default function NewProductPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Crear Nuevo Producto</h1>
       {/* Pass a product-like object with a generated SKU to the form */}
-      <ProductForm onSave={handleSave} product={{ sku: generateSKU('POP-') } as Product} />
+      <ProductForm onSave={handleSave} product={{ sku: generateSKU('P') } as Product} />
     </div>
   );
 }
