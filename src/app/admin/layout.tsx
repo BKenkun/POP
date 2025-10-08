@@ -45,7 +45,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   // If authenticated, render the full admin layout.
   return (
-    <div className="min-h-screen animate-in fade-in duration-500">
+    <div className="min-h-screen">
         {/* This is the floating trigger that appears when the sidebar is collapsed */}
         <div className={cn(
             "fixed left-2 top-2 z-20 hidden md:block transition-opacity",
