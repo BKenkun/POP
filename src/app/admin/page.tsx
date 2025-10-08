@@ -139,28 +139,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Ingresos" value={processedData.revenue} change={processedData.revenueChange} icon={Package} format={(v) => formatPrice(v * 100)} />
-          <StatCard title="Pedidos" value={processedData.orders} change={processedData.ordersChange} icon={ShoppingCart} />
-          <StatCard title="Clientes Nuevos" value={processedData.clients} change={processedData.clientsChange} icon={Users} />
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">239</div>
-              <Link href="/admin/stock?filter=low-stock">
-                  <p className="text-xs text-red-500 font-bold hover:underline cursor-pointer">
-                      {lowStockCount} con bajo stock
-                  </p>
-              </Link>
-            </CardContent>
-          </Card>
-      </div>
-
-      {/* Main Chart */}
+       {/* Main Chart */}
       <Card>
           <CardHeader>
               <CardTitle>Tendencia de Ingresos</CardTitle>
@@ -197,6 +176,27 @@ export default function AdminDashboardPage() {
             </ChartContainer>
           </CardContent>
       </Card>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard title="Ingresos" value={processedData.revenue} change={processedData.revenueChange} icon={Package} format={(v) => formatPrice(v * 100)} />
+          <StatCard title="Pedidos" value={processedData.orders} change={processedData.ordersChange} icon={ShoppingCart} />
+          <StatCard title="Clientes Nuevos" value={processedData.clients} change={processedData.clientsChange} icon={Users} />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">239</div>
+              <Link href="/admin/stock?filter=low-stock">
+                  <p className="text-xs text-red-500 font-bold hover:underline cursor-pointer">
+                      {lowStockCount} con bajo stock
+                  </p>
+              </Link>
+            </CardContent>
+          </Card>
+      </div>
 
 
        {/* Alerts Section */}
@@ -289,3 +289,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
