@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { addDays, format } from 'date-fns';
+import { addDays, format, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 
 
 interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -29,23 +28,30 @@ interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const DatePresets = ({ setDate }: { setDate: (date: DateRange | undefined) => void }) => {
+    const today = new Date();
     const presets = [
-        { label: 'Hoy', range: { from: new Date(), to: new Date() } },
-        { label: 'Ayer', range: { from: addDays(new Date(), -1), to: addDays(new Date(), -1) } },
-        { label: 'Últimos 7 días', range: { from: addDays(new Date(), -6), to: new Date() } },
-        { label: 'Últimos 14 días', range: { from: addDays(new Date(), -13), to: new Date() } },
-        { label: 'Últimos 30 días', range: { from: addDays(new Date(), -29), to: new Date() } },
-        { label: 'Este mes', range: { from: new Date(new Date().setDate(1)), to: new Date() } },
-        { label: 'Mes pasado', range: { from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), to: new Date(new Date().getFullYear(), new Date().getMonth(), 0) }},
+        { label: 'Hoy', range: { from: today, to: today } },
+        { label: 'Ayer', range: { from: addDays(today, -1), to: addDays(today, -1) } },
+        { label: 'Últimos 7 días', range: { from: addDays(today, -6), to: today } },
+        { label: 'Últimos 15 días', range: { from: addDays(today, -14), to: today } },
+        { label: 'Últimos 30 días', range: { from: addDays(today, -29), to: today } },
+        { label: 'Últimos 90 días', range: { from: addDays(today, -89), to: today } },
+        { label: 'Últimos 120 días', range: { from: addDays(today, -119), to: today } },
+        { label: 'Este mes', range: { from: startOfMonth(today), to: today } },
+        { label: 'Mes pasado', range: { from: startOfMonth(addDays(today, -30)), to: endOfMonth(addDays(today, -30)) }},
+        { label: 'Este año', range: { from: startOfYear(today), to: today } },
+        { label: 'Año pasado', range: { from: startOfYear(subYears(today, 1)), to: endOfYear(subYears(today, 1)) } },
+        { label: 'Todo el período', range: undefined },
     ];
 
     return (
-        <div className="flex flex-col space-y-2 pr-4 py-4 pl-4">
+        <div className="flex flex-col space-y-1 p-2">
             {presets.map((preset) => (
             <Button
                 key={preset.label}
                 onClick={() => setDate(preset.range)}
                 variant="ghost"
+                size="sm"
                 className="justify-start"
             >
                 {preset.label}
