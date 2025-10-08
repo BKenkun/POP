@@ -39,24 +39,24 @@ export const Logo = ({ className }: { className?: string }) => (
         POPPER ONLINE
       </text>
 
-      {/* Layer 2: 3D Extrusion (Yellow/Primary) - Positioned slightly offset for shadow */}
-      <text x="502" y="87" className="logo-text logo-primary-fill">
+      {/* Layer 2: 3D Extrusion (Red/Destructive) - Positioned slightly offset for shadow */}
+      <text x="502" y="87" className="logo-text logo-destructive-fill">
         POPPER ONLINE
       </text>
 
-       {/* Layer 3: Inner Stroke (Red/Destructive) - Positioned centrally */}
+       {/* Layer 3: Inner Stroke (Yellow/Primary) - Positioned centrally */}
       <text
         x="500"
         y="85"
-        className="logo-text fill-none logo-destructive-fill"
+        className="logo-text fill-none logo-primary-stroke"
         strokeWidth="3"
         strokeLinejoin="miter"
       >
         POPPER ONLINE
       </text>
 
-      {/* Layer 4: Main Text Fill (Red/Destructive) - Centered */}
-      <text x="500" y="85" className="logo-text logo-destructive-fill">
+      {/* Layer 4: Main Text Fill (Yellow/Primary) - Centered */}
+      <text x="500" y="85" className="logo-text logo-primary-fill">
         POPPER ONLINE
       </text>
     </g>
