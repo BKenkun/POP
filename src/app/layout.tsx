@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={inter.variable} suppressHydrationWarning>
+    <html lang="es" className={`${inter.variable} light`} suppressHydrationWarning>
       <head>
         {/* The font link in head is now handled by next/font, so we can remove it */}
       </head>
