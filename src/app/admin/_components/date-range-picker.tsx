@@ -105,26 +105,31 @@ export function DateRangePicker({
                 </div>
             </div>
            
-            {isCompareEnabled ? (
+            <div className={cn("flex", isCompareEnabled && "divide-x")}>
+                {/* --- Period A Block --- */}
                 <div className="flex">
                     <div className="border-r">
-                         <p className="p-4 text-sm font-medium text-center text-muted-foreground">PERIODO A</p>
+                        {isCompareEnabled && <p className="p-4 text-sm font-medium text-center text-muted-foreground">PERIODO A</p>}
                         <DatePresets setDate={setDate} />
-                        <Separator />
-                         <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={date?.from}
-                            selected={date}
-                            onSelect={setDate}
-                            numberOfMonths={1}
-                            locale={es}
-                        />
                     </div>
-                    <div>
-                        <p className="p-4 text-sm font-medium text-center text-muted-foreground">PERIODO B</p>
-                        <DatePresets setDate={setCompareDate!} />
-                        <Separator />
+                     <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={setDate}
+                        numberOfMonths={isCompareEnabled ? 1 : 2}
+                        locale={es}
+                    />
+                </div>
+
+                {/* --- Period B Block (Conditional) --- */}
+                {isCompareEnabled && (
+                    <div className="flex">
+                         <div className="border-r">
+                            <p className="p-4 text-sm font-medium text-center text-muted-foreground">PERIODO B</p>
+                            <DatePresets setDate={setCompareDate!} />
+                        </div>
                         <Calendar
                             initialFocus
                             mode="range"
@@ -135,22 +140,8 @@ export function DateRangePicker({
                             locale={es}
                         />
                     </div>
-                </div>
-            ) : (
-                <div className="flex">
-                    <DatePresets setDate={setDate} />
-                    <Separator orientation="vertical" />
-                    <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={date?.from}
-                        selected={date}
-                        onSelect={setDate}
-                        numberOfMonths={2}
-                        locale={es}
-                    />
-                </div>
-            )}
+                )}
+            </div>
         </PopoverContent>
       </Popover>
     </div>
