@@ -2,6 +2,7 @@
 
 export interface Product {
   id: string;
+  active?: boolean;
   priceId?: string; // Add priceId here
   name: string;
   description?: string | null;
@@ -56,22 +57,25 @@ export interface OrderItem {
 }
 
 export interface ShippingAddress {
-    name: string;
-    email: string;
-    phone: string;
-    address: string;
-    postalCode: string;
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
 }
 
 export interface Order {
-  id: string; // Custom Reservation ID like CBD-R12A3G
-  userId?: string; // Optional, for guest checkouts
+  id: string;
+  userId: string;
   createdAt: Date;
-  status: 'Reserva Recibida' | 'Pago Pendiente de Verificación' | 'Pago Confirmado / En Reparto' | 'Entregado / Finalizado' | 'Cancelado';
+  status: 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'entregado' | 'enviado' | 'pendiente' | 'cancelado';
   total: number; // Total amount in cents
   items: OrderItem[];
-  shippingAddress: ShippingAddress;
-  paymentMethod: 'cod' | 'prepaid';
+  customerName: string;
+  customerEmail: string;
+  shippingAddress: ShippingAddress | null;
+  paymentMethod?: 'cod' | 'prepaid';
 }
 
 
