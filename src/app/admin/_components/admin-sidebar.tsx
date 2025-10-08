@@ -15,9 +15,11 @@ import { Button } from '@/components/ui/button';
 import { Home, Newspaper, LogOut, Store, Package, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { logout } = useAdminAuth();
   
   return (
     <>
@@ -73,12 +75,10 @@ export default function AdminSidebar() {
       </SidebarContent>
        <SidebarSeparator />
       <SidebarFooter>
-         <Link href="/admin/login" passHref>
-             <Button variant="ghost" className="justify-start w-full gap-2">
-                <LogOut className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-             </Button>
-        </Link>
+         <Button variant="ghost" className="justify-start w-full gap-2" onClick={logout}>
+            <LogOut className="h-4 w-4" />
+            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+         </Button>
       </SidebarFooter>
     </>
   );
