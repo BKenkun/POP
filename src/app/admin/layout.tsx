@@ -3,18 +3,21 @@
 
 import { useEffect, ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import AdminSidebar from "./_components/admin-sidebar";
 import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
+import { cn } from '@/lib/utils';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAdminAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
     // If finished loading and not authenticated, redirect to login.
@@ -43,9 +46,11 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   // If authenticated, render the full admin layout.
   return (
     <div className="min-h-screen animate-in fade-in duration-500">
-      <SidebarProvider>
         {/* This is the floating trigger that appears when the sidebar is collapsed */}
-        <div className="fixed left-2 top-2 z-20 hidden md:block group-data-[state=expanded]/sidebar-wrapper:hidden">
+        <div className={cn(
+            "fixed left-2 top-2 z-20 hidden md:block transition-opacity",
+            isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}>
             <SidebarTrigger />
         </div>
         <Sidebar>
@@ -56,7 +61,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
             {children}
           </div>
         </SidebarInset>
-      </SidebarProvider>
       <ThemeToggleButton />
     </div>
   );
@@ -75,10 +79,12 @@ export default function AdminLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <AdminAuthProvider>
-          <AdminLayoutContent>{children}</AdminLayoutContent>
-          <Toaster />
-      </AdminAuthProvider>
+        <SidebarProvider>
+            <AdminAuthProvider>
+                <AdminLayoutContent>{children}</AdminLayoutContent>
+                <Toaster />
+            </AdminAuthProvider>
+        </SidebarProvider>
     </ThemeProvider>
   );
 }
