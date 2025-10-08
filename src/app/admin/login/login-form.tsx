@@ -36,10 +36,8 @@ export default function LoginForm() {
             description: 'Redirecting to the admin dashboard...',
         });
         setIsSuccess(true);
-        // Pequeño delay para asegurar que el estado de sesión se propaga antes de redirigir
-        setTimeout(() => {
-             router.push('/admin');
-        }, 500); 
+        // The context update and layout effect will handle the redirection.
+        router.push('/admin');
     } else {
         setError(result.error || 'Invalid email or password.');
         toast({

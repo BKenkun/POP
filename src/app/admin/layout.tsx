@@ -16,14 +16,16 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Evita la redirección si ya estamos en la página de login
+    // If finished loading and not authenticated, redirect to login.
+    // This check also prevents redirection while on the login page itself.
     if (!loading && !isAuthenticated && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }
   }, [isAuthenticated, loading, router, pathname]);
 
-  // Si está cargando o no está autenticado y no es la página de login, muestra el loader.
-  if ((loading || !isAuthenticated) && pathname !== '/admin/login') {
+  // While loading authentication status, show a full-page loader.
+  // This prevents rendering a protected page before the auth check is complete.
+  if (loading && pathname !== '/admin/login') {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -31,12 +33,13 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     );
   }
   
-  // Si no está autenticado y es la página de login, devuelve null para que el layout de abajo se encargue.
-  if (!isAuthenticated && pathname === '/admin/login') {
-      return null;
+  // If we are on the login page, or if the user is not authenticated yet, let the page component handle it.
+  if (pathname === '/admin/login' || !isAuthenticated) {
+    return <>{children}</>;
   }
 
 
+  // If authenticated, render the full admin layout.
   return (
     <div className="min-h-screen animate-in fade-in duration-500">
       <SidebarProvider>
@@ -63,18 +66,8 @@ export default function AdminLayout({
 
   return (
     <AdminAuthProvider>
-      {/* Si estamos en la página de login, no usamos el layout protegido. */}
-      {pathname === '/admin/login' ? (
-         <>
-            {children}
-            <Toaster />
-        </>
-      ) : (
-        <>
-            <AdminLayoutContent>{children}</AdminLayoutContent>
-            <Toaster />
-        </>
-      )}
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+        <Toaster />
     </AdminAuthProvider>
   );
 }

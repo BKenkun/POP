@@ -3,7 +3,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 const SESSION_STORAGE_KEY = 'admin_auth_session';
 
@@ -22,16 +21,22 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
     // Check sessionStorage on initial load
     try {
       const session = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      if (session === 'true') {
-        setIsAuthenticated(true);
+      if (isMounted) {
+        setIsAuthenticated(session === 'true');
       }
     } catch (e) {
       console.error('Could not access session storage:', e);
     } finally {
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
+    }
+    return () => {
+      isMounted = false;
     }
   }, []);
 
