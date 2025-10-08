@@ -16,7 +16,7 @@ import { ArrowUp, Users, Package, ShoppingCart, AlertCircle, ArrowRight, Minus, 
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { addDays, subDays } from "date-fns";
