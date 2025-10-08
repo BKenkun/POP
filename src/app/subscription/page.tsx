@@ -91,7 +91,7 @@ export default function SubscriptionPage() {
                             <p className="text-muted-foreground font-medium mb-6">
                                 Ahorra más de un 35%. Cancela cuando quieras, sin compromiso.
                             </p>
-                            <Button size="lg" className="w-full font-bold bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
+                            <Button size="lg" className="w-full font-bold" onClick={handleSubscription} disabled={authLoading || loading}>
                                 {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                                 {loading ? 'Procesando...' : (isSubscribed ? 'Gestionar Suscripción' : 'Unirme al Club')}
                             </Button>
@@ -183,7 +183,7 @@ export default function SubscriptionPage() {
 
             {/* Sección 7: Llamada a la Acción Final (CTA) */}
             <div className="text-center">
-                <Button size="lg" className="font-bold text-lg h-14 px-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSubscription} disabled={authLoading || loading}>
+                <Button size="lg" className="font-bold text-lg h-14 px-10" onClick={handleSubscription} disabled={authLoading || loading}>
                     {loading ? (
                         <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                     ) : null}

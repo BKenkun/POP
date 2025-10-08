@@ -47,7 +47,7 @@ const WelcomePopup = () => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md bg-background text-foreground text-center p-8">
         <DialogHeader className="space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
             <Percent className="h-10 w-10 text-primary" />
           </div>
           <DialogTitle className="text-3xl font-headline text-primary font-bold">

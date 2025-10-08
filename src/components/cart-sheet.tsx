@@ -114,7 +114,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                 <p className="text-xs text-muted-foreground text-center">
                   Items are not reserved. Shipping and taxes calculated at checkout.
                 </p>
-                <Button asChild size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleCheckout}>
+                <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">Proceed to Checkout</Link>
                 </Button>
               </div>

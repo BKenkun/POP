@@ -77,7 +77,7 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     }
 
     return (
-        <div className="bg-primary/20 dark:bg-primary/10 p-8 rounded-lg">
+        <div className="bg-secondary/50 p-8 rounded-lg">
             <div className="max-w-2xl mx-auto text-center">
                 <h3 className="font-headline text-2xl mb-3 text-primary font-bold">Suscríbete a nuestro boletín</h3>
                 <p className="text-sm text-foreground/80 mb-6">
@@ -88,13 +88,13 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
                         name="email" 
                         type="email" 
                         placeholder="Introduce tu email..." 
-                        className="flex-1 bg-background dark:bg-card" 
+                        className="flex-1 bg-background" 
                         required 
                         disabled={loading}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
-                    <Button type="submit" variant="destructive" disabled={loading}>
+                    <Button type="submit" disabled={loading}>
                         {loading ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (

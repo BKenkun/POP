@@ -25,7 +25,7 @@ export function Header() {
   const MobileNav = () => (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/80">
+          <Button variant="ghost" size="icon" className="md:hidden text-primary-foreground hover:bg-primary/90">
             <Menu className="text-primary-foreground"/>
           </Button>
         </SheetTrigger>

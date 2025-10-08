@@ -83,7 +83,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false }
                <Button variant="ghost" asChild className="w-full justify-start font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
                   <Link href="/create-pack" onClick={onNavigate}>Crea tu Pack</Link>
               </Button>
-              <Button variant="destructive" asChild className="w-full justify-start font-headline uppercase font-bold">
+              <Button variant="secondary" asChild className="w-full justify-start font-headline uppercase font-bold bg-accent text-accent-foreground hover:bg-accent/90">
                   <Link href={subscriptionUrl} onClick={onNavigate}>Dosis Mensual</Link>
               </Button>
 
@@ -149,7 +149,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false }
             </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-            <Button asChild variant="destructive" className="h-10 font-headline uppercase font-bold text-sm px-3">
+            <Button asChild variant="secondary" className="h-10 font-headline uppercase font-bold text-sm px-3 bg-accent text-accent-foreground hover:bg-accent/90">
                 <Link href={subscriptionUrl}> 
                     Dosis Mensual
                 </Link>

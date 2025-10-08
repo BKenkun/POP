@@ -17,7 +17,7 @@ export default function FloatingCartButton() {
         <Button
           variant="default"
           size="icon"
-          className="relative h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-accent text-primary-foreground hover:text-accent-foreground transition-transform hover:scale-110"
+          className="relative h-14 w-14 rounded-full shadow-lg transition-transform hover:scale-110"
           aria-label="Open cart"
           onClick={() => setIsCartOpen(true)}
         >
