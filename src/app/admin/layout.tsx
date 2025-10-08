@@ -39,7 +39,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Sidebar variant="sidebar" collapsible="icon">
+      <Sidebar variant="sidebar" collapsible="offcanvas">
         <AdminSidebar />
       </Sidebar>
       
