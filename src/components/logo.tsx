@@ -21,9 +21,9 @@ export const Logo = ({ className }: { className?: string }) => (
             letter-spacing: -0.01em;
           }
           .logo-bg-stroke { stroke: hsl(var(--background)); }
-          .logo-accent-fill { fill: hsl(var(--accent)); }
+          .logo-primary-fill { fill: hsl(var(--primary)); }
           .logo-primary-stroke { stroke: hsl(var(--primary)); }
-          .logo-accent-stroke { stroke: hsl(var(--accent)); }
+          .logo-destructive-fill { fill: hsl(var(--destructive)); }
         `}
       </style>
     </defs>
@@ -39,8 +39,8 @@ export const Logo = ({ className }: { className?: string }) => (
         POPPER ONLINE
       </text>
 
-      {/* Layer 2: 3D Extrusion (Red/Accent) - Positioned slightly offset for shadow */}
-      <text x="502" y="87" className="logo-text logo-accent-fill">
+      {/* Layer 2: 3D Extrusion (Red/Destructive) - Positioned slightly offset for shadow */}
+      <text x="502" y="87" className="logo-text logo-destructive-fill">
         POPPER ONLINE
       </text>
 
@@ -55,8 +55,8 @@ export const Logo = ({ className }: { className?: string }) => (
         POPPER ONLINE
       </text>
 
-      {/* Layer 4: Main Text Fill (Red/Accent) - Centered */}
-      <text x="500" y="85" className="logo-text logo-accent-fill">
+      {/* Layer 4: Main Text Fill (Yellow/Primary) - Centered */}
+      <text x="500" y="85" className="logo-text logo-primary-fill">
         POPPER ONLINE
       </text>
     </g>
