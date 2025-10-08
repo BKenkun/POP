@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { addDays, format, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -15,12 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
@@ -33,42 +27,6 @@ interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   isCompareEnabled: boolean;
   setIsCompareEnabled: (enabled: boolean) => void;
 }
-
-export function DatePresets({ setDate }: { setDate: (date: DateRange | undefined) => void }) {
-    const today = new Date();
-    const presets = [
-        { label: 'Hoy', range: { from: today, to: today } },
-        { label: 'Ayer', range: { from: addDays(today, -1), to: addDays(today, -1) } },
-        { label: 'Últimos 7 días', range: { from: addDays(today, -6), to: today } },
-        { label: 'Últimos 15 días', range: { from: addDays(today, -14), to: today } },
-        { label: 'Últimos 30 días', range: { from: addDays(today, -29), to: today } },
-        { label: 'Este mes', range: { from: startOfMonth(today), to: today } },
-        { label: 'Mes pasado', range: { from: startOfMonth(addDays(today, -30)), to: endOfMonth(addDays(today, -30)) }},
-        { label: 'Últimos 90 días', range: { from: addDays(today, -89), to: today } },
-        { label: 'Últimos 120 días', range: { from: addDays(today, -119), to: today } },
-        { label: 'Este año', range: { from: startOfYear(today), to: today } },
-        { label: 'Año pasado', range: { from: startOfYear(subYears(today, 1)), to: endOfYear(subYears(today, 1)) } },
-        { label: 'Histórico', range: undefined },
-    ];
-
-    return (
-         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[150px] justify-start text-left font-normal">
-                    <span>Selector de Fechas</span>
-                    <ChevronDown className="ml-auto h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[150px]">
-                {presets.map((preset) => (
-                    <DropdownMenuItem key={preset.label} onClick={() => setDate(preset.range)}>
-                        {preset.label}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-};
 
 export function DateRangePicker({
   className,
@@ -85,6 +43,37 @@ export function DateRangePicker({
         if (!range.to) return format(range.from, 'LLL dd, y', { locale: es });
         return `${format(range.from, 'LLL dd, y', { locale: es })} - ${format(range.to, 'LLL dd, y', { locale: es })}`;
    }
+   
+    const today = new Date();
+    const presets = [
+        { label: 'Hoy', range: { from: today, to: today } },
+        { label: 'Ayer', range: { from: addDays(today, -1), to: addDays(today, -1) } },
+        { label: 'Últimos 7 días', range: { from: addDays(today, -6), to: today } },
+        { label: 'Últimos 15 días', range: { from: addDays(today, -14), to: today } },
+        { label: 'Últimos 30 días', range: { from: addDays(today, -29), to: today } },
+        { label: 'Este mes', range: { from: startOfMonth(today), to: today } },
+        { label: 'Mes pasado', range: { from: startOfMonth(addDays(today, -30)), to: endOfMonth(addDays(today, -30)) }},
+        { label: 'Últimos 90 días', range: { from: addDays(today, -89), to: today } },
+        { label: 'Últimos 120 días', range: { from: addDays(today, -119), to: today } },
+        { label: 'Este año', range: { from: startOfYear(today), to: today } },
+        { label: 'Año pasado', range: { from: startOfYear(subYears(today, 1)), to: endOfYear(subYears(today, 1)) } },
+        { label: 'Histórico', range: undefined },
+    ];
+    
+    const DatePresetsColumn = ({ period }: { period: 'A' | 'B' }) => {
+        const setCorrectDate = period === 'A' ? setDate : setCompareDate;
+        if (!setCorrectDate) return null;
+        return (
+            <div className="flex flex-col space-y-1 p-2 border-r">
+                {presets.map(preset => (
+                    <Button key={preset.label} variant="ghost" className="justify-start text-xs h-8" onClick={() => setCorrectDate(preset.range)}>
+                        {preset.label}
+                    </Button>
+                ))}
+            </div>
+        )
+    };
+
 
   return (
     <div className={cn('grid gap-2', className)}>
@@ -122,23 +111,23 @@ export function DateRangePicker({
            
             <div className={cn("flex", isCompareEnabled && "divide-x")}>
                 {/* --- Period A Block --- */}
-                <div className="flex flex-col p-2">
-                    {isCompareEnabled && <p className="p-2 text-sm font-medium text-center text-muted-foreground">PERIODO A</p>}
+                <div className="flex">
+                    <DatePresetsColumn period="A" />
                      <Calendar
                         initialFocus
                         mode="range"
                         defaultMonth={date?.from}
                         selected={date}
                         onSelect={setDate}
-                        numberOfMonths={1}
+                        numberOfMonths={isCompareEnabled ? 1 : 2}
                         locale={es}
                     />
                 </div>
 
                 {/* --- Period B Block (Conditional) --- */}
                 {isCompareEnabled && (
-                    <div className="flex flex-col p-2">
-                        <p className="p-2 text-sm font-medium text-center text-muted-foreground">PERIODO B</p>
+                    <div className="flex">
+                        <DatePresetsColumn period="B" />
                         <Calendar
                             initialFocus
                             mode="range"
@@ -156,3 +145,4 @@ export function DateRangePicker({
     </div>
   );
 }
+

@@ -20,7 +20,7 @@ import { formatPrice } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { addDays, subDays } from "date-fns";
-import { DateRangePicker, DatePresets } from "./_components/date-range-picker";
+import { DateRangePicker } from "./_components/date-range-picker";
 import { cn } from "@/lib/utils";
 
 const chartData = [
@@ -79,7 +79,7 @@ const StatCard = ({ title, value, change, icon: Icon, format = (v) => v }: { tit
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{format(value)}</div>
-                {change !== null && (
+                {change !== null && isFinite(change) && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <ChangeIndicator />
                         <span className={cn(isPositive && 'text-green-500', isNegative && 'text-red-500')}>
@@ -106,16 +106,18 @@ export default function AdminDashboardPage() {
   const processedData = useMemo(() => {
     // Simulate fetching and processing orders based on date ranges
     const periodA = { revenue: 2801, orders: 8, clients: 12 };
-    const periodB = { revenue: 2500, orders: 7, clients: 10 };
+    let periodB = { revenue: 0, orders: 0, clients: 0 };
     
-    if (isCompareEnabled) {
-      const revenueChange = ((periodA.revenue - periodB.revenue) / periodB.revenue) * 100;
-      const ordersChange = ((periodA.orders - periodB.orders) / periodB.orders) * 100;
-      const clientsChange = ((periodA.clients - periodB.clients) / periodB.clients) * 100;
+    if (isCompareEnabled && compareDateRange) {
+      // Simulate data for period B - in a real app, you'd filter orders by compareDateRange
+      periodB = { revenue: 2500, orders: 7, clients: 10 };
+      const revenueChange = periodB.revenue !== 0 ? ((periodA.revenue - periodB.revenue) / periodB.revenue) * 100 : Infinity;
+      const ordersChange = periodB.orders !== 0 ? ((periodA.orders - periodB.orders) / periodB.orders) * 100 : Infinity;
+      const clientsChange = periodB.clients !== 0 ? ((periodA.clients - periodB.clients) / periodB.clients) * 100 : Infinity;
       return { ...periodA, revenueChange, ordersChange, clientsChange };
     }
     
-    return { ...periodA, revenueChange: 0, ordersChange: 0, clientsChange: 0 };
+    return { ...periodA, revenueChange: NaN, ordersChange: NaN, clientsChange: NaN };
   }, [dateRange, compareDateRange, isCompareEnabled]);
 
   return (
@@ -126,7 +128,6 @@ export default function AdminDashboardPage() {
           <p className="text-muted-foreground">Resumen general de tu tienda.</p>
         </div>
          <div className="flex items-center gap-2">
-             <DatePresets setDate={setDateRange} />
             <DateRangePicker 
                 date={dateRange} 
                 setDate={setDateRange}
