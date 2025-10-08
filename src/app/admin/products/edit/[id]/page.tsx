@@ -1,4 +1,3 @@
-
 'use client';
 
 import ProductForm from '../../_components/product-form';
@@ -14,10 +13,11 @@ export default function EditProductPage() {
   const router = useRouter();
   const id = params.id as string;
 
+  // Find the product in the static array
   const product = cbdProducts.find((p) => p.id === id);
 
   if (!product) {
-      // In a real app, you might show a loading state first
+       // In a real app, you might show a loading state first
       // For this simulation, if not found synchronously, it's a 404.
        const timer = setTimeout(() => {
         notFound();
@@ -31,12 +31,13 @@ export default function EditProductPage() {
   }
 
   const handleSave = (data: Product) => {
-    // In a real app, this would be an API call to your backend to update the product.
-    console.log(`--- UPDATING PRODUCT ${id} (SIMULATION) ---`);
-    console.log(data);
+    // In a real app, this would trigger a file write or an API call to update the static data source.
+    console.log('--- UPDATING PRODUCT (SIMULATION) ---');
+    console.log(`Product ID: ${id}`);
+    console.log('New Data:', data);
     toast({
       title: 'Producto Actualizado (Simulación)',
-      description: `Los cambios en "${data.name}" han sido guardados.`,
+      description: `Los cambios en "${data.name}" han sido guardados. Esta es una simulación y los datos no se persistirán.`,
     });
     router.push('/admin/products');
   };

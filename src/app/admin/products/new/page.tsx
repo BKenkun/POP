@@ -1,4 +1,3 @@
-
 'use client';
 
 import ProductForm from '../_components/product-form';
@@ -11,12 +10,12 @@ export default function NewProductPage() {
   const router = useRouter();
 
   const handleSave = (data: Product) => {
-    // In a real app, this would be an API call to your backend to create the product.
+    // In a real app, this would trigger a file write or an API call to update the static data source.
     console.log('--- CREATING NEW PRODUCT (SIMULATION) ---');
     console.log(data);
     toast({
       title: 'Producto Creado (Simulación)',
-      description: `El producto "${data.name}" ha sido añadido a la lista.`,
+      description: `El producto "${data.name}" ha sido añadido. Esta es una simulación y los datos no se persistirán.`,
     });
     router.push('/admin/products');
   };

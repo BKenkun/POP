@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -20,7 +19,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Save } from 'lucide-react';
 
-// Schema based on Stripe metadata + core fields
 const productSchema = z.object({
   name: z.string().min(3, 'El nombre es requerido.'),
   price: z.coerce.number().int().positive('El precio debe ser un número positivo (en céntimos).'),

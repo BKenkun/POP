@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -10,7 +9,7 @@ import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/types';
 import { useEffect, useState } from 'react';
-import { getStripeProducts } from '@/lib/stripe-actions'; // We will create this action
+import { cbdProducts } from '@/lib/cbd-products'; // Import local products
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,10 +20,11 @@ export default function AdminProductsPage() {
     async function loadProducts() {
       try {
         setLoading(true);
-        const fetchedProducts = await getStripeProducts();
-        setProducts(fetchedProducts);
+        // Simulate an async fetch, but use local data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setProducts(cbdProducts);
       } catch (err: any) {
-        setError(err.message || 'Failed to load products.');
+        setError('Failed to load local products.');
       } finally {
         setLoading(false);
       }
@@ -37,7 +37,7 @@ export default function AdminProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Productos</h1>
-          <p className="text-muted-foreground">Añade, edita y gestiona el catálogo de tu tienda desde Stripe.</p>
+          <p className="text-muted-foreground">Añade, edita y gestiona el catálogo de tu tienda.</p>
         </div>
         <Link href="/admin/products/new" passHref>
           <Button>
@@ -50,7 +50,7 @@ export default function AdminProductsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Catálogo de Productos</CardTitle>
-          <CardDescription>Esta es una lista de todos los productos actualmente en tu tienda de Stripe.</CardDescription>
+          <CardDescription>Esta es una lista de todos los productos de tu catálogo local.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -70,7 +70,6 @@ export default function AdminProductsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Producto</TableHead>
-                  <TableHead>Estado</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -80,11 +79,6 @@ export default function AdminProductsPage() {
                 {products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={product.active ? 'default' : 'outline'}>
-                        {product.active ? 'Activo' : 'Archivado'}
-                      </Badge>
-                    </TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
                     <TableCell>
                       <Badge 
