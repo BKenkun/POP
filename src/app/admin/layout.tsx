@@ -1,17 +1,18 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar, SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AdminSidebar from "./_components/admin-sidebar";
 import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
 import { Loader2 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 
-function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAdminAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -46,11 +47,23 @@ function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
 export default function AdminLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const pathname = usePathname();
+
+  // Si estamos en la página de login, no usamos el layout protegido.
+  if (pathname === '/admin/login') {
+    return (
+         <AdminAuthProvider>
+            {children}
+            <Toaster />
+        </AdminAuthProvider>
+    );
+  }
+
   return (
     <AdminAuthProvider>
-      <ProtectedAdminLayout>{children}</ProtectedAdminLayout>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
       <Toaster />
     </AdminAuthProvider>
   );
