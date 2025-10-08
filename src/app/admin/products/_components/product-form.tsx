@@ -19,10 +19,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Save } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { cbdProducts } from '@/lib/cbd-products';
 
+// Define the schema outside the component
 const productSchema = z.object({
   name: z.string().min(3, 'El nombre es requerido.'),
-  sku: z.string().optional(),
+  sku: z.string().min(1, 'El SKU es requerido.'),
   active: z.boolean().default(true),
   price: z.coerce.number().int().positive('El precio debe ser un número positivo (en céntimos).'),
   stock: z.coerce.number().int().min(0, 'El stock no puede ser negativo.'),
@@ -46,8 +48,21 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ product, onSave }: ProductFormProps) {
+  // Create a refined schema for uniqueness validation
+  const productSchemaWithUniqueness = productSchema.refine(
+    (data) => {
+        // Check if there's any other product with the same SKU
+        const isSkuDuplicate = cbdProducts.some(p => p.sku === data.sku && p.id !== product?.id);
+        return !isSkuDuplicate;
+    },
+    {
+      message: "Este SKU ya está en uso por otro producto.",
+      path: ["sku"], // Apply the error to the 'sku' field
+    }
+  );
+
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchemaWithUniqueness),
     defaultValues: {
       name: product?.name || '',
       sku: product?.sku || '',
@@ -144,8 +159,8 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                  <FormField control={form.control} name="sku" render={({ field }) => (
                   <FormItem>
                     <FormLabel>SKU (Número de Referencia)</FormLabel>
-                    <FormControl><Input {...field} disabled={!!product} /></FormControl>
-                    <FormDescription>Se genera automáticamente al crear.</FormDescription>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormDescription>Debe ser único para cada producto.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
