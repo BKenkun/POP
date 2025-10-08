@@ -1,20 +1,35 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ShoppingCart, Loader2 } from 'lucide-react';
+import { PlusCircle, ShoppingCart, Loader2, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/types';
 import { useEffect, useState } from 'react';
-import { cbdProducts } from '@/lib/cbd-products'; // Import local products
+import { cbdProducts } from '@/lib/cbd-products';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function loadProducts() {
@@ -31,6 +46,16 @@ export default function AdminProductsPage() {
     }
     loadProducts();
   }, []);
+  
+  const handleDelete = (productId: string) => {
+    console.log(`--- DELETING PRODUCT (SIMULATION) --- ID: ${productId}`);
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    toast({
+        title: "Producto Eliminado (Simulación)",
+        description: "El producto ha sido eliminado de la vista. Los datos no se persistirán.",
+        variant: "destructive"
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -70,6 +95,8 @@ export default function AdminProductsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Producto</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -79,6 +106,12 @@ export default function AdminProductsPage() {
                 {products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="text-muted-foreground font-mono text-xs">{product.sku || 'N/A'}</TableCell>
+                    <TableCell>
+                        <Badge variant={product.active === false ? 'outline' : 'default'}>
+                            {product.active === false ? 'Archivado' : 'Activo'}
+                        </Badge>
+                    </TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
                     <TableCell>
                       <Badge 
@@ -87,12 +120,33 @@ export default function AdminProductsPage() {
                         {product.stock ?? 'Ilimitado'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-2">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/admin/products/edit/${product.id}`}>
-                          Editar
+                          <Edit className="mr-2 h-4 w-4" /> Editar
                         </Link>
                       </Button>
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción es una simulación. El producto se eliminará de esta vista, pero el cambio no será permanente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(product.id)}>
+                                Continuar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}

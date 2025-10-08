@@ -2,8 +2,9 @@
 
 export interface Product {
   id: string;
+  sku?: string; // Stock Keeping Unit
   active?: boolean;
-  priceId?: string; // Add priceId here
+  priceId?: string; 
   name: string;
   description?: string | null;
   longDescription?: string | null;

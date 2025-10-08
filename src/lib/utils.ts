@@ -27,3 +27,13 @@ export const getUniqueValues = (products: Product[], key: keyof Product): string
     });
     return Array.from(allValues).sort();
 };
+
+export function generateSKU(): string {
+  const prefix = "PROD-";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${prefix}${result}`;
+}

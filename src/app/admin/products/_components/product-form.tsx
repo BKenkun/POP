@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -18,9 +19,12 @@ import {
 } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Save } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const productSchema = z.object({
   name: z.string().min(3, 'El nombre es requerido.'),
+  sku: z.string().optional(),
+  active: z.boolean().default(true),
   price: z.coerce.number().int().positive('El precio debe ser un número positivo (en céntimos).'),
   stock: z.coerce.number().int().min(0, 'El stock no puede ser negativo.'),
   description: z.string().optional(),
@@ -47,6 +51,8 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: product?.name || '',
+      sku: product?.sku || '',
+      active: product?.active === undefined ? true : product.active,
       price: product?.price || 0,
       stock: product?.stock || 0,
       description: product?.description || '',
@@ -118,8 +124,32 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
           {/* Sidebar Column */}
           <div className="space-y-6">
             <Card>
-              <CardHeader><CardTitle>Precio y Stock</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Estado</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <FormField control={form.control} name="active" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <FormLabel>Producto Activo</FormLabel>
+                                <FormDescription>Si está inactivo, no se mostrará en la tienda.</FormDescription>
+                            </div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                        </FormItem>
+                    )} />
+                </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Inventario y Precio</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                 <FormField control={form.control} name="sku" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SKU (Número de Referencia)</FormLabel>
+                    <FormControl><Input {...field} disabled={!!product} /></FormControl>
+                    <FormDescription>Se genera automáticamente al crear.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                  <FormField control={form.control} name="price" render={({ field }) => (
                   <FormItem><FormLabel>Precio (en céntimos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
