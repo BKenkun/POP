@@ -28,14 +28,12 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createReservationAction } from '@/app/actions/create-reservation';
 
-const alicantePostalCodes = new RegExp('^03[0-9]{3}$');
-
 const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
   email: z.string().email("Por favor, introduce un email válido."),
   phone: z.string().min(9, "El teléfono es requerido."),
   address: z.string().min(10, "La dirección de entrega es requerida."),
-  postalCode: z.string().regex(alicantePostalCodes, "Lo sentimos, solo hacemos entregas en la provincia de Alicante (CP 03XXX)."),
+  postalCode: z.string().min(3, "El código postal es requerido."),
   paymentMethod: z.enum(['cod', 'prepaid'], {
     required_error: "Debes seleccionar un método de pago.",
   }),
@@ -140,7 +138,7 @@ export default function CheckoutClientPage() {
                             <FormItem><FormLabel><Home className="inline-block mr-2"/>Dirección de Entrega</FormLabel><FormControl><Input placeholder="Calle, número, piso..." {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="postalCode" render={({ field }) => (
-                            <FormItem><FormLabel><MapPin className="inline-block mr-2"/>Código Postal (Alicante)</FormLabel><FormControl><Input placeholder="03XXX" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel><MapPin className="inline-block mr-2"/>Código Postal</FormLabel><FormControl><Input placeholder="03203" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </CardContent>
                 </Card>
