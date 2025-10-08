@@ -28,8 +28,7 @@ export const getUniqueValues = (products: Product[], key: keyof Product): string
     return Array.from(allValues).sort();
 };
 
-export function generateSKU(): string {
-  const prefix = "PROD-";
+export function generateSKU(prefix: string = "PROD-"): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = '';
   for (let i = 0; i < 6; i++) {
