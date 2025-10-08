@@ -1,9 +1,10 @@
+
 'use client';
 
 import * as React from 'react';
 import { addDays, format, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -14,6 +15,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
@@ -27,7 +34,7 @@ interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   setIsCompareEnabled: (enabled: boolean) => void;
 }
 
-const DatePresets = ({ setDate }: { setDate: (date: DateRange | undefined) => void }) => {
+export function DatePresets({ setDate }: { setDate: (date: DateRange | undefined) => void }) {
     const today = new Date();
     const presets = [
         { label: 'Hoy', range: { from: today, to: today } },
@@ -35,29 +42,31 @@ const DatePresets = ({ setDate }: { setDate: (date: DateRange | undefined) => vo
         { label: 'Últimos 7 días', range: { from: addDays(today, -6), to: today } },
         { label: 'Últimos 15 días', range: { from: addDays(today, -14), to: today } },
         { label: 'Últimos 30 días', range: { from: addDays(today, -29), to: today } },
-        { label: 'Últimos 90 días', range: { from: addDays(today, -89), to: today } },
-        { label: 'Últimos 120 días', range: { from: addDays(today, -119), to: today } },
         { label: 'Este mes', range: { from: startOfMonth(today), to: today } },
         { label: 'Mes pasado', range: { from: startOfMonth(addDays(today, -30)), to: endOfMonth(addDays(today, -30)) }},
+        { label: 'Últimos 90 días', range: { from: addDays(today, -89), to: today } },
+        { label: 'Últimos 120 días', range: { from: addDays(today, -119), to: today } },
         { label: 'Este año', range: { from: startOfYear(today), to: today } },
         { label: 'Año pasado', range: { from: startOfYear(subYears(today, 1)), to: endOfYear(subYears(today, 1)) } },
-        { label: 'Todo el período', range: undefined },
+        { label: 'Histórico', range: undefined },
     ];
 
     return (
-        <div className="flex flex-col space-y-1 p-2">
-            {presets.map((preset) => (
-            <Button
-                key={preset.label}
-                onClick={() => setDate(preset.range)}
-                variant="ghost"
-                size="sm"
-                className="justify-start"
-            >
-                {preset.label}
-            </Button>
-            ))}
-        </div>
+         <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[150px] justify-start text-left font-normal">
+                    <span>Selector de Fechas</span>
+                    <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[150px]">
+                {presets.map((preset) => (
+                    <DropdownMenuItem key={preset.label} onClick={() => setDate(preset.range)}>
+                        {preset.label}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 
@@ -113,29 +122,23 @@ export function DateRangePicker({
            
             <div className={cn("flex", isCompareEnabled && "divide-x")}>
                 {/* --- Period A Block --- */}
-                <div className="flex">
-                    <div className="border-r">
-                        {isCompareEnabled && <p className="p-4 text-sm font-medium text-center text-muted-foreground">PERIODO A</p>}
-                        <DatePresets setDate={setDate} />
-                    </div>
+                <div className="flex flex-col p-2">
+                    {isCompareEnabled && <p className="p-2 text-sm font-medium text-center text-muted-foreground">PERIODO A</p>}
                      <Calendar
                         initialFocus
                         mode="range"
                         defaultMonth={date?.from}
                         selected={date}
                         onSelect={setDate}
-                        numberOfMonths={isCompareEnabled ? 1 : 2}
+                        numberOfMonths={1}
                         locale={es}
                     />
                 </div>
 
                 {/* --- Period B Block (Conditional) --- */}
                 {isCompareEnabled && (
-                    <div className="flex">
-                         <div className="border-r">
-                            <p className="p-4 text-sm font-medium text-center text-muted-foreground">PERIODO B</p>
-                            <DatePresets setDate={setCompareDate!} />
-                        </div>
+                    <div className="flex flex-col p-2">
+                        <p className="p-2 text-sm font-medium text-center text-muted-foreground">PERIODO B</p>
                         <Calendar
                             initialFocus
                             mode="range"

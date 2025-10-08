@@ -16,11 +16,12 @@ import { ArrowUp, Users, Package, ShoppingCart, AlertCircle, ArrowRight, Minus, 
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { addDays, subDays } from "date-fns";
-import { DateRangePicker } from "./_components/date-range-picker";
+import { DateRangePicker, DatePresets } from "./_components/date-range-picker";
+import { cn } from "@/lib/utils";
 
 const chartData = [
   { date: "2024-09-01", periodA: 186, periodB: 150 },
@@ -125,6 +126,7 @@ export default function AdminDashboardPage() {
           <p className="text-muted-foreground">Resumen general de tu tienda.</p>
         </div>
          <div className="flex items-center gap-2">
+             <DatePresets setDate={setDateRange} />
             <DateRangePicker 
                 date={dateRange} 
                 setDate={setDateRange}
@@ -138,8 +140,7 @@ export default function AdminDashboardPage() {
             </Button>
         </div>
       </div>
-
-       {/* Main Chart */}
+      
       <Card>
           <CardHeader>
               <CardTitle>Tendencia de Ingresos</CardTitle>
@@ -176,6 +177,7 @@ export default function AdminDashboardPage() {
             </ChartContainer>
           </CardContent>
       </Card>
+
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
