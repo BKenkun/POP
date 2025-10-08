@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { products as staticProducts } from '@/lib/products';
+import { cbdProducts as staticProducts } from '@/lib/cbd-products';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
