@@ -14,14 +14,14 @@ body {
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 0 84.2% 60.2%; /* Changed to RED for light mode */
-    --primary-foreground: 210 40% 98%;
+    --primary: 45 95% 51%; /* YELLOW for light mode */
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 215.4 16.3% 46.9%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 45 95% 51%; /* ACCENT is now YELLOW */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 84.2% 60.2%; /* RED for light mode interaction */
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
@@ -33,6 +33,10 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+  }
+  html:not(.dark) {
+    --primary: 0 84.2% 60.2%;
+    --primary-foreground: 210 40% 98%;
   }
   .dark {
     --background: 222.2 47.4% 11.2%;
