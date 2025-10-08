@@ -45,21 +45,21 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   // If authenticated, render the full admin layout.
   return (
-    <div className="min-h-screen">
-        {/* This is the floating trigger that appears when the sidebar is collapsed */}
-        <div className={cn(
-            "fixed left-2 top-2 z-20 hidden md:block transition-opacity",
-            isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}>
-            <SidebarTrigger />
-        </div>
+    <div className="min-h-screen bg-background">
         <Sidebar>
           <AdminSidebar />
         </Sidebar>
         <SidebarInset>
-          <div className="p-4 md:p-8">
-            {children}
-          </div>
+             {/* This is the floating trigger that appears when the sidebar is collapsed */}
+            <div className={cn(
+                "fixed left-2 top-2 z-20 hidden md:block transition-opacity",
+                isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}>
+                <SidebarTrigger />
+            </div>
+            <div className="p-4 md:p-8">
+              {children}
+            </div>
         </SidebarInset>
       <ThemeToggleButton />
     </div>
