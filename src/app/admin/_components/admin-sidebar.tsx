@@ -41,7 +41,10 @@ export default function AdminSidebar() {
         <Link href="/admin">
            <Logo className="h-8 group-data-[collapsible=icon]:hidden" />
         </Link>
-        <SidebarTrigger />
+        {/* This trigger is visible when the sidebar is expanded */}
+        <div className="group-data-[state=collapsed]/sidebar-wrapper:hidden">
+            <SidebarTrigger />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

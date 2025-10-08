@@ -3,7 +3,7 @@
 
 import { useEffect, ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Sidebar, SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./_components/admin-sidebar";
 import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
 import { Loader2 } from 'lucide-react';
@@ -44,6 +44,10 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen animate-in fade-in duration-500">
       <SidebarProvider>
+        {/* This is the floating trigger that appears when the sidebar is collapsed */}
+        <div className="fixed left-2 top-2 z-20 hidden md:block group-data-[state=collapsed]/sidebar-wrapper:block">
+            <SidebarTrigger />
+        </div>
         <Sidebar>
           <AdminSidebar />
         </Sidebar>
