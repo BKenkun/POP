@@ -15,18 +15,26 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    // Evita la redirección si ya estamos en la página de login
+    if (!loading && !isAuthenticated && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router, pathname]);
 
-  if (loading || !isAuthenticated) {
+  // Si está cargando o no está autenticado y no es la página de login, muestra el loader.
+  if ((loading || !isAuthenticated) && pathname !== '/admin/login') {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  // Si no está autenticado y es la página de login, devuelve null para que el layout de abajo se encargue.
+  if (!isAuthenticated && pathname === '/admin/login') {
+      return null;
+  }
+
 
   return (
     <div className="min-h-screen animate-in fade-in duration-500">
@@ -51,20 +59,20 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
 
-  // Si estamos en la página de login, no usamos el layout protegido.
-  if (pathname === '/admin/login') {
-    return (
-         <AdminAuthProvider>
-            {children}
-            <Toaster />
-        </AdminAuthProvider>
-    );
-  }
-
   return (
     <AdminAuthProvider>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
-      <Toaster />
+      {/* Si estamos en la página de login, no usamos el layout protegido. */}
+      {pathname === '/admin/login' ? (
+         <>
+            {children}
+            <Toaster />
+        </>
+      ) : (
+        <>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+            <Toaster />
+        </>
+      )}
     </AdminAuthProvider>
   );
 }
