@@ -56,25 +56,24 @@ export interface OrderItem {
 }
 
 export interface ShippingAddress {
-    line1: string | null;
-    line2: string | null;
-    city: string | null;
-    state: string | null;
-    postal_code: string | null;
-    country: string | null;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    postalCode: string;
 }
 
 export interface Order {
-  id: string; // Stripe Checkout Session ID
-  userId: string;
+  id: string; // Custom Reservation ID like CBD-R12A3G
+  userId?: string; // Optional, for guest checkouts
   createdAt: Date;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'Reserva Recibida' | 'Pago Pendiente de Verificación' | 'Pago Confirmado / En Reparto' | 'Entregado / Finalizado' | 'Cancelado';
   total: number; // Total amount in cents
   items: OrderItem[];
-  customerName: string;
-  customerEmail: string;
-  shippingAddress: ShippingAddress | null;
+  shippingAddress: ShippingAddress;
+  paymentMethod: 'cod' | 'prepaid';
 }
+
 
 // --- NEW SUBSCRIPTION TYPES ---
 
