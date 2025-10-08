@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, ShoppingCart, Loader2, Edit, Archive, ArchiveRestore, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -105,6 +106,7 @@ export default function AdminProductsPage() {
                 <Table>
                 <TableHeader>
                     <TableRow>
+                    <TableHead>Imagen</TableHead>
                     <TableHead className="w-[30%]">Producto</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Estado</TableHead>
@@ -116,6 +118,17 @@ export default function AdminProductsPage() {
                 <TableBody>
                     {products.map((product) => (
                     <TableRow key={product.id}>
+                        <TableCell>
+                            <div className="relative h-12 w-12 rounded-md overflow-hidden border">
+                                <Image 
+                                    src={product.imageUrl} 
+                                    alt={product.name} 
+                                    fill 
+                                    className="object-cover"
+                                    sizes="48px"
+                                />
+                            </div>
+                        </TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell className="text-muted-foreground font-mono text-xs">{product.sku || 'N/A'}</TableCell>
                         <TableCell>
