@@ -99,7 +99,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="space-y-6">
-            <Card className="border-primary border-2">
+            <Card className="border-primary/50">
               <CardHeader><CardTitle>Información Principal</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
@@ -116,7 +116,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                 )} />
               </CardContent>
             </Card>
-             <Card className="border-primary border-2">
+             <Card className="border-primary/50">
                 <CardHeader><CardTitle>Imágenes</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                      <FormField control={form.control} name="imageUrl" render={({ field }) => (
@@ -131,7 +131,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                     )} />
                 </CardContent>
             </Card>
-            <Card className="border-primary border-2">
+            <Card className="border-primary/50">
                 <CardHeader>
                     <CardTitle>Estado del Producto</CardTitle>
                 </CardHeader>
@@ -147,7 +147,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                     )} />
                 </CardContent>
             </Card>
-            <Card className="border-primary border-2">
+            <Card className="border-primary/50">
               <CardHeader><CardTitle>Inventario y Precio</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                  <FormField control={form.control} name="sku" render={({ field }) => (
@@ -166,7 +166,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                 )} />
               </CardContent>
             </Card>
-            <Card className="border-primary border-2">
+            <Card className="border-primary/50">
               <CardHeader><CardTitle>Organización</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                  <FormField control={form.control} name="brand" render={({ field }) => (
@@ -180,7 +180,7 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                 )} />
               </CardContent>
             </Card>
-            <Card className="border-primary border-2">
+            <Card className="border-primary/50">
                 <CardHeader><CardTitle>Etiquetas y Detalles</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <FormField control={form.control} name="tags" render={({ field }) => (
