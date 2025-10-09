@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/context/auth-context";
+import { useAuth } from '@/context/auth-context';
 
 export function Footer() {
     const pathname = usePathname();
     const { user } = useAuth();
+    const isAdminUser = user?.email === process.env.ADMIN_EMAIL;
 
     // No renderizar el footer en las rutas de admin.
-    if (pathname.startsWith('/admin') || pathname.startsWith('/verify') || pathname.startsWith('/positive')) {
+    if (pathname.startsWith('/admin')) {
       return null;
     }
     
@@ -60,7 +61,13 @@ export function Footer() {
 
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
-                &copy; {new Date().getFullYear()} Popper Online. Todos los derechos reservados.
+                &copy; {new Date().getFullYear()} Popper Online. Todos los derech
+                {isAdminUser ? (
+                    <Link href="/admin" className="font-bold text-primary hover:underline">o</Link>
+                ) : (
+                    'o'
+                )}
+                s reservados.
                 </p>
             </div>
         </div>
