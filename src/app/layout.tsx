@@ -3,7 +3,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
-import { Toaster } from '@/components/ui/toaster';
+import { ReactNode } from 'react';
 
 // Setup font with next/font
 const inter = Inter({
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="es" className="light" suppressHydrationWarning>

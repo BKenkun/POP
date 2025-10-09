@@ -2,42 +2,33 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./_components/admin-sidebar";
 import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
-import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
-import { Loader2 } from 'lucide-react';
+import { AdminAuthProvider } from '@/context/admin-auth-context';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
-  
-  // The middleware is the single source of truth for protecting this route.
-  // We no longer need a client-side loading/auth check here. If the user is on this page,
-  // the middleware has already validated their session.
-  
+  // El middleware es la única fuente de verdad para proteger las rutas /admin.
+  // No se necesita ninguna comprobación de estado de carga o autenticación aquí.
   return (
     <>
-        <Sidebar variant="sidebar" collapsible="offcanvas">
-            <AdminSidebar />
-        </Sidebar>
-        
-        <div className={cn(
-            "fixed left-2 top-2 z-20 hidden transition-opacity",
-            isCollapsed ? "md:block opacity-100" : "opacity-0 pointer-events-none"
-        )}>
-            <SidebarTrigger />
+      <Sidebar variant="sidebar" collapsible="offcanvas">
+        <AdminSidebar />
+      </Sidebar>
+
+      <div className={cn("fixed left-2 top-2 z-20 hidden transition-opacity md:block")}>
+        <SidebarTrigger />
+      </div>
+
+      <SidebarInset>
+        <div className="p-4 md:p-8">
+          {children}
         </div>
-        
-        <SidebarInset>
-            <div className="p-4 md:p-8">
-                {children}
-            </div>
-        </SidebarInset>
-        <ThemeToggleButton />
+      </SidebarInset>
+      <ThemeToggleButton />
     </>
   );
 }
