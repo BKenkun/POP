@@ -36,3 +36,8 @@ export async function createCustomPackCheckoutAction(
     // Pass the detailed pack items to the checkout session creator
     return createPackCheckoutSession(customPackForCheckout, packItems, userId);
 }
+
+
+export async function createSubscriptionCheckoutAction(userId: string, userEmail: string): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
+    return createSubscriptionCheckout(userId, userEmail);
+}
