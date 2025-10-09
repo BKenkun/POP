@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
 import { getAdminOrderById } from '@/app/actions/admin-data';
-import { db } from '@/lib/firebase'; // We need the admin instance for updates
+import { db } from '@/lib/firebase';
 
 export default function OrderDetailPage() {
   const params = useParams();
