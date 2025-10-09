@@ -13,12 +13,13 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { adminLoginAction } from '../actions/admin-auth';
+import { useAuth as useAppAuth } from '@/context/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const { loginAsAdminCustomer } = useAuth();
+  const { loginAsAdminCustomer } = useAppAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

@@ -52,7 +52,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAdminAsCustomer(false);
         router.push('/');
       } else {
-        await firebaseSignOut(useFirebaseAuth());
+        const auth = useFirebaseAuth(); // Get auth instance here
+        await firebaseSignOut(auth);
         router.push('/');
       }
     } catch (error) {
@@ -85,14 +86,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       loyaltyPoints: isAdminAsCustomer ? 1000 : loyaltyPoints,
       isSubscribed: isAdminAsCustomer ? true : isSubscribed 
     };
-
-  if (loading && !providedUser) {
-    return (
-        <div className="flex items-center justify-center h-screen">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-    );
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
