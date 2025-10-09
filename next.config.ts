@@ -1,7 +1,21 @@
 
 const nextConfig = {
-  devIndicators: {
-    allowedDevOrigins: ['*'],
+  async rewrites() {
+    return {
+      // These rewrites are only active in development
+      beforeFiles: [
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'host',
+              value: 'localhost',
+            },
+          ],
+          destination: 'http://localhost:9002/:path*',
+        },
+      ],
+    };
   },
   typescript: {
     ignoreBuildErrors: true,

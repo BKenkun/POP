@@ -1,20 +1,25 @@
 
-'use client';
-
 import { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./_components/admin-sidebar";
 import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
+import { getAdminSession } from '@/app/actions/admin-auth';
 
-// This layout is now simplified to trust the middleware for auth protection.
-// It no longer contains client-side auth checks.
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  // This check now happens on the server, in a Node.js environment.
+  // It can access process.env and correctly decrypt the cookie.
+  const session = await getAdminSession();
+  if (!session?.isAdmin) {
+    redirect('/verify');
+  }
+
   return (
     <ThemeProvider
       attribute="class"

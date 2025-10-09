@@ -1,7 +1,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/app/actions/admin-auth';
 
+// This middleware is now simpler. It only checks for the *presence* of a cookie.
+// The actual validation of the cookie's content is moved to the Server Component layer (AdminLayout)
+// where Node.js APIs like `process.env` are available.
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
@@ -12,24 +14,13 @@ export async function middleware(request: NextRequest) {
   if (isProtectedAdminPath) {
     const sessionCookie = request.cookies.get('admin_session');
     
+    // If the cookie doesn't even exist, redirect to login immediately.
     if (!sessionCookie?.value) {
-        // Redirect to the new, root-level verify page
         return NextResponse.redirect(new URL('/verify', request.url));
-    }
-    
-    try {
-      const session = await decrypt(sessionCookie.value);
-      
-      if (!session?.isAdmin) {
-          return NextResponse.redirect(new URL('/verify', request.url));
-      }
-    } catch (error) {
-      console.error("Middleware decryption error:", error);
-      // If decryption fails, it's a bad cookie, redirect to login
-      return NextResponse.redirect(new URL('/verify', request.url));
     }
   }
 
+  // If the cookie exists, let the request proceed. The AdminLayout will do the final verification.
   return NextResponse.next();
 }
 
