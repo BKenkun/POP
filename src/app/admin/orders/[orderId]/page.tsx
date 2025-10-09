@@ -37,27 +37,38 @@ export default function OrderDetailPage() {
     if (!orderId) return;
 
     const findOrder = async () => {
-      setLoading(true);
-      const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
+        setLoading(true);
+        // First, check guest reservations
+        let q = query(collectionGroup(db, 'reservations'), where('id', '==', orderId));
+        let unsub = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const orderDoc = snapshot.docs[0];
+                setDocRefPath(orderDoc.ref.path);
+                setOrder({ ...orderDoc.data(), createdAt: orderDoc.data().createdAt?.toDate ? orderDoc.data().createdAt.toDate() : new Date() } as Order);
+                setLoading(false);
+            } else {
+                // If not found in reservations, check user orders
+                q = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
+                unsub = onSnapshot(q, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const orderDoc = snapshot.docs[0];
+                        setDocRefPath(orderDoc.ref.path);
+                        setOrder({ ...orderDoc.data(), createdAt: orderDoc.data().createdAt?.toDate ? orderDoc.data().createdAt.toDate() : new Date() } as Order);
+                    } else {
+                        setOrder(null);
+                    }
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching user order:", error);
+                    setLoading(false);
+                });
+            }
+        }, (error) => {
+            console.error("Error fetching reservation:", error);
+            setLoading(false);
+        });
       
-      const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-        if (!snapshot.empty) {
-          const orderDoc = snapshot.docs[0];
-          setDocRefPath(orderDoc.ref.path);
-          setOrder({
-            ...orderDoc.data(),
-            createdAt: orderDoc.data().createdAt?.toDate ? orderDoc.data().createdAt.toDate() : new Date(),
-          } as Order);
-        } else {
-          setOrder(null);
-        }
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching order:", error);
-        setLoading(false);
-      });
-      
-      return () => unsubscribe();
+        return () => unsub();
     };
 
     findOrder();
@@ -95,6 +106,8 @@ export default function OrderDetailPage() {
             return 'secondary';
         case 'pending':
         case 'pendiente':
+        case 'reserva recibida':
+        case 'pago pendiente de verificación':
             return 'outline';
         case 'cancelled':
         case 'cancelado':
@@ -171,10 +184,11 @@ export default function OrderDetailPage() {
                     <SelectValue placeholder="Cambiar estado..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="shipped">Enviado</SelectItem>
-                    <SelectItem value="delivered">Entregado</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="Reserva Recibida">Reserva Recibida</SelectItem>
+                    <SelectItem value="Pago Pendiente de Verificación">Pago Pendiente</SelectItem>
+                    <SelectItem value="Enviado">Enviado</SelectItem>
+                    <SelectItem value="Entregado">Entregado</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
                  {updatingStatus && <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/>Actualizando...</p>}
@@ -185,6 +199,7 @@ export default function OrderDetailPage() {
              <CardContent className="space-y-1 text-sm">
                 <p className="font-medium">{order.customerName}</p>
                 <p className="text-muted-foreground">{order.customerEmail}</p>
+                {order.userId === 'guest' && <Badge variant="secondary">Invitado</Badge>}
              </CardContent>
           </Card>
           {order.shippingAddress && (

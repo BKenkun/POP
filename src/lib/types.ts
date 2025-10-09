@@ -67,11 +67,14 @@ export interface ShippingAddress {
   country: string | null;
 }
 
+export type OrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'entregado' | 'enviado' | 'pendiente' | 'cancelado' | 'Reserva Recibida' | 'Pago Pendiente de Verificación';
+
+
 export interface Order {
   id: string;
   userId: string;
   createdAt: Date;
-  status: 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'entregado' | 'enviado' | 'pendiente' | 'cancelado' | 'Reserva Recibida' | 'Pago Pendiente de Verificación';
+  status: OrderStatus;
   total: number; // Total amount in cents
   items: OrderItem[];
   customerName: string;
@@ -87,7 +90,7 @@ export interface MonthlySelection {
     [key: string]: string; // e.g., { popper1: 'prod_xxxx', popper2: 'prod_yyyy', ... }
 }
 
-// This type will be stored in Firestore under the user's document
+// This type will be stored in the user's document
 export interface UserSubscription {
     stripeSubscriptionId: string;
     stripeCustomerId: string;

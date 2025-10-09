@@ -3,6 +3,9 @@
 
 import { CartItem, Order, ShippingAddress } from "@/lib/types";
 import { cbdProducts } from "@/lib/cbd-products";
+import { db } from "@/lib/firebase";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+
 
 // Helper function to generate a unique alphanumeric order code
 function generateOrderCode(): string {
@@ -19,6 +22,7 @@ interface ReservationInput {
     customerDetails: any; // Using 'any' as it comes from a form with a different structure
     items: CartItem[];
     total: number;
+    userId?: string; // Optional user ID for logged-in users
 }
 
 // This is a SERVER ACTION. It runs on the server.
@@ -40,7 +44,7 @@ export async function createReservationAction(
             stockErrors.push(`Producto ${item.name} no encontrado.`);
             continue;
         }
-        if (productInDb.stock === undefined || productInDb.stock < item.quantity) {
+        if (productInDb.stock !== undefined && productInDb.stock < item.quantity) {
              stockErrors.push(`Stock insuficiente para ${item.name}.`);
         }
     }
@@ -50,12 +54,7 @@ export async function createReservationAction(
         return { orderId: null, error: `Error de stock: ${stockErrors.join(' ')}` };
     }
 
-    // If stock is okay, we would decrement it here.
-    // For now, we just log it.
     console.log("Stock check passed. Simulating stock reduction.");
-    input.items.forEach(item => {
-        console.log(`- Reducing stock for ${item.name} by ${item.quantity}`);
-    });
     
     // --- 3. Create Order Object (for DB persistence) ---
      const shippingAddress: ShippingAddress = {
@@ -69,9 +68,9 @@ export async function createReservationAction(
     
     const newOrder: Order = {
         id: orderId,
-        userId: 'guest', // Or get from session if available
-        createdAt: new Date(),
-        status: input.customerDetails.paymentMethod === 'prepaid' ? 'pending' : 'pending',
+        userId: input.userId || 'guest',
+        createdAt: new Date(), // This will be replaced by serverTimestamp
+        status: input.customerDetails.paymentMethod === 'prepaid' ? 'Pago Pendiente de Verificación' : 'Reserva Recibida',
         total: input.total,
         items: input.items.map(item => ({
             productId: item.id,
@@ -86,10 +85,29 @@ export async function createReservationAction(
         paymentMethod: input.customerDetails.paymentMethod,
     };
 
-    // In a real app, you would save `newOrder` to Firestore here.
-    console.log("Order object created. In a real app, this would be saved to Firestore:", newOrder);
+    // --- 4. Save to Firestore ---
+    try {
+        let docRef;
+        if (input.userId) {
+            // For registered users, save under their own orders subcollection
+            docRef = doc(db, 'users', input.userId, 'orders', orderId);
+        } else {
+            // For guest users, save to a general 'reservations' collection
+            docRef = doc(db, 'reservations', orderId);
+        }
 
-    // --- 4. Send Confirmation Email (Simulation) ---
+        await setDoc(docRef, {
+            ...newOrder,
+            createdAt: serverTimestamp(), // Use server-side timestamp for accuracy
+        });
+        console.log(`✅ Order ${orderId} successfully saved to Firestore.`);
+    } catch (error) {
+        console.error("❌ Firestore save error:", error);
+        return { orderId: null, error: "No se pudo guardar la reserva en la base de datos." };
+    }
+
+
+    // --- 5. Send Confirmation Email (Simulation) ---
     console.log(`Simulating sending email to ${input.customerDetails.email}...`);
     if (input.customerDetails.paymentMethod === 'prepaid') {
         console.log("Email content: Instructions for Bizum/Transfer");
@@ -101,7 +119,6 @@ export async function createReservationAction(
         console.log("Email content: Confirmation for Cash on Delivery");
     }
 
-    // --- 5. Return success response ---
-    // We return the orderId so the frontend can display it.
+    // --- 6. Return success response ---
     return { orderId: orderId };
 }

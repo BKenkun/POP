@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collectionGroup, query, onSnapshot, orderBy } from "firebase/firestore";
+import { collectionGroup, query, onSnapshot, orderBy, collection, getDocs } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -25,26 +25,54 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    // Query for registered user orders
+    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsubUserOrders = onSnapshot(userOrdersQuery, (snapshot) => {
+        const userOrders = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
+        } as Order));
+        
+        // As snapshots come in, merge with existing state (this is tricky with two listeners)
+        // A simpler approach is to refetch guests when users change, or unify them.
+        setOrders(currentOrders => {
+             const guestOrders = currentOrders.filter(o => o.userId === 'guest');
+             const all = [...userOrders, ...guestOrders].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+             const uniqueOrders = Array.from(new Map(all.map(order => [order.id, order])).values());
+             return uniqueOrders;
+        });
 
-    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
-      const allOrders: Order[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        allOrders.push({
-          ...data,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-        } as Order);
-      });
-      setOrders(allOrders);
-      setLoading(false); // Ensure loading is set to false even if there are no orders
+        setLoading(false);
     }, (error) => {
-      console.error("Error fetching all orders:", error);
-      setLoading(false); // Also on error
+        console.error("Error fetching user orders:", error);
+        setLoading(false);
     });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    // Query for guest reservations
+    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+    const unsubReservations = onSnapshot(reservationsQuery, (snapshot) => {
+        const guestOrders = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
+        } as Order));
+
+        setOrders(currentOrders => {
+             const registeredUserOrders = currentOrders.filter(o => o.userId !== 'guest');
+             const all = [...registeredUserOrders, ...guestOrders].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+             const uniqueOrders = Array.from(new Map(all.map(order => [order.id, order])).values());
+             return uniqueOrders;
+        });
+        
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching guest reservations:", error);
+        setLoading(false);
+    });
+
+    return () => {
+        unsubUserOrders();
+        unsubReservations();
+    };
   }, []);
 
   const getStatusVariant = (status: string) => {
@@ -57,6 +85,8 @@ export default function AdminOrdersPage() {
             return 'secondary';
         case 'pending':
         case 'pendiente':
+        case 'reserva recibida':
+        case 'pago pendiente de verificación':
             return 'outline';
         case 'cancelled':
         case 'cancelado':
@@ -74,8 +104,8 @@ export default function AdminOrdersPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle>Pedidos Recientes</CardTitle>
-            <CardDescription>Aquí se listan todas las compras de tus clientes.</CardDescription>
+            <CardTitle>Pedidos y Reservas</CardTitle>
+            <CardDescription>Aquí se listan todas las compras y reservas de tus clientes.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (

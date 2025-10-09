@@ -79,6 +79,7 @@ export default function CheckoutClientPage() {
             customerDetails: data,
             items: cartItems,
             total: cartTotal,
+            userId: user?.uid,
         });
 
         if (error || !orderId) {
