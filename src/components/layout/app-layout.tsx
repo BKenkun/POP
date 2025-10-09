@@ -32,6 +32,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [consent.analytics]);
 
+  const showFloatingButtons = !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/checkout');
+
   return (
     <>
       <div className="flex flex-col min-h-screen bg-background">
@@ -42,7 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Footer />
       </div>
       <SalesNotification />
-      <FloatingActionButtons />
+      {showFloatingButtons && <FloatingActionButtons />}
       <CookieConsentBanner />
       <Toaster />
     </>
