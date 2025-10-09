@@ -25,54 +25,51 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Query for registered user orders
+    // Query for registered user orders and guest reservations simultaneously
     const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsubUserOrders = onSnapshot(userOrdersQuery, (snapshot) => {
-        const userOrders = snapshot.docs.map(doc => ({
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
-        } as Order));
-        
-        // As snapshots come in, merge with existing state (this is tricky with two listeners)
-        // A simpler approach is to refetch guests when users change, or unify them.
-        setOrders(currentOrders => {
-             const guestOrders = currentOrders.filter(o => o.userId === 'guest');
-             const all = [...userOrders, ...guestOrders].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-             const uniqueOrders = Array.from(new Map(all.map(order => [order.id, order])).values());
-             return uniqueOrders;
-        });
-
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching user orders:", error);
-        setLoading(false);
-    });
-
-    // Query for guest reservations
     const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-    const unsubReservations = onSnapshot(reservationsQuery, (snapshot) => {
-        const guestOrders = snapshot.docs.map(doc => ({
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
-        } as Order));
 
-        setOrders(currentOrders => {
-             const registeredUserOrders = currentOrders.filter(o => o.userId !== 'guest');
-             const all = [...registeredUserOrders, ...guestOrders].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-             const uniqueOrders = Array.from(new Map(all.map(order => [order.id, order])).values());
-             return uniqueOrders;
-        });
-        
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching guest reservations:", error);
-        setLoading(false);
-    });
+    const fetchAllOrders = async () => {
+        try {
+            const [userOrdersSnapshot, reservationsSnapshot] = await Promise.all([
+                getDocs(userOrdersQuery),
+                getDocs(reservationsQuery)
+            ]);
+
+            const userOrders = userOrdersSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
+            } as Order));
+
+            const guestOrders = reservationsSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
+            } as Order));
+
+            const allOrders = [...userOrders, ...guestOrders].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+            
+            // Remove duplicates just in case
+            const uniqueOrders = Array.from(new Map(allOrders.map(order => [order.id, order])).values());
+
+            setOrders(uniqueOrders);
+        } catch (error) {
+            console.error("Error fetching all orders:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    fetchAllOrders();
+    
+    // Set up listeners for real-time updates
+    const unsubUserOrders = onSnapshot(userOrdersQuery, (snapshot) => fetchAllOrders());
+    const unsubReservations = onSnapshot(reservationsQuery, (snapshot) => fetchAllOrders());
 
     return () => {
         unsubUserOrders();
         unsubReservations();
     };
+
   }, []);
 
   const getStatusVariant = (status: string) => {
