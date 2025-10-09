@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { adminLoginAction } from '@/app/actions/admin-auth';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
-export default function AdminVerifyPage() {
+export default function VerifyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { login, isAuthenticated } = useAdminAuth();
@@ -21,10 +21,9 @@ export default function AdminVerifyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // If the user is already authenticated as an admin, redirect them to the portal
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/admin/portal');
+      router.replace('/positive');
     }
   }, [isAuthenticated, router]);
 
@@ -37,12 +36,12 @@ export default function AdminVerifyPage() {
     const result = await adminLoginAction({ email, password });
 
     if (result.success) {
-        login(); // Set isAuthenticated to true in the admin context
+        login();
         toast({
             title: 'Verificación Correcta',
             description: 'Redirigiendo al portal de acceso...',
         });
-        router.push('/admin/portal'); // Redirect to the secure portal page
+        router.push('/positive');
     } else {
         setError(result.error || 'Email o contraseña incorrectos.');
         toast({

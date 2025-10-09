@@ -9,7 +9,7 @@ export function Footer() {
     const { isAdminAsCustomer } = useAuth();
     
     // No renderizar el footer en las rutas de admin
-    if (pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/verify') || pathname.startsWith('/positive')) {
       return null;
     }
     
@@ -62,7 +62,7 @@ export function Footer() {
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper Online. T
                 {isAdminAsCustomer ? (
-                    <Link href="/admin/verify">o</Link>
+                    <Link href="/verify">o</Link>
                 ) : (
                     'o'
                 )}

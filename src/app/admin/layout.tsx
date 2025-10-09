@@ -15,32 +15,15 @@ import { AuthProvider } from '@/context/auth-context';
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAdminAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
-  // These pages are publicly accessible within the admin route
-  const publicAdminPages = ['/admin/verify', '/admin/portal'];
-  const isPublicPage = publicAdminPages.includes(pathname);
-
   useEffect(() => {
-    if (loading) return; // Don't do anything while loading session state
-
-    if (!isAuthenticated && !isPublicPage) {
-      // If not authenticated and not on a public admin page, redirect to verify
-      router.replace('/admin/verify');
-    } else if (isAuthenticated && isPublicPage) {
-      // If authenticated and on a public page, redirect to the main admin dashboard
-      router.replace('/admin');
+    if (!loading && !isAuthenticated) {
+      router.replace('/verify');
     }
-  }, [isAuthenticated, loading, router, pathname, isPublicPage]);
+  }, [isAuthenticated, loading, router]);
 
-  // If it's a public page, render it directly without the main layout
-  if (isPublicPage) {
-    return <>{children}</>;
-  }
-
-  // If loading, or not yet authenticated for a protected page, show a full-screen loader
   if (loading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
@@ -49,7 +32,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     );
   }
 
-  // If authenticated and on a protected page, render the full admin layout
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas">
@@ -79,6 +61,27 @@ export default function AdminLayout({
 }: {
   children: ReactNode;
 }) {
+  const pathname = usePathname();
+  const isPublicPage = ['/verify', '/positive'].includes(pathname);
+
+  if (isPublicPage) {
+    return (
+       <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <AuthProvider>
+          <AdminAuthProvider>
+            {children}
+            <Toaster />
+          </AdminAuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider
       attribute="class"

@@ -9,13 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
-export default function AdminPortalPage() {
+export default function PositivePage() {
     const { isAuthenticated, loading } = useAdminAuth();
     const router = useRouter();
 
     useEffect(() => {
         if (!loading && !isAuthenticated) {
-            router.replace('/admin/verify');
+            router.replace('/verify');
         }
     }, [isAuthenticated, loading, router]);
 
