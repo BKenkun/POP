@@ -1,78 +1,96 @@
 /**
- * @fileOverview Firestore Security Rules for PuroRush.
+ * @fileoverview Firestore Security Rules for PuroRush application.
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for cart items and orders,
- * while allowing public read access to product information.
+ * while allowing public read access to the product catalog.  Reservations
+ * can be created by anyone, but only updated/deleted by an admin user.
  *
  * Data Structure:
- * - Products are stored in a top-level `/products` collection, accessible to all.
- * - Each user has their own cart items and orders stored under their respective
- *   `/users/{userId}/cart_items` and `/users/{userId}/orders` subcollections.
+ * - /products/{productId}: Public product catalog.
+ * - /users/{userId}/cart_items/{cartItemId}: User-specific shopping cart items.
+ * - /users/{userId}/orders/{orderId}: User-specific order history.
+ * - /reservations/{reservationId}: Reservations, which must have a userId.
  *
  * Key Security Decisions:
- * - Public product listing: All users can read product information.
- * - Owner-only cart and order management: Only the authenticated user can
- *   create, modify, or delete cart items and orders associated with their ID.
- * - No user listing: Listing the `/users` collection is not permitted.
+ * - Products are publicly readable, but only the application backend can create, update or delete them (TODO).
+ * - Users can only manage their own cart items and orders.
+ * - Listing of user cart items and orders is allowed only for the owner.
+ * - Reservations can be created by anyone but are only managed by the backend (TODO).
+ *
+ * Denormalization for Authorization:
+ *  - The `/reservations/{reservationId}` document requires a denormalized `userId` field to enforce ownership.
+ *    This avoids costly `get()` calls to other collections for authorization.
+ *
+ * Structural Segregation:
+ *  - User-specific data (cart items, orders) is stored under the `/users/{userId}` path to leverage path-based authorization.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows public read access to product information. Only allows create, update, and delete operations.
+     * @description Allows public read access to product information.
      * @path /products/{productId}
-     * @allow get, list: if true;
-     * @allow create: if false;
-     * @allow update: if false;
-     * @allow delete: if false;
-     * @principle Allows public read access to product information.
+     * @allow (get, list): if true
+     * @deny (create, update, delete): if false
+     * @principle Allows public read access while restricting write access.
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if false; // TODO: Only allow from backend
     }
 
     /**
-     * @description Manages cart items for each user, enforcing owner-only access.
+     * @description Manages user-specific cart items.
      * @path /users/{userId}/cart_items/{cartItemId}
-     * @allow get, list: if isOwner(userId);
-     * @allow create: if request.auth.uid == userId;
-     * @allow update: if isExistingOwner(userId);
-     * @allow delete: if isExistingOwner(userId);
-     * @deny create: if request.auth.uid != userId;
-     * @deny update: if !isExistingOwner(userId);
-     * @deny delete: if !isExistingOwner(userId);
-     * @principle Enforces document ownership for writes and restricts access to a user's own cart.
+     * @allow (create): if isSignedIn() && isOwner(userId)
+     * @allow (get, list): if isSignedIn() && isOwner(userId)
+     * @allow (update, delete): if isSignedIn() && isExistingOwner(userId)
+     * @deny (create): if !isSignedIn() || !isOwner(userId)
+     * @deny (get, list): if !isSignedIn() || !isOwner(userId)
+     * @deny (update, delete): if !isSignedIn() || !isExistingOwner(userId)
+     * @principle Enforces document ownership for cart items.
      */
     match /users/{userId}/cart_items/{cartItemId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow get, list: if isSignedIn() && isOwner(userId);
+      allow update, delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Manages orders for each user, enforcing owner-only access.
+     * @description Manages user-specific order history.
      * @path /users/{userId}/orders/{orderId}
-     * @allow get, list: if isOwner(userId);
-     * @allow create: if request.auth.uid == userId;
-     * @allow update: if isExistingOwner(userId);
-     * @allow delete: if isExistingOwner(userId);
-     * @deny create: if request.auth.uid != userId;
-     * @deny update: if !isExistingOwner(userId);
-     * @deny delete: if !isExistingOwner(userId);
-     * @principle Enforces document ownership for writes and restricts access to a user's own orders.
+     * @allow (create): if isSignedIn() && isOwner(userId)
+     * @allow (get, list): if isSignedIn() && isOwner(userId)
+     * @allow (update, delete): if isSignedIn() && isExistingOwner(userId)
+     * @deny (create): if !isSignedIn() || !isOwner(userId)
+     * @deny (get, list): if !isSignedIn() || !isOwner(userId)
+     * @deny (update, delete): if !isSignedIn() || !isExistingOwner(userId)
+     * @principle Enforces document ownership for orders.
      */
     match /users/{userId}/orders/{orderId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow get, list: if isSignedIn() && isOwner(userId);
+      allow update, delete: if isSignedIn() && isExistingOwner(userId);
+    }
+    
+        /**
+     * @description Allows anyone to create reservations, but only admins can update/delete them.
+     * @path /reservations/{reservationId}
+     * @allow (create): if request.resource.data.userId == request.auth.uid || request.resource.data.userId == 'guest';
+     * @allow (get): if true;
+     * @allow (update, delete): if false; // TODO: Only allow from backend
+     * @deny (create): if request.resource.data.userId != request.auth.uid && request.resource.data.userId != 'guest';
+     * @principle Allows reservations by authenticated users or guests, restricts modification to admins.
+     */
+    match /reservations/{reservationId} {
+        allow create: if request.auth != null && (request.resource.data.userId == request.auth.uid || request.resource.data.userId == 'guest');
+        allow get: if true;
+        allow list: if false;
+        allow update, delete: if false; // TODO: Only allow from backend
     }
 
-    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -82,7 +100,7 @@ service cloud.firestore {
     }
 
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+        return isOwner(userId) && resource != null;
     }
   }
 }
