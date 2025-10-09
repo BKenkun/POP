@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loyaltyPoints = userData?.loyaltyPoints ?? 0;
   
   // This is the special client-side user that gets access to the admin verification page
-  const isAdminAsCustomer = user?.email === process.env.NEXT_PUBLIC_CLIENT_ADMIN_EMAIL;
+  const isAdminAsCustomer = false; // This functionality is removed to simplify auth.
 
   const logout = async () => {
     try {
