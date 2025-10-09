@@ -2,18 +2,18 @@
 "use client";
 
 import { useCart } from '@/context/cart-context';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, Check, Circle, Dot, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createReservationAction } from '@/app/actions/create-reservation';
 import { Label } from '@/components/ui/label';
+import { QuantitySelector } from '@/components/quantity-selector';
 
 const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
@@ -42,12 +43,46 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+const Stepper = ({ currentStep }: { currentStep: number }) => {
+    const steps = [
+        { number: 1, name: 'Carrito' },
+        { number: 2, name: 'Datos' },
+        { number: 3, name: 'Pago' },
+        { number: 4, name: 'Revisión' },
+    ];
+    return (
+        <div className="flex items-center justify-center mb-12">
+            {steps.map((step, index) => (
+                 <React.Fragment key={step.number}>
+                    <div className="flex flex-col items-center">
+                        <div className={cn(
+                            "flex items-center justify-center h-10 w-10 rounded-full border-2 transition-all",
+                            currentStep > step.number ? "bg-primary border-primary text-primary-foreground" : (currentStep === step.number ? "border-primary text-primary" : "border-muted text-muted-foreground bg-muted/50")
+                        )}>
+                            {currentStep > step.number ? <Check /> : step.number}
+                        </div>
+                        <p className={cn(
+                            "mt-2 text-sm font-medium",
+                            currentStep >= step.number ? "text-primary" : "text-muted-foreground"
+                        )}>{step.name}</p>
+                    </div>
+                    {index < steps.length - 1 && (
+                        <div className={cn("flex-1 h-1 mx-4 rounded-full transition-all", currentStep > index + 1 ? "bg-primary" : "bg-muted")}></div>
+                    )}
+                 </React.Fragment>
+            ))}
+        </div>
+    );
+};
+
+
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount, clearCart } = useCart();
+  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -60,12 +95,34 @@ export default function CheckoutClientPage() {
       paymentMethod: 'cod',
     },
   });
-  
+
+  const formValues = useWatch({ control: form.control });
+
   useEffect(() => {
     if (cartCount === 0 && !loading) {
        router.push('/');
     }
   }, [cartCount, router, loading]);
+
+  const handleNextStep = async () => {
+    let isValid = false;
+    if (step === 2) { // Validate shipping details
+        isValid = await form.trigger(['name', 'email', 'phone', 'address', 'postalCode']);
+    } else if (step === 3) { // Validate payment method
+        isValid = await form.trigger('paymentMethod');
+    } else { // Step 1
+        isValid = true;
+    }
+    
+    if (isValid) {
+      setStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+      setStep(prev => prev - 1);
+  };
+  
 
   const onSubmit = async (data: CheckoutFormValues) => {
     setLoading(true);
@@ -93,7 +150,6 @@ export default function CheckoutClientPage() {
             description: `Tu número de pedido es ${orderId}. Revisa tu email para más detalles.`,
         });
 
-        // Redirect to a success page with order details
         router.push(`/checkout/success?orderId=${orderId}&paymentMethod=${data.paymentMethod}`);
         
     } catch (error: any) {
@@ -120,12 +176,44 @@ export default function CheckoutClientPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Finalizar Reserva</h1>
+      <Stepper currentStep={step} />
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Columna Izquierda: Formulario de Datos */}
-            <div>
-                <h2 className="text-2xl font-headline mb-4 font-bold">1. Tus Datos de Entrega</h2>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+            {step === 1 && (
                 <Card>
+                    <CardHeader><CardTitle>1. Confirma tu Carrito</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        {cartItems.map((item) => (
+                            <div key={item.id} className="flex items-center gap-4">
+                                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
+                                    <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold">{item.name}</p>
+                                    <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+                                    <div className="mt-2">
+                                        <QuantitySelector quantity={item.quantity} onQuantityChange={(q) => updateQuantity(item.id, q)} maxStock={item.stock} />
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                                    <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => removeFromCart(item.id)}>Eliminar</Button>
+                                </div>
+                            </div>
+                        ))}
+                         <Separator />
+                        <div className="flex justify-between font-bold text-lg">
+                            <span>Total</span>
+                            <span>{formatPrice(cartTotal)}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+             {step === 2 && (
+                <Card>
+                    <CardHeader><CardTitle>2. Tus Datos de Entrega</CardTitle></CardHeader>
                     <CardContent className="p-6 space-y-4">
                          <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -144,92 +232,117 @@ export default function CheckoutClientPage() {
                         )} />
                     </CardContent>
                 </Card>
-
-                <h2 className="text-2xl font-headline mt-8 mb-4 font-bold">2. Método de Pago</h2>
-                 <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                            >
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <Card className="flex-1">
-                                    <Label className="flex flex-col p-4 cursor-pointer">
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-bold text-lg">Pago Contra-entrega</span>
-                                            <FormControl>
-                                                <RadioGroupItem value="cod" />
-                                            </FormControl>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground mt-2">Paga al repartidor en el momento de la entrega. Aceptamos efectivo o tarjeta (TPV móvil).</p>
-                                    </Label>
-                                </Card>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <Card className="flex-1">
-                                    <Label className="flex flex-col p-4 cursor-pointer">
-                                         <div className="flex items-center justify-between">
-                                            <span className="font-bold text-lg">Pago Anticipado (Bizum / Transferencia)</span>
-                                             <FormControl>
-                                                <RadioGroupItem value="prepaid" />
-                                            </FormControl>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground mt-2">Paga después de confirmar tu reserva para agilizar el envío. Recibirás las instrucciones por email.</p>
-                                    </Label>
-                                </Card>
-                            </FormItem>
-                            </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-            </div>
+            )}
             
-            {/* Columna Derecha: Resumen de Pedido */}
-            <div>
-            <h2 className="text-2xl font-headline mb-4 font-bold">3. Resumen de tu Reserva</h2>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Productos en tu carrito</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {cartItems.map((item) => (
-                        <div key={item.id} className="flex items-center gap-4">
-                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                            <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+            {step === 3 && (
+                <Card>
+                    <CardHeader><CardTitle>3. Método de Pago</CardTitle></CardHeader>
+                    <CardContent>
+                         <FormField
+                            control={form.control}
+                            name="paymentMethod"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <Card className="flex-1">
+                                                <Label className="flex flex-col p-4 cursor-pointer">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-bold text-lg flex items-center gap-2"><Truck />Pago Contra-entrega</span>
+                                                        <FormControl><RadioGroupItem value="cod" /></FormControl>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground mt-2">Paga al repartidor en el momento de la entrega. Aceptamos efectivo o tarjeta (TPV móvil).</p>
+                                                </Label>
+                                            </Card>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <Card className="flex-1">
+                                                <Label className="flex flex-col p-4 cursor-pointer">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-bold text-lg flex items-center gap-2"><Wallet />Pago Anticipado (Bizum / Transferencia)</span>
+                                                        <FormControl><RadioGroupItem value="prepaid" /></FormControl>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground mt-2">Paga después de confirmar tu reserva para agilizar el envío. Recibirás las instrucciones por email.</p>
+                                                </Label>
+                                            </Card>
+                                        </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    </CardContent>
+                </Card>
+            )}
+
+            {step === 4 && (
+                <Card>
+                    <CardHeader><CardTitle>4. Revisa y Confirma tu Reserva</CardTitle></CardHeader>
+                    <CardContent className="space-y-6">
+                        <div>
+                            <h3 className="font-semibold mb-2">Productos:</h3>
+                             {cartItems.map((item) => (
+                                <div key={item.id} className="flex items-center gap-4 py-1">
+                                    <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
+                                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium">{item.name}</p>
+                                        <p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p>
+                                    </div>
+                                    <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                                </div>
+                            ))}
                         </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">{item.name}</p>
-                            <p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p>
+                        <Separator />
+                        <div>
+                             <h3 className="font-semibold mb-2">Datos de Entrega:</h3>
+                             <div className="text-sm text-muted-foreground">
+                                 <p>{formValues.name}</p>
+                                 <p>{formValues.email}</p>
+                                 <p>{formValues.phone}</p>
+                                 <p>{formValues.address}, {formValues.postalCode}</p>
+                             </div>
                         </div>
-                        <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                         <Separator />
+                        <div>
+                            <h3 className="font-semibold mb-2">Método de Pago:</h3>
+                             <p className="text-sm text-muted-foreground">{formValues.paymentMethod === 'cod' ? 'Pago Contra-entrega' : 'Pago Anticipado (Bizum / Transferencia)'}</p>
                         </div>
-                    ))}
-                    <Separator />
-                    <div className="flex justify-between font-bold text-lg">
-                        <span>Total a Pagar</span>
-                        <span>{formatPrice(cartTotal)}</span>
-                    </div>
-                </CardContent>
-                <CardFooter className="flex-col items-stretch gap-4">
-                <Button size="lg" type="submit" className="w-full" disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null }
-                    {loading ? 'Confirmando...' : `Confirmar Reserva (${formatPrice(cartTotal)})`}
-                </Button>
-                <div className="text-center mt-2">
-                    <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
-                    &larr; Volver a la tienda
-                    </Link>
-                </div>
-                </CardFooter>
-            </Card>
+                        <Separator />
+                        <div className="flex justify-between font-bold text-xl">
+                            <span>Total a Pagar</span>
+                            <span className="text-primary">{formatPrice(cartTotal)}</span>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                         <Button size="lg" type="submit" className="w-full" disabled={loading}>
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null }
+                            {loading ? 'Confirmando...' : 'Confirmar Reserva'}
+                        </Button>
+                    </CardFooter>
+                </Card>
+            )}
+
+            <div className="mt-8 flex justify-between">
+                {step > 1 ? (
+                    <Button type="button" variant="outline" onClick={handlePrevStep}>
+                       <ArrowLeft className="mr-2" /> Anterior
+                    </Button>
+                ) : (
+                    <Button asChild type="button" variant="outline">
+                        <Link href="/products">&larr; Seguir Comprando</Link>
+                    </Button>
+                )}
+                 {step < 4 && (
+                    <Button type="button" onClick={handleNextStep}>
+                        Siguiente
+                    </Button>
+                )}
             </div>
+
         </form>
       </Form>
     </div>
