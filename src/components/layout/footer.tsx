@@ -60,7 +60,7 @@ export function Footer() {
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper Online. T
-                {pathname.startsWith('/blog') ? (
+                {pathname === '/blog' ? (
                     <Link href="/admin/login">o</Link>
                 ) : (
                     'o'
