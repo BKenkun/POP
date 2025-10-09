@@ -18,13 +18,15 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
-
+  
   useEffect(() => {
+    // If loading is finished and user is not authenticated, redirect to verify page
     if (!loading && !isAuthenticated) {
       router.replace('/verify');
     }
   }, [isAuthenticated, loading, router]);
 
+  // While loading, or if not authenticated (before redirect kicks in), show loader.
   if (loading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
@@ -33,6 +35,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     );
   }
 
+  // If authenticated, render the admin panel layout
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas">
@@ -63,26 +66,9 @@ export default function AdminLayout({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  // The verify and positive pages are public but still need the admin auth context.
-  const isPublicPage = ['/verify', '/positive'].includes(pathname);
-
-  if (isPublicPage) {
-    return (
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <AuthProvider>
-          <AdminAuthProvider>
-            {children}
-            <Toaster />
-          </AdminAuthProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    );
-  }
+  // The verify page is public and does not need the admin panel layout.
+  // It will get the provider wrapper below, but not the content wrapper.
+  const isPublicAdminPage = ['/verify'].includes(pathname);
 
   return (
     <ThemeProvider
@@ -93,10 +79,17 @@ export default function AdminLayout({
     >
       <AuthProvider>
         <AdminAuthProvider>
-            <SidebarProvider>
-                <AdminLayoutContent>{children}</AdminLayoutContent>
-                <Toaster />
-            </SidebarProvider>
+            {isPublicAdminPage ? (
+              <>
+                {children}
+                <Toaster/>
+              </>
+            ) : (
+               <SidebarProvider>
+                  <AdminLayoutContent>{children}</AdminLayoutContent>
+                  <Toaster />
+              </SidebarProvider>
+            )}
         </AdminAuthProvider>
       </AuthProvider>
     </ThemeProvider>

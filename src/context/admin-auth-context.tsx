@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth as useClientAuthContext } from './auth-context';
+import { useAuth } from './auth-context';
 
 const ADMIN_AUTHENTICATED_KEY = 'admin_session_active';
 
@@ -19,11 +19,11 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const { loading: clientAuthLoading } = useClientAuthContext();
+  const { loading: clientAuthLoading } = useAuth(); // Wait for client auth to be ready
 
   useEffect(() => {
-    // Wait for the client auth context to be ready.
-    // This is crucial to avoid race conditions.
+    // Crucially, wait for the main auth provider to finish loading.
+    // This prevents race conditions where we check sessionStorage before Firebase has initialized.
     if (clientAuthLoading) {
       return;
     }
@@ -56,11 +56,10 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Could not clear session storage for admin auth:', e);
     }
     setIsAuthenticated(false);
-    // Redirect to the main site page after admin logout, not the verify page.
-    router.push('/');
+    router.push('/'); // Redirect to home on logout
   };
-
-  // The final loading state depends on both contexts.
+  
+  // The final loading state depends on both contexts finishing their initial checks.
   const finalLoading = clientAuthLoading || loading;
 
   const value = { isAuthenticated, loading: finalLoading, login, logout };

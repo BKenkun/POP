@@ -6,9 +6,13 @@ import { useAuth } from "@/context/auth-context";
 
 export function Footer() {
     const pathname = usePathname();
-    const { isAdminAsCustomer } = useAuth();
+    const { user } = useAuth();
     
-    // No renderizar el footer en las rutas de admin
+    // Determine if the logged-in user is the administrator based on email.
+    // This is ONLY for showing the link, not for auth logic.
+    const isClientAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+    // No renderizar el footer en las rutas de admin o verificación.
     if (pathname.startsWith('/admin') || pathname.startsWith('/verify') || pathname.startsWith('/positive')) {
       return null;
     }
@@ -61,7 +65,7 @@ export function Footer() {
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper Online. T
-                {isAdminAsCustomer ? (
+                {isClientAdmin ? (
                     <Link href="/verify">o</Link>
                 ) : (
                     'o'

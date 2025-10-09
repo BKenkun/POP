@@ -14,7 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 export default function VerifyPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { login, isAuthenticated } = useAdminAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAdminAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,11 +22,11 @@ export default function VerifyPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace('/positive');
+    // If the user is already authenticated as an admin, redirect them directly to the panel
+    if (!authLoading && isAuthenticated) {
+      router.replace('/admin');
     }
-  }, [isAuthenticated, router]);
-
+  }, [isAuthenticated, authLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +39,9 @@ export default function VerifyPage() {
         login();
         toast({
             title: 'Verificación Correcta',
-            description: 'Redirigiendo al portal de acceso...',
+            description: 'Redirigiendo al panel de administrador...',
         });
-        router.push('/positive');
+        router.push('/admin'); // Redirect directly to admin panel on success
     } else {
         setError(result.error || 'Email o contraseña incorrectos.');
         toast({
@@ -53,17 +53,31 @@ export default function VerifyPage() {
     }
   };
 
+  // While checking auth state, show a loader
+  if (authLoading) {
+      return (
+          <div className="flex items-center justify-center min-h-screen bg-muted/40">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+      );
+  }
+
+  // If already authenticated, this will be blank while redirecting
+  if (isAuthenticated) {
+      return null;
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
         <Card className="w-full max-w-sm">
             <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Confirmación de Administrador</CardTitle>
-                <CardDescription>Confirma tu identidad para acceder al panel.</CardDescription>
+                <CardTitle className="text-2xl">Acceso de Administrador</CardTitle>
+                <CardDescription>Introduce tus credenciales para acceder al panel.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">Email de Administrador</Label>
                         <Input 
                         id="email" 
                         type="email" 
@@ -89,7 +103,7 @@ export default function VerifyPage() {
                     <Button type="submit" className="w-full" disabled={loading}>
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         <LogIn className="mr-2 h-4 w-4" />
-                        {loading ? "Verificando..." : "Confirmar"}
+                        {loading ? "Verificando..." : "Acceder al Panel"}
                     </Button>
                 </form>
             </CardContent>
