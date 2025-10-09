@@ -1,43 +1,6 @@
 
 'use server';
 
-import { createCheckoutSession, createPackCheckoutSession, createSubscriptionCheckout } from '@/lib/stripe';
-import { CartItem, PackItemBrief } from '@/lib/types';
-
-// This action is for the main shopping cart
-export async function createCheckoutSessionAction(
-    items: CartItem[],
-    userId: string | undefined,
-    pointsToRedeem: number = 0,
-): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
-     return createCheckoutSession(items, userId, pointsToRedeem);
-}
-
-// This is a new, separate action specifically for the custom pack builder
-export async function createCustomPackCheckoutAction(
-    packItems: PackItemBrief[],
-    discountedPrice: number,
-    userId?: string
-): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
-    const totalQuantity = packItems.reduce((sum, item) => sum + item.quantity, 0);
-    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-    
-    // Create a virtual cart item representing the pack
-    const customPackForCheckout: CartItem = {
-        id: 'custom-pack',
-        name: `Pack Personalizado (${totalQuantity} uds)`,
-        description: packItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
-        price: discountedPrice,
-        imageUrl: `${YOUR_DOMAIN}/pack-default.png`, // Placeholder image for packs
-        imageHint: 'custom pack',
-        quantity: 1, // A pack is a single item in checkout terms
-    };
-    
-    // Pass the detailed pack items to the checkout session creator
-    return createPackCheckoutSession(customPackForCheckout, packItems, userId);
-}
-
-
-export async function createSubscriptionCheckoutAction(userId: string, userEmail: string): Promise<{ sessionId: string | null; sessionUrl: string | null; error?: string }> {
-    return createSubscriptionCheckout(userId, userEmail);
-}
+// This file is intentionally left blank as checkout is now handled
+// by the manual reservation system in `checkout-client-page.tsx`.
+// Stripe-related checkout actions have been removed.

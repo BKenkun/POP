@@ -8,7 +8,6 @@ import { Loader2, Settings, CalendarClock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createStripePortalAction } from "@/app/actions/manage-subscription";
 import SubscriptionTimeline from "./_components/subscription-timeline";
 import MonthlyBoxSelector from "./_components/monthly-box-selector";
 import { Product } from "@/lib/types";
@@ -58,16 +57,8 @@ export default function SubscriptionManagementPage() {
     const handleManageSubscription = async () => {
         if (!user) return;
         setPortalLoading(true);
-        toast({ title: 'Redirigiendo a tu portal de cliente...' });
-        
-        const { url, error } = await createStripePortalAction(user.uid);
-
-        if (error || !url) {
-            toast({ title: 'Error', description: error || 'No se pudo abrir el portal.', variant: 'destructive' });
-            setPortalLoading(false);
-            return;
-        }
-        window.location.href = url;
+        toast({ title: 'Esta función no está disponible actualmente.', variant: 'destructive' });
+        setPortalLoading(false);
     };
     
     if (authLoading || !isSubscribed) {

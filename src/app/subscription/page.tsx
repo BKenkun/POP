@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAuth } from '@/context/auth-context';
 import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createSubscriptionCheckoutAction } from '../actions/checkout';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -37,30 +36,11 @@ export default function SubscriptionPage() {
 
         setLoading(true);
         toast({
-            title: 'Creando tu suscripción...',
-            description: 'Espera mientras te redirigimos al pago seguro.',
+            title: 'Función no disponible',
+            description: 'La creación de nuevas suscripciones está temporalmente desactivada.',
+            variant: 'destructive'
         });
-
-        try {
-            if (!user.email) {
-                throw new Error("El email del usuario no está disponible.");
-            }
-            const { sessionUrl, error } = await createSubscriptionCheckoutAction(user.uid, user.email);
-
-            if (error || !sessionUrl) {
-                throw new Error(error || 'No se pudo iniciar el proceso de suscripción.');
-            }
-
-            window.location.href = sessionUrl;
-
-        } catch (error: any) {
-            toast({
-                title: 'Error de Suscripción',
-                description: error.message,
-                variant: 'destructive'
-            });
-            setLoading(false);
-        }
+        setLoading(false);
     }
     
     return (

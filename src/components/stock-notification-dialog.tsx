@@ -36,7 +36,8 @@ export function StockNotificationDialog({ product, children }: StockNotification
         e.preventDefault();
         setLoading(true);
 
-        if (!product?.priceId || !email) {
+        // In a real app, product.id would be used. priceId was from Stripe.
+        if (!product?.id || !email) {
             toast({
                 title: 'Error',
                 description: 'Falta información del producto o el email. Inténtalo de nuevo.',
@@ -50,7 +51,8 @@ export function StockNotificationDialog({ product, children }: StockNotification
             const response = await fetch('/api/stock-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, priceId: product.priceId }),
+                // Use product.id instead of priceId
+                body: JSON.stringify({ email, productId: product.id }),
             });
 
             const result = await response.json();
