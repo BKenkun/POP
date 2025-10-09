@@ -23,12 +23,13 @@ import { useAdminAuth } from "@/context/admin-auth-context";
 
 export default function AdminOrdersPage() {
   const firestore = useFirestore();
-  const { isAuthenticated } = useAdminAuth();
+  const { isAuthenticated, loading: authLoading } = useAdminAuth();
   
   const userOrdersQuery = useMemoFirebase(() => {
       if (!firestore || !isAuthenticated) return null;
       return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'))
     }, [firestore, isAuthenticated]);
+
   const reservationsQuery = useMemoFirebase(() => {
       if (!firestore || !isAuthenticated) return null;
       return query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc'))
@@ -38,15 +39,16 @@ export default function AdminOrdersPage() {
   const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
   
   const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const loading = loadingUserOrders || loadingGuestOrders;
+  const loading = authLoading || loadingUserOrders || loadingGuestOrders;
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
-    const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
-    uniqueOrders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    setAllOrders(uniqueOrders);
-  }, [userOrders, guestOrders, isAuthenticated]);
+    if (userOrders || guestOrders) {
+        const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
+        const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
+        uniqueOrders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setAllOrders(uniqueOrders);
+    }
+  }, [userOrders, guestOrders]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {

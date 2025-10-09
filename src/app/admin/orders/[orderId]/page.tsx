@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { collectionGroup, query, where, getDocs, updateDoc, doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, onSnapshot, collectionGroup } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { Loader2, Package, User, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,54 +22,77 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
+import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { isAuthenticated, loading: authLoading } = useAdminAuth();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [docRefPath, setDocRefPath] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
+  // This effect finds the document path once authenticated.
+  useEffect(() => {
+    if (!orderId || !firestore || !isAuthenticated) return;
+
+    const findOrderPath = async () => {
+      let path: string | null = null;
+      try {
+        const ordersQuery = query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
+        const orderSnap = await getDocs(ordersQuery);
+        
+        if (!orderSnap.empty) {
+          path = orderSnap.docs[0].ref.path;
+        } else {
+          // If not in user orders, check reservations
+          const reservationsQuery = query(collection(firestore, 'reservations'), where('id', '==', orderId));
+          const reservationSnap = await getDocs(reservationsQuery);
+          if (!reservationSnap.empty) {
+            path = reservationSnap.docs[0].ref.path;
+          }
+        }
+      } catch (e) {
+        console.error("Error finding order path:", e);
+      } finally {
+        setDocRefPath(path);
+      }
+    };
+    findOrderPath();
+  }, [orderId, firestore, isAuthenticated]);
+
   const docRef = useMemoFirebase(() => {
     if (!docRefPath || !firestore) return null;
     return doc(firestore, docRefPath);
   }, [docRefPath, firestore]);
 
-  const { data: orderData, isLoading: isDocLoading } = useDoc<Order>(docRef);
-
+  // This effect subscribes to the document once the path is found.
   useEffect(() => {
-    if (!orderId || !firestore) return;
-    setLoading(true);
-    const findOrderPath = async () => {
-      let path: string | null = null;
-      // Search in reservations
-      const reservationsQuery = query(collection(firestore, 'reservations'), where('id', '==', orderId));
-      const reservationSnap = await getDocs(reservationsQuery);
-      if (!reservationSnap.empty) {
-        path = reservationSnap.docs[0].ref.path;
-      } else {
-        // Search in user orders
-        const ordersQuery = query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
-        const orderSnap = await getDocs(ordersQuery);
-        if (!orderSnap.empty) {
-          path = orderSnap.docs[0].ref.path;
-        }
-      }
-      setDocRefPath(path);
-      setLoading(false);
+    if (!docRef) {
+      if (isAuthenticated) setLoading(false); // Stop loading if authenticated but no path found
+      return;
     };
-    findOrderPath();
-  }, [orderId, firestore]);
-  
-  useEffect(() => {
-    if (orderData) {
-      setOrder(orderData);
-    }
-  }, [orderData]);
+    
+    setLoading(true);
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+        if (snapshot.exists()) {
+            setOrder(snapshot.data() as Order);
+        } else {
+            setOrder(null);
+        }
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching order details:", error);
+        toast({ title: "Error", description: "No se pudieron cargar los detalles del pedido."});
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [docRef, toast]);
 
 
   const handleStatusChange = async (newStatus: string) => {
@@ -80,6 +103,10 @@ export default function OrderDetailPage() {
         title: "Estado del pedido actualizado",
         description: `El pedido ahora está marcado como "${newStatus}".`,
     });
+    // Optimistic update of local state
+    if(order) {
+        setOrder({...order, status: newStatus as Order['status']});
+    }
     setUpdatingStatus(false);
   };
   
@@ -104,7 +131,7 @@ export default function OrderDetailPage() {
     }
   };
 
-  if (loading || isDocLoading) {
+  if (loading || authLoading) {
     return <div className="flex justify-center items-center h-60"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 

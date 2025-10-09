@@ -23,7 +23,7 @@ import { es } from 'date-fns/locale';
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Order, Product } from "@/lib/types";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collectionGroup, query, orderBy } from "firebase/firestore";
+import { collection, collectionGroup, query, orderBy } from "firebase/firestore";
 import { cbdProducts } from "@/lib/cbd-products";
 import { useAdminAuth } from "@/context/admin-auth-context";
 
@@ -124,7 +124,7 @@ const StatCard = ({ title, value, change, icon: Icon, format = (v: number) => v,
 };
 
 export default function AdminDashboardPage() {
-  const { isAuthenticated } = useAdminAuth();
+  const { isAuthenticated, loading: authLoading } = useAdminAuth();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
@@ -134,21 +134,46 @@ export default function AdminDashboardPage() {
   const [products] = useState<Product[]>(cbdProducts);
   
   const firestore = useFirestore();
+
   const ordersQuery = useMemoFirebase(() => {
     if (!firestore || !isAuthenticated) return null; // Wait for auth
-    return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+    return query(
+      collectionGroup(firestore, 'orders'), 
+      orderBy('createdAt', 'desc')
+    );
   }, [firestore, isAuthenticated]);
 
-  const { data: allOrders, isLoading: loading } = useCollection<Order>(ordersQuery);
+  const reservationsQuery = useMemoFirebase(() => {
+    if (!firestore || !isAuthenticated) return null;
+    return query(
+        collection(firestore, 'reservations'),
+        orderBy('createdAt', 'desc')
+    );
+  }, [firestore, isAuthenticated]);
+
+  const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(ordersQuery);
+  const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  
+  const loading = authLoading || loadingUserOrders || loadingGuestOrders;
+  
+   useEffect(() => {
+    if (userOrders || guestOrders) {
+      const combined = [...(userOrders || []), ...(guestOrders || [])];
+      const unique = Array.from(new Map(combined.map(order => [order.id, order])).values());
+      unique.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      setAllOrders(unique);
+    }
+  }, [userOrders, guestOrders]);
 
   
   const processedData = useMemo(() => {
-    const periodAData = processOrdersForPeriod(allOrders || [], dateRange, products);
+    const periodAData = processOrdersForPeriod(allOrders, dateRange, products);
     let periodBData = { revenue: 0, orderCount: 0, clients: new Set(), dailyRevenue: new Map(), topProducts: new Map(), topClients: new Map()};
     let chartData = [];
 
     if (isCompareEnabled && compareDateRange) {
-        periodBData = processOrdersForPeriod(allOrders || [], compareDateRange, products);
+        periodBData = processOrdersForPeriod(allOrders, compareDateRange, products);
     }
     
     // Combine chart data
@@ -167,7 +192,7 @@ export default function AdminDashboardPage() {
     
     const sortedTopProducts = Array.from(periodAData.topProducts.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 3);
     const sortedTopClients = Array.from(periodAData.topClients.values()).sort((a, b) => b.total - a.total).slice(0, 3);
-    const recentOrders = (allOrders || []).slice(0,3);
+    const recentOrders = allOrders.slice(0,3);
 
     return { 
       ...periodAData,
@@ -254,7 +279,7 @@ export default function AdminDashboardPage() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
+              {authLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
                 <div className="text-2xl font-bold">{products.length}</div>
                 <Link href="/admin/products">
                     <p className={cn("text-xs font-bold hover:underline cursor-pointer", processedData.lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>

@@ -1,97 +1,39 @@
-/**
- * @file Firestore Security Rules for PuroRush
- *
- * @core_philosophy This ruleset enforces a strict user-ownership model for cart items and orders,
- * ensuring that users can only access their own data. Products are publicly readable.
- *
- * @data_structure
- * - /products/{productId}: Stores product information, publicly readable.
- * - /users/{userId}/cart_items/{cartItemId}: Stores cart items for each user, only accessible by the owner.
- * - /users/{userId}/orders/{orderId}: Stores order information for each user, only accessible by the owner.
- *
- * @key_security_decisions
- * - Products are publicly readable to allow browsing without authentication.
- * - Cart items and orders are private to each user and can only be accessed by that user.
- * - Listing all users is disallowed.
- * - The rules do not enforce a specific data schema.
- *
- * @denormalization_for_authorization
- * - The rules rely on path-based ownership, where the user ID in the path is used to determine access. This avoids the need for `get()` calls in security rules, simplifying the rules and improving performance.
- * - The rules are structured to support atomic operations and improve debuggability.
- *
- * @structural_segregation
- * - User-specific data (cart items and orders) is stored in subcollections under `/users/{userId}`, ensuring that users can only access their own data.
- */
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Allows anyone to read product information. Only the application backend can manage products.
-     * @path /products/{productId}
-     * @allow (get, list): if true
-     * @deny (create, update, delete): if false
-     * @principle Public read, admin-only write.
-     */
-    match /products/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+  
+    // Allow admins to do anything
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == "maryandpopper@gmail.com";
     }
 
-    /**
-     * @description Manages cart items for each user. Only the owner can create, read, update, and delete cart items.
-     * @path /users/{userId}/cart_items/{cartItemId}
-     * @allow (create): if isSignedIn() && isOwner(userId);
-     * @allow (get, list, update, delete): if isSignedIn() && isExistingOwner(userId);
-     * @deny (create): if !isSignedIn() || !isOwner(userId);
-     * @deny (get, list, update, delete): if !isSignedIn() || !isExistingOwner(userId);
-     * @principle Enforces user ownership of cart items.
-     */
-    match /users/{userId}/cart_items/{cartItemId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get, list, update, delete: if isSignedIn() && isExistingOwner(userId);
+    // Reglas para la colección de usuarios
+    match /users/{userId} {
+      // Un usuario solo puede leer o escribir en su propio documento
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Un usuario solo puede listar sus propios pedidos
+      match /orders/{orderId} {
+        allow read, list, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Reglas para la colección de reservas de invitados
+    match /reservations/{reservationId} {
+      // Los invitados (sin autenticar) solo pueden crear una reserva nueva.
+      allow write: if request.auth == null;
+      // Nadie puede leer, actualizar o eliminar reservas de otros.
+      allow read, update, delete: if false;
     }
 
-    /**
-     * @description Manages order information for each user. Only the owner can create, read, update, and delete orders.
-     * @path /users/{userId}/orders/{orderId}
-     * @allow (create): if isSignedIn() && isOwner(userId);
-     * @allow (get, list, update, delete): if isSignedIn() && isExistingOwner(userId);
-     * @deny (create): if !isSignedIn() || !isOwner(userId);
-     * @deny (get, list, update, delete): if !isSignedIn() || !isExistingOwner(userId);
-     * @principle Enforces user ownership of orders.
-     */
-    match /users/{userId}/orders/{orderId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get, list, update, delete: if isSignedIn() && isExistingOwner(userId);
-    }
-
-    // --- Helper functions ---
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user ID matches the authenticated user's ID.
-     * @param {string} userId The user ID to check.
-     * @return {bool} True if the user ID matches the authenticated user's ID, false otherwise.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user is the owner of an existing resource.
-     * @param {string} userId The user ID to check.
-     * @return {bool} True if the user is the owner of the existing resource, false otherwise.
-     */
-    function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+    // Reglas para las consultas collectionGroup
+    // Permite a usuarios autenticados (y por ende al admin) listar pedidos de todos los usuarios
+    match /{path=**}/orders/{orderId} {
+      allow list: if request.auth != null;
+      // Las reglas de lectura/escritura se heredan de la ruta /users/{userId}/orders/{orderId}
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || request.auth.uid == path[1];
     }
   }
 }
