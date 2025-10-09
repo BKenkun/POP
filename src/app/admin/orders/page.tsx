@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from "react";
@@ -49,7 +48,7 @@ export default function AdminOrdersPage() {
     if (userOrders || guestOrders) {
         const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
         const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
-        uniqueOrders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        uniqueOrders.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
         setAllOrders(uniqueOrders);
     }
   }, [userOrders, guestOrders]);
@@ -113,7 +112,7 @@ export default function AdminOrdersPage() {
                     {allOrders.map((order) => (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
-                        <TableCell>{new Date(order.createdAt).toLocaleDateString('es-ES')}</TableCell>
+                        <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'N/A'}</TableCell>
                         <TableCell>{order.customerName}</TableCell>
                         <TableCell>
                             <Badge variant={getStatusVariant(order.status)}>
@@ -139,5 +138,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
-    

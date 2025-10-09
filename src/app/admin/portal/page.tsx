@@ -10,16 +10,16 @@ import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminPortalPage() {
-    const { isVerified, loading } = useAdminAuth();
+    const { isAuthenticated, loading } = useAdminAuth();
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading && !isVerified) {
+        if (!loading && !isAuthenticated) {
             router.replace('/admin/verify');
         }
-    }, [isVerified, loading, router]);
+    }, [isAuthenticated, loading, router]);
 
-    if (loading || !isVerified) {
+    if (loading || !isAuthenticated) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-muted/40">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
@@ -211,7 +210,7 @@ export default function AdminDashboardPage() {
   }, [allOrders, products, dateRange, compareDateRange, isCompareEnabled]);
 
   // Main loading state before rendering the dashboard
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -381,5 +380,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    

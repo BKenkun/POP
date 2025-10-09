@@ -1,25 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useAdminAuth } from '@/context/admin-auth-context';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { adminLoginAction } from '@/app/actions/admin-auth';
-import { useAdminAuth } from '@/context/admin-auth-context';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
 export default function AdminVerifyPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { login } = useAdminAuth();
+  const { login, isAuthenticated } = useAdminAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // If the user is already authenticated as an admin, redirect them to the portal
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/admin/portal');
+    }
+  }, [isAuthenticated, router]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,12 +37,12 @@ export default function AdminVerifyPage() {
     const result = await adminLoginAction({ email, password });
 
     if (result.success) {
-        login(); // Set isAuthenticated to true
+        login(); // Set isAuthenticated to true in the admin context
         toast({
             title: 'Verificación Correcta',
             description: 'Redirigiendo al portal de acceso...',
         });
-        router.push('/admin/portal');
+        router.push('/admin/portal'); // Redirect to the secure portal page
     } else {
         setError(result.error || 'Email o contraseña incorrectos.');
         toast({
