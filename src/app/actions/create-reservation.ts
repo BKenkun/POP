@@ -32,6 +32,7 @@ const getOrderStatus = (paymentMethod: string): string => {
             return 'Pago Pendiente de Verificación';
         case 'cod_cash':
         case 'cod_card':
+        case 'cod_bizum':
         default:
             return 'Reserva Recibida';
     }

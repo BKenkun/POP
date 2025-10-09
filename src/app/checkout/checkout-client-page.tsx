@@ -41,7 +41,7 @@ const checkoutSchema = z.object({
   state: z.string().min(2, "El estado/provincia es requerido."),
   postalCode: z.string().min(3, "El código postal es requerido."),
   country: z.string().min(2, "El país es requerido."),
-  paymentMethod: z.enum(['cod_cash', 'cod_card', 'prepaid_bizum', 'prepaid_transfer'], {
+  paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'], {
     required_error: "Debes seleccionar un método de pago.",
   }),
 });
@@ -52,6 +52,7 @@ type PrimaryPaymentMethod = 'cod' | 'prepaid';
 const paymentMethodLabels: { [key in CheckoutFormValues['paymentMethod']]: string } = {
     cod_cash: 'Contra-entrega (Efectivo)',
     cod_card: 'Contra-entrega (Tarjeta)',
+    cod_bizum: 'Contra-entrega (Bizum)',
     prepaid_bizum: 'Pago Anticipado (Bizum)',
     prepaid_transfer: 'Pago Anticipado (Transferencia)',
 }
@@ -101,7 +102,7 @@ const PaymentOption = ({
 }) => (
   <Label
     htmlFor={value}
-    className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all hover:bg-accent/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+    className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all hover:bg-primary/5 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
   >
     <Icon className="h-6 w-6 flex-shrink-0 text-primary" />
     <div className="flex-1">
@@ -310,7 +311,7 @@ export default function CheckoutClientPage() {
                             <Label className={cn("flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all", primaryPaymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-muted')}>
                                 <RadioGroupItem value="cod" id="cod" className="sr-only" />
                                 <Truck className="h-8 w-8 mb-2" />
-                                <span className="font-bold text-lg">Contra-entrega</span>
+                                <span className="font-bold text-lg">Pago Contra-entrega</span>
                             </Label>
                             <Label className={cn("flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all", primaryPaymentMethod === 'prepaid' ? 'border-primary bg-primary/5' : 'border-muted')}>
                                 <RadioGroupItem value="prepaid" id="prepaid" className="sr-only" />
@@ -332,12 +333,13 @@ export default function CheckoutClientPage() {
                                                 <CollapsibleContent className="space-y-4">
                                                      <PaymentOption value="cod_card" icon={CreditCard} title="Pagar con Tarjeta" description="El repartidor llevará un TPV móvil."/>
                                                      <PaymentOption value="cod_cash" icon={Banknote} title="Pagar en Efectivo" description="Ten preparado el importe exacto para el repartidor."/>
+                                                     <PaymentOption value="cod_bizum" icon={Smartphone} title="Pagar con Bizum en la entrega" description="Paga con Bizum cuando recibas el paquete."/>
                                                 </CollapsibleContent>
                                             </Collapsible>
                                             <Collapsible open={primaryPaymentMethod === 'prepaid'}>
                                                 <CollapsibleContent className="space-y-4">
-                                                     <PaymentOption value="prepaid_bizum" icon={Smartphone} title="Pagar con Bizum" description="Recibirás un email con nuestro número de teléfono."/>
-                                                     <PaymentOption value="prepaid_transfer" icon={Banknote} title="Pagar por Transferencia" description="Recibirás un email con nuestro número de cuenta (IBAN)."/>
+                                                     <PaymentOption value="prepaid_bizum" icon={Smartphone} title="Pagar con Bizum (Anticipado)" description="Recibirás un email con nuestro número de teléfono."/>
+                                                     <PaymentOption value="prepaid_transfer" icon={Banknote} title="Pagar por Transferencia (Anticipado)" description="Recibirás un email con nuestro número de cuenta (IBAN)."/>
                                                 </CollapsibleContent>
                                             </Collapsible>
                                         </RadioGroup>
