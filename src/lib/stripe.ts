@@ -1,4 +1,6 @@
 
+'use client';
+
 import Stripe from 'stripe';
 import type { Product, CartItem, PackItemBrief } from './types';
 
@@ -80,7 +82,7 @@ export async function getStripeProducts(): Promise<Product[]> {
       const longDescParts = Object.entries(product.metadata)
         .filter(([key]) => key.startsWith('long_description_'))
         .sort(([keyA], [keyB]) => keyA.localeCompare(keyB, undefined, { numeric: true }))
-        .map(([, value]) => value);
+        .map(([, value]) => value as string);
       
       const longDescription = longDescParts.length > 0 ? longDescParts.join('') : undefined;
       // --- End Workaround ---
@@ -105,6 +107,8 @@ export async function getStripeProducts(): Promise<Product[]> {
         brand: product.metadata.brand,
         size: product.metadata.size,
         composition: product.metadata.composition,
+        active: product.active,
+        url: product.url,
       };
     })
     .filter((p) => p.price > 0);
@@ -142,7 +146,7 @@ export async function createCheckoutSession(
             product_data: {
                 name: item.name,
                 images: item.imageUrl ? [item.imageUrl] : [],
-                description: item.description,
+                description: item.description || undefined,
                 metadata: {
                     productId: item.id,
                 },
@@ -272,4 +276,6 @@ export async function createSubscriptionCheckout(userId: string, userEmail: stri
         return { sessionId: null, sessionUrl: null, error: error.message };
     }
 }
+    
+
     
