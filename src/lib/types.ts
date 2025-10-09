@@ -73,14 +73,14 @@ export type OrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'e
 export interface Order {
   id: string;
   userId: string;
-  createdAt: Date;
+  createdAt: any;
   status: OrderStatus;
   total: number; // Total amount in cents
   items: OrderItem[];
   customerName: string;
   customerEmail: string;
   shippingAddress: ShippingAddress | null;
-  paymentMethod?: 'cod' | 'prepaid';
+  paymentMethod?: 'cod_cash' | 'cod_card' | 'cod_bizum' | 'prepaid_bizum' | 'prepaid_transfer';
 }
 
 

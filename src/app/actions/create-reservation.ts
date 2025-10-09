@@ -3,9 +3,8 @@
 
 import { CartItem, Order, ShippingAddress } from "@/lib/types";
 import { cbdProducts } from "@/lib/cbd-products";
-import { getFirestore } from "firebase-admin/firestore";
-import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { initializeFirebase } from "@/firebase/server";
+import { getFirestore, doc, serverTimestamp, setDoc, collection } from "firebase/firestore";
+import { initializeFirebase } from "@/firebase";
 
 
 // Helper function to generate a unique alphanumeric order code
@@ -44,7 +43,7 @@ export async function createReservationAction(
     input: ReservationInput,
 ): Promise<{ orderId: string | null; error?: string }> {
     console.log("Received reservation request:", input);
-    const { db } = initializeFirebase();
+    const { firestore } = initializeFirebase();
 
     // --- 1. Generate Unique Order Code ---
     const orderId = generateOrderCode();
@@ -81,10 +80,9 @@ export async function createReservationAction(
         country: input.customerDetails.country,
     }
     
-    const newOrder: Order = {
+    const newOrder: Omit<Order, 'createdAt'> & { createdAt: any } = {
         id: orderId,
         userId: input.userId || 'guest',
-        createdAt: new Date(), // This will be replaced by serverTimestamp
         status: getOrderStatus(input.customerDetails.paymentMethod),
         total: input.total,
         items: input.items.map(item => ({
@@ -97,7 +95,8 @@ export async function createReservationAction(
         customerName: input.customerDetails.name,
         customerEmail: input.customerDetails.email,
         shippingAddress: shippingAddress,
-        paymentMethod: input.customerDetails.paymentMethod as any,
+        paymentMethod: input.customerDetails.paymentMethod,
+        createdAt: serverTimestamp(),
     };
 
     // --- 4. Save to Firestore ---
@@ -105,16 +104,13 @@ export async function createReservationAction(
         let docRef;
         if (input.userId) {
             // For registered users, save under their own orders subcollection
-            docRef = doc(db, 'users', input.userId, 'orders', orderId);
+            docRef = doc(firestore, 'users', input.userId, 'orders', orderId);
         } else {
             // For guest users, save to a general 'reservations' collection
-            docRef = doc(db, 'reservations', orderId);
+            docRef = doc(firestore, 'reservations', orderId);
         }
 
-        await setDoc(docRef, {
-            ...newOrder,
-            createdAt: serverTimestamp(), // Use server-side timestamp for accuracy
-        });
+        await setDoc(docRef, newOrder);
         console.log(`✅ Order ${orderId} successfully saved to Firestore.`);
     } catch (error) {
         console.error("❌ Firestore save error:", error);
