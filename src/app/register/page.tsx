@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -20,6 +20,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -82,25 +84,51 @@ export default function RegisterPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="password">Contraseña</Label>
-                    <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    />
+                    <div className="relative">
+                        <Input 
+                        id="password" 
+                        type={showPassword ? "text" : "password"} 
+                        required 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        className="pr-10"
+                        />
+                         <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={loading}
+                        >
+                            {showPassword ? <EyeOff /> : <Eye />}
+                        </Button>
+                    </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-                    <Input 
-                    id="confirmPassword" 
-                    type="password" 
-                    required 
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={loading}
-                    />
+                    <div className="relative">
+                        <Input 
+                        id="confirmPassword" 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        required 
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={loading}
+                        className="pr-10"
+                        />
+                         <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            disabled={loading}
+                        >
+                            {showConfirmPassword ? <EyeOff /> : <Eye />}
+                        </Button>
+                    </div>
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
             </CardContent>

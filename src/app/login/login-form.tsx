@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginForm() {
@@ -20,6 +20,7 @@ export default function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -73,14 +74,27 @@ export default function LoginForm() {
         </div>
         <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input 
-            id="password" 
-            type="password" 
-            required 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            />
+            <div className="relative">
+                <Input 
+                id="password" 
+                type={showPassword ? "text" : "password"} 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                className="pr-10"
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute inset-y-0 right-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+            </div>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
