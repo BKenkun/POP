@@ -12,7 +12,6 @@ interface AdminSession {
 interface AdminAuthContextType {
   session: AdminSession | null;
   isAuthenticated: boolean;
-  loading: boolean;
   logout: () => void;
   checkSession: () => void;
 }
@@ -21,13 +20,10 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<AdminSession | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const checkSession = async () => {
-    setLoading(true);
     const sessionData = await getAdminSession();
     setSession(sessionData);
-    setLoading(false);
   };
   
   useEffect(() => {
@@ -37,15 +33,13 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await adminLogout();
     setSession(null);
-    window.location.href = '/'; // Redirect to home on logout
   };
   
-  const isAuthenticated = !loading && !!session;
+  const isAuthenticated = !!session;
 
   const value = { 
     session,
     isAuthenticated,
-    loading, 
     logout,
     checkSession,
   };

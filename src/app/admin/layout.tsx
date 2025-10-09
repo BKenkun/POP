@@ -13,12 +13,10 @@ import { Loader2 } from 'lucide-react';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { state } = useSidebar();
-  const { loading, isAuthenticated } = useAdminAuth();
   const isCollapsed = state === 'collapsed';
   
   // The middleware is the single source of truth for protecting this route.
-  // We no longer need a client-side loading/auth check here, which was
-  // causing an infinite loading state. If the user is on this page,
+  // We no longer need a client-side loading/auth check here. If the user is on this page,
   // the middleware has already validated their session.
   
   return (
