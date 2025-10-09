@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Match all paths under /admin, including the root /admin page
+// Match the root /admin page AND all paths under it
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin', '/admin/:path*'],
 }
