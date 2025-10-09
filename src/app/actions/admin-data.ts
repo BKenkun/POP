@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { Order, Product } from '@/lib/types';
-import { collection, collectionGroup, getDocs, query, where, doc, getDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, query, where, doc, getDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { cbdProducts } from '@/lib/cbd-products';
 
 // This is a server-only function
@@ -12,6 +12,17 @@ async function verifyAdmin() {
     // In a real-world scenario with more complex permissions, you'd verify
     // the user's token here using Firebase Admin SDK.
     return;
+}
+
+// Helper function to safely get a Date object from Firestore Timestamp or string
+const toDateSafe = (timestamp: any): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  }
+  if (typeof timestamp === 'string') {
+    return new Date(timestamp);
+  }
+  return new Date(0); // Fallback for invalid formats
 }
 
 async function fetchAllOrders(): Promise<Order[]> {
@@ -23,21 +34,37 @@ async function fetchAllOrders(): Promise<Order[]> {
         getDocs(reservationsQuery),
     ]);
 
-    const userOrders = userOrdersSnap.docs.map(doc => doc.data() as Order);
-    const guestOrders = guestOrdersSnap.docs.map(doc => doc.data() as Order);
+    const allOrdersMap = new Map<string, Order>();
 
-    const combined = [...userOrders, ...guestOrders];
-    const unique = Array.from(new Map(combined.map(order => [order.id, order])).values());
-    
-    // Sort after combining and ensuring uniqueness
-    unique.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : 0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : 0);
-        return dateB - dateA;
+    // Process user orders
+    userOrdersSnap.forEach(doc => {
+        const orderData = doc.data() as Order;
+        if (orderData.id) {
+            allOrdersMap.set(orderData.id, orderData);
+        }
     });
 
-    return unique;
+    // Process guest orders, potentially overwriting if an ID somehow conflicted
+    // (which is unlikely but safe to handle)
+    guestOrdersSnap.forEach(doc => {
+        const orderData = doc.data() as Order;
+        if (orderData.id) {
+            allOrdersMap.set(orderData.id, orderData);
+        }
+    });
+    
+    const combinedOrders = Array.from(allOrdersMap.values());
+    
+    // Sort after combining and ensuring uniqueness
+    combinedOrders.sort((a, b) => {
+        const dateA = toDateSafe(a.createdAt).getTime();
+        const dateB = toDateSafe(b.createdAt).getTime();
+        return dateB - dateA; // Sort descending
+    });
+
+    return combinedOrders;
 }
+
 
 export async function getAdminDashboardData() {
     await verifyAdmin();
@@ -65,7 +92,7 @@ export async function getAllAdminOrders(): Promise<Order[]> {
     // Serialize Timestamps to strings before sending to the client
     return orders.map(order => ({
         ...order,
-        createdAt: order.createdAt?.toDate ? order.createdAt.toDate().toISOString() : (typeof order.createdAt === 'string' ? order.createdAt : new Date(0).toISOString()),
+        createdAt: toDateSafe(order.createdAt).toISOString(),
     }));
 }
 
@@ -98,7 +125,14 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
         }
     }
 
-    return order;
+    if (order) {
+        return {
+            ...order,
+            createdAt: toDateSafe(order.createdAt).toISOString(),
+        } as Order;
+    }
+
+    return null;
 }
 
 // You might need a new function for getting customer data
