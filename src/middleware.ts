@@ -11,15 +11,21 @@ export async function middleware(request: NextRequest) {
   if (isProtectedAdminPath) {
     const sessionCookie = request.cookies.get('admin_session');
     
-    if (!sessionCookie) {
+    if (!sessionCookie?.value) {
         // Redirect to the new, root-level verify page
         return NextResponse.redirect(new URL('/verify', request.url));
     }
     
-    const session = await decrypt(sessionCookie.value);
-    
-    if (!session?.isAdmin) {
-        return NextResponse.redirect(new URL('/verify', request.url));
+    try {
+      const session = await decrypt(sessionCookie.value);
+      
+      if (!session?.isAdmin) {
+          return NextResponse.redirect(new URL('/verify', request.url));
+      }
+    } catch (error) {
+      console.error("Middleware decryption error:", error);
+      // If decryption fails, it's a bad cookie, redirect to login
+      return NextResponse.redirect(new URL('/verify', request.url));
     }
   }
 

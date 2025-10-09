@@ -12,7 +12,6 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/context/auth-context';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -41,7 +40,10 @@ export default function LoginForm() {
         description: 'Redirigiendo a tu panel de usuario...',
       });
 
-      router.push('/account'); 
+      // The redirect is handled by the AuthProvider and the account layout.
+      // We just need to make sure the state is updated.
+      // A small delay might help ensure context is updated before layout checks.
+      setTimeout(() => router.push('/account'), 100);
 
     } catch (err: any) {
       const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
@@ -51,9 +53,9 @@ export default function LoginForm() {
         description: errorMessage,
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false on error
     }
+    // Don't set loading to false on success, as we are navigating away
   };
 
   return (
