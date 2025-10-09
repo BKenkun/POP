@@ -16,15 +16,10 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { loading, isAuthenticated } = useAdminAuth();
   const isCollapsed = state === 'collapsed';
   
-  // Although middleware handles the redirect, this prevents flicker while
-  // the client-side auth context initializes.
-  if (loading || !isAuthenticated) {
-     return (
-      <div className="flex items-center justify-center h-screen bg-secondary">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // The middleware is the single source of truth for protecting this route.
+  // We no longer need a client-side loading/auth check here, which was
+  // causing an infinite loading state. If the user is on this page,
+  // the middleware has already validated their session.
   
   return (
     <>
