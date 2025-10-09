@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -6,7 +5,7 @@ import { User, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { doc } from 'firebase/firestore';
-import { useAuth as useFirebaseAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth as useFirebaseAuthHook, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user: firebaseUser, isUserLoading } = useFirebaseAuth();
+  const { user: firebaseUser, isUserLoading } = useFirebaseAuthHook();
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -35,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-        const auth = useFirebaseAuth(); // Get auth instance here
+        const auth = useFirebaseAuthHook(); 
         await firebaseSignOut(auth);
         router.push('/');
     } catch (error) {
