@@ -14,21 +14,29 @@ async function verifyAdmin() {
     return;
 }
 
-// Helper function to safely get a Date object from Firestore Timestamp or string
+// Helper function to safely get a Date object from Firestore Timestamp, string or other types.
 const toDateSafe = (timestamp: any): Date => {
   if (!timestamp) {
     return new Date(0); // Return epoch if timestamp is null or undefined
   }
-  if (timestamp.toDate) {
+  // Firestore Timestamp
+  if (typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
+  // ISO string or number
   if (typeof timestamp === 'string' || typeof timestamp === 'number') {
     const d = new Date(timestamp);
-    if (!isNaN(d.getTime())) {
+    if (!isNaN(d.getTime())) { // Check if the date is valid
         return d;
     }
   }
-  return new Date(0); // Fallback for invalid formats
+   // Firestore Timestamp-like object from server-side rendering
+  if (typeof timestamp === 'object' && timestamp._seconds) {
+      return new Date(timestamp._seconds * 1000);
+  }
+  
+  console.warn("Could not parse timestamp, returning epoch:", timestamp);
+  return new Date(0); // Fallback for invalid or unexpected formats
 }
 
 
