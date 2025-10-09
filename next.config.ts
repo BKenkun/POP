@@ -3,6 +3,9 @@ import type {NextConfig} from 'next';
 
 // Forcing a server restart to recognize new routes. This comment will trigger it again.
 const nextConfig: NextConfig = {
+  devIndicators: {
+    allowedDevOrigins: ['*'],
+  },
   env: {
     ADMIN_EMAIL: 'maryandpopper@gmail.com',
     ADMIN_PASSWORD: 'Jk#8@z!pLq&9$vR*sWb2',
