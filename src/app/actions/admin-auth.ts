@@ -1,4 +1,3 @@
-
 'use server';
 
 import { cookies } from 'next/headers';
@@ -38,7 +37,7 @@ export async function decrypt(input: string): Promise<AdminSessionPayload | null
   }
 }
 
-export async function login(formData: FormData) {
+export async function login(previousState: any, formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
 
