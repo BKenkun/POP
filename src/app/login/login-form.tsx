@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword, getIdToken } from 'firebase/auth';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import Link from 'next/link';
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { auth } = useFirebaseAuth();
 
@@ -45,9 +46,11 @@ export default function LoginForm() {
           },
           body: JSON.stringify({ idToken }),
       });
+      
+      const result = await response.json();
 
       if (!response.ok) {
-          throw new Error('No se pudo crear la sesión del servidor.');
+          throw new Error(result.error || 'No se pudo crear la sesión del servidor.');
       }
       
       toast({
@@ -55,14 +58,18 @@ export default function LoginForm() {
         description: 'Redirigiendo...',
       });
       
+      const redirectUrl = searchParams.get('redirect');
+
       // Check if the user is an admin and redirect accordingly
-      if (email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-          router.push('/admin');
-          router.refresh(); // Force a refresh to ensure middleware re-evaluates with the new cookie
+      if (result.isAdmin) {
+          // If the original redirect was to admin, go there. Otherwise, go to /admin by default.
+          router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
       } else {
-          router.push('/account');
-          router.refresh();
+          // For regular users, redirect to the intended page or their account page.
+          router.push(redirectUrl || '/account');
       }
+      // A full page refresh is important to ensure the new cookies are sent to the middleware
+      router.refresh();
 
     } catch (err: any) {
       const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';

@@ -9,10 +9,16 @@ export async function middleware(request: NextRequest) {
   const isProtectedAdminPath = adminPaths.some(p => pathname.startsWith(p));
 
   if (isProtectedAdminPath) {
-    const sessionCookie = request.cookies.get('admin_session')?.value;
+    // The middleware now only checks for the generic session cookie.
+    // The actual admin verification will happen inside the admin layout itself.
+    const sessionCookie = request.cookies.get('session')?.value;
     
     if (!sessionCookie) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      // If the user isn't logged in at all, redirect to the login page.
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.search = `?redirect=${pathname}`
+      return NextResponse.redirect(url);
     }
   }
 

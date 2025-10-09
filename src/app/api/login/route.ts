@@ -25,27 +25,32 @@ export async function POST(request: NextRequest) {
     // Create the session cookie. This will also verify the ID token in the process.
     const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
 
-    // Set cookie policy for session cookie.
-    const options = {
+    // Create the response object to attach cookies to
+    const response = NextResponse.json({ status: 'success', isAdmin: decodedToken.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL });
+    
+    // Set the main session cookie
+    response.cookies.set({
       name: 'session',
       value: sessionCookie,
       maxAge: expiresIn,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-    };
-
-    const response = NextResponse.json({ status: 'success' });
-    response.cookies.set(options);
+    });
     
     // If the user is the admin, create a separate, encrypted admin session cookie.
     if (decodedToken.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-        const adminExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes for admin
+        const adminExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours for admin
         const adminSession = await encrypt({ user: { email: decodedToken.email, isAdmin: true }, expires: adminExpires });
 
-        response.cookies.set('admin_session', adminSession, { expires: adminExpires, httpOnly: true, path: '/' });
+        response.cookies.set({
+          name: 'admin_session',
+          value: adminSession,
+          expires: adminExpires,
+          httpOnly: true,
+          path: '/',
+        });
     }
-
 
     return response;
 

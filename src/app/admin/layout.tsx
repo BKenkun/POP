@@ -1,6 +1,6 @@
 
 import { ReactNode, Suspense } from 'react';
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./_components/admin-sidebar";
 import { Toaster } from '@/components/ui/toaster';
@@ -12,8 +12,11 @@ import { Loader2 } from 'lucide-react';
 
 async function AdminAuthCheck() {
   const session = await getAdminSession();
+  // If the session is invalid or the user is not an admin,
+  // show a 404 page. This is a secure way to prevent access
+  // without causing redirect loops.
   if (!session?.isAdmin) {
-    redirect('/login');
+    notFound();
   }
   return null;
 }
