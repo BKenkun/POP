@@ -62,7 +62,7 @@ export function Footer() {
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                   &copy; {new Date().getFullYear()} T
-                  {isAdminAsCustomer ? (
+                  {isAdminAsCustomer && pathname.startsWith('/blog') ? (
                     <Link href="/admin" aria-label="Acceso secreto al panel de administración">o</Link>
                   ) : (
                     'o'
