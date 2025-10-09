@@ -13,8 +13,9 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  // This check now happens on the server, in a Node.js environment.
-  // It can access process.env and correctly decrypt the cookie.
+  // This check is now a secondary safeguard. The primary validation
+  // happens in the middleware. If the request reaches this point,
+  // the session is almost certainly valid.
   const session = await getAdminSession();
   if (!session?.isAdmin) {
     redirect('/verify');
