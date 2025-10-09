@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { encrypt } from '@/lib/session';
+import { encrypt, decrypt } from '@/lib/session';
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
@@ -12,6 +12,13 @@ interface AdminSessionPayload {
   isAdmin: true;
   expires: Date;
 }
+
+export async function getAdminSession() {
+  const cookie = cookies().get('admin_session')?.value;
+  if (!cookie) return null;
+  return await decrypt(cookie);
+}
+
 
 export async function login(formData: FormData): Promise<{ error: string } | void> {
   const email = formData.get('email');
