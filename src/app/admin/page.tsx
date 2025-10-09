@@ -25,6 +25,7 @@ import { Order, Product } from "@/lib/types";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collectionGroup, query, orderBy } from "firebase/firestore";
 import { cbdProducts } from "@/lib/cbd-products";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 const chartConfig = {
   periodA: {
@@ -123,6 +124,7 @@ const StatCard = ({ title, value, change, icon: Icon, format = (v: number) => v,
 };
 
 export default function AdminDashboardPage() {
+  const { isAuthenticated } = useAdminAuth();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
@@ -132,7 +134,11 @@ export default function AdminDashboardPage() {
   const [products] = useState<Product[]>(cbdProducts);
   
   const firestore = useFirestore();
-  const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
+  const ordersQuery = useMemoFirebase(() => {
+    if (!firestore || !isAuthenticated) return null; // Wait for auth
+    return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+  }, [firestore, isAuthenticated]);
+
   const { data: allOrders, isLoading: loading } = useCollection<Order>(ordersQuery);
 
   
