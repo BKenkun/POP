@@ -1,3 +1,4 @@
+
 'use server';
 
 import { cookies } from 'next/headers';
@@ -16,7 +17,7 @@ export async function login(formData: FormData) {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    // Hardcode the admin email to ensure reliability and remove .env dependency for this logic.
+    // Hardcode the admin email to ensure reliability.
     const adminEmail = 'maryandpopper@gmail.com';
 
     try {
@@ -24,7 +25,7 @@ export async function login(formData: FormData) {
         // This authenticates against Firebase Auth
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         
-        // This sets the regular user session cookie
+        // This sets the regular user session cookie. It's useful for the main app.
         const idToken = await userCredential.user.getIdToken();
         const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
         cookies().set('session', idToken, { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
@@ -33,7 +34,10 @@ export async function login(formData: FormData) {
         if (email === adminEmail) {
             const adminExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours for admin
             const adminSession = await encrypt({ user: { email: adminEmail, isAdmin: true }, expires: adminExpires });
+            
+            // Set the admin-specific cookie
             cookies().set('admin_session', adminSession, { expires: adminExpires, httpOnly: true, path: '/' });
+            
             return { success: true, redirectPath: '/admin' };
         }
 
@@ -43,18 +47,13 @@ export async function login(formData: FormData) {
     } catch (error: any) {
         console.error("Login action error:", error);
         let errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-        // Keep error message generic for security, regardless of the actual Firebase error code
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            // Message is already set
-        } else {
-            errorMessage = 'Ocurrió un error inesperado durante el inicio de sesión.';
-        }
+        // Keep error message generic for security
         return { error: errorMessage };
     }
 }
 
 export async function logout() {
-  // Clear both cookies
+  // Clear both cookies to be safe
   cookies().set('session', '', { expires: new Date(0), path: '/' });
   cookies().set('admin_session', '', { expires: new Date(0), path: '/' });
   redirect('/login');

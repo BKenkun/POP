@@ -13,8 +13,7 @@ import { Loader2 } from 'lucide-react';
 async function AdminAuthCheck() {
   const session = await getAdminSession();
   // If the session is invalid or the user is not an admin,
-  // show a 404 page. This is a secure way to prevent access
-  // without causing redirect loops.
+  // show a 404 page. This is a secure way to prevent access.
   if (!session?.isAdmin) {
     notFound();
   }
