@@ -7,7 +7,6 @@ import { CookieProvider } from "./cookie-context";
 import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
 import { FirebaseClientProvider } from "@/firebase";
-import CookieConsentBanner from "@/components/cookie-consent-banner";
 import { usePathname, useRouter } from "next/navigation";
 import { Toaster } from "@/components/ui/toaster";
 import { ReactNode, useEffect } from 'react';
@@ -22,11 +21,14 @@ function AdminArea({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // If auth state is done loading and the user is not an admin, redirect them.
     if (!loading && !isAdmin) {
-      router.push('/');
+      router.push('/login?redirect=' + window.location.pathname);
     }
   }, [isAdmin, loading, router]);
 
+  // While loading or if not an admin (before redirect kicks in), show a loading screen.
+  // This prevents flashing the admin content to non-admin users.
   if (loading || !isAdmin) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -35,6 +37,7 @@ function AdminArea({ children }: { children: ReactNode }) {
     );
   }
 
+  // If loading is complete and user is admin, render the admin layout.
   return (
     <SidebarProvider>
       <Sidebar variant="sidebar" collapsible="offcanvas">

@@ -39,22 +39,26 @@ export default function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
+      const isAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
+      
       toast({
           title: "Inicio de sesión exitoso",
-          description: "¡Bienvenido de nuevo!",
+          description: isAdmin ? "¡Bienvenido, Administrador!" : "¡Bienvenido de nuevo!",
       });
 
-      // Check if the logged-in user is the admin
-      const isAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
       const redirectUrl = searchParams.get('redirect');
 
-      if (isAdmin && redirectUrl) {
+      // Prioritize admin redirection
+      if (isAdmin) {
+          // If admin was trying to access a specific admin page, go there. Otherwise, go to dashboard.
+          router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
+      } else if (redirectUrl) {
           router.push(redirectUrl);
-      } else if (isAdmin) {
-          router.push('/admin');
       } else {
           router.push('/account');
       }
+      
+      router.refresh(); // Force a refresh to ensure all states are updated
 
     } catch (err: any) {
         let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
@@ -69,7 +73,8 @@ export default function LoginForm() {
             description: friendlyError,
             variant: 'destructive',
         });
-        setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
