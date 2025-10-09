@@ -36,7 +36,9 @@ export default function LoginForm() {
         title: 'Inicio de sesión exitoso',
         description: 'Redirigiendo a tu panel de usuario...',
       });
-      router.push('/account');
+      // The onAuthStateChanged listener in AuthProvider will handle the user state change,
+      // and the AccountLayout will correctly redirect after loading is complete.
+      router.push('/account'); 
     } catch (err: any) {
       const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
       setError(errorMessage);

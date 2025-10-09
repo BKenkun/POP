@@ -9,26 +9,20 @@ import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
-  const { user, loading, isAdminAsCustomer } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Let admin-as-customer through. For real users, check loading and user status.
-    if (!isAdminAsCustomer && !loading && !user) {
+    // Wait until the loading is complete before checking for the user
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router, isAdminAsCustomer]);
+  }, [user, loading, router]);
 
-  if (loading && !isAdminAsCustomer) {
+  // While loading, show a spinner to prevent premature redirection
+  // and let the user know something is happening.
+  if (loading || !user) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  if (!user) {
-       return (
       <div className="flex items-center justify-center h-[50vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
