@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,22 +10,40 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
 import { login } from '@/app/actions/admin-auth';
-import { useFormStatus } from 'react-dom';
-
-function SubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-            {pending ? 'Verificando...' : 'Acceder'}
-        </Button>
-    );
-}
 
 export default function VerifyPage() {
+  const router = useRouter();
   const { toast } = useToast();
-  // The login server action now handles redirection, but can return an error state.
-  const [state, formAction] = useActionState(login, undefined);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>('');
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const formData = new FormData(event.currentTarget);
+    const result = await login(formData);
+
+    if (result?.error) {
+      setError(result.error);
+      toast({
+        title: "Error de autenticación",
+        description: result.error,
+        variant: "destructive",
+      });
+      setLoading(false);
+    } else {
+      // On success, the server action sets the cookie.
+      // We now handle the redirection on the client.
+      toast({
+        title: "Acceso concedido",
+        description: "Redirigiendo al panel de administración...",
+      });
+      router.push('/admin');
+      // No need to set loading to false as we are navigating away
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary">
@@ -34,7 +53,7 @@ export default function VerifyPage() {
           <CardTitle className="text-2xl font-bold">Verificación de Administrador</CardTitle>
           <CardDescription>Esta es una zona restringida. Por favor, identifícate.</CardDescription>
         </CardHeader>
-        <form action={formAction}>
+        <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="email">Email de Administrador</Label>
@@ -44,6 +63,7 @@ export default function VerifyPage() {
                         type="email" 
                         placeholder="admin@email.com" 
                         required 
+                        disabled={loading}
                     />
                 </div>
                 <div className="space-y-2">
@@ -53,12 +73,16 @@ export default function VerifyPage() {
                         name="password"
                         type="password" 
                         required 
+                        disabled={loading}
                     />
                 </div>
-                {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+                {error && <p className="text-sm text-destructive">{error}</p>}
             </CardContent>
             <CardFooter>
-                <SubmitButton />
+                 <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                    {loading ? 'Verificando...' : 'Acceder'}
+                </Button>
             </CardFooter>
         </form>
       </Card>

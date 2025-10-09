@@ -38,7 +38,9 @@ export async function decrypt(input: string): Promise<AdminSessionPayload | null
   }
 }
 
-export async function login(previousState: any, formData: FormData) {
+// This function now returns an error message or nothing on success.
+// Redirection is handled by the client.
+export async function login(formData: FormData): Promise<{ error: string } | void> {
   const email = formData.get('email');
   const password = formData.get('password');
 
@@ -55,10 +57,10 @@ export async function login(previousState: any, formData: FormData) {
   const session = await encrypt(sessionPayload);
 
   // 4. Save the session in a cookie, making it available for all paths.
+  // CRITICAL: The 'path: "/"' ensures the cookie is sent for all requests on the domain.
   cookies().set('admin_session', session, { expires, httpOnly: true, path: '/' });
   
-  // 5. Redirect to the admin dashboard upon successful login
-  redirect('/admin');
+  // 5. DO NOT redirect from the server action. The client will handle it.
 }
 
 export async function logout() {
