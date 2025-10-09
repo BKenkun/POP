@@ -40,7 +40,7 @@ const toDateSafe = (timestamp: any): Date => {
   return new Date(0);
 }
 
-// This function now runs only on the server.
+// This function now runs only on the server, as part of the Server Component's rendering.
 async function getAllAdminOrders(): Promise<Order[]> {
     const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
@@ -54,25 +54,24 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     userOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
-        // IMPORTANT: Add the document path to each order object
         allOrders.push({ ...orderData, path: doc.ref.path });
     });
 
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
         if (!allOrders.some(o => o.id === orderData.id)) {
-             // IMPORTANT: Add the document path to each order object
             allOrders.push({ ...orderData, path: doc.ref.path });
         }
     });
     
+    // Sort before serializing
     allOrders.sort((a, b) => {
         const dateA = toDateSafe(a.createdAt).getTime();
         const dateB = toDateSafe(b.createdAt).getTime();
         return dateB - dateA;
     });
 
-    // Serialize data for the client component
+    // Serialize data for the client component: Convert Timestamps to strings.
     return allOrders.map(order => ({
         ...order,
         createdAt: toDateSafe(order.createdAt).toISOString(),
