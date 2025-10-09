@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -18,7 +19,7 @@ export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useFirebaseAuth();
-  const { loginAsAdminCustomer } = useAuth(); // Use the new function from context
+  const { loginAsAdminCustomer } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,6 +47,9 @@ export default function LoginForm() {
 
     // Step 2: If not admin, proceed with normal Firebase customer login
     try {
+      if (!auth) {
+        throw new Error("Servicio de autenticación no disponible.");
+      }
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Inicio de sesión exitoso',

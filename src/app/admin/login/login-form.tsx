@@ -32,17 +32,17 @@ export default function LoginForm() {
     if (result.success) {
         login();
         toast({
-            title: 'Login Successful',
-            description: 'Redirecting to the admin dashboard...',
+            title: 'Login Correcto',
+            description: 'Redirigiendo al panel de administrador...',
         });
         setIsSuccess(true);
         // The context update and layout effect will handle the redirection.
         router.push('/admin');
     } else {
-        setError(result.error || 'Invalid email or password.');
+        setError(result.error || 'Email o contraseña incorrectos.');
         toast({
-            title: 'Login Failed',
-            description: result.error || 'Please check your credentials and try again.',
+            title: 'Login Fallido',
+            description: result.error || 'Por favor, comprueba tus credenciales e inténtalo de nuevo.',
             variant: 'destructive',
         });
         setLoading(false);
@@ -64,7 +64,7 @@ export default function LoginForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">Contraseña</Label>
         <Input 
           id="password" 
           type="password" 
@@ -78,7 +78,7 @@ export default function LoginForm() {
       <Button type="submit" className="w-full" disabled={loading}>
          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         <LogIn className="mr-2 h-4 w-4" />
-        {loading ? "Signing In..." : "Sign In"}
+        {loading ? "Iniciando Sesión..." : "Iniciar Sesión"}
       </Button>
     </form>
   );

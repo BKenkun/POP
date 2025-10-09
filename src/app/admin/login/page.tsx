@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -14,14 +15,15 @@ export default function AdminLoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If done loading and user is already authenticated, redirect to dashboard.
+    // Si ha terminado de cargar y el usuario ya está autenticado, redirigir al panel.
     if (!loading && isAuthenticated) {
       router.replace('/admin');
     }
   }, [isAuthenticated, loading, router]);
 
 
-  // While loading, show a spinner to prevent a flash of the login form if already authenticated.
+  // Mientras se carga, muestra un spinner para evitar un destello del formulario de login
+  // si ya está autenticado.
   if (loading) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted/40">
@@ -30,7 +32,8 @@ export default function AdminLoginPage() {
     );
   }
   
-  // Don't render the form if we're authenticated, to avoid a flash of content while redirecting.
+  // No renderizar el formulario si estamos autenticados, para evitar un destello de contenido
+  // mientras se redirige.
   if (isAuthenticated) {
     return null; 
   }
@@ -39,8 +42,8 @@ export default function AdminLoginPage() {
       <div className="flex items-center justify-center min-h-screen bg-muted/40 animate-in fade-in duration-500">
           <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Admin Login</CardTitle>
-              <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
+              <CardTitle className="text-2xl">Login de Administrador</CardTitle>
+              <CardDescription>Introduce tus credenciales para acceder al panel.</CardDescription>
           </CardHeader>
           <CardContent>
               <LoginForm />

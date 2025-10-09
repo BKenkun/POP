@@ -20,30 +20,32 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
-    // If loading is finished, and the user is NOT authenticated,
-    // and they are not already on the login page, redirect them.
+    // Si la carga ha terminado y el usuario NO está autenticado,
+    // y no están ya en la página de login, redirigir.
     if (!loading && !isAuthenticated && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }
   }, [isAuthenticated, loading, router, pathname]);
 
-  // While checking auth, show a global loader for any page other than login.
-  if (loading && pathname !== '/admin/login') {
+  // Si está en la página de login, mostrarla sin el layout del panel.
+  // Esto previene que se carguen componentes del panel (y sus hooks de datos)
+  // antes de que el usuario haya podido iniciar sesión.
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  // Mientras se verifica la autenticación, muestra un loader a pantalla completa
+  // para cualquier otra página del panel.
+  if (loading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-  
-  // If we are on the login page OR if we are not authenticated yet (even after loading),
-  // just render the children. This allows the login page to be displayed without the admin layout.
-  if (pathname === '/admin/login' || !isAuthenticated) {
-    return <>{children}</>;
-  }
 
-  // If we get here, it means we are authenticated and not on the login page,
-  // so we can render the full admin layout.
+  // Si llegamos aquí, significa que el usuario está autenticado y no está en la página de login,
+  // por lo que podemos renderizar el layout completo del panel de administración.
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas">

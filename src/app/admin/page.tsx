@@ -207,6 +207,14 @@ export default function AdminDashboardPage() {
     };
   }, [allOrders, products, dateRange, compareDateRange, isCompareEnabled]);
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

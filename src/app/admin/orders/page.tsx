@@ -26,11 +26,13 @@ export default function AdminOrdersPage() {
   const { isAuthenticated, loading: authLoading } = useAdminAuth();
   
   const userOrdersQuery = useMemoFirebase(() => {
+      // Solo crear la consulta si el usuario está autenticado como administrador
       if (!firestore || !isAuthenticated) return null;
       return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'))
     }, [firestore, isAuthenticated]);
 
   const reservationsQuery = useMemoFirebase(() => {
+      // Solo crear la consulta si el usuario está autenticado como administrador
       if (!firestore || !isAuthenticated) return null;
       return query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc'))
     }, [firestore, isAuthenticated]);
@@ -39,9 +41,11 @@ export default function AdminOrdersPage() {
   const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
   
   const [allOrders, setAllOrders] = useState<Order[]>([]);
+  // La carga general depende de la autenticación y de las consultas individuales
   const loading = authLoading || loadingUserOrders || loadingGuestOrders;
 
   useEffect(() => {
+    // Solo combinar si las consultas han devuelto datos
     if (userOrders || guestOrders) {
         const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
         const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
