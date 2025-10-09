@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, MapPin, LogOut, HeartPulse } from 'lucide-react';
+import { LayoutDashboard, Package, MapPin, LogOut, HeartPulse, Shield } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
 
 export default function AccountSidebar() {
   const pathname = usePathname();
-  const { logout, isSubscribed } = useAuth();
+  const { user, logout, isSubscribed, isAdmin } = useAuth();
 
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -19,6 +19,7 @@ export default function AccountSidebar() {
   }
 
   const navLinks = [
+    ...(isAdmin ? [{ href: '/admin', label: 'Panel de Admin', icon: Shield }] : []),
     { href: '/account', label: 'Panel de Usuario', icon: LayoutDashboard },
     { href: '/account/orders', label: 'Pedidos', icon: Package },
     { href: '/account/addresses', label: 'Direcciones', icon: MapPin },
@@ -32,11 +33,17 @@ export default function AccountSidebar() {
                 const isActive = link.href === '/account' 
                     ? pathname === link.href 
                     : pathname.startsWith(link.href);
+                
+                const isExternalAdminLink = link.href === '/admin';
+
                 return (
-                <Link key={link.href} href={link.href} passHref>
+                <Link key={link.href} href={link.href} passHref target={isExternalAdminLink ? '_blank' : undefined}>
                     <Button
                     variant={isActive ? 'default' : 'ghost'}
-                    className="w-full justify-start"
+                    className={cn(
+                        "w-full justify-start",
+                        isExternalAdminLink && "bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900"
+                    )}
                     >
                     <link.icon className="mr-2 h-4 w-4" />
                     {link.label}

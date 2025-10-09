@@ -1,13 +1,11 @@
 
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { User, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { useAuth as useFirebaseAuthHook, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { useAdminAuth } from './admin-auth-context';
-
 
 interface AuthContextType {
   user: User | null;
@@ -15,21 +13,27 @@ interface AuthContextType {
   logout: () => void;
   isSubscribed: boolean;
   loyaltyPoints: number;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { user, isUserLoading: authLoading, auth } = useFirebaseAuthHook();
-  const { isAdminAsCustomer } = useAdminAuth(); // Use admin context
   const firestore = useFirestore();
   const router = useRouter();
 
+  // Memoize the admin check.
+  const isAdmin = useMemo(() => {
+    // Check against the environment variable, ensuring it's available on the client.
+    return !!user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  }, [user]);
+
   const userDocRef = useMemoFirebase(() => {
-    // Prevent Firestore reads if there's no user OR if the admin is viewing as a customer
-    if (!user || !firestore || isAdminAsCustomer) return null;
+    // Prevent Firestore reads if there's no user OR if the user is an admin.
+    if (!user || !firestore || isAdmin) return null;
     return doc(firestore, "users", user.uid);
-  }, [user, firestore, isAdminAsCustomer]);
+  }, [user, firestore, isAdmin]);
 
   const { data: userData, isLoading: userDocLoading } = useDoc<{ loyaltyPoints?: number, isSubscribed?: boolean }>(userDocRef);
 
@@ -48,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   // Doc is only loading if we are fetching it (i.e., not an admin)
-  const loading = authLoading || (user && !isAdminAsCustomer ? userDocLoading : false);
+  const loading = authLoading || (user && !isAdmin ? userDocLoading : false);
 
   const value = { 
       user, 
@@ -56,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       isSubscribed,
       loyaltyPoints,
+      isAdmin,
     };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

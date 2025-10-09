@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from "@/context/auth-context";
@@ -8,22 +9,20 @@ import { formatPrice } from "@/lib/utils";
 import { Gift, PackagePlus, Settings, Shield, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useAdminAuth } from "@/context/admin-auth-context";
 
 export default function AccountDashboardPage() {
-  const { user, isSubscribed, loyaltyPoints } = useAuth();
-  const { isAdminAsCustomer } = useAdminAuth();
+  const { user, isSubscribed, loyaltyPoints, isAdmin } = useAuth();
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(() => {
-    // Don't fetch doc for admin-as-customer
-    if (!user || isAdminAsCustomer || !firestore) return null;
+    // Don't fetch doc if it's an admin user
+    if (!user || isAdmin || !firestore) return null;
     return doc(firestore, "users", user.uid);
-  }, [user, isAdminAsCustomer, firestore]);
+  }, [user, isAdmin, firestore]);
 
   const { data: userData } = useDoc<{ displayName: string }>(userDocRef);
 
-  const userName = isAdminAsCustomer ? "Administrador" : (userData?.displayName || user?.displayName || user?.email?.split('@')[0] || "Usuario");
+  const userName = isAdmin ? "Administrador" : (userData?.displayName || user?.displayName || user?.email?.split('@')[0] || "Usuario");
   const userEmail = user?.email || "No email provided";
   
   // 100 points = 2€ discount
@@ -38,7 +37,7 @@ export default function AccountDashboardPage() {
             </p>
         </div>
 
-        {isAdminAsCustomer && (
+        {isAdmin && (
              <Card className="border-amber-500 border-2 bg-amber-500/5">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-amber-600">
@@ -46,12 +45,12 @@ export default function AccountDashboardPage() {
                         <span>Acceso de Administrador</span>
                     </CardTitle>
                     <CardDescription>
-                       Estás navegando la tienda como administrador. Desde aquí puedes volver a tu panel de gestión.
+                       Has iniciado sesión como administrador. Desde aquí puedes acceder al panel de gestión de la tienda.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
                     <Button asChild variant="secondary">
-                        <Link href="/admin/products">
+                        <Link href="/admin" target="_blank">
                             <Shield className="mr-2" />
                             Ir al Panel de Administración
                         </Link>
@@ -99,7 +98,7 @@ export default function AccountDashboardPage() {
             <CardContent className="space-y-2">
                 <p><span className="font-semibold">Nombre:</span> {userName}</p>
                 <p><span className="font-semibold">Email:</span> {userEmail}</p>
-                 {isAdminAsCustomer && <p className="text-xs text-amber-500 font-bold mt-2">(Estás viendo la tienda como administrador)</p>}
+                 {isAdmin && <p className="text-xs text-amber-500 font-bold mt-2">(Estás viendo la tienda como administrador)</p>}
             </CardContent>
             </Card>
             <Card>
