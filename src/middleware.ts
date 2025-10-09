@@ -4,27 +4,28 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Check if the path is for the admin area
   const isProtectedAdminPath = pathname.startsWith('/admin');
 
   if (isProtectedAdminPath) {
-    // This cookie is set by our /api/login endpoint.
-    // It's an HttpOnly cookie, so it's secure.
-    const sessionCookie = request.cookies.get('session')?.value;
+    // Check for the presence of the admin-specific session cookie
+    const adminSessionCookie = request.cookies.get('admin_session')?.value;
     
-    // If the session cookie doesn't exist at all, redirect to login.
-    if (!sessionCookie) {
+    // If the admin session cookie doesn't exist, redirect to the login page.
+    if (!adminSessionCookie) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
-      url.search = `?redirect=${pathname}` // Keep track of where the user wanted to go
+      // Pass the original destination as a redirect parameter
+      url.search = `?redirect=${pathname}`
       return NextResponse.redirect(url);
     }
   }
 
-  // If checks pass, allow the request to continue.
+  // If checks pass, or if it's not an admin path, allow the request to continue.
   return NextResponse.next();
 }
 
-// This config ensures the middleware runs only for admin routes.
+// Config to specify which paths the middleware should run on.
 export const config = {
   matcher: ['/admin/:path*'],
 }
