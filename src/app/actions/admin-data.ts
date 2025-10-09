@@ -26,8 +26,8 @@ const toDateSafe = (timestamp: any): Date => {
 }
 
 async function fetchAllOrders(): Promise<Order[]> {
-    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+    const userOrdersQuery = collectionGroup(db, 'orders');
+    const reservationsQuery = collection(db, 'reservations');
 
     const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
         getDocs(userOrdersQuery),
@@ -36,7 +36,7 @@ async function fetchAllOrders(): Promise<Order[]> {
 
     const allOrdersMap = new Map<string, Order>();
 
-    // Process user orders
+    // Process user orders from the collection group
     userOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
         if (orderData.id) {
@@ -44,8 +44,7 @@ async function fetchAllOrders(): Promise<Order[]> {
         }
     });
 
-    // Process guest orders, potentially overwriting if an ID somehow conflicted
-    // (which is unlikely but safe to handle)
+    // Process guest orders from the reservations collection
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
         if (orderData.id) {
@@ -55,11 +54,11 @@ async function fetchAllOrders(): Promise<Order[]> {
     
     const combinedOrders = Array.from(allOrdersMap.values());
     
-    // Sort after combining and ensuring uniqueness
+    // Sort after combining to ensure correct chronological order
     combinedOrders.sort((a, b) => {
         const dateA = toDateSafe(a.createdAt).getTime();
         const dateB = toDateSafe(b.createdAt).getTime();
-        return dateB - dateA; // Sort descending
+        return dateB - dateA; // Sort descending (newest first)
     });
 
     return combinedOrders;
