@@ -25,6 +25,18 @@ interface ReservationInput {
     userId?: string; // Optional user ID for logged-in users
 }
 
+const getOrderStatus = (paymentMethod: string): string => {
+    switch(paymentMethod) {
+        case 'prepaid_bizum':
+        case 'prepaid_transfer':
+            return 'Pago Pendiente de Verificación';
+        case 'cod_cash':
+        case 'cod_card':
+        default:
+            return 'Reserva Recibida';
+    }
+}
+
 // This is a SERVER ACTION. It runs on the server.
 export async function createReservationAction(
     input: ReservationInput,
@@ -70,7 +82,7 @@ export async function createReservationAction(
         id: orderId,
         userId: input.userId || 'guest',
         createdAt: new Date(), // This will be replaced by serverTimestamp
-        status: input.customerDetails.paymentMethod === 'prepaid' ? 'Pago Pendiente de Verificación' : 'Reserva Recibida',
+        status: getOrderStatus(input.customerDetails.paymentMethod),
         total: input.total,
         items: input.items.map(item => ({
             productId: item.id,
@@ -109,11 +121,14 @@ export async function createReservationAction(
 
     // --- 5. Send Confirmation Email (Simulation) ---
     console.log(`Simulating sending email to ${input.customerDetails.email}...`);
-    if (input.customerDetails.paymentMethod === 'prepaid') {
+    if (input.customerDetails.paymentMethod.startsWith('prepaid')) {
         console.log("Email content: Instructions for Bizum/Transfer");
         console.log(` - Concepto: ${orderId}`);
-        console.log(` - IBAN: ESXX XXXX XXXX XXXX XXXX`);
-        console.log(` - Bizum: 622 222 222`);
+        if(input.customerDetails.paymentMethod === 'prepaid_transfer') {
+            console.log(` - IBAN: ESXX XXXX XXXX XXXX XXXX XXXX`);
+        } else {
+            console.log(` - Bizum: 622 222 222`);
+        }
         console.log(" - Instrucción: Responder a este email con el justificante.");
     } else {
         console.log("Email content: Confirmation for Cash on Delivery");

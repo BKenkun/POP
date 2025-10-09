@@ -13,7 +13,17 @@ function SuccessContent() {
     const orderId = searchParams.get('orderId');
     const paymentMethod = searchParams.get('paymentMethod');
 
-    const isPrepaid = paymentMethod === 'prepaid';
+    const isPrepaid = paymentMethod?.startsWith('prepaid');
+
+    const getPrepaidMessage = () => {
+        if (paymentMethod === 'prepaid_bizum') {
+            return "Hemos recibido tu reserva. En breve recibirás un correo electrónico con nuestro número de Bizum para realizar el pago.";
+        }
+        if (paymentMethod === 'prepaid_transfer') {
+             return "Hemos recibido tu reserva. En breve recibirás un correo electrónico con nuestro IBAN para realizar la transferencia.";
+        }
+        return "Hemos recibido tu reserva. En breve recibirás un correo electrónico con las instrucciones de pago.";
+    }
 
     return (
         <div className="flex flex-col items-center justify-center text-center space-y-8">
@@ -33,7 +43,7 @@ function SuccessContent() {
                     {isPrepaid ? (
                         <>
                             <p className="text-muted-foreground">
-                                Hemos recibido tu reserva. En breve recibirás un correo electrónico con las instrucciones para realizar el pago mediante Bizum o Transferencia.
+                                {getPrepaidMessage()}
                             </p>
                             <p className="font-semibold text-destructive-foreground bg-destructive p-3 rounded-md">
                                 ¡Importante! Debes responder a ese email con el justificante del pago para que podamos procesar tu envío.
