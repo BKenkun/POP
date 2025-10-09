@@ -1,11 +1,12 @@
-
 'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
 
 export function Footer() {
     const pathname = usePathname();
+    const { isAdminAsCustomer } = useAuth();
     
     // No renderizar el footer en las rutas de admin
     if (pathname.startsWith('/admin')) {
@@ -60,8 +61,8 @@ export function Footer() {
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper Online. T
-                {pathname === '/blog' ? (
-                    <Link href="/admin/login">o</Link>
+                {isAdminAsCustomer ? (
+                    <Link href="/admin/verify">o</Link>
                 ) : (
                     'o'
                 )}

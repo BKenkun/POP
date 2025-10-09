@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, ReactNode } from 'react';
@@ -13,29 +12,45 @@ import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading } = useAdminAuth();
+  const { isAuthenticated, loading, isVerified } = useAdminAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
-    // Si la carga ha terminado y el usuario NO está autenticado,
-    // y no están ya en la página de login, redirigir.
-    if (!loading && !isAuthenticated && pathname !== '/admin/login') {
-      router.replace('/admin/login');
-    }
-  }, [isAuthenticated, loading, router, pathname]);
+    // If loading, do nothing yet.
+    if (loading) return;
 
-  // Si está en la página de login, mostrarla sin el layout del panel.
-  // Esto previene que se carguen componentes del panel (y sus hooks de datos)
-  // antes de que el usuario haya podido iniciar sesión.
-  if (pathname === '/admin/login') {
+    const isVerifyPage = pathname === '/admin/verify';
+    const isPortalPage = pathname === '/admin/portal';
+
+    // If user is fully authenticated, but on verify or portal, redirect to admin dashboard
+    if (isAuthenticated && (isVerifyPage || isPortalPage)) {
+        router.replace('/admin');
+        return;
+    }
+    
+    // If not fully authenticated...
+    if (!isAuthenticated) {
+        // ...and not verified, and trying to access something other than the verify page, redirect to verify
+        if (!isVerified && !isVerifyPage) {
+            router.replace('/admin/verify');
+        }
+        // ...and is verified, but trying to access something other than the portal, redirect to portal
+        if (isVerified && !isPortalPage) {
+            router.replace('/admin/portal');
+        }
+    }
+
+  }, [isAuthenticated, isVerified, loading, router, pathname]);
+
+  // Publicly accessible pages for the admin flow
+  if (pathname === '/admin/verify' || pathname === '/admin/portal') {
     return <>{children}</>;
   }
 
-  // Mientras se verifica la autenticación, muestra un loader a pantalla completa
-  // para cualquier otra página del panel.
+  // While checking auth, show a loader for any protected admin page
   if (loading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
@@ -44,8 +59,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     );
   }
 
-  // Si llegamos aquí, significa que el usuario está autenticado y no está en la página de login,
-  // por lo que podemos renderizar el layout completo del panel de administración.
+  // If authenticated, render the full admin panel layout
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas">
@@ -69,12 +83,12 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   );
 }
 
+
 export default function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-
   return (
     <ThemeProvider
       attribute="class"

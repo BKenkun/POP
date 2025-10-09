@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -31,21 +30,18 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
 
-    // Step 1: Check if the credentials are for the admin
     const adminCheckResult = await adminLoginAction({ email, password });
 
     if (adminCheckResult.success) {
-        // If they are admin credentials, log in as admin-customer
         loginAsAdminCustomer({ email });
         toast({
-            title: 'Inicio de sesión como Administrador',
-            description: 'Viendo la tienda como cliente. Redirigiendo...',
+            title: 'Sesión de Cliente-Admin iniciada',
+            description: 'Acceso especial activado. Ahora puedes usar la entrada secreta.',
         });
-        router.push('/account');
-        return; // Stop the process here
+        router.push('/blog'); // Redirect to blog to use the secret entry
+        return;
     }
 
-    // Step 2: If not admin, proceed with normal Firebase customer login
     try {
       if (!auth) {
         throw new Error("Servicio de autenticación no disponible.");
