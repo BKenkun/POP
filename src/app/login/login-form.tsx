@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -11,6 +12,7 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -31,7 +33,7 @@ export default function LoginForm() {
       if (!auth) {
         throw new Error("Servicio de autenticación no disponible.");
       }
-      // This is a standard Firebase login.
+      
       await signInWithEmailAndPassword(auth, email, password);
       
       toast({
@@ -39,8 +41,6 @@ export default function LoginForm() {
         description: 'Redirigiendo a tu panel de usuario...',
       });
 
-      // The onAuthStateChanged listener in AuthProvider will handle the user state change,
-      // and the AccountLayout will correctly redirect after loading is complete.
       router.push('/account'); 
 
     } catch (err: any) {

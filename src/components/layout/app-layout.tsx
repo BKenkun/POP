@@ -10,11 +10,13 @@ import { usePathname } from 'next/navigation';
 import { useCookieConsent } from '@/context/cookie-context';
 import CookieConsentBanner from '@/components/cookie-consent-banner';
 import { useEffect } from 'react';
+import { AdminAuthProvider } from '@/context/admin-auth-context';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
   const pathname = usePathname();
   const isAdminPath = pathname.startsWith('/admin');
+  const isVerifyPath = pathname.startsWith('/verify');
 
   // Load Clarity script if consent is given
   useEffect(() => {
@@ -26,14 +28,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       })(window, document, "clarity", "script", "tc3cngb8to");
     }
   }, [consent.analytics]);
-
+  
   if (isAdminPath) {
+    return <>{children}</>
+  }
+  
+  if(isVerifyPath) {
     return (
-      <>
-        {children}
+      <AdminAuthProvider>
+         {children}
         <Toaster />
-      </>
-    );
+      </AdminAuthProvider>
+    )
   }
 
   return (
