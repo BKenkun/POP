@@ -1,20 +1,19 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, Check, Circle, Dot, ArrowLeft, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
-import { useForm, useWatch, Controller } from "react-hook-form";
+import { useAuth, useFirestore, setDocumentNonBlocking } from '@/context/auth-context';
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -27,10 +26,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { createReservationAction } from '@/app/actions/create-reservation';
 import { Label } from '@/components/ui/label';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { Order, ShippingAddress } from '@/lib/types';
+
 
 const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
@@ -56,6 +57,30 @@ const paymentMethodLabels: { [key in CheckoutFormValues['paymentMethod']]: strin
     prepaid_bizum: 'Pago Anticipado (Bizum)',
     prepaid_transfer: 'Pago Anticipado (Transferencia)',
 }
+
+const generateOrderCode = (): string => {
+  const prefix = "P";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = '';
+  for (let i = 0; i < 7; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${prefix}-${result}`;
+}
+
+const getOrderStatus = (paymentMethod: string): string => {
+    switch(paymentMethod) {
+        case 'prepaid_bizum':
+        case 'prepaid_transfer':
+            return 'Pago Pendiente de Verificación';
+        case 'cod_cash':
+        case 'cod_card':
+        case 'cod_bizum':
+        default:
+            return 'Reserva Recibida';
+    }
+}
+
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
     const steps = [
@@ -117,6 +142,7 @@ const PaymentOption = ({
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
   const { user } = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -170,7 +196,7 @@ export default function CheckoutClientPage() {
     setPrimaryPaymentMethod(newPrimaryMethod);
     // Set a default sub-option when the main category changes
     if (newPrimaryMethod === 'cod') {
-        form.setValue('paymentMethod', 'cod_cash');
+        form.setValue('paymentMethod', 'cod_card');
     } else {
         form.setValue('paymentMethod', 'prepaid_bizum');
     }
@@ -185,17 +211,48 @@ export default function CheckoutClientPage() {
     });
 
     try {
-        const { orderId, error } = await createReservationAction({
-            customerDetails: data,
-            items: cartItems,
-            total: cartTotal,
-            userId: user?.uid,
-        });
-
-        if (error || !orderId) {
-            throw new Error(error || 'No se pudo crear la reserva.');
-        }
+        const orderId = generateOrderCode();
         
+        const shippingAddress: ShippingAddress = {
+            line1: data.street,
+            line2: null,
+            city: data.city,
+            state: data.state,
+            postal_code: data.postalCode,
+            country: data.country,
+        }
+
+        const newOrder: Omit<Order, 'createdAt'> & { createdAt: any } = {
+            id: orderId,
+            userId: user?.uid || 'guest',
+            status: getOrderStatus(data.paymentMethod),
+            total: cartTotal,
+            items: cartItems.map(item => ({
+                productId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                imageUrl: item.imageUrl
+            })),
+            customerName: data.name,
+            customerEmail: data.email,
+            shippingAddress: shippingAddress,
+            paymentMethod: data.paymentMethod,
+            createdAt: serverTimestamp(),
+        };
+
+        let docRef;
+        if (user) {
+            docRef = doc(firestore, 'users', user.uid, 'orders', orderId);
+        } else {
+            docRef = doc(firestore, 'reservations', orderId);
+        }
+
+        // Use the non-blocking set operation
+        setDocumentNonBlocking(docRef, newOrder, { merge: false });
+        
+        // --- Optimistic UI Update ---
+        // Clear the cart and redirect immediately. The write happens in the background.
         clearCart();
         
         toast({
@@ -204,7 +261,7 @@ export default function CheckoutClientPage() {
         });
 
         router.push(`/checkout/success?orderId=${orderId}&paymentMethod=${data.paymentMethod}`);
-        
+
     } catch (error: any) {
         console.error("Reservation Error: ", error);
         toast({
@@ -212,7 +269,7 @@ export default function CheckoutClientPage() {
             description: error.message || 'Ocurrió un error. Por favor, inténtalo de nuevo.',
             variant: 'destructive',
         });
-        setLoading(false);
+        setLoading(false); // Only set loading to false on error
     }
   };
 
