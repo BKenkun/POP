@@ -37,7 +37,7 @@ export default function LoginForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await getIdToken(userCredential.user);
 
-      // Send the token to the server to create a session cookie
+      // Send the token to the server to create session cookies
       const response = await fetch('/api/login', {
           method: 'POST',
           headers: {
@@ -52,7 +52,7 @@ export default function LoginForm() {
       
       toast({
         title: 'Inicio de sesión exitoso',
-        description: 'Redirigiendo a tu panel de usuario...',
+        description: 'Redirigiendo...',
       });
       
       // Check if the user is an admin and redirect accordingly

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { initializeFirebase } from '@/firebase/server';
+import { encrypt } from '@/lib/session';
 
 // Initialize Firebase Admin SDK if not already done
 initializeFirebase();
@@ -15,7 +16,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ID token is required' }, { status: 400 });
     }
 
-    // Set session expiration to 5 days.
+    const decodedToken = await getAuth().verifyIdToken(idToken);
+    
+    // Set session expiration to 5 days for regular users.
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
     
     // Create the session cookie. This will also verify the ID token in the process.
@@ -33,6 +36,15 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ status: 'success' });
     response.cookies.set(options);
+    
+    // If the user is the admin, create a separate, encrypted admin session cookie.
+    if (decodedToken.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+        const adminExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes for admin
+        const adminSession = await encrypt({ user: { email: decodedToken.email, isAdmin: true }, expires: adminExpires });
+
+        cookies().set('admin_session', adminSession, { expires: adminExpires, httpOnly: true, path: '/' });
+    }
+
 
     return response;
 
