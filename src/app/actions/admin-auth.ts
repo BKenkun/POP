@@ -53,8 +53,8 @@ export async function login(previousState: any, formData: FormData) {
   // 3. Encrypt the session
   const session = await encrypt(sessionPayload);
 
-  // 4. Save the session in a cookie
-  cookies().set('admin_session', session, { expires, httpOnly: true });
+  // 4. Save the session in a cookie, making it available for all paths.
+  cookies().set('admin_session', session, { expires, httpOnly: true, path: '/' });
   
   // 5. Redirect to the admin dashboard upon successful login
   redirect('/admin');
@@ -62,7 +62,7 @@ export async function login(previousState: any, formData: FormData) {
 
 export async function logout() {
   // Destroy the session
-  cookies().set('admin_session', '', { expires: new Date(0) });
+  cookies().set('admin_session', '', { expires: new Date(0), path: '/' });
   redirect('/verify');
 }
 
