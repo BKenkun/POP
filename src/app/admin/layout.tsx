@@ -20,11 +20,14 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
+    // If loading is finished, and the user is NOT authenticated,
+    // and they are not already on the login page, redirect them.
     if (!loading && !isAuthenticated && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }
   }, [isAuthenticated, loading, router, pathname]);
 
+  // While checking auth, show a global loader for any page other than login.
   if (loading && pathname !== '/admin/login') {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
@@ -33,10 +36,14 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
     );
   }
   
+  // If we are on the login page OR if we are not authenticated yet (even after loading),
+  // just render the children. This allows the login page to be displayed.
   if (pathname === '/admin/login' || !isAuthenticated) {
     return <>{children}</>;
   }
 
+  // If we get here, it means we are authenticated and not on the login page,
+  // so we can render the full admin layout.
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas">
