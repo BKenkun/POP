@@ -6,7 +6,7 @@ import { cbdProducts } from "@/lib/cbd-products";
 
 // Helper function to generate a unique alphanumeric order code
 function generateOrderCode(): string {
-  const prefix = "CBD";
+  const prefix = "P";
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = '';
   for (let i = 0; i < 7; i++) {
