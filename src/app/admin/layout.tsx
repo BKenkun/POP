@@ -37,7 +37,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   }
   
   // If we are on the login page OR if we are not authenticated yet (even after loading),
-  // just render the children. This allows the login page to be displayed.
+  // just render the children. This allows the login page to be displayed without the admin layout.
   if (pathname === '/admin/login' || !isAuthenticated) {
     return <>{children}</>;
   }
