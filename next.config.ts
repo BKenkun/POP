@@ -23,11 +23,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  env: {
-    // These are the final admin credentials for the second verification step on the /verify page.
-    ADMIN_EMAIL: 'maryandpopper@gmail.com',
-    ADMIN_PASSWORD: 'PowerAdmin123!',
-  },
   images: {
     remotePatterns: [
       {
