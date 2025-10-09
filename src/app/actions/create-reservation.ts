@@ -3,8 +3,8 @@
 
 import { CartItem, Order, ShippingAddress } from "@/lib/types";
 import { cbdProducts } from "@/lib/cbd-products";
-import { getFirestore, doc, serverTimestamp, setDoc, collection } from "firebase/firestore";
-import { initializeFirebase } from "@/firebase";
+import { getFirestore, serverTimestamp } from "firebase-admin/firestore";
+import { initializeFirebase } from "@/firebase/server";
 
 
 // Helper function to generate a unique alphanumeric order code
@@ -43,7 +43,7 @@ export async function createReservationAction(
     input: ReservationInput,
 ): Promise<{ orderId: string | null; error?: string }> {
     console.log("Received reservation request:", input);
-    const { firestore } = initializeFirebase();
+    const { db: firestore } = initializeFirebase();
 
     // --- 1. Generate Unique Order Code ---
     const orderId = generateOrderCode();
@@ -104,13 +104,13 @@ export async function createReservationAction(
         let docRef;
         if (input.userId) {
             // For registered users, save under their own orders subcollection
-            docRef = doc(firestore, 'users', input.userId, 'orders', orderId);
+            docRef = firestore.collection('users').doc(input.userId).collection('orders').doc(orderId);
         } else {
             // For guest users, save to a general 'reservations' collection
-            docRef = doc(firestore, 'reservations', orderId);
+            docRef = firestore.collection('reservations').doc(orderId);
         }
 
-        await setDoc(docRef, newOrder);
+        await docRef.set(newOrder);
         console.log(`✅ Order ${orderId} successfully saved to Firestore.`);
     } catch (error) {
         console.error("❌ Firestore save error:", error);
