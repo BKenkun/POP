@@ -12,36 +12,13 @@ import { AdminAuthProvider } from '@/context/admin-auth-context';
 import { FirebaseClientProvider } from '@/firebase';
 import { CookieProvider } from '@/context/cookie-context';
 
-function AdminLayoutContent({ children }: { children: ReactNode }) {
-  // El middleware es la única fuente de verdad para proteger las rutas /admin.
-  // No se necesita ninguna comprobación de estado de carga o autenticación aquí.
-  return (
-    <>
-      <Sidebar variant="sidebar" collapsible="offcanvas">
-        <AdminSidebar />
-      </Sidebar>
-
-      <div className={cn("fixed left-2 top-2 z-20 hidden transition-opacity md:block")}>
-        <SidebarTrigger />
-      </div>
-
-      <SidebarInset>
-        <div className="p-4 md:p-8">
-          {children}
-        </div>
-      </SidebarInset>
-      <ThemeToggleButton />
-    </>
-  );
-}
-
-
 export default function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-
+  // El middleware ya ha protegido esta ruta.
+  // El layout simplemente renderiza la interfaz de administración.
   return (
     <ThemeProvider
       attribute="class"
@@ -53,7 +30,20 @@ export default function AdminLayout({
         <AdminAuthProvider>
           <FirebaseClientProvider>
             <SidebarProvider>
-                <AdminLayoutContent>{children}</AdminLayoutContent>
+                <Sidebar variant="sidebar" collapsible="offcanvas">
+                  <AdminSidebar />
+                </Sidebar>
+
+                <div className={cn("fixed left-2 top-2 z-20 hidden transition-opacity md:block")}>
+                  <SidebarTrigger />
+                </div>
+
+                <SidebarInset>
+                  <div className="p-4 md:p-8">
+                    {children}
+                  </div>
+                </SidebarInset>
+                <ThemeToggleButton />
             </SidebarProvider>
             <Toaster />
           </FirebaseClientProvider>
