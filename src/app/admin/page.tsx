@@ -136,7 +136,8 @@ export default function AdminDashboardPage() {
   const firestore = useFirestore();
 
   const ordersQuery = useMemoFirebase(() => {
-    if (!firestore || !isAuthenticated) return null; // Wait for auth
+    // DO NOT run the query if the user is not authenticated as an admin.
+    if (!firestore || !isAuthenticated) return null;
     return query(
       collectionGroup(firestore, 'orders'), 
       orderBy('createdAt', 'desc')
@@ -144,6 +145,7 @@ export default function AdminDashboardPage() {
   }, [firestore, isAuthenticated]);
 
   const reservationsQuery = useMemoFirebase(() => {
+      // DO NOT run the query if the user is not authenticated as an admin.
       if (!firestore || !isAuthenticated) return null;
       return query(
           collection(firestore, 'reservations'),
@@ -155,6 +157,7 @@ export default function AdminDashboardPage() {
   const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   
+  // The general loading state depends on admin auth and the individual queries.
   const loading = authLoading || loadingUserOrders || loadingGuestOrders;
   
    useEffect(() => {
@@ -207,6 +210,7 @@ export default function AdminDashboardPage() {
     };
   }, [allOrders, products, dateRange, compareDateRange, isCompareEnabled]);
 
+  // Main loading state before rendering the dashboard
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -377,3 +381,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

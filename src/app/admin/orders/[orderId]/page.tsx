@@ -38,6 +38,7 @@ export default function OrderDetailPage() {
   
   // This effect finds the document path once authenticated.
   useEffect(() => {
+    // DO NOT run if not authenticated
     if (!orderId || !firestore || !isAuthenticated) return;
 
     const findOrderPath = async () => {
@@ -66,12 +67,14 @@ export default function OrderDetailPage() {
   }, [orderId, firestore, isAuthenticated]);
 
   const docRef = useMemoFirebase(() => {
+    // Only create the doc ref if the path is known
     if (!docRefPath || !firestore) return null;
     return doc(firestore, docRefPath);
   }, [docRefPath, firestore]);
 
   // This effect subscribes to the document once the path is found.
   useEffect(() => {
+    // DO NOT subscribe if there's no docRef
     if (!docRef) {
       if (isAuthenticated) setLoading(false); // Stop loading if authenticated but no path found
       return;
@@ -232,3 +235,5 @@ export default function OrderDetailPage() {
     </div>
   );
 }
+
+    
