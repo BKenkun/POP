@@ -1,10 +1,8 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc } from 'firebase/firestore';
+import { updateOrderStatus } from '@/app/actions/admin-data';
 import { Order } from '@/lib/types';
 import { Loader2, Package, User, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,8 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
-import { getAdminOrderById } from '@/app/actions/admin-data';
-import { db } from '@/firebase';
+import { getAdminOrderById } from '@/app/actions/get-order-by-id';
+
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -42,14 +40,14 @@ export default function OrderDetailPage() {
         try {
             const fetchedOrder = await getAdminOrderById(orderId);
             if (fetchedOrder) {
-                // The server action already serializes createdAt to a string.
                 setOrder(fetchedOrder);
             } else {
                 setOrder(null);
+                toast({ title: "Error", description: "Pedido no encontrado.", variant: "destructive" });
             }
         } catch (error) {
             console.error("Error fetching order details:", error);
-            toast({ title: "Error", description: "No se pudieron cargar los detalles del pedido."});
+            toast({ title: "Error", description: "No se pudieron cargar los detalles del pedido.", variant: "destructive"});
         } finally {
             setLoading(false);
         }
@@ -64,20 +62,16 @@ export default function OrderDetailPage() {
     }
     setUpdatingStatus(true);
     
-    // The path is now stored on the order object itself
-    const docRef = doc(db, order.path);
-
-    try {
-        await updateDocumentNonBlocking(docRef, { status: newStatus });
-        toast({
+    const result = await updateOrderStatus(order.path, newStatus);
+    
+    if (result.success) {
+      toast({
             title: "Estado del pedido actualizado",
             description: `El pedido ahora está marcado como "${newStatus}".`,
         });
-        // Optimistic update of local state
-        setOrder({...order, status: newStatus as Order['status']});
-    } catch(e) {
-        console.error("Failed to update status", e);
-        toast({ title: "Error", description: "No se pudo actualizar el estado.", variant: 'destructive'});
+        setOrder(prev => prev ? {...prev, status: newStatus as Order['status']} : null);
+    } else {
+       toast({ title: "Error", description: result.error || "No se pudo actualizar el estado.", variant: 'destructive'});
     }
     
     setUpdatingStatus(false);
@@ -151,7 +145,6 @@ export default function OrderDetailPage() {
                     <div className="flex justify-end">
                         <div className="text-right">
                             <p className="text-muted-foreground">Subtotal <span className="font-medium text-foreground ml-2">{formatPrice(order.total)}</span></p>
-                            {/* Assuming total includes shipping etc. for simplicity */}
                              <p className="font-bold text-lg">TOTAL <span className="text-primary ml-2">{formatPrice(order.total)}</span></p>
                         </div>
                     </div>

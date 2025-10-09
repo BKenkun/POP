@@ -21,31 +21,26 @@ const toDateSafe = (timestamp: any): Date => {
   if (!timestamp) {
     return new Date(0); // Return epoch for null/undefined to avoid crashes
   }
-  // Firestore Timestamp (most common case for registered user orders)
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
-  // ISO string (from client-side, guest orders, or serialization)
   if (typeof timestamp === 'string') {
     const d = new Date(timestamp);
     if (!isNaN(d.getTime())) {
       return d;
     }
   }
-  // Object with _seconds (alternative serialization)
   if (typeof timestamp === 'object' && timestamp._seconds) {
     return new Date(timestamp._seconds * 1000);
   }
-   // Object with seconds and nanoseconds (from server-side rendering or Firestore directly)
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000);
   }
-
-  // Fallback for unexpected formats
   console.warn("Could not parse timestamp, returning epoch:", timestamp);
   return new Date(0);
 }
 
+// This function now runs only on the server.
 async function getAllAdminOrders(): Promise<Order[]> {
     const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
@@ -59,25 +54,25 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     userOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
+        // IMPORTANT: Add the document path to each order object
         allOrders.push({ ...orderData, path: doc.ref.path });
     });
 
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
-        // Check if this order (by ID) is already in the list to avoid duplicates.
         if (!allOrders.some(o => o.id === orderData.id)) {
+             // IMPORTANT: Add the document path to each order object
             allOrders.push({ ...orderData, path: doc.ref.path });
         }
     });
     
-    // Sort after combining to ensure correct chronological order
     allOrders.sort((a, b) => {
         const dateA = toDateSafe(a.createdAt).getTime();
         const dateB = toDateSafe(b.createdAt).getTime();
-        return dateB - dateA; // Sort descending (newest first)
+        return dateB - dateA;
     });
 
-    // Serialize Timestamps to strings before sending to the client
+    // Serialize data for the client component
     return allOrders.map(order => ({
         ...order,
         createdAt: toDateSafe(order.createdAt).toISOString(),
