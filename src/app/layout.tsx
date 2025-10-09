@@ -23,11 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} light`} suppressHydrationWarning>
+    <html lang="es" className="light" suppressHydrationWarning>
       <head>
         {/* The font link in head is now handled by next/font, so we can remove it */}
       </head>
-      <body className="font-body antialiased">
+      <body className={`${inter.variable} font-body antialiased`}>
         <Providers>
           <AppLayout>{children}</AppLayout>
         </Providers>
