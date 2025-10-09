@@ -1,9 +1,8 @@
-
 'use server';
 
 import { CartItem, Order, ShippingAddress } from "@/lib/types";
 import { cbdProducts } from "@/lib/cbd-products";
-import { getFirestore, serverTimestamp } from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 import { initializeFirebase } from "@/firebase/server";
 
 
@@ -96,7 +95,7 @@ export async function createReservationAction(
         customerEmail: input.customerDetails.email,
         shippingAddress: shippingAddress,
         paymentMethod: input.customerDetails.paymentMethod,
-        createdAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
     };
 
     // --- 4. Save to Firestore ---
