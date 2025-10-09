@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
+import { AuthProvider } from '@/context/auth-context';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading, isVerified } = useAdminAuth();
@@ -19,47 +20,52 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   const isCollapsed = state === 'collapsed';
 
   useEffect(() => {
-    // If loading, do nothing yet.
     if (loading) return;
 
     const isVerifyPage = pathname === '/admin/verify';
     const isPortalPage = pathname === '/admin/portal';
 
-    // If user is fully authenticated, but on verify or portal, redirect to admin dashboard
-    if (isAuthenticated && (isVerifyPage || isPortalPage)) {
-        router.replace('/admin');
-        return;
-    }
-    
-    // If not fully authenticated...
     if (!isAuthenticated) {
-        // ...and not verified, and trying to access something other than the verify page, redirect to verify
-        if (!isVerified && !isVerifyPage) {
-            router.replace('/admin/verify');
+        if (isVerifyPage) {
+            // Already on the verify page, do nothing.
+        } else if(isPortalPage) {
+            if (!isVerified) {
+                router.replace('/admin/verify');
+            }
+        } else {
+             // If not on verify or portal, and not authenticated, start the flow.
+             router.replace('/admin/verify');
         }
-        // ...and is verified, but trying to access something other than the portal, redirect to portal
-        if (isVerified && !isPortalPage) {
-            router.replace('/admin/portal');
+    } else { // Is authenticated
+        if (isVerifyPage || isPortalPage) {
+            router.replace('/admin');
         }
     }
 
   }, [isAuthenticated, isVerified, loading, router, pathname]);
 
-  // Publicly accessible pages for the admin flow
-  if (pathname === '/admin/verify' || pathname === '/admin/portal') {
-    return <>{children}</>;
-  }
-
-  // While checking auth, show a loader for any protected admin page
-  if (loading || !isAuthenticated) {
+  const isPublicAdminPage = pathname === '/admin/verify' || pathname === '/admin/portal';
+  
+  if (loading && !isPublicAdminPage) {
     return (
       <div className="flex items-center justify-center h-screen bg-muted/40">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  if (isPublicAdminPage) {
+      return <>{children}</>;
+  }
 
-  // If authenticated, render the full admin panel layout
+  if (!isAuthenticated) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-muted/40">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+  }
+
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas">
@@ -97,10 +103,12 @@ export default function AdminLayout({
       disableTransitionOnChange
     >
         <SidebarProvider>
-            <AdminAuthProvider>
-                <AdminLayoutContent>{children}</AdminLayoutContent>
-                <Toaster />
-            </AdminAuthProvider>
+            <AuthProvider>
+                <AdminAuthProvider>
+                    <AdminLayoutContent>{children}</AdminLayoutContent>
+                    <Toaster />
+                </AdminAuthProvider>
+            </AuthProvider>
         </SidebarProvider>
     </ThemeProvider>
   );

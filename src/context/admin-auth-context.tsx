@@ -2,16 +2,17 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth as useFirebaseClientAuth } from './auth-context'; // Use the main auth context
 
 const VERIFY_KEY = 'admin_verified';
 const AUTH_KEY = 'admin_authenticated';
 
 interface AdminAuthContextType {
-  isVerified: boolean;         // Step 1: Logged in as customer admin
-  isAuthenticated: boolean;    // Step 2: Confirmed in admin panel
+  isVerified: boolean;
+  isAuthenticated: boolean;
   loading: boolean;
-  verify: () => void;          // Action for Step 1
-  login: () => void;           // Action for Step 2
+  verify: () => void;
+  login: () => void;
   logout: () => void;
 }
 
@@ -20,10 +21,19 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const router = useRouter();
 
+  // Get the loading state from the main Firebase auth context
+  const { loading: firebaseAuthLoading } = useFirebaseClientAuth();
+
   useEffect(() => {
+    // CRITICAL: Wait for Firebase auth to be ready before checking admin session state.
+    // This prevents the race condition where admin checks run before Firebase is initialized.
+    if (firebaseAuthLoading) {
+      return;
+    }
+
     try {
       const verifiedSession = sessionStorage.getItem(VERIFY_KEY);
       const authSession = sessionStorage.getItem(AUTH_KEY);
@@ -32,9 +42,9 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.error('Could not access session storage:', e);
     } finally {
-      setLoading(false);
+      setSessionLoading(false);
     }
-  }, []);
+  }, [firebaseAuthLoading]); // This effect now depends on the Firebase auth loading state
 
   const verify = () => {
     try {
@@ -65,6 +75,9 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     router.push('/');
   };
+
+  // The overall loading state depends on BOTH Firebase auth and the admin session check
+  const loading = firebaseAuthLoading || sessionLoading;
 
   const value = { isVerified, isAuthenticated, loading, verify, login, logout };
 
