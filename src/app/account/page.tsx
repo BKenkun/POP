@@ -5,12 +5,14 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter } from "@/components/ui/card"
 import { doc } from "firebase/firestore";
 import { formatPrice } from "@/lib/utils";
-import { Gift, PackagePlus, Settings } from "lucide-react";
+import { Gift, PackagePlus, Settings, Shield, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 export default function AccountDashboardPage() {
-  const { user, isSubscribed, loyaltyPoints, isAdminAsCustomer } = useAuth();
+  const { user, isSubscribed, loyaltyPoints } = useAuth();
+  const { isAdminAsCustomer } = useAdminAuth();
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(() => {
@@ -35,6 +37,28 @@ export default function AccountDashboardPage() {
                 Bienvenido de nuevo, {userName}. Aquí tienes un resumen de tu actividad.
             </p>
         </div>
+
+        {isAdminAsCustomer && (
+             <Card className="border-amber-500 border-2 bg-amber-500/5">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-amber-600">
+                        <KeyRound className="h-6 w-6"/>
+                        <span>Acceso de Administrador</span>
+                    </CardTitle>
+                    <CardDescription>
+                       Estás navegando la tienda como administrador. Desde aquí puedes volver a tu panel de gestión.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                    <Button asChild variant="secondary">
+                        <Link href="/admin/products">
+                            <Shield className="mr-2" />
+                            Ir al Panel de Administración
+                        </Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        )}
 
         {isSubscribed && (
             <Card className="border-primary border-2">

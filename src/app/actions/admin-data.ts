@@ -1,11 +1,13 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { Order, Product } from '@/lib/types';
-import { getAdminSession } from './admin-auth';
+import { getAdminSession } from '@/app/actions/admin-auth';
 import { collection, collectionGroup, getDocs, query, where, doc, getDoc, orderBy, limit } from 'firebase/firestore';
 import { cbdProducts } from '@/lib/cbd-products';
 
+// This is a server-only function
 async function verifyAdmin() {
     const session = await getAdminSession();
     if (!session?.isAdmin) {
@@ -27,7 +29,13 @@ async function fetchAllOrders(): Promise<Order[]> {
 
     const combined = [...userOrders, ...guestOrders];
     const unique = Array.from(new Map(combined.map(order => [order.id, order])).values());
-    unique.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+    
+    // Sort after combining and ensuring uniqueness
+    unique.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return dateB - dateA;
+    });
 
     return unique;
 }
@@ -38,27 +46,28 @@ export async function getAdminDashboardData() {
     const allOrders = await fetchAllOrders();
     const allProducts: Product[] = cbdProducts;
     
-    // For simplicity, we'll just return the 5 most recent orders for the dashboard
     const recentOrders = allOrders.slice(0, 5);
     const totalRevenue = allOrders.reduce((sum, order) => sum + order.total, 0);
     const totalOrders = allOrders.length;
 
-    // This is a simplified version of the complex processing in the original component
     return {
         totalRevenue,
         totalOrders,
         totalProducts: allProducts.length,
         recentOrders,
-        // The dashboard expects more data, but we provide the essentials to fix the error
         topClients: [], 
         topProducts: [],
     };
 }
 
-
 export async function getAllAdminOrders(): Promise<Order[]> {
     await verifyAdmin();
-    return fetchAllOrders();
+    const orders = await fetchAllOrders();
+    // Serialize Timestamps to strings before sending to the client
+    return orders.map(order => ({
+        ...order,
+        createdAt: order.createdAt?.toDate ? order.createdAt.toDate().toISOString() : new Date(0).toISOString(),
+    }));
 }
 
 
@@ -69,7 +78,6 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
     let order: Order | null = null;
     let path: string | null = null;
 
-    // Search in user orders
     const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
     const orderSnap = await getDocs(ordersQuery);
     
@@ -81,7 +89,6 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
              order = docSnap.data() as Order;
         }
     } else {
-        // If not in user orders, check reservations
         const reservationRef = doc(db, 'reservations', orderId);
         const reservationSnap = await getDoc(reservationRef);
         if (reservationSnap.exists()) {
@@ -91,3 +98,25 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
 
     return order;
 }
+
+// You might need a new function for getting customer data
+export async function getAllAdminCustomers() {
+    await verifyAdmin();
+    const { getAuth } = await import('firebase-admin/auth');
+    const auth = getAuth();
+    
+    const listUsersResult = await auth.listUsers(1000);
+    const users = listUsersResult.users.map(userRecord => {
+        return {
+            uid: userRecord.uid,
+            email: userRecord.email || 'No Email',
+            displayName: userRecord.displayName,
+            photoURL: userRecord.photoURL,
+            disabled: userRecord.disabled,
+            creationTime: userRecord.metadata.creationTime,
+        };
+    });
+    return users;
+}
+
+    

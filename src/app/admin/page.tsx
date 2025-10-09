@@ -22,7 +22,7 @@ import { subDays, startOfDay, endOfDay, isWithinInterval, format as formatDate, 
 import { es } from 'date-fns/locale';
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Order, Product } from "@/lib/types";
-import { getAdminDashboardData } from "@/app/actions/admin-data";
+import { getAdminDashboardData, getAllAdminOrders } from "@/app/actions/admin-data";
 import { cbdProducts } from "@/lib/cbd-products";
 
 const chartConfig = {
@@ -135,13 +135,13 @@ export default function AdminDashboardPage() {
         setLoading(true);
         try {
             // Server action will fetch all orders securely
-            const { recentOrders, totalOrders, totalRevenue } = await getAdminDashboardData();
-            // The dashboard page previously calculated all orders, now we just need the full list
-            // For a full implementation, the server action would need to return all orders
-            // For now, we will use a separate action to get all orders to keep the dashboard fast
-            const response = await fetch('/api/admin/orders'); // A temporary API route to get all orders
-            const ordersData = await response.json();
-            setAllOrders(ordersData);
+            const ordersData = await getAllAdminOrders();
+            const sanitizedOrders = ordersData.map(order => ({
+                ...order,
+                // Ensure createdAt is a Date object, whether it's a Timestamp or string
+                createdAt: order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt),
+            }));
+            setAllOrders(sanitizedOrders);
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         }
@@ -358,3 +358,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
