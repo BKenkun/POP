@@ -1,4 +1,3 @@
-
 'use server';
 
 import { cookies } from 'next/headers';
@@ -33,6 +32,7 @@ export async function decrypt(input: string): Promise<AdminSessionPayload | null
     return payload as AdminSessionPayload;
   } catch (error) {
     // This will happen if the token is expired or invalid
+    console.log('Failed to verify token', error);
     return null;
   }
 }
@@ -63,7 +63,7 @@ export async function login(formData: FormData) {
 export async function logout() {
   // Destroy the session
   cookies().set('admin_session', '', { expires: new Date(0) });
-  redirect('/verify'); // Redirect to login page on logout
+  redirect('/verify');
 }
 
 export async function getAdminSession() {

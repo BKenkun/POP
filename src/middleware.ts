@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/app/actions/admin-auth';
 
@@ -27,7 +26,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
+// Match all paths under /admin, including the root /admin page
 export const config = {
   matcher: ['/admin/:path*'],
 }
