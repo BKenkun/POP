@@ -46,43 +46,38 @@ const toDateSafe = (timestamp: any): Date => {
 
 
 async function fetchAllOrders(): Promise<Order[]> {
-    const userOrdersQuery = collectionGroup(db, 'orders');
-    const reservationsQuery = collection(db, 'reservations');
+    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
 
     const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
         getDocs(userOrdersQuery),
         getDocs(reservationsQuery),
     ]);
 
-    const allOrdersMap = new Map<string, Order>();
+    const allOrders: Order[] = [];
 
-    // Process user orders from the collection group
     userOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
-        if (orderData.id) {
-            allOrdersMap.set(orderData.id, { ...orderData, path: doc.ref.path });
-        }
+        allOrders.push({ ...orderData, path: doc.ref.path });
     });
 
-    // Process guest orders from the reservations collection
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
-        if (orderData.id) {
-             // Ensure path property is added for guest orders as well
-            allOrdersMap.set(orderData.id, { ...orderData, path: doc.ref.path });
+        // Check if this order (by ID) is already in the list to avoid duplicates,
+        // although it's unlikely with separate collections.
+        if (!allOrders.some(o => o.id === orderData.id)) {
+            allOrders.push({ ...orderData, path: doc.ref.path });
         }
     });
     
-    const combinedOrders = Array.from(allOrdersMap.values());
-    
     // Sort after combining to ensure correct chronological order
-    combinedOrders.sort((a, b) => {
+    allOrders.sort((a, b) => {
         const dateA = toDateSafe(a.createdAt).getTime();
         const dateB = toDateSafe(b.createdAt).getTime();
         return dateB - dateA; // Sort descending (newest first)
     });
 
-    return combinedOrders;
+    return allOrders;
 }
 
 
