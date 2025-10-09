@@ -1,4 +1,3 @@
-
 "use client";
 
 import { CartProvider } from "./cart-context";

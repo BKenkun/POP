@@ -7,9 +7,11 @@ import { useAuth } from '@/context/auth-context';
 export function Footer() {
     const pathname = usePathname();
     const { user } = useAuth();
+    
+    // Check if the logged-in user is the administrator
     const isAdminUser = user?.email === process.env.ADMIN_EMAIL;
 
-    // No renderizar el footer en las rutas de admin.
+    // Do not render the footer on admin routes.
     if (pathname.startsWith('/admin')) {
       return null;
     }
@@ -63,7 +65,7 @@ export function Footer() {
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper Online. Todos los derech
                 {isAdminUser ? (
-                    <Link href="/admin" className="font-bold text-primary hover:underline">o</Link>
+                    <Link href="/admin/verify" className="font-bold text-primary hover:underline">o</Link>
                 ) : (
                     'o'
                 )}
