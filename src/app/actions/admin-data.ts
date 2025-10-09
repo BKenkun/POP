@@ -31,8 +31,8 @@ async function fetchAllOrders(): Promise<Order[]> {
     
     // Sort after combining and ensuring uniqueness
     unique.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : 0);
         return dateB - dateA;
     });
 
@@ -65,7 +65,7 @@ export async function getAllAdminOrders(): Promise<Order[]> {
     // Serialize Timestamps to strings before sending to the client
     return orders.map(order => ({
         ...order,
-        createdAt: order.createdAt?.toDate ? order.createdAt.toDate().toISOString() : new Date(0).toISOString(),
+        createdAt: order.createdAt?.toDate ? order.createdAt.toDate().toISOString() : (typeof order.createdAt === 'string' ? order.createdAt : new Date(0).toISOString()),
     }));
 }
 

@@ -28,12 +28,8 @@ export default function AdminOrdersPage() {
         setLoading(true);
         try {
             const orders = await getAllAdminOrders();
-            // Timestamps from server actions might be strings, so convert them
-            const sanitizedOrders = orders.map(order => ({
-                ...order,
-                createdAt: order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt)
-            }));
-            setAllOrders(sanitizedOrders);
+            // Timestamps from server actions are already strings, just use them
+            setAllOrders(orders);
         } catch (error) {
             console.error("Failed to fetch orders:", error);
             // Handle error state, maybe show a toast

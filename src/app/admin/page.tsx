@@ -136,12 +136,8 @@ export default function AdminDashboardPage() {
         try {
             // Server action will fetch all orders securely
             const ordersData = await getAllAdminOrders();
-            const sanitizedOrders = ordersData.map(order => ({
-                ...order,
-                // Ensure createdAt is a Date object, whether it's a Timestamp or string
-                createdAt: order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt),
-            }));
-            setAllOrders(sanitizedOrders);
+            // Data is already serialized correctly, just use it
+            setAllOrders(ordersData);
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         }
@@ -189,7 +185,7 @@ export default function AdminDashboardPage() {
     };
   }, [allOrders, products, dateRange, compareDateRange, isCompareEnabled]);
 
-  if (loading) {
+  if (loading && allOrders.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -260,16 +256,16 @@ export default function AdminDashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Ingresos" value={processedData.revenue} change={processedData.revenueChange} icon={Package} format={(v) => formatPrice(v)} loading={loading} />
-          <StatCard title="Pedidos" value={processedData.orderCount} change={processedData.ordersChange} icon={ShoppingCart} loading={loading} />
-          <StatCard title="Clientes Nuevos" value={processedData.clients.size} change={processedData.clientsChange} icon={Users} loading={loading} />
+          <StatCard title="Ingresos" value={processedData.revenue} change={processedData.revenueChange} icon={Package} format={(v) => formatPrice(v)} loading={loading && allOrders.length === 0} />
+          <StatCard title="Pedidos" value={processedData.orderCount} change={processedData.ordersChange} icon={ShoppingCart} loading={loading && allOrders.length === 0} />
+          <StatCard title="Clientes Nuevos" value={processedData.clients.size} change={processedData.clientsChange} icon={Users} loading={loading && allOrders.length === 0} />
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
+              {loading && allOrders.length === 0 ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
                 <div className="text-2xl font-bold">{products.length}</div>
                 <Link href="/admin/products">
                     <p className={cn("text-xs font-bold hover:underline cursor-pointer", processedData.lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
