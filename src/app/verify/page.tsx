@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
 import { login } from '@/app/actions/admin-auth';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -24,7 +24,7 @@ function SubmitButton() {
 export default function VerifyPage() {
   const { toast } = useToast();
   // The login server action now handles redirection, but can return an error state.
-  const [state, formAction] = useFormState(login, undefined);
+  const [state, formAction] = useActionState(login, undefined);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary">
