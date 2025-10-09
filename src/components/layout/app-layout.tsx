@@ -8,6 +8,7 @@ import FloatingActionButtons from '@/components/floating-action-buttons';
 import { useCookieConsent } from '@/context/cookie-context';
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
+import CookieConsentBanner from '../cookie-consent-banner';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
@@ -35,6 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SalesNotification />
       <FloatingActionButtons />
       <Toaster />
+      <CookieConsentBanner />
     </>
   );
 }
