@@ -19,7 +19,7 @@ import { useAuth } from '@/context/auth-context';
 
 export default function FloatingAccountButton() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdminAsCustomer } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = (e: Event) => {
@@ -32,8 +32,6 @@ export default function FloatingAccountButton() {
         router.push('/login');
     }
   }
-
-  const isSimulatedAdmin = user?.uid === 'admin_user';
 
   return (
     <div
@@ -55,7 +53,7 @@ export default function FloatingAccountButton() {
         </DropdownMenuTrigger>
         {user && (
             <DropdownMenuContent className="w-56 mb-2" align="end" side="top">
-            <DropdownMenuLabel>{isSimulatedAdmin ? 'Admin (Vista Cliente)' : 'Mi Cuenta'}</DropdownMenuLabel>
+            <DropdownMenuLabel>{isAdminAsCustomer ? 'Admin (Vista Cliente)' : 'Mi Cuenta'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>

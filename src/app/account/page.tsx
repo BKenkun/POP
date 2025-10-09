@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -11,13 +10,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function AccountDashboardPage() {
-  const { user, isSubscribed, loyaltyPoints } = useAuth();
+  const { user, isSubscribed, loyaltyPoints, isAdminAsCustomer } = useAuth();
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    // Don't fetch doc for admin-as-customer
+    if (!user || isAdminAsCustomer || !firestore) return null;
     return doc(firestore, "users", user.uid);
-  }, [user, firestore]);
+  }, [user, isAdminAsCustomer, firestore]);
 
   const { data: userData } = useDoc<{ displayName: string }>(userDocRef);
 
@@ -75,6 +75,7 @@ export default function AccountDashboardPage() {
             <CardContent className="space-y-2">
                 <p><span className="font-semibold">Nombre:</span> {userName}</p>
                 <p><span className="font-semibold">Email:</span> {userEmail}</p>
+                 {isAdminAsCustomer && <p className="text-xs text-amber-500 font-bold mt-2">(Estás viendo la tienda como administrador)</p>}
             </CardContent>
             </Card>
             <Card>

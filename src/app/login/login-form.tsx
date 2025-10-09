@@ -11,11 +11,15 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { adminLoginAction } from '@/app/actions/admin-auth';
+import { useAuth } from '@/context/auth-context';
 
 export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useFirebaseAuth();
+  const { loginAsAdminCustomer } = useAuth(); // Use the new function from context
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +29,22 @@ export default function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
+    // Step 1: Check if the credentials are for the admin
+    const adminCheckResult = await adminLoginAction({ email, password });
+
+    if (adminCheckResult.success) {
+        // If they are admin credentials, log in as admin-customer
+        loginAsAdminCustomer({ email });
+        toast({
+            title: 'Inicio de sesión como Administrador',
+            description: 'Viendo la tienda como cliente. Redirigiendo...',
+        });
+        router.push('/account');
+        return; // Stop the process here
+    }
+
+    // Step 2: If not admin, proceed with normal Firebase customer login
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
