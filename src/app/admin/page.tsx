@@ -144,11 +144,11 @@ export default function AdminDashboardPage() {
   }, [firestore, isAuthenticated]);
 
   const reservationsQuery = useMemoFirebase(() => {
-    if (!firestore || !isAuthenticated) return null;
-    return query(
-        collection(firestore, 'reservations'),
-        orderBy('createdAt', 'desc')
-    );
+      if (!firestore || !isAuthenticated) return null;
+      return query(
+          collection(firestore, 'reservations'),
+          orderBy('createdAt', 'desc')
+      );
   }, [firestore, isAuthenticated]);
 
   const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(ordersQuery);

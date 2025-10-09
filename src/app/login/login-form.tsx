@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,14 +12,11 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { adminLoginAction } from '../actions/admin-auth';
-import { useAuth as useAppAuth } from '@/context/auth-context';
 
 export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const auth = useAuth();
-  const { loginAsAdminCustomer } = useAppAuth();
+  const auth = useFirebaseAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,26 +27,6 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
     
-    // Step 1: Attempt to log in as admin via the special client view
-    try {
-        const adminCheckResult = await adminLoginAction({ email, password });
-        if (adminCheckResult.success) {
-            loginAsAdminCustomer();
-            toast({
-                title: 'Inicio de sesión como administrador',
-                description: 'Explorando la vista de cliente.',
-            });
-            router.push('/account');
-            setLoading(false);
-            return; // Important: exit the function if admin login is successful
-        }
-    } catch (serverActionError) {
-        console.error("Error during admin check server action:", serverActionError);
-        // We can let it fall through to regular login, but good to log this.
-    }
-
-
-    // Step 2: If admin login fails, proceed with standard Firebase authentication for regular users.
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
@@ -58,7 +35,6 @@ export default function LoginForm() {
       });
       router.push('/account');
     } catch (err: any) {
-      // This error message is for regular user login failure
       const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
       setError(errorMessage);
       toast({

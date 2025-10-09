@@ -92,7 +92,7 @@ export default function OrderDetailPage() {
     });
 
     return () => unsubscribe();
-  }, [docRef, toast]);
+  }, [docRef, toast, isAuthenticated]);
 
 
   const handleStatusChange = async (newStatus: string) => {
