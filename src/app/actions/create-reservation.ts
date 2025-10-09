@@ -58,12 +58,12 @@ export async function createReservationAction(
     
     // --- 3. Create Order Object (for DB persistence) ---
      const shippingAddress: ShippingAddress = {
-        line1: input.customerDetails.address,
+        line1: input.customerDetails.street,
         line2: null,
-        city: 'N/A', // Assuming city is part of the address line for this simple form
-        state: 'N/A',
+        city: input.customerDetails.city,
+        state: input.customerDetails.state,
         postal_code: input.customerDetails.postalCode,
-        country: 'ES' // Assuming Spain
+        country: input.customerDetails.country,
     }
     
     const newOrder: Order = {

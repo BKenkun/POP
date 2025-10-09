@@ -35,8 +35,11 @@ const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
   email: z.string().email("Por favor, introduce un email válido."),
   phone: z.string().min(9, "El teléfono es requerido."),
-  address: z.string().min(10, "La dirección de entrega es requerida."),
+  street: z.string().min(5, "La calle es requerida."),
+  city: z.string().min(2, "La ciudad es requerida."),
+  state: z.string().min(2, "El estado/provincia es requerido."),
   postalCode: z.string().min(3, "El código postal es requerido."),
+  country: z.string().min(2, "El país es requerido."),
   paymentMethod: z.enum(['cod', 'prepaid'], {
     required_error: "Debes seleccionar un método de pago.",
   }),
@@ -91,8 +94,11 @@ export default function CheckoutClientPage() {
       name: user?.displayName || '',
       email: user?.email || '',
       phone: '',
-      address: '',
+      street: '',
+      city: '',
+      state: '',
       postalCode: '',
+      country: 'España',
       paymentMethod: 'cod',
     },
   });
@@ -108,7 +114,7 @@ export default function CheckoutClientPage() {
   const handleNextStep = async () => {
     let isValid = false;
     if (step === 2) { // Validate shipping details
-        isValid = await form.trigger(['name', 'email', 'phone', 'address', 'postalCode']);
+        isValid = await form.trigger(['name', 'email', 'phone', 'street', 'city', 'state', 'postalCode', 'country']);
     } else if (step === 3) { // Validate payment method
         isValid = await form.trigger('paymentMethod');
     } else { // Step 1
@@ -215,9 +221,9 @@ export default function CheckoutClientPage() {
              {step === 2 && (
                 <Card>
                     <CardHeader><CardTitle>2. Tus Datos de Entrega</CardTitle></CardHeader>
-                    <CardContent className="p-6 space-y-4">
+                    <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                          <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem className="md:col-span-2"><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="email" render={({ field }) => (
                             <FormItem><FormLabel><Mail className="inline-block mr-2"/>Email de Contacto</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
@@ -225,11 +231,20 @@ export default function CheckoutClientPage() {
                         <FormField control={form.control} name="phone" render={({ field }) => (
                             <FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                         <FormField control={form.control} name="address" render={({ field }) => (
-                            <FormItem><FormLabel><Home className="inline-block mr-2"/>Dirección de Entrega</FormLabel><FormControl><Input placeholder="Calle, número, piso..." {...field} /></FormControl><FormMessage /></FormItem>
+                         <FormField control={form.control} name="street" render={({ field }) => (
+                            <FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="city" render={({ field }) => (
+                            <FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="state" render={({ field }) => (
+                            <FormItem><FormLabel>Estado / Provincia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="postalCode" render={({ field }) => (
-                            <FormItem><FormLabel><MapPin className="inline-block mr-2"/>Código Postal</FormLabel><FormControl><Input placeholder="03203" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="country" render={({ field }) => (
+                            <FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                     </CardContent>
                 </Card>
@@ -304,7 +319,9 @@ export default function CheckoutClientPage() {
                                  <p>{formValues.name}</p>
                                  <p>{formValues.email}</p>
                                  <p>{formValues.phone}</p>
-                                 <p>{formValues.address}, {formValues.postalCode}</p>
+                                 <p>{formValues.street}</p>
+                                 <p>{formValues.city}, {formValues.state}, {formValues.postalCode}</p>
+                                 <p>{formValues.country}</p>
                              </div>
                         </div>
                          <Separator />
