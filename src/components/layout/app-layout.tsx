@@ -18,7 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // El middleware se encarga de las rutas /admin.
   // Este layout no debe renderizar nada para /verify para evitar conflictos.
   if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
-    return null;
+    return <>{children}</>;
   }
 
   // Load Clarity script if consent is given
@@ -44,6 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SalesNotification />
       <FloatingActionButtons />
       <CookieConsentBanner />
+      <Toaster />
     </>
   );
 }

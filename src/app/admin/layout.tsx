@@ -8,8 +8,8 @@ import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
-import { FirebaseClientProvider } from '@/firebase';
 import { CookieProvider } from '@/context/cookie-context';
+import { FirebaseClientProvider } from '@/firebase';
 
 
 export default function AdminLayout({

@@ -7,13 +7,12 @@ import { CookieProvider } from "./cookie-context";
 import { FirebaseClientProvider } from "@/firebase";
 import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
-import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // No envolvemos las rutas de admin o verify con los proveedores del cliente
+  // Do not wrap admin or verify routes with the client-side providers
   if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
     return <>{children}</>;
   }
@@ -32,7 +31,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <AppLayout>
                       {children}
                     </AppLayout>
-                    <Toaster />
                   </CartProvider>
               </AuthProvider>
           </FirebaseClientProvider>

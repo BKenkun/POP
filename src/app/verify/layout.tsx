@@ -1,8 +1,8 @@
 
 import { ReactNode } from 'react';
 
-// Este layout está intencionalmente vacío para aislar la página de verificación
-// de cualquier proveedor de contexto global que pueda causar conflictos.
+// This layout is intentionally empty to isolate the verification page
+// from any global context providers that might cause conflicts.
 export default function VerifyLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
