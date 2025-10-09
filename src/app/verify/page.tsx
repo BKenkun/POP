@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
-import { login } from '@/app/actions/admin-auth';
+import { login } from './action';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function VerifyPage() {
