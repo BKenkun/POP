@@ -17,25 +17,23 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   
   return (
     <ProtectedAdminRoute>
-        <SidebarProvider>
-            <Sidebar variant="sidebar" collapsible="offcanvas">
-                <AdminSidebar />
-            </Sidebar>
-            
-            <div className={cn(
-                "fixed left-2 top-2 z-20 hidden transition-opacity",
-                isCollapsed ? "md:block opacity-100" : "opacity-0 pointer-events-none"
-            )}>
-                <SidebarTrigger />
+        <Sidebar variant="sidebar" collapsible="offcanvas">
+            <AdminSidebar />
+        </Sidebar>
+        
+        <div className={cn(
+            "fixed left-2 top-2 z-20 hidden transition-opacity",
+            isCollapsed ? "md:block opacity-100" : "opacity-0 pointer-events-none"
+        )}>
+            <SidebarTrigger />
+        </div>
+        
+        <SidebarInset>
+            <div className="p-4 md:p-8">
+                {children}
             </div>
-            
-            <SidebarInset>
-                <div className="p-4 md:p-8">
-                    {children}
-                </div>
-            </SidebarInset>
-            <ThemeToggleButton />
-        </SidebarProvider>
+        </SidebarInset>
+        <ThemeToggleButton />
     </ProtectedAdminRoute>
   );
 }
@@ -55,7 +53,9 @@ export default function AdminLayout({
       disableTransitionOnChange
     >
         <AdminAuthProvider>
-            <AdminLayoutContent>{children}</AdminLayoutContent>
+            <SidebarProvider>
+                <AdminLayoutContent>{children}</AdminLayoutContent>
+            </SidebarProvider>
             <Toaster />
         </AdminAuthProvider>
     </ThemeProvider>
