@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword, getIdToken } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, getIdToken } from 'firebase/auth';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,26 +24,54 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Define admin credentials directly in the component for the special one-time creation logic
+  const ADMIN_EMAIL = 'maryandpopper@gmail.com';
+  const ADMIN_PASS = 'Jk#8@z!pLq&9$vR*sWb2';
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    if (!auth) {
+        setError("Servicio de autenticación no disponible.");
+        setLoading(false);
+        return;
+    }
+
     try {
-      if (!auth) {
-        throw new Error("Servicio de autenticación no disponible.");
-      }
+        let userCredential;
+        
+        try {
+            // Step 1: Try to sign in normally
+            userCredential = await signInWithEmailAndPassword(auth, email, password);
+        } catch (err: any) {
+            // Step 2: If sign-in fails because the user is not found,
+            // AND the credentials match the hardcoded admin credentials,
+            // then try to create the admin user account.
+            if (err.code === 'auth/user-not-found' && email === ADMIN_EMAIL && password === ADMIN_PASS) {
+                toast({
+                    title: 'Creando cuenta de administrador...',
+                    description: 'Espera un momento, esto solo ocurrirá una vez.'
+                });
+                userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+                // For any other login error (like wrong password), show a generic message.
+                 throw new Error('Email o contraseña incorrectos. Por favor, inténtalo de nuevo.');
+            } else {
+                // Re-throw other Firebase errors (e.g., network issues)
+                throw err;
+            }
+        }
       
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await getIdToken(userCredential.user);
 
-      // Send the token to the server to create session cookies
+      // Step 3: Send the token to the server to create session cookies
       const response = await fetch('/api/login', {
           method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
       });
       
@@ -59,27 +87,22 @@ export default function LoginForm() {
       });
       
       const redirectUrl = searchParams.get('redirect');
+      const isAdmin = result.isAdmin;
 
-      // Check if the user is an admin and redirect accordingly
-      if (result.isAdmin) {
-          // If the original redirect was to admin, go there. Otherwise, go to /admin by default.
-          router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
-      } else {
-          // For regular users, redirect to the intended page or their account page.
-          router.push(redirectUrl || '/account');
-      }
-      // A full page refresh is important to ensure the new cookies are sent to the middleware
+      // Step 4: Redirect user based on their role
+      const targetUrl = isAdmin ? (redirectUrl || '/admin') : (redirectUrl || '/account');
+      router.push(targetUrl);
       router.refresh();
 
     } catch (err: any) {
-      const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      const errorMessage = err.message || 'Ocurrió un error inesperado.';
       setError(errorMessage);
       toast({
         title: 'Error al iniciar sesión',
         description: errorMessage,
         variant: 'destructive',
       });
-      setLoading(false); // Only set loading to false on error
+      setLoading(false);
     }
   };
 
@@ -117,6 +140,7 @@ export default function LoginForm() {
                     className="absolute inset-y-0 right-0 h-full px-3"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
                     {showPassword ? <EyeOff /> : <Eye />}
                 </Button>
