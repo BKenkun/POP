@@ -1,14 +1,12 @@
 
 'use client';
 
-import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { SalesNotification } from '@/components/sales-notification';
 import FloatingActionButtons from '@/components/floating-action-buttons';
 import { usePathname } from 'next/navigation';
 import { useCookieConsent } from '@/context/cookie-context';
-import CookieConsentBanner from '@/components/cookie-consent-banner';
 import { useEffect } from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -26,8 +24,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [consent.analytics]);
 
-  const showHeaderFooter = !pathname.startsWith('/verify');
-  const showFloatingButtons = !pathname.startsWith('/checkout') && !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/verify');
+  const showHeaderFooter = !pathname.startsWith('/verify') && !pathname.startsWith('/admin');
+  const showFloatingButtons = !pathname.startsWith('/checkout') && !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/verify') && !pathname.startsWith('/admin');
 
   return (
     <>
@@ -40,8 +38,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <SalesNotification />
       {showFloatingButtons && <FloatingActionButtons />}
-      <CookieConsentBanner />
-      <Toaster />
     </>
   );
 }

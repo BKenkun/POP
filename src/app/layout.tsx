@@ -28,7 +28,7 @@ export default function RootLayout({
         {/* The font link in head is now handled by next/font, so we can remove it */}
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-        <Providers>{children}</Providers>
+          <Providers>{children}</Providers>
       </body>
     </html>
   );
