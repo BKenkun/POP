@@ -77,10 +77,12 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
     let order: Order | null = null;
     let path: string | null = null;
 
+    // Search in 'orders' collection group first
     const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
     const orderSnap = await getDocs(ordersQuery);
     
     if (!orderSnap.empty) {
+        // Found in a user's subcollection
         path = orderSnap.docs[0].ref.path;
         const docRef = doc(db, path);
         const docSnap = await getDoc(docRef);
@@ -88,6 +90,7 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
              order = docSnap.data() as Order;
         }
     } else {
+        // If not found, check the 'reservations' collection for guest orders
         const reservationRef = doc(db, 'reservations', orderId);
         const reservationSnap = await getDoc(reservationRef);
         if (reservationSnap.exists()) {
@@ -117,5 +120,3 @@ export async function getAllAdminCustomers() {
     });
     return users;
 }
-
-    

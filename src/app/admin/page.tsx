@@ -22,7 +22,7 @@ import { subDays, startOfDay, endOfDay, isWithinInterval, format as formatDate, 
 import { es } from 'date-fns/locale';
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Order, Product } from "@/lib/types";
-import { getAdminDashboardData, getAllAdminOrders } from "@/app/actions/admin-data";
+import { getAllAdminOrders } from "@/app/actions/admin-data";
 import { cbdProducts } from "@/lib/cbd-products";
 
 const chartConfig = {
@@ -354,5 +354,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
