@@ -6,6 +6,7 @@ import { User, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
 import { useAuth as useFirebaseAuthHook, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAdminAuth } from './admin-auth-context';
 
 
 interface AuthContextType {
@@ -20,13 +21,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { user, isUserLoading: authLoading, auth } = useFirebaseAuthHook();
+  const { isAdminAsCustomer } = useAdminAuth(); // Use admin context
   const firestore = useFirestore();
   const router = useRouter();
 
   const userDocRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    // Prevent Firestore reads if there's no user OR if the admin is viewing as a customer
+    if (!user || !firestore || isAdminAsCustomer) return null;
     return doc(firestore, "users", user.uid);
-  }, [user, firestore]);
+  }, [user, firestore, isAdminAsCustomer]);
 
   const { data: userData, isLoading: userDocLoading } = useDoc<{ loyaltyPoints?: number, isSubscribed?: boolean }>(userDocRef);
 
@@ -44,7 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const loading = authLoading || userDocLoading;
+  // Doc is only loading if we are fetching it (i.e., not an admin)
+  const loading = authLoading || (user && !isAdminAsCustomer ? userDocLoading : false);
 
   const value = { 
       user, 

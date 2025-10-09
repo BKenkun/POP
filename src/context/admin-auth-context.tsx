@@ -19,6 +19,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   // On initial load, check localStorage to see if admin was previously viewing as a customer.
   // This persists the "secret link" state across page reloads.
+  // CRITICAL: This now runs inside useEffect to ensure it only executes on the client.
   useEffect(() => {
     try {
       const storedState = localStorage.getItem(ADMIN_STORAGE_KEY);
@@ -31,16 +32,6 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // When admin logs out from /admin panel, this effect will clear the flag.
-  useEffect(() => {
-    if (!pathname.startsWith('/admin')) {
-      // If we are not in admin, we don't need to do anything with the session.
-      return;
-    }
-    // If we navigate AWAY from the admin section, it means a logout or similar.
-    // However, this logic is flawed. A better check is needed.
-    // The main control is now handleSetIsAdminAsCustomer.
-  }, [pathname]);
 
   const handleSetIsAdminAsCustomer = (isViewing: boolean) => {
      try {

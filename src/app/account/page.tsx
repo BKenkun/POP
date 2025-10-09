@@ -23,7 +23,7 @@ export default function AccountDashboardPage() {
 
   const { data: userData } = useDoc<{ displayName: string }>(userDocRef);
 
-  const userName = userData?.displayName || user?.displayName || user?.email?.split('@')[0] || "Usuario";
+  const userName = isAdminAsCustomer ? "Administrador" : (userData?.displayName || user?.displayName || user?.email?.split('@')[0] || "Usuario");
   const userEmail = user?.email || "No email provided";
   
   // 100 points = 2€ discount
