@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -30,6 +30,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createReservationAction } from '@/app/actions/create-reservation';
 import { Label } from '@/components/ui/label';
 import { QuantitySelector } from '@/components/quantity-selector';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 
 const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
@@ -46,6 +47,7 @@ const checkoutSchema = z.object({
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+type PrimaryPaymentMethod = 'cod' | 'prepaid';
 
 const paymentMethodLabels: { [key in CheckoutFormValues['paymentMethod']]: string } = {
     cod_cash: 'Contra-entrega (Efectivo)',
@@ -86,6 +88,30 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
     );
 };
 
+const PaymentOption = ({
+  value,
+  icon: Icon,
+  title,
+  description,
+}: {
+  value: CheckoutFormValues['paymentMethod'];
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}) => (
+  <Label
+    htmlFor={value}
+    className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all hover:bg-accent/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+  >
+    <Icon className="h-6 w-6 flex-shrink-0 text-primary" />
+    <div className="flex-1">
+      <p className="font-semibold">{title}</p>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
+    <RadioGroupItem value={value} id={value} />
+  </Label>
+);
+
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
@@ -94,6 +120,7 @@ export default function CheckoutClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [primaryPaymentMethod, setPrimaryPaymentMethod] = useState<PrimaryPaymentMethod>('cod');
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -137,6 +164,17 @@ export default function CheckoutClientPage() {
       setStep(prev => prev - 1);
   };
   
+  const handlePrimaryPaymentChange = (value: string) => {
+    const newPrimaryMethod = value as PrimaryPaymentMethod;
+    setPrimaryPaymentMethod(newPrimaryMethod);
+    // Set a default sub-option when the main category changes
+    if (newPrimaryMethod === 'cod') {
+        form.setValue('paymentMethod', 'cod_cash');
+    } else {
+        form.setValue('paymentMethod', 'prepaid_bizum');
+    }
+  }
+
 
   const onSubmit = async (data: CheckoutFormValues) => {
     setLoading(true);
@@ -259,57 +297,55 @@ export default function CheckoutClientPage() {
             
             {step === 3 && (
                 <Card>
-                    <CardHeader><CardTitle>3. Método de Pago</CardTitle></CardHeader>
-                    <CardContent>
-                         <FormField
+                    <CardHeader>
+                        <CardTitle>3. Método de Pago</CardTitle>
+                        <CardDescription>Elige cómo quieres pagar tu pedido.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <RadioGroup 
+                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                            value={primaryPaymentMethod}
+                            onValueChange={handlePrimaryPaymentChange}
+                        >
+                            <Label className={cn("flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all", primaryPaymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-muted')}>
+                                <RadioGroupItem value="cod" id="cod" className="sr-only" />
+                                <Truck className="h-8 w-8 mb-2" />
+                                <span className="font-bold text-lg">Contra-entrega</span>
+                            </Label>
+                            <Label className={cn("flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all", primaryPaymentMethod === 'prepaid' ? 'border-primary bg-primary/5' : 'border-muted')}>
+                                <RadioGroupItem value="prepaid" id="prepaid" className="sr-only" />
+                                <Wallet className="h-8 w-8 mb-2" />
+                                <span className="font-bold text-lg">Pago Anticipado</span>
+                            </Label>
+                        </RadioGroup>
+                        
+                        <Separator />
+
+                        <FormField
                             control={form.control}
                             name="paymentMethod"
                             render={({ field }) => (
-                                <FormItem className="space-y-3">
-                                <FormControl>
-                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Card>
-                                            <Label className="flex flex-col p-4 cursor-pointer">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-lg flex items-center gap-2"><Truck /> Contra-entrega (Efectivo)</span>
-                                                    <FormControl><RadioGroupItem value="cod_cash" /></FormControl>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground mt-2">Paga en efectivo al repartidor en el momento de la entrega.</p>
-                                            </Label>
-                                        </Card>
-                                         <Card>
-                                            <Label className="flex flex-col p-4 cursor-pointer">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-lg flex items-center gap-2"><CreditCard /> Contra-entrega (Tarjeta)</span>
-                                                    <FormControl><RadioGroupItem value="cod_card" /></FormControl>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground mt-2">Paga con tarjeta a través del TPV móvil del repartidor.</p>
-                                            </Label>
-                                        </Card>
-                                         <Card>
-                                            <Label className="flex flex-col p-4 cursor-pointer">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-lg flex items-center gap-2"><Smartphone /> Pago Anticipado (Bizum)</span>
-                                                    <FormControl><RadioGroupItem value="prepaid_bizum" /></FormControl>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground mt-2">Recibirás un email con el número para realizar el pago.</p>
-                                            </Label>
-                                        </Card>
-                                         <Card>
-                                            <Label className="flex flex-col p-4 cursor-pointer">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-lg flex items-center gap-2"><Banknote /> Pago Anticipado (Transferencia)</span>
-                                                    <FormControl><RadioGroupItem value="prepaid_transfer" /></FormControl>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground mt-2">Recibirás un email con el IBAN para realizar el pago.</p>
-                                            </Label>
-                                        </Card>
-                                    </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
+                                <FormItem>
+                                    <FormControl>
+                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
+                                            <Collapsible open={primaryPaymentMethod === 'cod'}>
+                                                <CollapsibleContent className="space-y-4">
+                                                     <PaymentOption value="cod_card" icon={CreditCard} title="Pagar con Tarjeta" description="El repartidor llevará un TPV móvil."/>
+                                                     <PaymentOption value="cod_cash" icon={Banknote} title="Pagar en Efectivo" description="Ten preparado el importe exacto para el repartidor."/>
+                                                </CollapsibleContent>
+                                            </Collapsible>
+                                            <Collapsible open={primaryPaymentMethod === 'prepaid'}>
+                                                <CollapsibleContent className="space-y-4">
+                                                     <PaymentOption value="prepaid_bizum" icon={Smartphone} title="Pagar con Bizum" description="Recibirás un email con nuestro número de teléfono."/>
+                                                     <PaymentOption value="prepaid_transfer" icon={Banknote} title="Pagar por Transferencia" description="Recibirás un email con nuestro número de cuenta (IBAN)."/>
+                                                </CollapsibleContent>
+                                            </Collapsible>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
                                 </FormItem>
                             )}
-                            />
+                        />
                     </CardContent>
                 </Card>
             )}
