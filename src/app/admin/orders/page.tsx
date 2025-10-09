@@ -19,12 +19,20 @@ import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 export default function AdminOrdersPage() {
   const firestore = useFirestore();
+  const { isAuthenticated } = useAdminAuth();
   
-  const userOrdersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
-  const reservationsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc')) : null, [firestore]);
+  const userOrdersQuery = useMemoFirebase(() => {
+      if (!firestore || !isAuthenticated) return null;
+      return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'))
+    }, [firestore, isAuthenticated]);
+  const reservationsQuery = useMemoFirebase(() => {
+      if (!firestore || !isAuthenticated) return null;
+      return query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc'))
+    }, [firestore, isAuthenticated]);
 
   const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(userOrdersQuery);
   const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
@@ -33,11 +41,12 @@ export default function AdminOrdersPage() {
   const loading = loadingUserOrders || loadingGuestOrders;
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
     const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
     uniqueOrders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     setAllOrders(uniqueOrders);
-  }, [userOrders, guestOrders]);
+  }, [userOrders, guestOrders, isAuthenticated]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
