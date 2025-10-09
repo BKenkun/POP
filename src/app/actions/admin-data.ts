@@ -17,26 +17,31 @@ async function verifyAdmin() {
 // Helper function to safely get a Date object from Firestore Timestamp, string or other types.
 const toDateSafe = (timestamp: any): Date => {
   if (!timestamp) {
-    return new Date(0); // Return epoch if timestamp is null or undefined
+    return new Date(0); // Return epoch for null/undefined to avoid crashes
   }
-  // Firestore Timestamp
-  if (typeof timestamp.toDate === 'function') {
+  // Firestore Timestamp (most common case for registered user orders)
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
-  // ISO string or number
-  if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+  // ISO string (from client-side, guest orders, or serialization)
+  if (typeof timestamp === 'string') {
     const d = new Date(timestamp);
-    if (!isNaN(d.getTime())) { // Check if the date is valid
-        return d;
+    if (!isNaN(d.getTime())) {
+      return d;
     }
   }
-   // Firestore Timestamp-like object from server-side rendering
+  // Object with _seconds (alternative serialization)
   if (typeof timestamp === 'object' && timestamp._seconds) {
-      return new Date(timestamp._seconds * 1000);
+    return new Date(timestamp._seconds * 1000);
   }
-  
+   // Object with seconds and nanoseconds (from server-side rendering or Firestore directly)
+  if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
+    return new Date(timestamp.seconds * 1000);
+  }
+
+  // Fallback for unexpected formats
   console.warn("Could not parse timestamp, returning epoch:", timestamp);
-  return new Date(0); // Fallback for invalid or unexpected formats
+  return new Date(0);
 }
 
 
