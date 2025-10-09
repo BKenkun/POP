@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
 import { AdminAuthProvider } from '@/context/admin-auth-context';
 import { FirebaseClientProvider } from '@/firebase';
+import { CookieProvider } from '@/context/cookie-context';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   // El middleware es la única fuente de verdad para proteger las rutas /admin.
@@ -48,6 +49,7 @@ export default function AdminLayout({
       enableSystem
       disableTransitionOnChange
     >
+      <CookieProvider>
         <AdminAuthProvider>
           <FirebaseClientProvider>
             <SidebarProvider>
@@ -56,6 +58,7 @@ export default function AdminLayout({
             <Toaster />
           </FirebaseClientProvider>
         </AdminAuthProvider>
+      </CookieProvider>
     </ThemeProvider>
   );
 }
