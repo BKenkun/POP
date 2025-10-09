@@ -1,0 +1,88 @@
+/**
+ * @fileOverview Firestore Security Rules for PuroRush.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for cart items and orders,
+ * while allowing public read access to product information.
+ *
+ * Data Structure:
+ * - Products are stored in a top-level `/products` collection, accessible to all.
+ * - Each user has their own cart items and orders stored under their respective
+ *   `/users/{userId}/cart_items` and `/users/{userId}/orders` subcollections.
+ *
+ * Key Security Decisions:
+ * - Public product listing: All users can read product information.
+ * - Owner-only cart and order management: Only the authenticated user can
+ *   create, modify, or delete cart items and orders associated with their ID.
+ * - No user listing: Listing the `/users` collection is not permitted.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows public read access to product information. Only allows create, update, and delete operations.
+     * @path /products/{productId}
+     * @allow get, list: if true;
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access to product information.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Manages cart items for each user, enforcing owner-only access.
+     * @path /users/{userId}/cart_items/{cartItemId}
+     * @allow get, list: if isOwner(userId);
+     * @allow create: if request.auth.uid == userId;
+     * @allow update: if isExistingOwner(userId);
+     * @allow delete: if isExistingOwner(userId);
+     * @deny create: if request.auth.uid != userId;
+     * @deny update: if !isExistingOwner(userId);
+     * @deny delete: if !isExistingOwner(userId);
+     * @principle Enforces document ownership for writes and restricts access to a user's own cart.
+     */
+    match /users/{userId}/cart_items/{cartItemId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages orders for each user, enforcing owner-only access.
+     * @path /users/{userId}/orders/{orderId}
+     * @allow get, list: if isOwner(userId);
+     * @allow create: if request.auth.uid == userId;
+     * @allow update: if isExistingOwner(userId);
+     * @allow delete: if isExistingOwner(userId);
+     * @deny create: if request.auth.uid != userId;
+     * @deny update: if !isExistingOwner(userId);
+     * @deny delete: if !isExistingOwner(userId);
+     * @principle Enforces document ownership for writes and restricts access to a user's own orders.
+     */
+    match /users/{userId}/orders/{orderId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+  }
+}
