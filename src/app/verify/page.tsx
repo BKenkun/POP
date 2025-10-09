@@ -11,19 +11,21 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
 import { login } from '@/app/actions/admin-auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function VerifyPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { setIsAdminAsCustomer } = useAdminAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>('');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This ensures the form only renders on the client side,
-    // avoiding hydration mismatches caused by browser extensions.
     setIsClient(true);
-  }, []);
+    // On load, ensure any previous admin customer state is cleared
+    setIsAdminAsCustomer(false);
+  }, [setIsAdminAsCustomer]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,6 +44,8 @@ export default function VerifyPage() {
       });
       setLoading(false);
     } else {
+      // On successful admin login, set the flag and redirect
+      setIsAdminAsCustomer(true);
       toast({
         title: "Acceso concedido",
         description: "Redirigiendo al panel de administración...",

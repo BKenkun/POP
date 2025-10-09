@@ -14,7 +14,6 @@ interface AuthContextType {
   logout: () => void;
   isSubscribed: boolean;
   loyaltyPoints: number;
-  isAdminAsCustomer: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,8 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isSubscribed = userData?.isSubscribed ?? false;
   const loyaltyPoints = userData?.loyaltyPoints ?? 0;
   
-  const isAdminAsCustomer = false; // This functionality is removed to simplify auth.
-
   const logout = async () => {
     try {
         if (auth) {
@@ -55,7 +52,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       isSubscribed,
       loyaltyPoints,
-      isAdminAsCustomer,
     };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

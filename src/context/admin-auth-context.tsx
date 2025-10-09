@@ -2,46 +2,64 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getAdminSession, logout as adminLogout } from '@/app/actions/admin-auth';
-
-interface AdminSession {
-  email: string;
-  isAdmin: true;
-}
+import { usePathname } from 'next/navigation';
 
 interface AdminAuthContextType {
-  session: AdminSession | null;
-  isAuthenticated: boolean;
-  logout: () => void;
-  checkSession: () => void;
+  isAdminAsCustomer: boolean;
+  setIsAdminAsCustomer: (isViewing: boolean) => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
-export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<AdminSession | null>(null);
+const ADMIN_STORAGE_KEY = 'is_admin_as_customer';
 
-  const checkSession = async () => {
-    const sessionData = await getAdminSession();
-    setSession(sessionData);
-  };
-  
+export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
+  const [isAdminAsCustomer, setAdminState] = useState(false);
+  const pathname = usePathname();
+
+  // On initial load, check localStorage to see if admin was previously viewing as a customer.
+  // This persists the "secret link" state across page reloads.
   useEffect(() => {
-    checkSession();
+    try {
+      const storedState = localStorage.getItem(ADMIN_STORAGE_KEY);
+      if (storedState === 'true') {
+        setAdminState(true);
+      }
+    } catch (e) {
+        // localStorage is not available (e.g., in SSR or private browsing)
+        console.warn("Could not access localStorage for admin state.");
+    }
   }, []);
 
-  const logout = async () => {
-    await adminLogout();
-    setSession(null);
+  // When admin logs out from /admin panel, this effect will clear the flag.
+  useEffect(() => {
+    if (!pathname.startsWith('/admin')) {
+      // If we are not in admin, we don't need to do anything with the session.
+      return;
+    }
+    // If we navigate AWAY from the admin section, it means a logout or similar.
+    // However, this logic is flawed. A better check is needed.
+    // The main control is now handleSetIsAdminAsCustomer.
+  }, [pathname]);
+
+  const handleSetIsAdminAsCustomer = (isViewing: boolean) => {
+     try {
+        if (isViewing) {
+            localStorage.setItem(ADMIN_STORAGE_KEY, 'true');
+            setAdminState(true);
+        } else {
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            setAdminState(false);
+        }
+    } catch(e) {
+        console.warn("Could not access localStorage to set admin state.");
+        setAdminState(isViewing); // Set in memory at least
+    }
   };
-  
-  const isAuthenticated = !!session;
 
   const value = { 
-    session,
-    isAuthenticated,
-    logout,
-    checkSession,
+    isAdminAsCustomer,
+    setIsAdminAsCustomer: handleSetIsAdminAsCustomer,
   };
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

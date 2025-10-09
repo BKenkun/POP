@@ -3,9 +3,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAdminAuth } from "@/context/admin-auth-context";
 
 export function Footer() {
     const pathname = usePathname();
+    const { isAdminAsCustomer } = useAdminAuth();
     
     // Do not render the footer on admin or verify routes.
     if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
@@ -59,7 +61,13 @@ export function Footer() {
 
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
-                &copy; {new Date().getFullYear()} Popper Online. Todos los derechos reservados.
+                  &copy; {new Date().getFullYear()} T
+                  {isAdminAsCustomer ? (
+                    <Link href="/admin" aria-label="Acceso secreto al panel de administración">o</Link>
+                  ) : (
+                    'o'
+                  )}
+                  dos los derechos reservados.
                 </p>
             </div>
         </div>
