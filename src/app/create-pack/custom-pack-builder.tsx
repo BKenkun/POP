@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -16,7 +15,6 @@ import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/product-card';
 import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
 import { createCustomPackCheckoutAction } from '@/app/actions/checkout';
-import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import ProductFilters from '@/app/products/filters';
 
@@ -40,7 +38,6 @@ const MAX_UNITS_PER_PRODUCT = 6;
 export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes, uniqueCompositions }: CustomPackBuilderProps) {
   const [packItems, setPackItems] = useState<PackItem[]>([]);
   const { toast } = useToast();
-  const { user } = useAuth();
   const router = useRouter();
   const [priceDetails, setPriceDetails] = useState<PackCalculationOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -154,8 +151,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
 
         const { sessionUrl, error } = await createCustomPackCheckoutAction(
             packItemsForAction,
-            priceDetails.discountedTotal,
-            user?.uid // Pass user ID
+            priceDetails.discountedTotal
         );
 
         if (error || !sessionUrl) {
@@ -338,5 +334,3 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     </div>
   );
 }
-
-    

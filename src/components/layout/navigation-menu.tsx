@@ -20,7 +20,6 @@ import {
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useAuth } from '@/context/auth-context';
 import { SearchForm } from './search-form';
 import { Separator } from '../ui/separator';
 
@@ -48,9 +47,8 @@ interface NavigationMenuComponentProps {
 }
 
 export default function NavigationMenuComponent({ onNavigate, isMobile = false }: NavigationMenuComponentProps) {
-  const { user, isSubscribed } = useAuth();
   
-  const subscriptionUrl = isSubscribed ? "/account/subscription" : "/subscription";
+  const subscriptionUrl = "/subscription";
 
   if (isMobile) {
       return (

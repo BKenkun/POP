@@ -30,30 +30,6 @@ async function updateStock(productId: string, quantitySold: number) {
     }
 }
 
-async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
-    const userId = session.metadata?.userId;
-    const stripeCustomerId = session.customer;
-    const stripeSubscriptionId = session.subscription;
-
-    if (!userId || !stripeCustomerId || !stripeSubscriptionId) {
-        console.error('❌ Missing data in subscription session:', { userId, stripeCustomerId, stripeSubscriptionId });
-        return;
-    }
-
-    const userDocRef = doc(db, 'users', userId);
-    try {
-        await setDoc(userDocRef, {
-            stripeCustomerId: stripeCustomerId,
-            stripeSubscriptionId: stripeSubscriptionId,
-            isSubscribed: true,
-        }, { merge: true });
-        console.log(`✅ User ${userId} subscribed. Customer ID: ${stripeCustomerId}`);
-    } catch (error) {
-        console.error(`❌ Failed to update user ${userId} with subscription data:`, error);
-    }
-}
-
-
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = headers().get('stripe-signature') as string;
@@ -70,9 +46,7 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    if (session.mode === 'subscription') {
-      await handleSubscriptionCreated(session);
-    } else if (session.mode === 'payment') {
+    if (session.mode === 'payment') {
       try {
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
             expand: ['data.price.product']
@@ -119,9 +93,6 @@ export async function POST(req: NextRequest) {
       }
     }
   }
-  
-  // TODO: Add handler for `invoice.payment_succeeded` to create monthly orders.
-  // TODO: Add handler for `customer.subscription.deleted` to update user's `isSubscribed` status.
 
   return NextResponse.json({ received: true });
 }

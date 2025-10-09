@@ -32,7 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [consent.analytics]);
 
-  const showFloatingButtons = !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/checkout');
+  const showFloatingButtons = !pathname.startsWith('/checkout');
 
   return (
     <>

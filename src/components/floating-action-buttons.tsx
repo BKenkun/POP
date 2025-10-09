@@ -1,7 +1,7 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
-import FloatingAccountButton from './floating-account-button';
 import FloatingCartButton from './floating-cart-button';
 import FloatingCbdButton from './floating-cbd-button';
 import { useCookieConsent } from '@/context/cookie-context';
@@ -35,7 +35,7 @@ export default function FloatingActionButtons() {
                     <FloatingCbdButton />
                 </div>
                 <div className="absolute top-0 right-0">
-                    <FloatingAccountButton />
+                    {/* FloatingAccountButton is removed */}
                 </div>
                 <div className="absolute bottom-0 right-0">
                     <FloatingCartButton />

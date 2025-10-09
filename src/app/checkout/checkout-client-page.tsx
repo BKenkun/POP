@@ -12,7 +12,6 @@ import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, C
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
 import { useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -142,7 +141,6 @@ const PaymentOption = ({
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
-  const { user } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -153,8 +151,8 @@ export default function CheckoutClientPage() {
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      name: user?.displayName || '',
-      email: user?.email || '',
+      name: '',
+      email: '',
       phone: '',
       street: '',
       city: '',
@@ -225,7 +223,7 @@ export default function CheckoutClientPage() {
 
         const newOrder: Omit<Order, 'createdAt'> & { createdAt: any } = {
             id: orderId,
-            userId: user?.uid || 'guest',
+            userId: 'guest',
             status: getOrderStatus(data.paymentMethod),
             total: cartTotal,
             items: cartItems.map(item => ({
@@ -242,12 +240,7 @@ export default function CheckoutClientPage() {
             createdAt: serverTimestamp(),
         };
 
-        let docRef;
-        if (user) {
-            docRef = doc(firestore, 'users', user.uid, 'orders', orderId);
-        } else {
-            docRef = doc(firestore, 'reservations', orderId);
-        }
+        const docRef = doc(firestore, 'reservations', orderId);
 
         // Use the non-blocking set operation
         setDocumentNonBlocking(docRef, newOrder, { merge: false });

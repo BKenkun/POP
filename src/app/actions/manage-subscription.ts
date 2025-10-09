@@ -30,7 +30,7 @@ export async function createStripePortalAction(userId: string): Promise<{ url?: 
 
         const portalSession = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,
-            return_url: `${process.env.NEXT_PUBLIC_APP_URL}/account/subscription`,
+            return_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
         });
 
         return { url: portalSession.url };
