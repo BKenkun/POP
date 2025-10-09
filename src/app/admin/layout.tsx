@@ -6,19 +6,14 @@ import AdminSidebar from "./_components/admin-sidebar";
 import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
-import { decrypt } from '@/lib/session';
-import { cookies } from 'next/headers';
+import { getAdminSession } from '@/app/actions/admin-auth';
 import { Loader2 } from 'lucide-react';
 
 
 async function AdminAuthCheck() {
-  const sessionCookie = cookies().get('admin_session')?.value;
-  if (!sessionCookie) {
-    redirect('/verify');
-  }
-  const session = await decrypt(sessionCookie);
+  const session = await getAdminSession();
   if (!session?.isAdmin) {
-    redirect('/verify');
+    redirect('/login');
   }
   return null;
 }
