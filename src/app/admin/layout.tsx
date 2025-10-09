@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, ReactNode } from 'react';
@@ -62,11 +63,12 @@ export default function AdminLayout({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  // The verify and positive pages are public but still need the admin auth context.
   const isPublicPage = ['/verify', '/positive'].includes(pathname);
 
   if (isPublicPage) {
     return (
-       <ThemeProvider
+      <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
