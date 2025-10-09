@@ -11,14 +11,11 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { adminLoginAction } from '@/app/actions/admin-auth';
-import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useFirebaseAuth();
-  const { login: loginAsAdmin } = useAdminAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,21 +27,6 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
 
-    // 1. Check for admin credentials first
-    const adminCheckResult = await adminLoginAction({ email, password });
-
-    if (adminCheckResult.success) {
-      loginAsAdmin();
-      toast({
-        title: 'Sesión de Administrador iniciada',
-        description: 'Ahora puedes acceder al panel a través de la entrada secreta.',
-      });
-      // Redirect to a page where the secret entry is visible, e.g., the blog.
-      router.push('/blog'); 
-      return;
-    }
-
-    // 2. If not admin, proceed with regular user login
     try {
       if (!auth) {
         throw new Error("Servicio de autenticación no disponible.");

@@ -6,10 +6,6 @@ const nextConfig: NextConfig = {
   devIndicators: {
     allowedDevOrigins: ['*'],
   },
-  env: {
-    ADMIN_EMAIL: 'maryandpopper@gmail.com',
-    ADMIN_PASSWORD: 'Jk#8@z!pLq&9$vR*sWb2',
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
