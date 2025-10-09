@@ -4,9 +4,6 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { encrypt, decrypt } from '@/lib/session';
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-
 interface AdminSessionPayload {
   email: string;
   isAdmin: true;
@@ -16,20 +13,26 @@ interface AdminSessionPayload {
 export async function getAdminSession() {
   const cookie = cookies().get('admin_session')?.value;
   if (!cookie) return null;
-  return await decrypt(cookie);
+  try {
+    const session = await decrypt(cookie);
+    return session;
+  } catch (error) {
+    // This will catch errors if the token is expired or invalid
+    return null;
+  }
 }
-
 
 export async function login(formData: FormData): Promise<{ error: string } | void> {
   const email = formData.get('email');
   const password = formData.get('password');
 
-  if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+  // Compare directly against process.env to ensure fresh values are used
+  if (email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL || password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
     return { error: 'Credenciales inválidas' };
   }
 
   const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-  const sessionPayload: AdminSessionPayload = { email: ADMIN_EMAIL!, isAdmin: true, expires };
+  const sessionPayload: AdminSessionPayload = { email: process.env.NEXT_PUBLIC_ADMIN_EMAIL!, isAdmin: true, expires };
 
   const session = await encrypt(sessionPayload);
 
