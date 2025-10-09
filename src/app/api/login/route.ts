@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { initializeFirebase } from '@/firebase/server';
 import { encrypt } from '@/lib/session';
+import { cookies } from 'next/headers';
 
 // Initialize Firebase Admin SDK if not already done
 initializeFirebase();
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         const adminExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes for admin
         const adminSession = await encrypt({ user: { email: decodedToken.email, isAdmin: true }, expires: adminExpires });
 
-        cookies().set('admin_session', adminSession, { expires: adminExpires, httpOnly: true, path: '/' });
+        response.cookies.set('admin_session', adminSession, { expires: adminExpires, httpOnly: true, path: '/' });
     }
 
 

@@ -58,8 +58,10 @@ export default function LoginForm() {
       // Check if the user is an admin and redirect accordingly
       if (email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
           router.push('/admin');
+          router.refresh(); // Force a refresh to ensure middleware re-evaluates with the new cookie
       } else {
           router.push('/account');
+          router.refresh();
       }
 
     } catch (err: any) {
