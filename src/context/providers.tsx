@@ -8,7 +8,6 @@ import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
 import { FirebaseClientProvider } from "@/firebase";
 import CookieConsentBanner from "@/components/cookie-consent-banner";
-import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
 
 
@@ -38,7 +37,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   {children}
                 </AppLayout>
                 <CookieConsentBanner />
-                <Toaster />
               </CartProvider>
             </AuthProvider>
         </FirebaseClientProvider>

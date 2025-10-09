@@ -7,6 +7,7 @@ import { SalesNotification } from '@/components/sales-notification';
 import FloatingActionButtons from '@/components/floating-action-buttons';
 import { useCookieConsent } from '@/context/cookie-context';
 import { useEffect } from 'react';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
@@ -33,6 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <SalesNotification />
       <FloatingActionButtons />
+      <Toaster />
     </>
   );
 }
