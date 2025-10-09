@@ -5,7 +5,7 @@ import React from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, Check, Circle, Dot, ArrowLeft, CreditCard, Banknote, Smartphone } from 'lucide-react';
