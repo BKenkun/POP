@@ -2,8 +2,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collectionGroup, query, orderBy, collection } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -19,35 +17,32 @@ import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
+import { getAllAdminOrders } from "@/app/actions/admin-data";
 
 export default function AdminOrdersPage() {
-  const firestore = useFirestore();
-  
-  const userOrdersQuery = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'))
-    }, [firestore]);
-
-  const reservationsQuery = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc'))
-    }, [firestore]);
-
-  const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(userOrdersQuery);
-  const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
-  
   const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const loading = loadingUserOrders || loadingGuestOrders;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only combine if the queries have returned data
-    if (userOrders || guestOrders) {
-        const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
-        const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
-        uniqueOrders.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
-        setAllOrders(uniqueOrders);
-    }
-  }, [userOrders, guestOrders]);
+    const fetchOrders = async () => {
+        setLoading(true);
+        try {
+            const orders = await getAllAdminOrders();
+            // Timestamps from server actions might be strings, so convert them
+            const sanitizedOrders = orders.map(order => ({
+                ...order,
+                createdAt: order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt)
+            }));
+            setAllOrders(sanitizedOrders);
+        } catch (error) {
+            console.error("Failed to fetch orders:", error);
+            // Handle error state, maybe show a toast
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchOrders();
+  }, []);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {

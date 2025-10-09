@@ -3,8 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { collection, query, where, getDocs, updateDoc, doc, onSnapshot, collectionGroup } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { Loader2, Package, User, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,90 +22,66 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
+import { getAdminOrderById } from '@/app/actions/admin-data';
+import { db } from '@/lib/firebase'; // We need the admin instance for updates
 
 export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
-  const firestore = useFirestore();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [docRefPath, setDocRefPath] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
-  // This effect finds the document path once authenticated.
   useEffect(() => {
-    if (!orderId || !firestore) return;
+    if (!orderId) return;
 
-    const findOrderPath = async () => {
-      let path: string | null = null;
-      try {
-        const ordersQuery = query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
-        const orderSnap = await getDocs(ordersQuery);
-        
-        if (!orderSnap.empty) {
-          path = orderSnap.docs[0].ref.path;
-        } else {
-          // If not in user orders, check reservations
-          const reservationsQuery = query(collection(firestore, 'reservations'), where('id', '==', orderId));
-          const reservationSnap = await getDocs(reservationsQuery);
-          if (!reservationSnap.empty) {
-            path = reservationSnap.docs[0].ref.path;
-          }
+    const findOrder = async () => {
+        setLoading(true);
+        try {
+            const fetchedOrder = await getAdminOrderById(orderId);
+            if (fetchedOrder) {
+                // Convert timestamp if needed
+                const sanitizedOrder = {
+                    ...fetchedOrder,
+                    createdAt: fetchedOrder.createdAt?.toDate ? fetchedOrder.createdAt.toDate() : new Date(fetchedOrder.createdAt)
+                };
+                setOrder(sanitizedOrder as Order);
+            } else {
+                setOrder(null);
+            }
+        } catch (error) {
+            console.error("Error fetching order details:", error);
+            toast({ title: "Error", description: "No se pudieron cargar los detalles del pedido."});
+        } finally {
+            setLoading(false);
         }
-      } catch (e) {
-        console.error("Error finding order path:", e);
-      } finally {
-        setDocRefPath(path);
-      }
     };
-    findOrderPath();
-  }, [orderId, firestore]);
-
-  const docRef = useMemoFirebase(() => {
-    // Only create the doc ref if the path is known
-    if (!docRefPath || !firestore) return null;
-    return doc(firestore, docRefPath);
-  }, [docRefPath, firestore]);
-
-  // This effect subscribes to the document once the path is found.
-  useEffect(() => {
-    if (!docRef) {
-      setLoading(false);
-      return;
-    };
-    
-    setLoading(true);
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-        if (snapshot.exists()) {
-            setOrder(snapshot.data() as Order);
-        } else {
-            setOrder(null);
-        }
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching order details:", error);
-        toast({ title: "Error", description: "No se pudieron cargar los detalles del pedido."});
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [docRef, toast]);
-
+    findOrder();
+  }, [orderId, toast]);
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!docRef) return;
+    if (!order) return;
     setUpdatingStatus(true);
-    updateDocumentNonBlocking(docRef, { status: newStatus });
-    toast({
-        title: "Estado del pedido actualizado",
-        description: `El pedido ahora está marcado como "${newStatus}".`,
-    });
-    // Optimistic update of local state
-    if(order) {
+    
+    // Determine the correct path for the update
+    const collectionName = order.userId === 'guest' ? 'reservations' : `users/${order.userId}/orders`;
+    const docRef = doc(db, collectionName, order.id);
+
+    try {
+        await updateDocumentNonBlocking(docRef, { status: newStatus });
+        toast({
+            title: "Estado del pedido actualizado",
+            description: `El pedido ahora está marcado como "${newStatus}".`,
+        });
+        // Optimistic update of local state
         setOrder({...order, status: newStatus as Order['status']});
+    } catch(e) {
+        console.error("Failed to update status", e);
+        toast({ title: "Error", description: "No se pudo actualizar el estado.", variant: 'destructive'});
     }
+    
     setUpdatingStatus(false);
   };
   

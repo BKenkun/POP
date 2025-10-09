@@ -22,8 +22,7 @@ import { subDays, startOfDay, endOfDay, isWithinInterval, format as formatDate, 
 import { es } from 'date-fns/locale';
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Order, Product } from "@/lib/types";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, collectionGroup, query, orderBy } from "firebase/firestore";
+import { getAdminDashboardData } from "@/app/actions/admin-data";
 import { cbdProducts } from "@/lib/cbd-products";
 
 const chartConfig = {
@@ -45,8 +44,8 @@ const processOrdersForPeriod = (orders: Order[], range: DateRange | undefined, a
     const endDate = endOfDay(range.to || range.from);
 
     const filteredOrders = orders.filter(order => {
-        const orderDate = order.createdAt;
-        return isWithinInterval(orderDate, { start: startDate, end: endDate });
+        const orderDateObj = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
+        return isWithinInterval(orderDateObj, { start: startDate, end: endDate });
     });
 
     const dailyRevenue = new Map<string, number>();
@@ -56,7 +55,6 @@ const processOrdersForPeriod = (orders: Order[], range: DateRange | undefined, a
 
     let totalRevenue = 0;
     
-    // Initialize daily revenue map for the entire range
     let dayCursor = startDate;
     while (dayCursor <= endDate) {
         dailyRevenue.set(formatDate(dayCursor, 'yyyy-MM-dd'), 0);
@@ -64,19 +62,18 @@ const processOrdersForPeriod = (orders: Order[], range: DateRange | undefined, a
     }
 
     filteredOrders.forEach(order => {
+        const orderDateObj = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
         totalRevenue += order.total;
-        const dateStr = formatDate(order.createdAt, 'yyyy-MM-dd');
+        const dateStr = formatDate(orderDateObj, 'yyyy-MM-dd');
         dailyRevenue.set(dateStr, (dailyRevenue.get(dateStr) || 0) + order.total);
         
         clients.add(order.customerEmail);
 
-        // Update top clients
         const client = topClients.get(order.customerEmail) || { name: order.customerName, orders: 0, total: 0 };
         client.orders += 1;
         client.total += order.total;
         topClients.set(order.customerEmail, client);
 
-        // Update top products
         order.items.forEach(item => {
             const product = topProducts.get(item.productId) || { name: item.name, sold: 0, revenue: 0, imageUrl: item.imageUrl };
             product.sold += item.quantity;
@@ -130,40 +127,28 @@ export default function AdminDashboardPage() {
   const [compareDateRange, setCompareDateRange] = useState<DateRange | undefined>();
   const [isCompareEnabled, setIsCompareEnabled] = useState(false);
   const [products] = useState<Product[]>(cbdProducts);
-  
-  const firestore = useFirestore();
-
-  const ordersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(
-      collectionGroup(firestore, 'orders'), 
-      orderBy('createdAt', 'desc')
-    );
-  }, [firestore]);
-
-  const reservationsQuery = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return query(
-          collection(firestore, 'reservations'),
-          orderBy('createdAt', 'desc')
-      );
-  }, [firestore]);
-
-  const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(ordersQuery);
-  const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const loading = loadingUserOrders || loadingGuestOrders;
-  
-   useEffect(() => {
-    if (userOrders || guestOrders) {
-      const combined = [...(userOrders || []), ...(guestOrders || [])];
-      const unique = Array.from(new Map(combined.map(order => [order.id, order])).values());
-      unique.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      setAllOrders(unique);
+  useEffect(() => {
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // Server action will fetch all orders securely
+            const { recentOrders, totalOrders, totalRevenue } = await getAdminDashboardData();
+            // The dashboard page previously calculated all orders, now we just need the full list
+            // For a full implementation, the server action would need to return all orders
+            // For now, we will use a separate action to get all orders to keep the dashboard fast
+            const response = await fetch('/api/admin/orders'); // A temporary API route to get all orders
+            const ordersData = await response.json();
+            setAllOrders(ordersData);
+        } catch (error) {
+            console.error("Failed to fetch admin data", error);
+        }
+        setLoading(false);
     }
-  }, [userOrders, guestOrders]);
-
+    fetchData();
+  }, []);
   
   const processedData = useMemo(() => {
     const periodAData = processOrdersForPeriod(allOrders, dateRange, products);
@@ -174,7 +159,6 @@ export default function AdminDashboardPage() {
         periodBData = processOrdersForPeriod(allOrders, compareDateRange, products);
     }
     
-    // Combine chart data
     const allDates = new Set([...periodAData.dailyRevenue.keys(), ...periodBData.dailyRevenue.keys()]);
     chartData = Array.from(allDates).sort().map(date => ({
         date,
@@ -205,7 +189,6 @@ export default function AdminDashboardPage() {
     };
   }, [allOrders, products, dateRange, compareDateRange, isCompareEnabled]);
 
-  // Main loading state before rendering the dashboard
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -372,7 +355,6 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
