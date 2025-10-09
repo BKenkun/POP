@@ -42,12 +42,8 @@ export default function OrderDetailPage() {
         try {
             const fetchedOrder = await getAdminOrderById(orderId);
             if (fetchedOrder) {
-                // Convert timestamp if needed
-                const sanitizedOrder = {
-                    ...fetchedOrder,
-                    createdAt: fetchedOrder.createdAt?.toDate ? fetchedOrder.createdAt.toDate() : new Date(fetchedOrder.createdAt)
-                };
-                setOrder(sanitizedOrder as Order);
+                // The server action already serializes createdAt to a string.
+                setOrder(fetchedOrder);
             } else {
                 setOrder(null);
             }

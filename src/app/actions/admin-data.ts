@@ -16,14 +16,21 @@ async function verifyAdmin() {
 
 // Helper function to safely get a Date object from Firestore Timestamp or string
 const toDateSafe = (timestamp: any): Date => {
-  if (timestamp?.toDate) {
+  if (!timestamp) {
+    return new Date(0); // Return epoch if timestamp is null or undefined
+  }
+  if (timestamp.toDate) {
     return timestamp.toDate();
   }
-  if (typeof timestamp === 'string') {
-    return new Date(timestamp);
+  if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) {
+        return d;
+    }
   }
   return new Date(0); // Fallback for invalid formats
 }
+
 
 async function fetchAllOrders(): Promise<Order[]> {
     const userOrdersQuery = collectionGroup(db, 'orders');

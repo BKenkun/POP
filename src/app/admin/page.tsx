@@ -44,7 +44,8 @@ const processOrdersForPeriod = (orders: Order[], range: DateRange | undefined, a
     const endDate = endOfDay(range.to || range.from);
 
     const filteredOrders = orders.filter(order => {
-        const orderDateObj = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
+        // createdAt from server action is already an ISO string
+        const orderDateObj = new Date(order.createdAt);
         return isWithinInterval(orderDateObj, { start: startDate, end: endDate });
     });
 
@@ -62,7 +63,7 @@ const processOrdersForPeriod = (orders: Order[], range: DateRange | undefined, a
     }
 
     filteredOrders.forEach(order => {
-        const orderDateObj = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
+        const orderDateObj = new Date(order.createdAt);
         totalRevenue += order.total;
         const dateStr = formatDate(orderDateObj, 'yyyy-MM-dd');
         dailyRevenue.set(dateStr, (dailyRevenue.get(dateStr) || 0) + order.total);
