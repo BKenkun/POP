@@ -16,7 +16,8 @@ export async function login(formData: FormData) {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    // Hardcode the admin email to ensure reliability
+    const adminEmail = 'maryandpopper@gmail.com';
 
     try {
         const auth = getAuth();
