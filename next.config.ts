@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   env: {
-    // This is the "special" client-side user that will see the secret link to the admin login page.
-    // They must first register and log in like a normal user.
-    NEXT_PUBLIC_CLIENT_ADMIN_EMAIL: 'maryandpopper@gmail.com',
-    
     // These are the final admin credentials for the second verification step on the /verify page.
     ADMIN_EMAIL: 'admin@purorush.com',
     ADMIN_PASSWORD: 'PowerAdmin123!',

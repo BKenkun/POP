@@ -3,16 +3,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from '@/firebase';
 
 export function Footer() {
     const pathname = usePathname();
-    const { user } = useUser();
     
-    // This is the special client-side user that gets access to the admin verification page
-    const isAdminClientUser = user?.email === process.env.NEXT_PUBLIC_CLIENT_ADMIN_EMAIL;
-
-    // Do not render the footer on admin routes.
+    // Do not render the footer on admin or verify routes.
     if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
       return null;
     }
@@ -64,13 +59,7 @@ export function Footer() {
 
             <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
-                &copy; {new Date().getFullYear()} Popper Online. Todos los derech
-                {isAdminClientUser ? (
-                    <Link href="/verify" className="font-bold text-primary hover:underline">o</Link>
-                ) : (
-                    'o'
-                )}
-                s reservados.
+                &copy; {new Date().getFullYear()} Popper Online. Todos los derechos reservados.
                 </p>
             </div>
         </div>
