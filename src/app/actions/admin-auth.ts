@@ -38,11 +38,12 @@ export async function login(formData: FormData) {
             // Set the admin-specific cookie
             cookies().set('admin_session', adminSession, { expires: adminExpires, httpOnly: true, path: '/' });
             
-            return { success: true, redirectPath: '/admin' };
+            // Redirect directly from the server action
+            return redirect('/admin');
         }
 
         // If it's a regular user, redirect to their account page
-        return { success: true, redirectPath: '/account' };
+        return redirect('/account');
 
     } catch (error: any) {
         console.error("Login action error:", error);

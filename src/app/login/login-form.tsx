@@ -23,25 +23,33 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
 
-    const result = await login(formData);
+    try {
+      const result = await login(formData);
 
-    if (result.error) {
-      setError(result.error);
-      toast({
-        title: 'Error al iniciar sesión',
-        description: result.error,
-        variant: 'destructive',
-      });
+      if (result?.error) {
+        setError(result.error);
+        toast({
+          title: 'Error al iniciar sesión',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+      // No need to handle success redirection here, the server action does it.
+      // If there's an error, we should stop the loading spinner.
       setLoading(false);
-    } else {
-      toast({
-        title: 'Inicio de sesión exitoso',
-        description: 'Redirigiendo...',
-      });
-      // A full page refresh is needed to make sure the new cookies are sent to the middleware
-      // and server components.
-      router.push(result.redirectPath || '/');
-      router.refresh();
+    } catch (e: any) {
+        // Catch errors that might be thrown by the redirect
+        if (e.message.includes('NEXT_REDIRECT')) {
+            // This is expected, do nothing.
+        } else {
+            setError('Ha ocurrido un error inesperado.');
+            toast({
+                title: 'Error',
+                description: 'Ha ocurrido un error inesperado.',
+                variant: 'destructive',
+            });
+            setLoading(false);
+        }
     }
   };
 
