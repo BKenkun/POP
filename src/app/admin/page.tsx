@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
@@ -24,7 +25,6 @@ import { Order, Product } from "@/lib/types";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, collectionGroup, query, orderBy } from "firebase/firestore";
 import { cbdProducts } from "@/lib/cbd-products";
-import { useAdminAuth } from "@/context/admin-auth-context";
 
 const chartConfig = {
   periodA: {
@@ -123,7 +123,6 @@ const StatCard = ({ title, value, change, icon: Icon, format = (v: number) => v,
 };
 
 export default function AdminDashboardPage() {
-  const { isAuthenticated, loading: authLoading } = useAdminAuth();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
@@ -135,29 +134,26 @@ export default function AdminDashboardPage() {
   const firestore = useFirestore();
 
   const ordersQuery = useMemoFirebase(() => {
-    // DO NOT run the query if the user is not authenticated as an admin.
-    if (!firestore || !isAuthenticated) return null;
+    if (!firestore) return null;
     return query(
       collectionGroup(firestore, 'orders'), 
       orderBy('createdAt', 'desc')
     );
-  }, [firestore, isAuthenticated]);
+  }, [firestore]);
 
   const reservationsQuery = useMemoFirebase(() => {
-      // DO NOT run the query if the user is not authenticated as an admin.
-      if (!firestore || !isAuthenticated) return null;
+      if (!firestore) return null;
       return query(
           collection(firestore, 'reservations'),
           orderBy('createdAt', 'desc')
       );
-  }, [firestore, isAuthenticated]);
+  }, [firestore]);
 
   const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(ordersQuery);
   const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   
-  // The general loading state depends on admin auth and the individual queries.
-  const loading = authLoading || loadingUserOrders || loadingGuestOrders;
+  const loading = loadingUserOrders || loadingGuestOrders;
   
    useEffect(() => {
     if (userOrders || guestOrders) {
@@ -290,7 +286,7 @@ export default function AdminDashboardPage() {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {authLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
                 <div className="text-2xl font-bold">{products.length}</div>
                 <Link href="/admin/products">
                     <p className={cn("text-xs font-bold hover:underline cursor-pointer", processedData.lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>

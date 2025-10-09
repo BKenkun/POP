@@ -15,12 +15,11 @@ import { Button } from '@/components/ui/button';
 import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAdminAuth } from '@/context/admin-auth-context';
 import { Logo } from '@/components/logo';
+import { logout } from '@/app/actions/admin-auth';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { logout } = useAdminAuth();
   
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: Home },
@@ -70,10 +69,12 @@ export default function AdminSidebar() {
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
-         <Button variant="ghost" className="justify-start w-full gap-2" onClick={logout}>
-            <LogOut />
-            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-         </Button>
+         <form action={logout}>
+            <Button variant="ghost" className="justify-start w-full gap-2" type="submit">
+                <LogOut />
+                <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+            </Button>
+         </form>
       </SidebarFooter>
     </>
   );

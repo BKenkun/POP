@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from "react";
@@ -18,30 +19,25 @@ import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { useAdminAuth } from "@/context/admin-auth-context";
 
 export default function AdminOrdersPage() {
   const firestore = useFirestore();
-  const { isAuthenticated, loading: authLoading } = useAdminAuth();
   
   const userOrdersQuery = useMemoFirebase(() => {
-      // Only create the query if the user is authenticated as an admin
-      if (!firestore || !isAuthenticated) return null;
+      if (!firestore) return null;
       return query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'))
-    }, [firestore, isAuthenticated]);
+    }, [firestore]);
 
   const reservationsQuery = useMemoFirebase(() => {
-      // Only create the query if the user is authenticated as an admin
-      if (!firestore || !isAuthenticated) return null;
+      if (!firestore) return null;
       return query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc'))
-    }, [firestore, isAuthenticated]);
+    }, [firestore]);
 
   const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(userOrdersQuery);
   const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
   
   const [allOrders, setAllOrders] = useState<Order[]>([]);
-  // The general loading state depends on authentication and the individual queries
-  const loading = authLoading || loadingUserOrders || loadingGuestOrders;
+  const loading = loadingUserOrders || loadingGuestOrders;
 
   useEffect(() => {
     // Only combine if the queries have returned data

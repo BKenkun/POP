@@ -8,17 +8,15 @@ import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
-import { AdminAuthProvider } from '@/context/admin-auth-context';
 import { FirebaseClientProvider } from '@/firebase';
 import { CookieProvider } from '@/context/cookie-context';
+
 
 export default function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  // El middleware ya ha protegido esta ruta.
-  // El layout simplemente renderiza la interfaz de administración.
   return (
     <ThemeProvider
       attribute="class"
@@ -27,8 +25,7 @@ export default function AdminLayout({
       disableTransitionOnChange
     >
       <CookieProvider>
-        <AdminAuthProvider>
-          <FirebaseClientProvider>
+        <FirebaseClientProvider>
             <SidebarProvider>
                 <Sidebar variant="sidebar" collapsible="offcanvas">
                   <AdminSidebar />
@@ -46,8 +43,7 @@ export default function AdminLayout({
                 <ThemeToggleButton />
             </SidebarProvider>
             <Toaster />
-          </FirebaseClientProvider>
-        </AdminAuthProvider>
+        </FirebaseClientProvider>
       </CookieProvider>
     </ThemeProvider>
   );

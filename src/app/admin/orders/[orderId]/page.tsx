@@ -22,14 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
-import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { isAuthenticated, loading: authLoading } = useAdminAuth();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,8 +36,7 @@ export default function OrderDetailPage() {
   
   // This effect finds the document path once authenticated.
   useEffect(() => {
-    // DO NOT run if not authenticated
-    if (!orderId || !firestore || !isAuthenticated) return;
+    if (!orderId || !firestore) return;
 
     const findOrderPath = async () => {
       let path: string | null = null;
@@ -64,7 +61,7 @@ export default function OrderDetailPage() {
       }
     };
     findOrderPath();
-  }, [orderId, firestore, isAuthenticated]);
+  }, [orderId, firestore]);
 
   const docRef = useMemoFirebase(() => {
     // Only create the doc ref if the path is known
@@ -74,9 +71,8 @@ export default function OrderDetailPage() {
 
   // This effect subscribes to the document once the path is found.
   useEffect(() => {
-    // DO NOT subscribe if there's no docRef
     if (!docRef) {
-      if (isAuthenticated) setLoading(false); // Stop loading if authenticated but no path found
+      setLoading(false);
       return;
     };
     
@@ -95,7 +91,7 @@ export default function OrderDetailPage() {
     });
 
     return () => unsubscribe();
-  }, [docRef, toast, isAuthenticated]);
+  }, [docRef, toast]);
 
 
   const handleStatusChange = async (newStatus: string) => {
@@ -134,7 +130,7 @@ export default function OrderDetailPage() {
     }
   };
 
-  if (loading || authLoading) {
+  if (loading) {
     return <div className="flex justify-center items-center h-60"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
@@ -235,5 +231,3 @@ export default function OrderDetailPage() {
     </div>
   );
 }
-
-    
