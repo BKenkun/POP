@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -8,8 +9,8 @@ export function Footer() {
     const pathname = usePathname();
     const { user } = useAuth();
     
-    // Check if the logged-in user is the administrator
-    const isAdminUser = user?.email === process.env.ADMIN_EMAIL;
+    // Check if the logged-in user is the administrator based on email
+    const isAdminUser = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
     // Do not render the footer on admin routes.
     if (pathname.startsWith('/admin')) {
@@ -65,7 +66,7 @@ export function Footer() {
                 <p className="text-sm text-muted-foreground text-center sm:text-left">
                 &copy; {new Date().getFullYear()} Popper Online. Todos los derech
                 {isAdminUser ? (
-                    <Link href="/admin/verify" className="font-bold text-primary hover:underline">o</Link>
+                    <Link href="/verify" className="font-bold text-primary hover:underline">o</Link>
                 ) : (
                     'o'
                 )}

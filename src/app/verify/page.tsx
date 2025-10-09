@@ -11,8 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
 import { login } from '@/app/actions/admin-auth';
 
-export default function AdminVerifyPage() {
-  const router = useRouter();
+export default function VerifyPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +24,9 @@ export default function AdminVerifyPage() {
     const formData = new FormData(e.currentTarget);
     const result = await login(formData);
 
-    if (result.error) {
+    // If login action returns an error, display it.
+    // The successful case is handled by a redirect within the server action.
+    if (result?.error) {
       setError(result.error);
       toast({
         title: 'Error de Autenticación',
@@ -33,14 +34,6 @@ export default function AdminVerifyPage() {
         variant: 'destructive',
       });
       setLoading(false);
-    } else {
-      toast({
-        title: 'Verificación Exitosa',
-        description: 'Accediendo al panel de administrador...',
-      });
-      // Redirect to the admin dashboard after successful login
-      router.push('/admin');
-      router.refresh(); // This helps ensure the layout re-evaluates the session
     }
   };
 

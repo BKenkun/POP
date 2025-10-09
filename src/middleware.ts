@@ -7,19 +7,20 @@ export async function middleware(request: NextRequest) {
   
   // Define protected admin paths
   const adminPaths = ['/admin'];
-  const isProtectedAdminPath = adminPaths.some(p => pathname.startsWith(p)) && pathname !== '/admin/verify';
+  const isProtectedAdminPath = adminPaths.some(p => pathname.startsWith(p));
 
   if (isProtectedAdminPath) {
     const sessionCookie = request.cookies.get('admin_session');
     
     if (!sessionCookie) {
-        return NextResponse.redirect(new URL('/admin/verify', request.url));
+        // Redirect to the new, root-level verify page
+        return NextResponse.redirect(new URL('/verify', request.url));
     }
     
     const session = await decrypt(sessionCookie.value);
     
     if (!session?.isAdmin) {
-        return NextResponse.redirect(new URL('/admin/verify', request.url));
+        return NextResponse.redirect(new URL('/verify', request.url));
     }
   }
 

@@ -3,6 +3,7 @@
 
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
+import { redirect } from 'next/navigation';
 
 const secretKey = process.env.JWT_SECRET_KEY || 'super-secret-key-for-jwt';
 const key = new TextEncoder().encode(secretKey);
@@ -55,12 +56,14 @@ export async function login(formData: FormData) {
   // 4. Save the session in a cookie
   cookies().set('admin_session', session, { expires, httpOnly: true });
   
-  return { success: true };
+  // 5. Redirect to the admin dashboard upon successful login
+  redirect('/admin');
 }
 
 export async function logout() {
   // Destroy the session
   cookies().set('admin_session', '', { expires: new Date(0) });
+  redirect('/verify'); // Redirect to login page on logout
 }
 
 export async function getAdminSession() {
