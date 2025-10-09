@@ -10,11 +10,10 @@ import { getAdminSession } from '@/app/actions/admin-auth';
 import { Loader2 } from 'lucide-react';
 
 async function AdminAuthCheck() {
-  const session = await getAdminSession();
-  if (!session?.isAdmin) {
-    redirect('/verify');
-  }
-  return null; // This component doesn't render anything, it just validates
+  // This component no longer needs to validate the session.
+  // The middleware handles all validation and redirection.
+  // If the code reaches this point, the session is guaranteed to be valid.
+  return null;
 }
 
 

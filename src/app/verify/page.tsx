@@ -44,13 +44,14 @@ export default function VerifyPage() {
       });
       setLoading(false);
     } else {
-      // On successful admin login, set the flag and redirect
+      // On successful admin login, set the flag and redirect to the homepage
+      // to start browsing as an admin-customer.
       setIsAdminAsCustomer(true);
       toast({
-        title: "Acceso concedido",
-        description: "Redirigiendo al panel de administración...",
+        title: "Sesión de administrador iniciada",
+        description: "Ahora navegas por la tienda como administrador. El enlace secreto está activo.",
       });
-      router.push('/admin');
+      router.push('/');
     }
   };
   
