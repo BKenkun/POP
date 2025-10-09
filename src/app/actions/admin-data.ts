@@ -60,7 +60,7 @@ async function fetchAllOrders(): Promise<Order[]> {
     userOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
         if (orderData.id) {
-            allOrdersMap.set(orderData.id, orderData);
+            allOrdersMap.set(orderData.id, { ...orderData, path: doc.ref.path });
         }
     });
 
@@ -68,7 +68,8 @@ async function fetchAllOrders(): Promise<Order[]> {
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data() as Order;
         if (orderData.id) {
-            allOrdersMap.set(orderData.id, orderData);
+             // Ensure path property is added for guest orders as well
+            allOrdersMap.set(orderData.id, { ...orderData, path: doc.ref.path });
         }
     });
     
@@ -130,10 +131,10 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
     if (!orderSnap.empty) {
         // Found in a user's subcollection
         path = orderSnap.docs[0].ref.path;
-        const docRef = doc(db, path);
-        const docSnap = await getDoc(docRef);
+        const docSnap = await getDoc(orderSnap.docs[0].ref);
         if (docSnap.exists()) {
              order = docSnap.data() as Order;
+             order.path = path;
         }
     } else {
         // If not found, check the 'reservations' collection for guest orders
@@ -141,6 +142,7 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
         const reservationSnap = await getDoc(reservationRef);
         if (reservationSnap.exists()) {
             order = reservationSnap.data() as Order;
+            order.path = reservationRef.path;
         }
     }
 

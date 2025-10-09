@@ -58,12 +58,14 @@ export default function OrderDetailPage() {
   }, [orderId, toast]);
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!order) return;
+    if (!order || !order.path) {
+        toast({ title: "Error", description: "No se puede encontrar la referencia del pedido para actualizar.", variant: 'destructive'});
+        return;
+    }
     setUpdatingStatus(true);
     
-    // Determine the correct path for the update
-    const collectionName = order.userId === 'guest' ? 'reservations' : `users/${order.userId}/orders`;
-    const docRef = doc(db, collectionName, order.id);
+    // The path is now stored on the order object itself
+    const docRef = doc(db, order.path);
 
     try {
         await updateDocumentNonBlocking(docRef, { status: newStatus });
@@ -203,5 +205,3 @@ export default function OrderDetailPage() {
     </div>
   );
 }
-
-    

@@ -80,6 +80,7 @@ export interface Order {
   customerEmail: string;
   shippingAddress: ShippingAddress | null;
   paymentMethod?: 'cod_cash' | 'cod_card' | 'cod_bizum' | 'prepaid_bizum' | 'prepaid_transfer';
+  path?: string; // Added to store the document path for updates
 }
 
 
