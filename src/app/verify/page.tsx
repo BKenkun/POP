@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
-import { login } from './action';
+import { login } from '@/app/actions/admin-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function VerifyPage() {
@@ -40,7 +40,6 @@ export default function VerifyPage() {
       setLoading(false);
     } 
     // On success, the server action will redirect, so no client-side redirect is needed.
-    // If it fails, the error will be handled above.
   };
   
   const FormSkeleton = () => (

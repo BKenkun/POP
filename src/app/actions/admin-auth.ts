@@ -1,3 +1,5 @@
+'use server';
+
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { encrypt, decrypt } from '@/lib/session';
@@ -15,7 +17,6 @@ export async function getAdminSession() {
     const session = await decrypt(cookie);
     return session;
   } catch (error) {
-    // This will catch errors if the token is expired or invalid
     return null;
   }
 }
@@ -24,7 +25,7 @@ export async function login(formData: FormData): Promise<{ error: string } | voi
   const email = formData.get('email');
   const password = formData.get('password');
 
-  // Compare directly against process.env to ensure fresh values are used
+  // Compare directly against process.env to ensure fresh values are used at runtime
   if (email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL || password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
     return { error: 'Credenciales inválidas' };
   }
