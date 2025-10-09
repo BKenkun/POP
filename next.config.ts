@@ -1,8 +1,5 @@
 
-import type {NextConfig} from 'next';
-
-// Forcing a server restart to recognize new routes. This comment will trigger it again.
-const nextConfig: NextConfig = {
+const nextConfig = {
   devIndicators: {
     allowedDevOrigins: ['*'],
   },
@@ -95,4 +92,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
