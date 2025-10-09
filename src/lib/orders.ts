@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, serverTimestamp, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
 import type { Order, OrderItem, ShippingAddress } from './types';
 import type Stripe from 'stripe';
 
@@ -16,7 +16,8 @@ export async function createOrder(session: Stripe.Checkout.Session, lineItems: S
 
   if (!userId) {
     console.error('Error: No userId found in Stripe session metadata.');
-    throw new Error('User ID is missing, cannot create order.');
+    // We don't throw here to avoid failing the webhook for guest checkouts
+    return;
   }
   
   const orderId = session.id;
@@ -48,7 +49,7 @@ export async function createOrder(session: Stripe.Checkout.Session, lineItems: S
   const orderData: Order = {
     id: orderId,
     userId: userId,
-    createdAt: new Date(), // Will be converted to Firestore timestamp on save
+    createdAt: new Date(), // This will be replaced by serverTimestamp
     status: 'pending',
     total: session.amount_total || 0,
     items: orderItems,
@@ -61,13 +62,12 @@ export async function createOrder(session: Stripe.Checkout.Session, lineItems: S
     const userOrdersRef = collection(db, 'users', userId, 'orders');
     await setDoc(doc(userOrdersRef, orderId), {
         ...orderData,
-        createdAt: serverTimestamp() // Use server-side timestamp
+        createdAt: serverTimestamp() // Use server-side timestamp for accuracy
     });
     console.log(`✅ Order ${orderId} created successfully for user ${userId}.`);
   } catch (error) {
     console.error(`❌ Failed to create order ${orderId} for user ${userId}:`, error);
-    // Optionally, re-throw the error to be handled by the caller (e.g., the webhook)
-    throw error;
+    throw error; // Re-throw to indicate webhook failure
   }
 }
 
@@ -82,16 +82,11 @@ export async function updateUserLoyaltyPoints(userId: string, pointsToAdd: numbe
     const userDocRef = doc(db, 'users', userId);
 
     try {
-        // We use increment to safely add points to the existing value.
-        // If the field doesn't exist, Firestore initializes it to the increment value.
         await updateDoc(userDocRef, {
             loyaltyPoints: increment(pointsToAdd)
         });
         console.log(`✅ Awarded ${pointsToAdd} loyalty points to user ${userId}.`);
     } catch (error) {
-        // If the document might not exist, you could use setDoc with merge:true
-        // But increment is generally safer for counters.
         console.error(`❌ Failed to update loyalty points for user ${userId}:`, error);
-        // We don't re-throw, as failing to add points shouldn't block the order process.
     }
 }

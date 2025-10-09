@@ -4,6 +4,7 @@
 import { usePathname } from 'next/navigation';
 import FloatingCartButton from './floating-cart-button';
 import FloatingCbdButton from './floating-cbd-button';
+import FloatingAccountButton from './floating-account-button';
 import { useCookieConsent } from '@/context/cookie-context';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -18,7 +19,7 @@ export default function FloatingActionButtons() {
     }, []);
 
     // No mostrar los botones en las rutas de administrador o checkout
-    if (pathname.startsWith('/admin') || pathname.startsWith('/checkout')) {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/checkout') || pathname.startsWith('/verify')) {
         return null;
     }
 
@@ -35,7 +36,7 @@ export default function FloatingActionButtons() {
                     <FloatingCbdButton />
                 </div>
                 <div className="absolute top-0 right-0">
-                    {/* FloatingAccountButton is removed */}
+                    <FloatingAccountButton />
                 </div>
                 <div className="absolute bottom-0 right-0">
                     <FloatingCartButton />

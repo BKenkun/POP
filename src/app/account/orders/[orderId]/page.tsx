@@ -1,12 +1,13 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth } from '@/context/auth-context';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Order } from '@/lib/types';
-import { Loader2, Package, User, MapPin, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Loader2, Package, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
@@ -18,7 +19,7 @@ export default function UserOrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const router = useRouter();
-  const { user, isUserLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const firestore = useFirestore();
   
   const orderDocRef = useMemoFirebase(() => {

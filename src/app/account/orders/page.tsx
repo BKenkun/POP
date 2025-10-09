@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect, useState } from "react";
-import { useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useAuth } from "@/context/auth-context";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import {
   Table,

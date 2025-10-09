@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, Check, Circle, Dot, ArrowLeft, CreditCard, Banknote, Smartphone } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, Check, CreditCard, Banknote, Smartphone, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, setDocumentNonBlocking, useAuth } from '@/firebase';
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -142,6 +142,7 @@ const PaymentOption = ({
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
   const firestore = useFirestore();
+  const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -223,7 +224,7 @@ export default function CheckoutClientPage() {
 
         const newOrder: Omit<Order, 'createdAt'> & { createdAt: any } = {
             id: orderId,
-            userId: 'guest',
+            userId: user?.uid || 'guest',
             status: getOrderStatus(data.paymentMethod),
             total: cartTotal,
             items: cartItems.map(item => ({
@@ -239,8 +240,9 @@ export default function CheckoutClientPage() {
             paymentMethod: data.paymentMethod,
             createdAt: serverTimestamp(),
         };
-
-        const docRef = doc(firestore, 'reservations', orderId);
+        
+        const collectionName = user ? `users/${user.uid}/orders` : 'reservations';
+        const docRef = doc(firestore, collectionName, orderId);
 
         // Use the non-blocking set operation
         setDocumentNonBlocking(docRef, newOrder, { merge: false });

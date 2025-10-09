@@ -1,11 +1,11 @@
 'use client';
 
-import { useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useAuth } from "@/context/auth-context";
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter } from "@/components/ui/card"
-import { useEffect, useState } from "react";
 import { doc } from "firebase/firestore";
 import { formatPrice } from "@/lib/utils";
-import { Gift, HeartPulse, CheckCircle, PackagePlus, Settings } from "lucide-react";
+import { Gift, PackagePlus, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

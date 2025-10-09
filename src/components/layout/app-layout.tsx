@@ -15,12 +15,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
   const pathname = usePathname();
 
-  // The middleware handles /admin routes.
-  // This layout should not render anything for /verify to avoid conflicts.
-  if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
-    return <>{children}</>;
-  }
-
   // Load Clarity script if consent is given
   useEffect(() => {
     if (consent.analytics) {
@@ -32,7 +26,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [consent.analytics]);
 
-  const showFloatingButtons = !pathname.startsWith('/checkout');
+  const showFloatingButtons = !pathname.startsWith('/checkout') && !pathname.startsWith('/login') && !pathname.startsWith('/register');
 
   return (
     <>

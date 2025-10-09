@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { User, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
@@ -12,7 +12,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => void;
-  // This data will be moved to a more specific context later if needed
   isSubscribed: boolean;
   loyaltyPoints: number;
   isAdminAsCustomer: boolean;
@@ -21,7 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading: authLoading } = useFirebaseAuthHook();
+  const { user, isUserLoading: authLoading, auth } = useFirebaseAuthHook();
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -35,12 +34,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isSubscribed = userData?.isSubscribed ?? false;
   const loyaltyPoints = userData?.loyaltyPoints ?? 0;
   
-  // This is the special client-side user that gets access to the admin verification page
   const isAdminAsCustomer = false; // This functionality is removed to simplify auth.
 
   const logout = async () => {
     try {
-        const auth = useFirebaseAuthHook();
         if (auth) {
             await firebaseSignOut(auth);
         }

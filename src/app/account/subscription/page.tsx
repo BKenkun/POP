@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Loader2, Settings, CalendarClock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createStripePortalAction } from "@/app/actions/manage-subscription";
 import SubscriptionTimeline from "./_components/subscription-timeline";

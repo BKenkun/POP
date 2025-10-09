@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
-import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck, Settings, CalendarClock, ArrowRight } from 'lucide-react';
+import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSubscriptionCheckoutAction } from '../actions/checkout';
 import { useToast } from '@/hooks/use-toast';
@@ -42,7 +42,10 @@ export default function SubscriptionPage() {
         });
 
         try {
-            const { sessionUrl, error } = await createSubscriptionCheckoutAction(user.uid, user.email || '');
+            if (!user.email) {
+                throw new Error("El email del usuario no está disponible.");
+            }
+            const { sessionUrl, error } = await createSubscriptionCheckoutAction(user.uid, user.email);
 
             if (error || !sessionUrl) {
                 throw new Error(error || 'No se pudo iniciar el proceso de suscripción.');

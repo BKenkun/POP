@@ -16,7 +16,7 @@ import Link from 'next/link';
 export default function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const auth = useFirebaseAuth();
+  const { auth } = useFirebaseAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
