@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import { redirect } from 'next/navigation';
 
-const secretKey = process.env.JWT_SECRET_KEY || 'super-secret-key-for-jwt';
+const secretKey = process.env.JWT_SECRET_KEY || 'super-secret-key-for-jwt-that-is-long-enough';
 const key = new TextEncoder().encode(secretKey);
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -33,20 +33,20 @@ export async function decrypt(input: string): Promise<AdminSessionPayload | null
     return payload as AdminSessionPayload;
   } catch (error) {
     // This will happen if the token is expired or invalid
-    console.log('Failed to verify token', error);
+    console.log('Failed to verify token');
     return null;
   }
 }
 
 // This function now returns an error message or nothing on success.
-// Redirection is handled by the client.
+// Redirection is handled by the client to avoid race conditions.
 export async function login(formData: FormData): Promise<{ error: string } | void> {
   const email = formData.get('email');
   const password = formData.get('password');
 
   // 1. Verify credentials
   if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-    return { error: 'Invalid credentials' };
+    return { error: 'Credenciales inválidas' };
   }
 
   // 2. Create the session

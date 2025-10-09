@@ -15,8 +15,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
   const pathname = usePathname();
 
-  // El middleware se encarga de las rutas /admin.
-  // Este layout no debe renderizar nada para /verify para evitar conflictos.
+  // The middleware handles /admin routes.
+  // This layout should not render anything for /verify to avoid conflicts.
   if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
     return <>{children}</>;
   }

@@ -7,11 +7,9 @@ import AdminSidebar from "./_components/admin-sidebar";
 import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
-import { cn } from '@/lib/utils';
-import { CookieProvider } from '@/context/cookie-context';
-import { FirebaseClientProvider } from '@/firebase';
 
-
+// This layout is now simplified to trust the middleware for auth protection.
+// It no longer contains client-side auth checks.
 export default function AdminLayout({
   children,
 }: {
@@ -24,27 +22,23 @@ export default function AdminLayout({
       enableSystem
       disableTransitionOnChange
     >
-      <CookieProvider>
-        <FirebaseClientProvider>
-            <SidebarProvider>
-                <Sidebar variant="sidebar" collapsible="offcanvas">
-                  <AdminSidebar />
-                </Sidebar>
+      <SidebarProvider>
+        <Sidebar variant="sidebar" collapsible="offcanvas">
+          <AdminSidebar />
+        </Sidebar>
 
-                <div className={cn("fixed left-2 top-2 z-20 hidden transition-opacity md:block")}>
-                  <SidebarTrigger />
-                </div>
+        <div className="fixed left-2 top-2 z-20 hidden transition-opacity md:block">
+          <SidebarTrigger />
+        </div>
 
-                <SidebarInset>
-                  <div className="p-4 md:p-8">
-                    {children}
-                  </div>
-                </SidebarInset>
-                <ThemeToggleButton />
-            </SidebarProvider>
-            <Toaster />
-        </FirebaseClientProvider>
-      </CookieProvider>
+        <SidebarInset>
+          <div className="p-4 md:p-8">
+            {children}
+          </div>
+        </SidebarInset>
+        <ThemeToggleButton />
+      </SidebarProvider>
+      <Toaster />
     </ThemeProvider>
   );
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,7 +24,6 @@ export default function VerifyPage() {
     // avoiding hydration mismatches caused by browser extensions.
     setIsClient(true);
   }, []);
-
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
