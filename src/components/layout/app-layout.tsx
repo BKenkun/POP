@@ -26,16 +26,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [consent.analytics]);
 
-  const showFloatingButtons = !pathname.startsWith('/checkout') && !pathname.startsWith('/login') && !pathname.startsWith('/register');
+  const showHeaderFooter = !pathname.startsWith('/verify');
+  const showFloatingButtons = !pathname.startsWith('/checkout') && !pathname.startsWith('/login') && !pathname.startsWith('/register') && !pathname.startsWith('/verify');
 
   return (
     <>
       <div className="flex flex-col min-h-screen bg-background">
-        <Header />
+        {showHeaderFooter && <Header />}
         <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
           {children}
         </main>
-        <Footer />
+        {showHeaderFooter && <Footer />}
       </div>
       <SalesNotification />
       {showFloatingButtons && <FloatingActionButtons />}

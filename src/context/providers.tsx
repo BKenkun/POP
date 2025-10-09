@@ -13,8 +13,8 @@ import { AdminAuthProvider } from "./admin-auth-context";
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // For admin routes, we provide a different context layout
-  if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
+  // For admin routes, we provide a different context layout, without the public providers
+  if (pathname.startsWith('/admin')) {
     return (
        <AdminAuthProvider>
         {children}
@@ -22,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // For public routes, we wrap with all client-side providers
+  // For all public routes (including /verify), we wrap with all client-side providers
   return (
     <ThemeProvider
       attribute="class"
