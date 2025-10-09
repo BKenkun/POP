@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, getIdToken } from 'firebase/auth';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,15 +34,33 @@ export default function LoginForm() {
         throw new Error("Servicio de autenticación no disponible.");
       }
       
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await getIdToken(userCredential.user);
+
+      // Send the token to the server to create a session cookie
+      const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ idToken }),
+      });
+
+      if (!response.ok) {
+          throw new Error('No se pudo crear la sesión del servidor.');
+      }
       
       toast({
         title: 'Inicio de sesión exitoso',
         description: 'Redirigiendo a tu panel de usuario...',
       });
-
-      // Redirect to the account page upon successful login.
-      router.push('/account');
+      
+      // Check if the user is an admin and redirect accordingly
+      if (email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+          router.push('/admin');
+      } else {
+          router.push('/account');
+      }
 
     } catch (err: any) {
       const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
@@ -54,7 +72,6 @@ export default function LoginForm() {
       });
       setLoading(false); // Only set loading to false on error
     }
-    // Don't set loading to false on success, as we are navigating away
   };
 
   return (

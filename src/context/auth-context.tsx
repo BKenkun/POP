@@ -42,9 +42,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const logout = async () => {
     try {
+        // First, sign out from Firebase client
         if (auth) {
             await firebaseSignOut(auth);
         }
+        // Then, hit the API endpoint to clear the server-side session cookie
+        await fetch('/api/logout', { method: 'POST' });
+
+        // Redirect to home
         router.push('/');
     } catch (error) {
       console.error("Error signing out: ", error);
