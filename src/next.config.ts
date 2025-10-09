@@ -3,9 +3,6 @@ import type {NextConfig} from 'next';
 
 // Forcing a server restart to recognize new routes. This comment will trigger it again.
 const nextConfig: NextConfig = {
-  devIndicators: {
-    allowedDevOrigins: ['*'],
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -14,7 +11,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     // These are the final admin credentials for the second verification step on the /verify page.
-    ADMIN_EMAIL: 'admin@purorush.com',
+    ADMIN_EMAIL: 'maryandpopper@gmail.com',
     ADMIN_PASSWORD: 'PowerAdmin123!',
   },
   images: {

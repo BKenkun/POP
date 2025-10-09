@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/app/actions/admin-auth';
+import { decrypt } from '@/lib/session'; // Import from the new session library
 
 // This middleware now performs the FULL check: existence and validity.
 export async function middleware(request: NextRequest) {
