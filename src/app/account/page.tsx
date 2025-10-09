@@ -1,36 +1,28 @@
 
 'use client';
 
-import { useAuth } from "@/context/auth-context";
+import { useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter } from "@/components/ui/card"
 import { useEffect, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
 import { formatPrice } from "@/lib/utils";
 import { Gift, HeartPulse, CheckCircle, PackagePlus, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function AccountDashboardPage() {
-  const { user, isSubscribed } = useAuth();
-  const [userName, setUserName] = useState(user?.displayName || user?.email?.split('@')[0] || "Usuario");
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const userEmail = user?.email || "No email provided";
+  const { user, isSubscribed, loyaltyPoints } = useAuth();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    if (user) {
-      const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
-        const data = doc.data();
-        if (data?.displayName) {
-          setUserName(data.displayName);
-        }
-        if (data?.loyaltyPoints) {
-            setLoyaltyPoints(data.loyaltyPoints);
-        }
-      });
-      return () => unsub();
-    }
-  }, [user]);
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, "users", user.uid);
+  }, [user, firestore]);
+
+  const { data: userData } = useDoc<{ displayName: string }>(userDocRef);
+
+  const userName = userData?.displayName || user?.displayName || user?.email?.split('@')[0] || "Usuario";
+  const userEmail = user?.email || "No email provided";
   
   // 100 points = 2€ discount
   const pointsValue = (loyaltyPoints / 100) * 200;

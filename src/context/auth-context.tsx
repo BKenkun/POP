@@ -2,11 +2,12 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { User, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
+import { useAuth as useFirebaseAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+
 
 // Define a type for our simulated admin user
 type SimulatedUser = {
@@ -30,45 +31,28 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: firebaseUser, isUserLoading } = useFirebaseAuth();
+  const firestore = useFirestore();
   const [isAdminAsCustomer, setIsAdminAsCustomer] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
-      if (!isAdminAsCustomer) {
-        setUser(authUser);
-        if (authUser) {
-          const userDocRef = doc(db, "users", authUser.uid);
-          const unsubSnapshot = onSnapshot(userDocRef, (doc) => {
-            const data = doc.data();
-            setLoyaltyPoints(data?.loyaltyPoints || 0);
-            setIsSubscribed(!!data?.isSubscribed);
-          });
-          return () => unsubSnapshot();
-        } else {
-            setLoyaltyPoints(0);
-            setIsSubscribed(false);
-        }
-      }
-      setLoading(false);
-    });
+  const userDocRef = useMemoFirebase(() => {
+    if (!firebaseUser || !firestore) return null;
+    return doc(firestore, "users", firebaseUser.uid);
+  }, [firebaseUser, firestore]);
 
-    return () => unsubscribe();
-  }, [isAdminAsCustomer]);
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<{ loyaltyPoints: number, isSubscribed: boolean }>(userDocRef);
+
+  const loyaltyPoints = userData?.loyaltyPoints || 0;
+  const isSubscribed = userData?.isSubscribed || false;
 
   const logout = async () => {
     try {
       if (isAdminAsCustomer) {
         setIsAdminAsCustomer(false);
-        setUser(null); // Clear simulated user
-        setIsSubscribed(false);
         router.push('/');
       } else {
-        await firebaseSignOut(auth);
+        await firebaseSignOut(useFirebaseAuth());
         router.push('/');
       }
     } catch (error) {
@@ -78,10 +62,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsAdminCustomer = () => {
     setIsAdminAsCustomer(true);
-    setLoading(false);
-    setLoyaltyPoints(1000); // Give some points to test with
-    setIsSubscribed(true); // Simulate subscription for admin
   };
+  
+  const loading = isUserLoading || isUserDataLoading;
 
   const providedUser = isAdminAsCustomer 
     ? { 
@@ -92,9 +75,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailVerified: true,
         providerData: [],
       }
-    : user;
+    : firebaseUser;
 
-  const value = { user: providedUser, loading, logout, loginAsAdminCustomer, loyaltyPoints, isSubscribed };
+  const value = { 
+      user: providedUser, 
+      loading, 
+      logout, 
+      loginAsAdminCustomer, 
+      loyaltyPoints: isAdminAsCustomer ? 1000 : loyaltyPoints,
+      isSubscribed: isAdminAsCustomer ? true : isSubscribed 
+    };
 
   if (loading && !providedUser) {
     return (

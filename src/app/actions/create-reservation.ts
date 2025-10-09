@@ -3,8 +3,9 @@
 
 import { CartItem, Order, ShippingAddress } from "@/lib/types";
 import { cbdProducts } from "@/lib/cbd-products";
-import { db } from "@/lib/firebase";
+import { getFirestore } from "firebase-admin/firestore";
 import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { initializeFirebase } from "@/firebase/server";
 
 
 // Helper function to generate a unique alphanumeric order code
@@ -43,6 +44,7 @@ export async function createReservationAction(
     input: ReservationInput,
 ): Promise<{ orderId: string | null; error?: string }> {
     console.log("Received reservation request:", input);
+    const { db } = initializeFirebase();
 
     // --- 1. Generate Unique Order Code ---
     const orderId = generateOrderCode();
@@ -95,7 +97,7 @@ export async function createReservationAction(
         customerName: input.customerDetails.name,
         customerEmail: input.customerDetails.email,
         shippingAddress: shippingAddress,
-        paymentMethod: input.customerDetails.paymentMethod,
+        paymentMethod: input.customerDetails.paymentMethod as any,
     };
 
     // --- 4. Save to Firestore ---

@@ -2,9 +2,8 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/auth-context";
-import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -22,36 +21,14 @@ import Link from "next/link";
 
 export default function OrdersPage() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      const ordersRef = collection(db, 'users', user.uid, 'orders');
-      const q = query(ordersRef, orderBy('createdAt', 'desc'));
-
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const userOrders: Order[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          userOrders.push({
-            ...data,
-            // Convert Firestore Timestamp to JS Date if it's not already
-            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-          } as Order);
-        });
-        setOrders(userOrders);
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching orders:", error);
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else {
-        setLoading(false);
-    }
-  }, [user]);
+  const firestore = useFirestore();
+  
+  const ordersQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'users', user.uid, 'orders'), orderBy('createdAt', 'desc'));
+  }, [user, firestore]);
+  
+  const { data: orders, isLoading: loading } = useCollection<Order>(ordersQuery);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -85,7 +62,7 @@ export default function OrdersPage() {
             </p>
         </div>
         
-        {orders.length === 0 ? (
+        {!orders || orders.length === 0 ? (
              <div className="flex flex-col items-center justify-center h-40 text-center border-dashed border-2 rounded-lg">
                 <ShoppingBag className="h-12 w-12 text-muted-foreground/30" strokeWidth={1} />
                 <h3 className="mt-4 text-lg font-semibold">Aún no tienes pedidos</h3>

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { collectionGroup, query, where, getDocs, updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { Loader2, Package, User, MapPin, ArrowLeft } from 'lucide-react';
@@ -27,73 +27,60 @@ export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
+  const firestore = useFirestore();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [docRefPath, setDocRefPath] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  
+  const docRef = useMemoFirebase(() => {
+    if (!docRefPath || !firestore) return null;
+    return doc(firestore, docRefPath);
+  }, [docRefPath, firestore]);
+
+  const { data: orderData, isLoading: isDocLoading } = useDoc<Order>(docRef);
 
   useEffect(() => {
-    if (!orderId) return;
-
-    const findOrder = async () => {
-        setLoading(true);
-        // First, check guest reservations
-        let q = query(collectionGroup(db, 'reservations'), where('id', '==', orderId));
-        let unsub = onSnapshot(q, (snapshot) => {
-            if (!snapshot.empty) {
-                const orderDoc = snapshot.docs[0];
-                setDocRefPath(orderDoc.ref.path);
-                setOrder({ ...orderDoc.data(), createdAt: orderDoc.data().createdAt?.toDate ? orderDoc.data().createdAt.toDate() : new Date() } as Order);
-                setLoading(false);
-            } else {
-                // If not found in reservations, check user orders
-                q = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
-                unsub = onSnapshot(q, (snapshot) => {
-                    if (!snapshot.empty) {
-                        const orderDoc = snapshot.docs[0];
-                        setDocRefPath(orderDoc.ref.path);
-                        setOrder({ ...orderDoc.data(), createdAt: orderDoc.data().createdAt?.toDate ? orderDoc.data().createdAt.toDate() : new Date() } as Order);
-                    } else {
-                        setOrder(null);
-                    }
-                    setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching user order:", error);
-                    setLoading(false);
-                });
-            }
-        }, (error) => {
-            console.error("Error fetching reservation:", error);
-            setLoading(false);
-        });
-      
-        return () => unsub();
+    if (!orderId || !firestore) return;
+    setLoading(true);
+    const findOrderPath = async () => {
+      let path: string | null = null;
+      // Search in reservations
+      const reservationsQuery = query(collection(firestore, 'reservations'), where('id', '==', orderId));
+      const reservationSnap = await getDocs(reservationsQuery);
+      if (!reservationSnap.empty) {
+        path = reservationSnap.docs[0].ref.path;
+      } else {
+        // Search in user orders
+        const ordersQuery = query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
+        const orderSnap = await getDocs(ordersQuery);
+        if (!orderSnap.empty) {
+          path = orderSnap.docs[0].ref.path;
+        }
+      }
+      setDocRefPath(path);
+      setLoading(false);
     };
+    findOrderPath();
+  }, [orderId, firestore]);
+  
+  useEffect(() => {
+    if (orderData) {
+      setOrder(orderData);
+    }
+  }, [orderData]);
 
-    findOrder();
-  }, [orderId]);
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!docRefPath) return;
+    if (!docRef) return;
     setUpdatingStatus(true);
-    try {
-        const orderDocRef = doc(db, docRefPath);
-        await updateDoc(orderDocRef, { status: newStatus });
-        toast({
-            title: "Estado del pedido actualizado",
-            description: `El pedido ahora está marcado como "${newStatus}".`,
-        });
-    } catch (error) {
-        console.error("Error updating status: ", error);
-        toast({
-            title: "Error",
-            description: "No se pudo actualizar el estado del pedido.",
-            variant: "destructive",
-        });
-    } finally {
-        setUpdatingStatus(false);
-    }
+    updateDocumentNonBlocking(docRef, { status: newStatus });
+    toast({
+        title: "Estado del pedido actualizado",
+        description: `El pedido ahora está marcado como "${newStatus}".`,
+    });
+    setUpdatingStatus(false);
   };
   
   const getStatusVariant = (status: string) => {
@@ -117,7 +104,7 @@ export default function OrderDetailPage() {
     }
   };
 
-  if (loading) {
+  if (loading || isDocLoading) {
     return <div className="flex justify-center items-center h-60"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 

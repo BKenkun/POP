@@ -22,8 +22,8 @@ import { subDays, startOfDay, endOfDay, isWithinInterval, format as formatDate, 
 import { es } from 'date-fns/locale';
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Order, Product } from "@/lib/types";
-import { db } from "@/lib/firebase";
-import { collectionGroup, query, onSnapshot, orderBy } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collectionGroup, query, orderBy } from "firebase/firestore";
 import { cbdProducts } from "@/lib/cbd-products";
 
 const chartConfig = {
@@ -39,7 +39,7 @@ const chartConfig = {
 
 // Helper function to process orders for a given date range
 const processOrdersForPeriod = (orders: Order[], range: DateRange | undefined, allProducts: Product[]) => {
-    if (!range?.from) return { revenue: 0, orderCount: 0, clients: new Set(), dailyRevenue: new Map<string, number>(), topProducts: new Map(), topClients: new Map() };
+    if (!range?.from || !orders) return { revenue: 0, orderCount: 0, clients: new Set(), dailyRevenue: new Map<string, number>(), topProducts: new Map(), topClients: new Map() };
 
     const startDate = startOfDay(range.from);
     const endDate = endOfDay(range.to || range.from);
@@ -129,41 +129,20 @@ export default function AdminDashboardPage() {
   });
   const [compareDateRange, setCompareDateRange] = useState<DateRange | undefined>();
   const [isCompareEnabled, setIsCompareEnabled] = useState(false);
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [products] = useState<Product[]>(cbdProducts);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-
-    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
-      const fetchedOrders: Order[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        fetchedOrders.push({
-          ...data,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-        } as Order);
-      });
-      setAllOrders(fetchedOrders);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching all orders:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  
+  const firestore = useFirestore();
+  const ordersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
+  const { data: allOrders, isLoading: loading } = useCollection<Order>(ordersQuery);
 
   
   const processedData = useMemo(() => {
-    const periodAData = processOrdersForPeriod(allOrders, dateRange, products);
+    const periodAData = processOrdersForPeriod(allOrders || [], dateRange, products);
     let periodBData = { revenue: 0, orderCount: 0, clients: new Set(), dailyRevenue: new Map(), topProducts: new Map(), topClients: new Map()};
     let chartData = [];
 
     if (isCompareEnabled && compareDateRange) {
-        periodBData = processOrdersForPeriod(allOrders, compareDateRange, products);
+        periodBData = processOrdersForPeriod(allOrders || [], compareDateRange, products);
     }
     
     // Combine chart data
@@ -182,7 +161,7 @@ export default function AdminDashboardPage() {
     
     const sortedTopProducts = Array.from(periodAData.topProducts.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 3);
     const sortedTopClients = Array.from(periodAData.topClients.values()).sort((a, b) => b.total - a.total).slice(0, 3);
-    const recentOrders = allOrders.slice(0,3);
+    const recentOrders = (allOrders || []).slice(0,3);
 
     return { 
       ...periodAData,
@@ -359,5 +338,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    

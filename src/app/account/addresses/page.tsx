@@ -2,9 +2,8 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/auth-context";
-import { db } from "@/lib/firebase";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Edit, Trash2, Loader2, Home, Briefcase } from "lucide-react"
@@ -133,27 +132,19 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Ad
 
 export default function AddressesPage() {
     const { user } = useAuth();
+    const firestore = useFirestore();
     const { toast } = useToast();
-    const [addresses, setAddresses] = useState<Address[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (user) {
-            const userDocRef = doc(db, "users", user.uid);
-            const unsub = onSnapshot(userDocRef, (doc) => {
-                const data = doc.data();
-                setAddresses(data?.addresses || []);
-                setLoading(false);
-            });
-            return () => unsub();
-        } else {
-            setLoading(false);
-        }
-    }, [user]);
+    
+    const userDocRef = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return doc(firestore, "users", user.uid);
+    }, [user, firestore]);
+    
+    const { data: userData, isLoading: loading } = useDoc<{ addresses: Address[] }>(userDocRef);
+    const addresses = userData?.addresses || [];
 
     const handleSaveAddress = async (data: AddressFormData, addressId?: string) => {
-        if (!user) return;
-        const userDocRef = doc(db, "users", user.uid);
+        if (!user || !userDocRef) return;
         
         let newAddresses = [...addresses];
 
@@ -184,8 +175,7 @@ export default function AddressesPage() {
     };
     
     const handleDeleteAddress = async (addressId: string) => {
-        if (!user) return;
-        const userDocRef = doc(db, "users", user.uid);
+        if (!user || !userDocRef) return;
         
         let newAddresses = addresses.filter(addr => addr.id !== addressId);
         

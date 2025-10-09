@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collectionGroup, query, onSnapshot, orderBy, collection, getDocs } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collectionGroup, query, orderBy, collection } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -21,56 +21,23 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import Link from "next/link";
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+  
+  const userOrdersQuery = useMemoFirebase(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
+  const reservationsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'reservations'), orderBy('createdAt', 'desc')) : null, [firestore]);
+
+  const { data: userOrders, isLoading: loadingUserOrders } = useCollection<Order>(userOrdersQuery);
+  const { data: guestOrders, isLoading: loadingGuestOrders } = useCollection<Order>(reservationsQuery);
+  
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const loading = loadingUserOrders || loadingGuestOrders;
 
   useEffect(() => {
-    // Query for registered user orders and guest reservations simultaneously
-    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-
-    const fetchAllOrders = async () => {
-        try {
-            const [userOrdersSnapshot, reservationsSnapshot] = await Promise.all([
-                getDocs(userOrdersQuery),
-                getDocs(reservationsQuery)
-            ]);
-
-            const userOrders = userOrdersSnapshot.docs.map(doc => ({
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
-            } as Order));
-
-            const guestOrders = reservationsSnapshot.docs.map(doc => ({
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
-            } as Order));
-
-            const allOrders = [...userOrders, ...guestOrders].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-            
-            // Remove duplicates just in case
-            const uniqueOrders = Array.from(new Map(allOrders.map(order => [order.id, order])).values());
-
-            setOrders(uniqueOrders);
-        } catch (error) {
-            console.error("Error fetching all orders:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    fetchAllOrders();
-    
-    // Set up listeners for real-time updates
-    const unsubUserOrders = onSnapshot(userOrdersQuery, (snapshot) => fetchAllOrders());
-    const unsubReservations = onSnapshot(reservationsQuery, (snapshot) => fetchAllOrders());
-
-    return () => {
-        unsubUserOrders();
-        unsubReservations();
-    };
-
-  }, []);
+    const combinedOrders = [...(userOrders || []), ...(guestOrders || [])];
+    const uniqueOrders = Array.from(new Map(combinedOrders.map(order => [order.id, order])).values());
+    uniqueOrders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    setAllOrders(uniqueOrders);
+  }, [userOrders, guestOrders]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -109,7 +76,7 @@ export default function AdminOrdersPage() {
                 <div className="flex justify-center items-center h-60">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
-            ) : orders.length === 0 ? (
+            ) : allOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
@@ -128,7 +95,7 @@ export default function AdminOrdersPage() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {orders.map((order) => (
+                    {allOrders.map((order) => (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
                         <TableCell>{new Date(order.createdAt).toLocaleDateString('es-ES')}</TableCell>

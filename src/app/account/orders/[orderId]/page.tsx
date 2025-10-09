@@ -3,15 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { Loader2, Package, User, MapPin, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -20,39 +18,21 @@ export default function UserOrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isUserLoading: authLoading } = useAuth();
+  const firestore = useFirestore();
   
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+  const orderDocRef = useMemoFirebase(() => {
+    if (!user || !orderId || !firestore) return null;
+    return doc(firestore, 'users', user.uid, 'orders', orderId);
+  }, [user, orderId, firestore]);
+  
+  const { data: order, isLoading } = useDoc<Order>(orderDocRef);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for user auth to resolve
-    if (!user) {
+    if (!authLoading && !user) {
         router.push('/login'); // Redirect if not logged in
-        return;
     }
-    if (!orderId) return;
-
-    const fetchOrder = async () => {
-      setLoading(true);
-      const orderDocRef = doc(db, 'users', user.uid, 'orders', orderId);
-      const docSnap = await getDoc(orderDocRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setOrder({
-          ...data,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-        } as Order);
-      } else {
-        // Order not found or doesn't belong to this user
-        setOrder(null);
-      }
-      setLoading(false);
-    };
-
-    fetchOrder();
-  }, [orderId, user, authLoading, router]);
+  }, [user, authLoading, router]);
   
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -73,7 +53,7 @@ export default function UserOrderDetailPage() {
     }
   };
 
-  if (loading || authLoading) {
+  if (isLoading || authLoading) {
     return <div className="flex justify-center items-center h-60"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
@@ -177,4 +157,3 @@ export default function UserOrderDetailPage() {
     </div>
   );
 }
-
