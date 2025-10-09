@@ -8,15 +8,26 @@ import { Toaster } from '@/components/ui/toaster';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
-import { AdminAuthProvider } from '@/context/admin-auth-context';
-import ProtectedAdminRoute from '@/context/protected-admin-route';
+import { AdminAuthProvider, useAdminAuth } from '@/context/admin-auth-context';
+import { Loader2 } from 'lucide-react';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { state } = useSidebar();
+  const { loading, isAuthenticated } = useAdminAuth();
   const isCollapsed = state === 'collapsed';
   
+  // Although middleware handles the redirect, this prevents flicker while
+  // the client-side auth context initializes.
+  if (loading || !isAuthenticated) {
+     return (
+      <div className="flex items-center justify-center h-screen bg-secondary">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
   return (
-    <ProtectedAdminRoute>
+    <>
         <Sidebar variant="sidebar" collapsible="offcanvas">
             <AdminSidebar />
         </Sidebar>
@@ -34,7 +45,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
             </div>
         </SidebarInset>
         <ThemeToggleButton />
-    </ProtectedAdminRoute>
+    </>
   );
 }
 
