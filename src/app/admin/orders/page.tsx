@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableHeader,
@@ -21,18 +22,18 @@ const toDateSafe = (timestamp: any): Date => {
   if (!timestamp) {
     return new Date(0); // Return epoch for null/undefined to avoid crashes
   }
+  // This is the most reliable check for a Firestore Timestamp
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
+  // Check for ISO string
   if (typeof timestamp === 'string') {
     const d = new Date(timestamp);
     if (!isNaN(d.getTime())) {
       return d;
     }
   }
-  if (typeof timestamp === 'object' && timestamp._seconds) {
-    return new Date(timestamp._seconds * 1000);
-  }
+  // Check for the object format { _seconds: number, _nanoseconds: number }
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000);
   }
@@ -71,9 +72,10 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return dateB - dateA;
     });
 
-    // Serialize data for the client component: Convert Timestamps to strings.
+    // **CRITICAL FIX**: Serialize data for the client component. Convert Timestamps to strings.
     return allOrders.map(order => ({
         ...order,
+        // This ensures that the object passed from Server to Client is a plain object.
         createdAt: toDateSafe(order.createdAt).toISOString(),
     }));
 }
