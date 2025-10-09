@@ -12,7 +12,8 @@ import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, C
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore, setDocumentNonBlocking } from '@/context/auth-context';
+import { useAuth } from '@/context/auth-context';
+import { useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
