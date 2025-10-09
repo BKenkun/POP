@@ -58,6 +58,7 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
     }
 
     if (order) {
+        // Convert to a plain JavaScript object and ensure date is a string
         return {
             ...order,
             createdAt: toDateSafe(order.createdAt).toISOString(),
