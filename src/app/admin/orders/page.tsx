@@ -1,7 +1,4 @@
 
-'use client';
-
-import { useEffect, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -12,33 +9,85 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, Package, Eye } from "lucide-react";
+import { Package, Eye } from "lucide-react";
 import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { getAllAdminOrders } from "@/app/actions/admin-data";
+import { db } from '@/lib/firebase';
+import { collectionGroup, getDocs, query, orderBy, collection } from 'firebase/firestore';
 
-export default function AdminOrdersPage() {
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+// Helper function to safely get a Date object from Firestore Timestamp, string or other types.
+const toDateSafe = (timestamp: any): Date => {
+  if (!timestamp) {
+    return new Date(0); // Return epoch for null/undefined to avoid crashes
+  }
+  // Firestore Timestamp (most common case for registered user orders)
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+  // ISO string (from client-side, guest orders, or serialization)
+  if (typeof timestamp === 'string') {
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) {
+      return d;
+    }
+  }
+  // Object with _seconds (alternative serialization)
+  if (typeof timestamp === 'object' && timestamp._seconds) {
+    return new Date(timestamp._seconds * 1000);
+  }
+   // Object with seconds and nanoseconds (from server-side rendering or Firestore directly)
+  if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
+    return new Date(timestamp.seconds * 1000);
+  }
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-        setLoading(true);
-        try {
-            const orders = await getAllAdminOrders();
-            // Timestamps from server actions are already strings, just use them
-            setAllOrders(orders);
-        } catch (error) {
-            console.error("Failed to fetch orders:", error);
-            // Handle error state, maybe show a toast
-        } finally {
-            setLoading(false);
+  // Fallback for unexpected formats
+  console.warn("Could not parse timestamp, returning epoch:", timestamp);
+  return new Date(0);
+}
+
+async function getAllAdminOrders(): Promise<Order[]> {
+    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+
+    const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
+        getDocs(userOrdersQuery),
+        getDocs(reservationsQuery),
+    ]);
+
+    const allOrders: Order[] = [];
+
+    userOrdersSnap.forEach(doc => {
+        const orderData = doc.data() as Order;
+        allOrders.push({ ...orderData, path: doc.ref.path });
+    });
+
+    guestOrdersSnap.forEach(doc => {
+        const orderData = doc.data() as Order;
+        // Check if this order (by ID) is already in the list to avoid duplicates.
+        if (!allOrders.some(o => o.id === orderData.id)) {
+            allOrders.push({ ...orderData, path: doc.ref.path });
         }
-    };
-    fetchOrders();
-  }, []);
+    });
+    
+    // Sort after combining to ensure correct chronological order
+    allOrders.sort((a, b) => {
+        const dateA = toDateSafe(a.createdAt).getTime();
+        const dateB = toDateSafe(b.createdAt).getTime();
+        return dateB - dateA; // Sort descending (newest first)
+    });
+
+    // Serialize Timestamps to strings before sending to the client
+    return allOrders.map(order => ({
+        ...order,
+        createdAt: toDateSafe(order.createdAt).toISOString(),
+    }));
+}
+
+
+export default async function AdminOrdersPage() {
+  const allOrders = await getAllAdminOrders();
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -73,11 +122,7 @@ export default function AdminOrdersPage() {
             <CardDescription>Aquí se listan todas las compras y reservas de tus clientes.</CardDescription>
         </CardHeader>
         <CardContent>
-            {loading ? (
-                <div className="flex justify-center items-center h-60">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-            ) : allOrders.length === 0 ? (
+            {allOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
@@ -125,5 +170,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
-    

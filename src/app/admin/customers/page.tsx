@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button"
 import { Loader2, Users, User, MoreHorizontal } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { getAllAdminCustomers } from "@/app/actions/admin-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -24,6 +23,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getAllAdminCustomers } from "@/app/actions/admin-data";
+
 
 // Define a type for the user data we expect from the server action
 interface Customer {
@@ -130,5 +131,3 @@ export default function AdminCustomersPage() {
     </div>
   );
 }
-
-    

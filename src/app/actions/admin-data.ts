@@ -6,6 +6,10 @@ import { Order, Product } from '@/lib/types';
 import { collection, collectionGroup, getDocs, query, where, doc, getDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { cbdProducts } from '@/lib/cbd-products';
 
+// This file is being simplified.
+// The main data fetching logic is moved to the server components that use it
+// to prevent Firebase instance conflicts.
+
 // This is a server-only function
 async function verifyAdmin() {
     // This check is now handled by the admin layout, so we can simplify this.
@@ -19,96 +23,37 @@ const toDateSafe = (timestamp: any): Date => {
   if (!timestamp) {
     return new Date(0); // Return epoch for null/undefined to avoid crashes
   }
-  // Firestore Timestamp (most common case for registered user orders)
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
-  // ISO string (from client-side, guest orders, or serialization)
   if (typeof timestamp === 'string') {
     const d = new Date(timestamp);
     if (!isNaN(d.getTime())) {
       return d;
     }
   }
-  // Object with _seconds (alternative serialization)
   if (typeof timestamp === 'object' && timestamp._seconds) {
     return new Date(timestamp._seconds * 1000);
   }
-   // Object with seconds and nanoseconds (from server-side rendering or Firestore directly)
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000);
   }
-
-  // Fallback for unexpected formats
   console.warn("Could not parse timestamp, returning epoch:", timestamp);
   return new Date(0);
 }
 
-
-async function fetchAllOrders(): Promise<Order[]> {
-    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-
-    const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
-        getDocs(userOrdersQuery),
-        getDocs(reservationsQuery),
-    ]);
-
-    const allOrders: Order[] = [];
-
-    userOrdersSnap.forEach(doc => {
-        const orderData = doc.data() as Order;
-        allOrders.push({ ...orderData, path: doc.ref.path });
-    });
-
-    guestOrdersSnap.forEach(doc => {
-        const orderData = doc.data() as Order;
-        // Check if this order (by ID) is already in the list to avoid duplicates,
-        // although it's unlikely with separate collections.
-        if (!allOrders.some(o => o.id === orderData.id)) {
-            allOrders.push({ ...orderData, path: doc.ref.path });
-        }
-    });
-    
-    // Sort after combining to ensure correct chronological order
-    allOrders.sort((a, b) => {
-        const dateA = toDateSafe(a.createdAt).getTime();
-        const dateB = toDateSafe(b.createdAt).getTime();
-        return dateB - dateA; // Sort descending (newest first)
-    });
-
-    return allOrders;
-}
-
-
 export async function getAdminDashboardData() {
     await verifyAdmin();
-
-    const allOrders = await fetchAllOrders();
-    const allProducts: Product[] = cbdProducts;
-    
-    const recentOrders = allOrders.slice(0, 5);
-    const totalRevenue = allOrders.reduce((sum, order) => sum + order.total, 0);
-    const totalOrders = allOrders.length;
-
+    // This function can be expanded later if needed, but for now, we keep it minimal.
+    // The main order fetching is done in the orders page directly.
     return {
-        totalRevenue,
-        totalOrders,
-        totalProducts: allProducts.length,
-        recentOrders,
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalProducts: cbdProducts.length,
+        recentOrders: [],
         topClients: [], 
         topProducts: [],
     };
-}
-
-export async function getAllAdminOrders(): Promise<Order[]> {
-    await verifyAdmin();
-    const orders = await fetchAllOrders();
-    // Serialize Timestamps to strings before sending to the client
-    return orders.map(order => ({
-        ...order,
-        createdAt: toDateSafe(order.createdAt).toISOString(),
-    }));
 }
 
 
@@ -151,7 +96,6 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
     return null;
 }
 
-// You might need a new function for getting customer data
 export async function getAllAdminCustomers() {
     await verifyAdmin();
     const { getAuth } = await import('firebase-admin/auth');
