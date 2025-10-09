@@ -25,8 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Memoize the admin check.
   const isAdmin = useMemo(() => {
-    // Check against the environment variable, ensuring it's available on the client.
-    return !!user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    return !!user && user.email === 'maryandpopper@gmail.com';
   }, [user]);
 
   const userDocRef = useMemoFirebase(() => {
@@ -51,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Redirect to home
         router.push('/');
+        router.refresh();
     } catch (error) {
       console.error("Error signing out: ", error);
     }

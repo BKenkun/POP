@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,52 +10,71 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { login } from '@/app/actions/admin-auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { auth } = useFirebaseAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = async (formData: FormData) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
     setLoading(true);
 
-    try {
-      const result = await login(formData);
+    if (!auth) {
+        setError('Servicio de autenticación no disponible.');
+        setLoading(false);
+        return;
+    }
 
-      if (result?.error) {
-        setError(result.error);
-        toast({
-          title: 'Error al iniciar sesión',
-          description: result.error,
-          variant: 'destructive',
-        });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      toast({
+          title: "Inicio de sesión exitoso",
+          description: "¡Bienvenido de nuevo!",
+      });
+
+      // Check if the logged-in user is the admin
+      const isAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
+      const redirectUrl = searchParams.get('redirect');
+
+      if (isAdmin && redirectUrl) {
+          router.push(redirectUrl);
+      } else if (isAdmin) {
+          router.push('/admin');
+      } else {
+          router.push('/account');
       }
-      // No need to handle success redirection here, the server action does it.
-      // If there's an error, we should stop the loading spinner.
-      setLoading(false);
-    } catch (e: any) {
-        // Catch errors that might be thrown by the redirect
-        if (e.message.includes('NEXT_REDIRECT')) {
-            // This is expected, do nothing.
+
+    } catch (err: any) {
+        let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+             friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
         } else {
-            setError('Ha ocurrido un error inesperado.');
-            toast({
-                title: 'Error',
-                description: 'Ha ocurrido un error inesperado.',
-                variant: 'destructive',
-            });
-            setLoading(false);
+            console.error("Firebase Auth Error:", err);
         }
+        setError(friendlyError);
+        toast({
+            title: 'Error al iniciar sesión',
+            description: friendlyError,
+            variant: 'destructive',
+        });
+        setLoading(false);
     }
   };
 
   return (
-    <form action={handleLogin}>
+    <form onSubmit={handleLogin}>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -65,6 +85,8 @@ export default function LoginForm() {
             placeholder="tu@email.com"
             required
             disabled={loading}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div className="space-y-2">
@@ -77,6 +99,8 @@ export default function LoginForm() {
               required
               disabled={loading}
               className="pr-10"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <Button
               type="button"

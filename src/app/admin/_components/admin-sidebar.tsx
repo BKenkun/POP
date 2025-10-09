@@ -15,10 +15,11 @@ import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
-import { logout } from '@/app/actions/admin-auth';
+import { useAuth } from '@/context/auth-context';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
   
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: Home },
@@ -32,6 +33,11 @@ export default function AdminSidebar() {
     { href: '/admin/blog', label: 'Blog', icon: Newspaper },
     { href: '/admin/settings', label: 'Configuración', icon: Settings },
   ];
+
+  const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    logout();
+  }
 
   return (
     <>
@@ -68,12 +74,10 @@ export default function AdminSidebar() {
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
-         <form action={logout}>
-            <Button variant="ghost" className="justify-start w-full gap-2" type="submit">
-                <LogOut />
-                <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-            </Button>
-         </form>
+         <Button variant="ghost" className="justify-start w-full gap-2" onClick={handleLogout}>
+            <LogOut />
+            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+         </Button>
       </SidebarFooter>
     </>
   );

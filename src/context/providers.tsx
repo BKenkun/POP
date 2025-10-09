@@ -9,34 +9,44 @@ import { ThemeProvider } from "./theme-provider";
 import { FirebaseClientProvider } from "@/firebase";
 import CookieConsentBanner from "@/components/cookie-consent-banner";
 import { usePathname } from "next/navigation";
+import { Toaster } from "@/components/ui/toaster";
+import AdminLayout from "@/app/admin/layout";
 
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isPublicRoute = !pathname.startsWith('/admin') && !pathname.startsWith('/verify');
+    const isAdminRoute = pathname.startsWith('/admin');
 
-    // Admin routes have their own layout, so we render them directly.
-    if (!isPublicRoute) {
-        return <>{children}</>;
-    }
+    const PublicLayout = ({ children }: { children: React.ReactNode }) => (
+      <AppLayout>
+          {children}
+          <Toaster />
+          <CookieConsentBanner />
+      </AppLayout>
+    );
 
-  // All public routes are wrapped with all client-side providers.
+    const AdminWrapper = ({ children }: { children: React.ReactNode }) => (
+      <AdminLayout>
+        {children}
+      </AdminLayout>
+    );
+
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
-      forcedTheme="light"
+      defaultTheme="light" // Default to light for main site
+      enableSystem={true} // Allow system for admin
       disableTransitionOnChange
     >
       <CookieProvider>
         <FirebaseClientProvider>
             <AuthProvider>
               <CartProvider>
-                <AppLayout>
-                  {children}
-                </AppLayout>
-                <CookieConsentBanner />
+                {isAdminRoute ? (
+                    <AdminWrapper>{children}</AdminWrapper>
+                ) : (
+                    <PublicLayout>{children}</PublicLayout>
+                )}
               </CartProvider>
             </AuthProvider>
         </FirebaseClientProvider>

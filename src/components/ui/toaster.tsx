@@ -13,10 +13,12 @@ import {
 import { useCookieConsent } from "@/context/cookie-context"
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 export function Toaster() {
   const { toasts } = useToast()
   const { consent } = useCookieConsent();
+  const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -24,6 +26,7 @@ export function Toaster() {
   }, []);
 
   const isBannerVisible = isClient && !consent.necessary;
+  const isAdminRoute = pathname.startsWith('/admin');
 
   return (
     <ToastProvider>
@@ -41,7 +44,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className={cn(isBannerVisible && "bottom-16 sm:bottom-12 transition-all duration-300")} />
+      <ToastViewport className={cn((isBannerVisible && !isAdminRoute) && "bottom-16 sm:bottom-12 transition-all duration-300")} />
     </ToastProvider>
   )
 }

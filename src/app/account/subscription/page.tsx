@@ -26,8 +26,10 @@ export default function SubscriptionManagementPage() {
     const isSelectionWindowOpen = dayOfMonth >= 4 && dayOfMonth <= 25;
 
     useEffect(() => {
-        if (!authLoading && (!user || !isSubscribed)) {
-            router.push('/');
+        if (!authLoading && !user) {
+            router.push('/login?redirect=/account/subscription');
+        } else if (!authLoading && user && !isSubscribed) {
+            router.push('/subscription');
         }
     }, [user, isSubscribed, authLoading, router]);
 
