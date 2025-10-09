@@ -15,10 +15,10 @@ export default function AccountDashboardPage() {
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(() => {
-    // Don't fetch doc if it's an admin user
-    if (!user || isAdmin || !firestore) return null;
+    // We fetch the doc for ANY user now, but check isAdmin to display specific UI
+    if (!user || !firestore) return null;
     return doc(firestore, "users", user.uid);
-  }, [user, isAdmin, firestore]);
+  }, [user, firestore]);
 
   const { data: userData } = useDoc<{ displayName: string }>(userDocRef);
 
@@ -49,7 +49,7 @@ export default function AccountDashboardPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter>
-                    <Button asChild variant="secondary">
+                    <Button asChild>
                         <Link href="/admin" target="_blank">
                             <Shield className="mr-2" />
                             Ir al Panel de Administración
@@ -59,7 +59,7 @@ export default function AccountDashboardPage() {
             </Card>
         )}
 
-        {isSubscribed && (
+        {isSubscribed && !isAdmin && (
             <Card className="border-primary border-2">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-primary">
@@ -98,7 +98,6 @@ export default function AccountDashboardPage() {
             <CardContent className="space-y-2">
                 <p><span className="font-semibold">Nombre:</span> {userName}</p>
                 <p><span className="font-semibold">Email:</span> {userEmail}</p>
-                 {isAdmin && <p className="text-xs text-amber-500 font-bold mt-2">(Estás viendo la tienda como administrador)</p>}
             </CardContent>
             </Card>
             <Card>

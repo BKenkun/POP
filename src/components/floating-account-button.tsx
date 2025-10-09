@@ -13,13 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LayoutDashboard, Package, MapPin, LogOut } from 'lucide-react';
+import { User, LayoutDashboard, Package, MapPin, LogOut, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 
 export default function FloatingAccountButton() {
   const router = useRouter();
-  const { user, logout, isAdminAsCustomer } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = (e: Event) => {
@@ -53,9 +53,17 @@ export default function FloatingAccountButton() {
         </DropdownMenuTrigger>
         {user && (
             <DropdownMenuContent className="w-56 mb-2" align="end" side="top">
-            <DropdownMenuLabel>{isAdminAsCustomer ? 'Admin (Vista Cliente)' : 'Mi Cuenta'}</DropdownMenuLabel>
+            <DropdownMenuLabel>{isAdmin ? 'Cuenta de Admin' : 'Mi Cuenta'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                        <Shield className="mr-2" />
+                        <span>Panel de Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                 <Link href="/account">
                     <LayoutDashboard className="mr-2" />

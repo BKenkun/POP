@@ -9,7 +9,6 @@ import { ThemeProvider } from '@/context/theme-provider';
 import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 import { Loader2 } from 'lucide-react';
-import { AdminAuthProvider } from '@/context/admin-auth-context';
 
 
 async function AdminAuthCheck() {
@@ -46,24 +45,22 @@ export default function AdminLayout({
             <AdminAuthCheck />
         </Suspense>
         
-        <AdminAuthProvider>
-            <SidebarProvider>
-                <Sidebar variant="sidebar" collapsible="offcanvas">
-                <AdminSidebar />
-                </Sidebar>
+        <SidebarProvider>
+            <Sidebar variant="sidebar" collapsible="offcanvas">
+            <AdminSidebar />
+            </Sidebar>
 
-                <div className="fixed left-2 top-2 z-20 hidden transition-opacity md:block">
-                <SidebarTrigger />
-                </div>
+            <div className="fixed left-2 top-2 z-20 hidden transition-opacity md:block">
+            <SidebarTrigger />
+            </div>
 
-                <SidebarInset>
-                <div className="p-4 md:p-8">
-                    {children}
-                </div>
-                </SidebarInset>
-                <ThemeToggleButton />
-            </SidebarProvider>
-        </AdminAuthProvider>
+            <SidebarInset>
+            <div className="p-4 md:p-8">
+                {children}
+            </div>
+            </SidebarInset>
+            <ThemeToggleButton />
+        </SidebarProvider>
         <Toaster />
     </ThemeProvider>
   );

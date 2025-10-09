@@ -11,21 +11,17 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, ShieldAlert } from 'lucide-react';
 import { login } from '@/app/actions/admin-auth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function VerifyPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { setIsAdminAsCustomer } = useAdminAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>('');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    // On load, ensure any previous admin customer state is cleared
-    setIsAdminAsCustomer(false);
-  }, [setIsAdminAsCustomer]);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,16 +39,9 @@ export default function VerifyPage() {
         variant: "destructive",
       });
       setLoading(false);
-    } else {
-      // On successful admin login, set the flag and redirect to the homepage
-      // to start browsing as an admin-customer.
-      setIsAdminAsCustomer(true);
-      toast({
-        title: "Sesión de administrador iniciada",
-        description: "Ahora navegas por la tienda como administrador. El enlace secreto está activo.",
-      });
-      router.push('/');
-    }
+    } 
+    // On success, the server action will redirect, so no client-side redirect is needed.
+    // If it fails, the error will be handled above.
   };
   
   const FormSkeleton = () => (

@@ -3,7 +3,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 
 // Setup font with next/font
 const inter = Inter({

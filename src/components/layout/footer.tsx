@@ -3,11 +3,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAdminAuth } from "@/context/admin-auth-context";
-
+    
 export function Footer() {
     const pathname = usePathname();
-    const { isAdminAsCustomer } = useAdminAuth();
     
     // Do not render the footer on admin or verify routes.
     if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {

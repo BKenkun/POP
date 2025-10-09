@@ -7,7 +7,6 @@ import { CookieProvider } from "./cookie-context";
 import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
 import { FirebaseClientProvider } from "@/firebase";
-import { AdminAuthProvider } from "./admin-auth-context";
 import CookieConsentBanner from "@/components/cookie-consent-banner";
 import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
@@ -15,10 +14,10 @@ import { usePathname } from "next/navigation";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isAdminRoute = pathname.startsWith('/admin');
+    const isPublicRoute = !pathname.startsWith('/admin') && !pathname.startsWith('/verify');
 
-    // Admin routes have their own layout and providers, so we render them directly.
-    if (isAdminRoute) {
+    // Admin routes have their own layout, so we render them directly.
+    if (!isPublicRoute) {
         return <>{children}</>;
     }
 
@@ -33,7 +32,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <CookieProvider>
         <FirebaseClientProvider>
-          <AdminAuthProvider>
             <AuthProvider>
               <CartProvider>
                 <AppLayout>
@@ -43,7 +41,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <Toaster />
               </CartProvider>
             </AuthProvider>
-          </AdminAuthProvider>
         </FirebaseClientProvider>
       </CookieProvider>
     </ThemeProvider>
