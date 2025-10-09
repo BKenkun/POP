@@ -12,92 +12,118 @@
         },
         "name": {
           "type": "string",
-          "description": "Name of the product."
+          "description": "Name of the product (e.g., Rush Winter 10ml)."
         },
-        "description": {
-          "type": "string",
-          "description": "Detailed description of the product, including sensory language to enhance appeal."
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
         },
         "imageUrl": {
           "type": "string",
           "description": "URL of the product image.",
           "format": "uri"
         },
-        "price": {
-          "type": "number",
-          "description": "Price of the product."
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
         }
       },
       "required": [
         "id",
         "name",
-        "description",
-        "imageUrl",
-        "price"
+        "price",
+        "imageUrl"
       ]
     },
-    "CartItem": {
+    "ShoppingCart": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "CartItem",
+      "title": "ShoppingCart",
       "type": "object",
-      "description": "Represents an item in the shopping cart.",
+      "description": "Represents the user's shopping cart.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the cart item."
+          "description": "Unique identifier for the shopping cart."
         },
-        "productId": {
+        "userId": {
           "type": "string",
-          "description": "Reference to Product. (Relationship: CartItem N:1 Product)"
+          "description": "Reference to User. (Relationship: User 1:1 ShoppingCart)"
         },
-        "quantity": {
-          "type": "number",
-          "description": "Quantity of the product in the cart."
+        "productIds": {
+          "type": "array",
+          "description": "References to Products. (Relationship: ShoppingCart 1:N Product)",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
         "id",
-        "productId",
-        "quantity"
+        "userId"
       ]
     },
     "Order": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Order",
       "type": "object",
-      "description": "Represents a customer order.",
+      "description": "Represents a completed order.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the order."
         },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Order)"
+        },
+        "productIds": {
+          "type": "array",
+          "description": "References to Products. (Relationship: Order 1:N Product)",
+          "items": {
+            "type": "string"
+          }
+        },
         "orderDate": {
           "type": "string",
-          "description": "Date the order was placed.",
+          "description": "Date and time the order was placed.",
           "format": "date-time"
         },
         "totalAmount": {
           "type": "number",
           "description": "Total amount of the order."
         },
-        "cartItemIds": {
-          "type": "array",
-          "description": "References to CartItems. (Relationship: Order 1:N CartItem)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "stripePaymentId": {
+        "stripeTransactionId": {
           "type": "string",
-          "description": "Stripe Payment Intent ID"
+          "description": "The transaction ID returned from Stripe"
         }
       },
       "required": [
         "id",
+        "userId",
+        "productIds",
         "orderDate",
-        "totalAmount",
-        "cartItemIds",
-        "stripePaymentId"
+        "totalAmount"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the PuroRush app.  Authentication data (passwords, etc.) are assumed to be handled by an external system like Firebase Auth and are NOT stored in this entity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "email"
       ]
     }
   },
@@ -116,7 +142,7 @@
           "schema": {
             "$ref": "#/backend/entities/Product"
           },
-          "description": "Stores product information.",
+          "description": "Stores product information. Publicly readable.",
           "params": [
             {
               "name": "productId",
@@ -126,21 +152,21 @@
         }
       },
       {
-        "path": "/users/{userId}/cart_items/{cartItemId}",
+        "path": "/users/{userId}/shoppingCarts/{cartId}",
         "definition": {
-          "entityName": "CartItem",
+          "entityName": "ShoppingCart",
           "schema": {
-            "$ref": "#/backend/entities/CartItem"
+            "$ref": "#/backend/entities/ShoppingCart"
           },
-          "description": "Stores cart items for each user.",
+          "description": "Stores shopping cart information for each user.  Accessible only by the user.",
           "params": [
             {
               "name": "userId",
               "description": "The unique identifier of the user."
             },
             {
-              "name": "cartItemId",
-              "description": "The unique identifier of the cart item."
+              "name": "cartId",
+              "description": "The unique identifier of the shopping cart."
             }
           ]
         }
@@ -152,7 +178,7 @@
           "schema": {
             "$ref": "#/backend/entities/Order"
           },
-          "description": "Stores order information for each user.",
+          "description": "Stores order information for each user. Accessible only by the user.",
           "params": [
             {
               "name": "userId",
@@ -164,8 +190,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Accessible only by the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage products, cart items, and orders for the PuroRush application. It prioritizes authorization independence and clear security rules. Products are stored in a top-level `/products` collection. Cart items are stored as subcollections under `/users/{userId}/cart_items`. Orders are also stored as subcollections under `/users/{userId}/orders`. This structure facilitates secure list operations by ensuring that users can only access their own cart items and orders. The structure uses path-based ownership, so that rules can easily control access based on the user ID in the path. This design eliminates the need for `get()` calls in security rules, supporting atomic operations and improving debuggability. It enables QAPs by segregating user-specific data, allowing for efficient and secure `list` operations within a user's cart or order history."
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, support QAPs (queries are not filters), and provide clarity for security rules. It leverages structural segregation to maintain a homogeneous security posture across collections.\n\nProducts are stored in a global collection (`/products`) with public read access. User-specific data, such as shopping carts and orders, are stored in path-based collections under `/users/{userId}`, providing implicit ownership. This eliminates the need for complex `get()` calls in security rules and enables atomic operations.\n\nQAPs are supported by avoiding mixing data with different access needs in the same collection. Products are publicly accessible, while shopping carts and orders are private to each user. This simplifies `list` operations and prevents unauthorized data access."
   }
 }
