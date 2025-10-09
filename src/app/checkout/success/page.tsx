@@ -36,7 +36,7 @@ function SuccessContent() {
                                 Hemos recibido tu reserva. En breve recibirás un correo electrónico con las instrucciones para realizar el pago mediante Bizum o Transferencia.
                             </p>
                             <p className="font-semibold text-destructive-foreground bg-destructive p-3 rounded-md">
-                                ¡Importante! Debes responder a ese correo con el justificante del pago para que podamos procesar tu envío.
+                                ¡Importante! Debes responder a ese email con el justificante del pago para que podamos procesar tu envío.
                             </p>
                         </>
                     ) : (
@@ -78,4 +78,3 @@ export default function CheckoutSuccessPage() {
         </Suspense>
     );
 }
-

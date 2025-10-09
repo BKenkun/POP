@@ -16,7 +16,7 @@ function generateOrderCode(): string {
 }
 
 interface ReservationInput {
-    customerDetails: ShippingAddress;
+    customerDetails: any; // Using 'any' as it comes from a form with a different structure
     items: CartItem[];
     total: number;
 }
@@ -58,10 +58,20 @@ export async function createReservationAction(
     });
     
     // --- 3. Create Order Object (for DB persistence) ---
+     const shippingAddress: ShippingAddress = {
+        line1: input.customerDetails.address,
+        line2: null,
+        city: 'N/A', // Assuming city is part of the address line for this simple form
+        state: 'N/A',
+        postal_code: input.customerDetails.postalCode,
+        country: 'ES' // Assuming Spain
+    }
+    
     const newOrder: Order = {
         id: orderId,
+        userId: 'guest', // Or get from session if available
         createdAt: new Date(),
-        status: input.customerDetails.paymentMethod === 'prepaid' ? 'Pago Pendiente de Verificación' : 'Reserva Recibida',
+        status: input.customerDetails.paymentMethod === 'prepaid' ? 'pending' : 'pending',
         total: input.total,
         items: input.items.map(item => ({
             productId: item.id,
@@ -70,7 +80,9 @@ export async function createReservationAction(
             quantity: item.quantity,
             imageUrl: item.imageUrl
         })),
-        shippingAddress: input.customerDetails,
+        customerName: input.customerDetails.name,
+        customerEmail: input.customerDetails.email,
+        shippingAddress: shippingAddress,
         paymentMethod: input.customerDetails.paymentMethod,
     };
 

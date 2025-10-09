@@ -71,7 +71,7 @@ export interface Order {
   id: string;
   userId: string;
   createdAt: Date;
-  status: 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'entregado' | 'enviado' | 'pendiente' | 'cancelado';
+  status: 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'entregado' | 'enviado' | 'pendiente' | 'cancelado' | 'Reserva Recibida' | 'Pago Pendiente de Verificación';
   total: number; // Total amount in cents
   items: OrderItem[];
   customerName: string;

@@ -1,7 +1,7 @@
 import CheckoutClientPage from './checkout-client-page';
 
 export const metadata = {
-  title: 'Checkout | Popper Online',
+  title: 'Finalizar Reserva | Popper Online',
 };
 
 export default function CheckoutPage() {

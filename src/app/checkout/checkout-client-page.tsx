@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from "react-hook-form";
@@ -234,5 +234,3 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
-
-    

@@ -25,8 +25,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const handleCheckout = () => {
     if(cartCount === 0) {
       toast({
-        title: "Your cart is empty",
-        description: "Please add items to your cart before proceeding to checkout.",
+        title: "Tu carrito está vacío",
+        description: "Añade productos a tu carrito antes de ir a finalizar la compra.",
         variant: "destructive",
       });
       return;
@@ -38,7 +38,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
         <SheetHeader className="px-6">
-          <SheetTitle>Shopping Cart ({cartCount})</SheetTitle>
+          <SheetTitle>Carrito de la Compra ({cartCount})</SheetTitle>
         </SheetHeader>
         <Separator />
         {cartCount > 0 ? (
@@ -112,10 +112,10 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                     </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Items are not reserved. Shipping and taxes calculated at checkout.
+                  Los productos no se reservan. Los gastos de envío se calculan al finalizar la reserva.
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
-                  <Link href="/checkout">Proceed to Checkout</Link>
+                  <Link href="/checkout">Finalizar Reserva</Link>
                 </Button>
               </div>
             </SheetFooter>
@@ -123,8 +123,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
             <ShoppingBag className="h-24 w-24 text-muted-foreground/30" strokeWidth={1} />
-            <h2 className="text-xl font-semibold">Your cart is empty</h2>
-            <p className="text-muted-foreground">Looks like you haven't added anything yet.</p>
+            <h2 className="text-xl font-semibold">Tu carrito está vacío</h2>
+            <p className="text-muted-foreground">Parece que aún no has añadido nada.</p>
           </div>
         )}
       </SheetContent>
