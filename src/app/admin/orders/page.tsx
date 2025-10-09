@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableHeader,
@@ -33,7 +32,7 @@ const toDateSafe = (timestamp: any): Date => {
       return d;
     }
   }
-  // Check for the object format { _seconds: number, _nanoseconds: number }
+  // Check for the object format { _seconds: number, _nanoseconds: number } or { seconds: number, nanoseconds: number }
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000);
   }
