@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, getIdToken } from 'firebase/auth';
+import { signInWithEmailAndPassword, getIdToken } from 'firebase/auth';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,11 +25,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Define admin credentials directly in the component for the special one-time creation logic
-  const ADMIN_EMAIL = 'maryandpopper@gmail.com';
-  const ADMIN_PASS = 'Jk#8@z!pLq&9$vR*sWb2';
-
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -42,33 +37,10 @@ export default function LoginForm() {
     }
 
     try {
-        let userCredential;
-        
-        try {
-            // Step 1: Try to sign in normally
-            userCredential = await signInWithEmailAndPassword(auth, email, password);
-        } catch (err: any) {
-            // Step 2: If sign-in fails because the user is not found,
-            // AND the credentials match the hardcoded admin credentials,
-            // then try to create the admin user account.
-            if (err.code === 'auth/user-not-found' && email === ADMIN_EMAIL && password === ADMIN_PASS) {
-                toast({
-                    title: 'Creando cuenta de administrador...',
-                    description: 'Espera un momento, esto solo ocurrirá una vez.'
-                });
-                userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-                // For any other login error (like wrong password), show a generic message.
-                 throw new Error('Email o contraseña incorrectos. Por favor, inténtalo de nuevo.');
-            } else {
-                // Re-throw other Firebase errors (e.g., network issues)
-                throw err;
-            }
-        }
-      
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await getIdToken(userCredential.user);
 
-      // Step 3: Send the token to the server to create session cookies
+      // Send the token to the server to create session cookies
       const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -89,13 +61,19 @@ export default function LoginForm() {
       const redirectUrl = searchParams.get('redirect');
       const isAdmin = result.isAdmin;
 
-      // Step 4: Redirect user based on their role
+      // Redirect user based on their role
       const targetUrl = isAdmin ? (redirectUrl || '/admin') : (redirectUrl || '/account');
       router.push(targetUrl);
       router.refresh();
 
     } catch (err: any) {
-      const errorMessage = err.message || 'Ocurrió un error inesperado.';
+      let errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          // Keep the generic message for security reasons
+      } else {
+          errorMessage = 'Ocurrió un error inesperado. Por favor, contacta con soporte.';
+          console.error("Login Error:", err);
+      }
       setError(errorMessage);
       toast({
         title: 'Error al iniciar sesión',
