@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
