@@ -1,9 +1,9 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 import { useAuth as useFirebaseAuthHook, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 
@@ -12,14 +12,16 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => void;
-  loyaltyPoints: number;
+  // This data will be moved to a more specific context later if needed
   isSubscribed: boolean;
+  loyaltyPoints: number;
+  isAdminAsCustomer: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading } = useFirebaseAuthHook();
+  const { user, isUserLoading: authLoading } = useFirebaseAuthHook();
   const firestore = useFirestore();
   const router = useRouter();
 
@@ -28,29 +30,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return doc(firestore, "users", user.uid);
   }, [user, firestore]);
 
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<{ loyaltyPoints: number, isSubscribed: boolean }>(userDocRef);
+  const { data: userData, isLoading: userDocLoading } = useDoc<{ loyaltyPoints?: number, isSubscribed?: boolean }>(userDocRef);
 
-  const loyaltyPoints = userData?.loyaltyPoints || 0;
-  const isSubscribed = userData?.isSubscribed || false;
+  const isSubscribed = userData?.isSubscribed ?? false;
+  const loyaltyPoints = userData?.loyaltyPoints ?? 0;
+  
+  // This is the special client-side user that gets access to the admin verification page
+  const isAdminAsCustomer = user?.email === process.env.NEXT_PUBLIC_CLIENT_ADMIN_EMAIL;
 
   const logout = async () => {
     try {
-        const auth = useFirebaseAuthHook(); 
-        await firebaseSignOut(auth);
+        const auth = useFirebaseAuthHook();
+        if (auth) {
+            await firebaseSignOut(auth);
+        }
         router.push('/');
     } catch (error) {
       console.error("Error signing out: ", error);
     }
   };
   
-  const loading = isUserLoading || isUserDataLoading;
+  const loading = authLoading || userDocLoading;
 
   const value = { 
       user, 
       loading, 
       logout,
-      loyaltyPoints,
       isSubscribed,
+      loyaltyPoints,
+      isAdminAsCustomer,
     };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

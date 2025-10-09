@@ -17,6 +17,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminPath = pathname.startsWith('/admin');
   const isVerifyPath = pathname.startsWith('/verify');
+  const isAuthPath = pathname.startsWith('/login') || pathname.startsWith('/register');
+
 
   // Load Clarity script if consent is given
   useEffect(() => {
@@ -37,9 +39,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <AdminAuthProvider>
          {children}
-        <Toaster />
       </AdminAuthProvider>
     )
+  }
+
+  // Auth pages like login/register have their own simpler layout
+  if (isAuthPath) {
+    return <>{children}</>;
   }
 
   return (
@@ -51,7 +57,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
         <Footer />
       </div>
-      <Toaster />
       <SalesNotification />
       <FloatingActionButtons />
       <CookieConsentBanner />

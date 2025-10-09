@@ -3,7 +3,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
-import AppLayout from '@/components/layout/app-layout';
+import { Toaster } from '@/components/ui/toaster';
 
 // Setup font with next/font
 const inter = Inter({
