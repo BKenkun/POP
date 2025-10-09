@@ -3,36 +3,21 @@ import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { firebaseConfig } from './config';
+import { db } from '@/lib/firebase'; // Import the centralized instance
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
-function getServiceAccount() {
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccount) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error(
-        'FIREBASE_SERVICE_ACCOUNT env var is not set. The app will not work correctly. Please add it to your secrets.'
-      );
-    }
-    return undefined;
-  }
-  return JSON.parse(serviceAccount);
-}
 
+// This function is now simplified as initialization is handled in @/lib/firebase
 export function initializeFirebase() {
   if (!getApps().length) {
-    const serviceAccount = getServiceAccount();
-    initializeApp(
-      serviceAccount
-        ? { credential: cert(serviceAccount) }
-        : { projectId: firebaseConfig.projectId }
-    );
+    throw new Error("Firebase Admin SDK not initialized. This should be handled by the central @/lib/firebase module.");
   }
   return getSdks(getApp());
 }
 
 export function getSdks(app: App) {
   return {
-    db: getFirestore(app),
+    db: db, // Use the imported db instance
     auth: getAuth(app),
   };
 }

@@ -3,7 +3,7 @@
 import { CartItem, Order, ShippingAddress } from "@/lib/types";
 import { cbdProducts } from "@/lib/cbd-products";
 import { FieldValue } from "firebase-admin/firestore";
-import { initializeFirebase } from "@/firebase/server";
+import { db } from "@/lib/firebase"; // Use the centralized admin instance
 
 
 // Helper function to generate a unique alphanumeric order code
@@ -42,7 +42,6 @@ export async function createReservationAction(
     input: ReservationInput,
 ): Promise<{ orderId: string | null; error?: string }> {
     console.log("Received reservation request:", input);
-    const { db: firestore } = initializeFirebase();
 
     // --- 1. Generate Unique Order Code ---
     const orderId = generateOrderCode();
@@ -103,10 +102,10 @@ export async function createReservationAction(
         let docRef;
         if (input.userId) {
             // For registered users, save under their own orders subcollection
-            docRef = firestore.collection('users').doc(input.userId).collection('orders').doc(orderId);
+            docRef = db.collection('users').doc(input.userId).collection('orders').doc(orderId);
         } else {
             // For guest users, save to a general 'reservations' collection
-            docRef = firestore.collection('reservations').doc(orderId);
+            docRef = db.collection('reservations').doc(orderId);
         }
 
         await docRef.set(newOrder);
