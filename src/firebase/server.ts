@@ -1,9 +1,11 @@
 
+'use server';
+
 import { initializeApp, getApps, getApp, cert, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { firebaseConfig } from './config';
-import { db } from '@/lib/firebase'; // Import the centralized instance
+import { db as adminDb } from '@/lib/firebase'; // Import the admin instance with a different name
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
 
@@ -17,7 +19,7 @@ export function initializeFirebase() {
 
 export function getSdks(app: App) {
   return {
-    db: db, // Use the imported db instance
+    db: adminDb, // Use the imported admin db instance
     auth: getAuth(app),
   };
 }
