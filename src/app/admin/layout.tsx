@@ -9,6 +9,7 @@ import ThemeToggleButton from './_components/theme-toggle-button';
 import { ThemeProvider } from '@/context/theme-provider';
 import { cn } from '@/lib/utils';
 import { AdminAuthProvider } from '@/context/admin-auth-context';
+import { FirebaseClientProvider } from '@/firebase';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   // El middleware es la única fuente de verdad para proteger las rutas /admin.
@@ -48,10 +49,12 @@ export default function AdminLayout({
       disableTransitionOnChange
     >
         <AdminAuthProvider>
+          <FirebaseClientProvider>
             <SidebarProvider>
                 <AdminLayoutContent>{children}</AdminLayoutContent>
             </SidebarProvider>
             <Toaster />
+          </FirebaseClientProvider>
         </AdminAuthProvider>
     </ThemeProvider>
   );
