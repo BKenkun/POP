@@ -31,14 +31,18 @@ export default function LoginForm() {
       if (!auth) {
         throw new Error("Servicio de autenticación no disponible.");
       }
+      // This is a standard Firebase login.
       await signInWithEmailAndPassword(auth, email, password);
+      
       toast({
         title: 'Inicio de sesión exitoso',
         description: 'Redirigiendo a tu panel de usuario...',
       });
+
       // The onAuthStateChanged listener in AuthProvider will handle the user state change,
       // and the AccountLayout will correctly redirect after loading is complete.
       router.push('/account'); 
+
     } catch (err: any) {
       const errorMessage = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
       setError(errorMessage);
