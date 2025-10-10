@@ -1,4 +1,3 @@
-
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -28,14 +27,11 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     
     try {
-        // Correct Admin SDK syntax
-        const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
-        const reservationsQuery = db.collection('reservations').orderBy('createdAt', 'desc');
+        // Step 1: Fetch all orders from 'orders' collection groups (for registered users)
+        const ordersSnap = await db.collectionGroup('orders').orderBy('createdAt', 'desc').get();
 
-        const [ordersSnap, reservationsSnap] = await Promise.all([
-            ordersQuery.get(),
-            reservationsQuery.get(),
-        ]);
+        // Step 2: Fetch all orders from the top-level 'reservations' collection (for guests)
+        const reservationsSnap = await db.collection('reservations').orderBy('createdAt', 'desc').get();
 
         ordersSnap.forEach((doc) => {
             allOrdersRaw.push({
@@ -65,6 +61,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
         });
         
         if (result.success) {
+            // Prevent duplicates in case an order somehow ends up in both places
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -74,6 +71,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
+    // Final sort after merging
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -87,6 +85,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
     
     return serializableOrders as Order[];
 }
+
 
 async function OrderList() {
     const initialOrders = await getAllAdminOrders();

@@ -205,6 +205,10 @@ export default function CheckoutClientPage() {
 
 
   const onSubmit = async (data: CheckoutFormValues) => {
+    if (!firestore) {
+        toast({ title: 'Error', description: 'La base de datos no está disponible.', variant: 'destructive' });
+        return;
+    }
     setLoading(true);
     toast({
         title: 'Procesando tu reserva...',
@@ -242,26 +246,25 @@ export default function CheckoutClientPage() {
             createdAt: serverTimestamp(),
         };
 
-        // **FIX: Ensure user document exists before placing order**
+        // If the user is logged in, ensure their user document exists.
         if (user) {
             const userDocRef = doc(firestore, 'users', user.uid);
             // This is a "set" with "merge", which acts as an "upsert".
-            // It will create the document if it doesn't exist, or merge the fields if it does.
-            // This is a non-blocking operation.
-            setDoc(userDocRef, { email: user.email, uid: user.uid }, { merge: true });
+            // It will create the document if it doesn't exist with basic info,
+            // or do nothing if it already exists. It won't overwrite existing data.
+            await setDoc(userDocRef, { email: user.email, uid: user.uid }, { merge: true });
         }
         
-        const collectionName = user ? `users/${user.uid}/orders` : 'reservations';
-        const docRef = doc(firestore, collectionName, orderId);
-
-        // Use the non-blocking set operation
-        setDocumentNonBlocking(docRef, newOrder, { merge: false });
+        const collectionPath = user ? `users/${user.uid}/orders` : 'reservations';
+        const docRef = doc(firestore, collectionPath, orderId);
+        
+        await setDoc(docRef, newOrder);
         
         // --- Optimistic UI Update ---
         // Set data for the success page
         setCheckoutData({ orderId, paymentMethod: data.paymentMethod });
         
-        // Clear the cart and redirect immediately. The write happens in the background.
+        // Clear the cart and redirect immediately.
         clearCart();
         
         // Redirect to the success page without query params

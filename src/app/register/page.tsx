@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,7 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useFirebaseAuth();
+  const auth = useFirebaseAuth().auth;
   const firestore = useFirestore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +35,12 @@ export default function RegisterPage() {
       return;
     }
     
+    if (!auth || !firestore) {
+        setError("El servicio de autenticación no está listo. Inténtelo de nuevo en un momento.");
+        setLoading(false);
+        return;
+    }
+
     setLoading(true);
 
     try {
@@ -46,7 +52,7 @@ export default function RegisterPage() {
       await setDoc(userDocRef, {
           email: user.email,
           uid: user.uid,
-          createdAt: new Date(), // Use JS Date, will be converted by SDK
+          createdAt: serverTimestamp(),
           displayName: user.email?.split('@')[0] || 'Nuevo Usuario',
           loyaltyPoints: 0,
           isSubscribed: false,
