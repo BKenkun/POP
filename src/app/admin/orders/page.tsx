@@ -25,28 +25,12 @@ function processFirestoreData(data: { [key: string]: any }): any {
 
 async function getAllAdminOrders(): Promise<Order[]> {
     try {
-        // Step 1: Fetch all orders from the new unified 'orders' collection
         const ordersQuery = db.collection('orders').orderBy('createdAt', 'desc');
-
-        // Step 2: Fetch all orders from the old 'reservations' collection (for legacy guest orders)
-        const reservationsQuery = db.collection('reservations').orderBy('createdAt', 'desc');
-
-        const [ordersSnap, reservationsSnap] = await Promise.all([
-            ordersQuery.get(),
-            reservationsQuery.get()
-        ]);
+        const ordersSnap = await ordersQuery.get();
 
         const allOrdersRaw: any[] = [];
 
         ordersSnap.forEach((doc) => {
-            allOrdersRaw.push({
-                ...processFirestoreData(doc.data()),
-                id: doc.id,
-                path: doc.ref.path,
-            });
-        });
-
-        reservationsSnap.forEach((doc) => {
             allOrdersRaw.push({
                 ...processFirestoreData(doc.data()),
                 id: doc.id,
@@ -61,22 +45,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
             });
             
             if (result.success) {
-                // Ensure no duplicates if an order somehow exists in both
-                if (!acc.some(o => o.id === result.data.id)) {
-                    acc.push(result.data as Order);
-                }
+                acc.push(result.data as Order);
             } else {
                 console.warn(`[Admin Orders] Invalid object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
             }
             return acc;
         }, []);
-        
-        // Final sort after processing and merging
-        validatedOrders.sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA;
-        });
         
         const serializableOrders = validatedOrders.map(order => ({
             ...order,
