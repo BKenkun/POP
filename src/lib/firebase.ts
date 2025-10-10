@@ -5,27 +5,17 @@ import { firebaseConfig } from '@/firebase/config';
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
 
-function getServiceAccount() {
-  // This function is now deprecated for App Hosting, but kept for legacy or alternative environments.
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccount) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(serviceAccount);
-  } catch (e) {
-    console.error('Error parsing FIREBASE_SERVICE_ACCOUNT:', e);
-    return undefined;
-  }
-}
-
 let app: App;
 let db: Firestore;
 
 if (!getApps().length) {
-    // App Hosting provides service account credentials via environment variables.
-    // initializeApp() will automatically use them when no credential is provided.
-    app = initializeApp();
+  // This robust initialization ensures the Admin SDK is always properly authenticated.
+  // In production on App Hosting, process.env.GOOGLE_APPLICATION_CREDENTIALS is automatically set.
+  // In local development, it falls back to the service account key if provided.
+  app = initializeApp({
+    credential: cert(process.env.FIREBASE_SERVICE_ACCOUNT ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) : {}),
+    databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
+  });
 } else {
   app = getApps()[0];
 }
