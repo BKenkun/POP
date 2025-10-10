@@ -45,6 +45,8 @@ export default function UserOrderDetailPage() {
             return 'secondary';
         case 'pending':
         case 'pendiente':
+        case 'reserva recibida':
+        case 'pago pendiente de verificación':
             return 'outline';
         case 'cancelled':
         case 'cancelado':
@@ -122,7 +124,7 @@ export default function UserOrderDetailPage() {
              <CardHeader>
                 <CardTitle>Resumen</CardTitle>
                 <CardDescription>
-                    Realizado el {new Date(order.createdAt).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}
+                    Realizado el {order.createdAt instanceof Date ? order.createdAt.toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' }) : 'Fecha no disponible'}
                 </CardDescription>
              </CardHeader>
              <CardContent className="space-y-2">

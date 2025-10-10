@@ -1,26 +1,25 @@
 
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collectionGroup, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collectionGroup, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { notFound } from 'next/navigation';
 
-// Helper para convertir Timestamps de Firestore (que no son serializables) a strings ISO
-const toDateSafe = (timestamp: any): string => {
-  if (!timestamp) return new Date(0).toISOString();
-  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-    return timestamp.toDate().toISOString();
+// Helper para convertir Timestamps de Firestore a objetos Date de JS
+function processFirestoreData(data: { [key: string]: any }): any {
+  const processedData: { [key: string]: any } = {};
+  for (const key in data) {
+    const value = data[key];
+    if (value instanceof Timestamp) {
+      processedData[key] = value.toDate(); // Convert Timestamp to JS Date
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      processedData[key] = processFirestoreData(value); // Recursively process nested objects
+    } else {
+      processedData[key] = value;
+    }
   }
-  if (typeof timestamp === 'string') {
-    return timestamp; // It's already a string
-  }
-  if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
-    return new Date(timestamp.seconds * 1000).toISOString();
-  }
-  // Return a default or invalid date string for unhandled formats
-  return new Date(0).toISOString();
-};
-
+  return processedData;
+}
 
 async function getAdminOrderById(orderId: string): Promise<Order | null> {
     if (!orderId) return null;
@@ -29,28 +28,20 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     let path: string | null = null;
 
     try {
-        // Primero, busca en la colección de reservas (para invitados)
         const reservationRef = doc(db, 'reservations', orderId);
         const reservationSnap = await getDoc(reservationRef);
         
         if (reservationSnap.exists()) {
-            const data = reservationSnap.data();
-            if (data) {
-                orderRaw = data;
-                path = reservationRef.path;
-            }
+            orderRaw = reservationSnap.data();
+            path = reservationRef.path;
         } else {
-            // Si no se encuentra en reservas, busca en todas las subcolecciones de pedidos de usuarios
             const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
             const orderSnap = await getDocs(ordersQuery);
             
             if (!orderSnap.empty) {
                 const docSnap = orderSnap.docs[0];
+                orderRaw = docSnap.data();
                 path = docSnap.ref.path;
-                const data = docSnap.data();
-                if (data) {
-                    orderRaw = data;
-                }
             }
         }
     } catch (error) {
@@ -60,19 +51,19 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
 
 
     if (orderRaw) {
+        const processedData = processFirestoreData(orderRaw);
+
         const sanitizedOrder = {
-            ...orderRaw,
-            id: orderRaw.id || orderId, // Asegura que el ID siempre esté presente
-            createdAt: toDateSafe(orderRaw.createdAt),
-            path: path, // Añade la ruta del documento para futuras acciones
+            ...processedData,
+            id: processedData.id || orderId,
+            path: path,
         };
 
         const result = OrderSchema.safeParse(sanitizedOrder);
         if (result.success) {
-            return result.data;
+            return result.data as Order;
         } else {
             console.warn(`[Admin Order Detail] Invalid order object fetched. ID: ${orderId}, Reason:`, result.error.flatten());
-            // No devolvemos el pedido si no es válido para evitar errores.
             return null;
         }
     }
@@ -92,6 +83,12 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
         notFound();
     }
     
+    // Convert Date objects to strings before passing to client component
+    const serializableOrder = {
+        ...order,
+        createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString(),
+    };
+    
     // 2. Pasar los datos "limpios" y serializados al componente de cliente para su presentación.
-    return <OrderDetailsClient initialOrder={order} />;
+    return <OrderDetailsClient initialOrder={serializableOrder as Order} />;
 }

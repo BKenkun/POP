@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
+  Timestamp,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -35,6 +37,31 @@ export interface InternalQuery extends Query<DocumentData> {
       toString(): string;
     }
   }
+}
+
+// Helper function to recursively convert Firestore Timestamps to JS Date objects
+function processData<T>(data: T): T {
+    if (!data) return data;
+
+    if (Array.isArray(data)) {
+        return data.map(item => processData(item)) as any;
+    }
+
+    if (data instanceof Timestamp) {
+        return data.toDate() as any;
+    }
+
+    if (typeof data === 'object' && data !== null) {
+        const processedObject: { [key: string]: any } = {};
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                processedObject[key] = processData((data as any)[key]);
+            }
+        }
+        return processedObject as T;
+    }
+
+    return data;
 }
 
 /**
@@ -78,7 +105,8 @@ export function useCollection<T = any>(
       (snapshot: QuerySnapshot<DocumentData>) => {
         const results: ResultItemType[] = [];
         for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
+          const docData = processData(doc.data() as T);
+          results.push({ ...docData, id: doc.id });
         }
         setData(results);
         setError(null);

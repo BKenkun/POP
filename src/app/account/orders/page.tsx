@@ -40,6 +40,8 @@ export default function OrdersPage() {
             return 'secondary';
         case 'pending':
         case 'pendiente':
+        case 'reserva recibida':
+        case 'pago pendiente de verificación':
             return 'outline';
         case 'cancelled':
         case 'cancelado':
@@ -83,7 +85,7 @@ export default function OrdersPage() {
                 {orders.map((order) => (
                     <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.id.substring(order.id.length - 7)}</TableCell>
-                    <TableCell>{new Date(order.createdAt).toLocaleDateString('es-ES')}</TableCell>
+                    <TableCell>{order.createdAt instanceof Date ? order.createdAt.toLocaleDateString('es-ES') : 'Fecha inválida'}</TableCell>
                     <TableCell>
                         <Badge variant={getStatusVariant(order.status)}>
                         {order.status}

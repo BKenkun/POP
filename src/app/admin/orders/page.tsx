@@ -1,25 +1,24 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 
-// Helper para convertir Timestamps de Firestore (que no son serializables) a strings ISO
-const toDateSafe = (timestamp: any): string => {
-  if (!timestamp) return new Date(0).toISOString();
-  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-    return timestamp.toDate().toISOString();
+function processFirestoreData(data: { [key: string]: any }): any {
+  const processedData: { [key: string]: any } = {};
+  for (const key in data) {
+    const value = data[key];
+    if (value instanceof Timestamp) {
+      processedData[key] = value.toDate();
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      processedData[key] = processFirestoreData(value);
+    } else {
+      processedData[key] = value;
+    }
   }
-  if (typeof timestamp === 'string') {
-    return timestamp; // It's already a string
-  }
-  if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
-    return new Date(timestamp.seconds * 1000).toISOString();
-  }
-  // Return a default or invalid date string for unhandled formats
-  return new Date(0).toISOString();
-};
+  return processedData;
+}
 
 
 async function getAllAdminOrders(): Promise<Order[]> {
@@ -33,25 +32,20 @@ async function getAllAdminOrders(): Promise<Order[]> {
             getDocs(reservationsQuery),
         ]);
 
-        userOrdersSnap.forEach((doc: any) => {
-            const data = doc.data();
-            allOrdersRaw.push({
-                ...data,
-                id: data.id || doc.id,
-                createdAt: toDateSafe(data.createdAt),
-                path: doc.ref.path,
+        const processSnapshot = (snap: any, ordersArray: any[]) => {
+            snap.forEach((doc: any) => {
+                const data = doc.data();
+                const processedData = processFirestoreData(data);
+                ordersArray.push({
+                    ...processedData,
+                    id: processedData.id || doc.id,
+                    path: doc.ref.path,
+                });
             });
-        });
+        };
 
-        guestOrdersSnap.forEach((doc: any) => {
-            const data = doc.data();
-            allOrdersRaw.push({
-                ...data,
-                id: data.id || doc.id,
-                createdAt: toDateSafe(data.createdAt),
-                path: doc.ref.path,
-            });
-        });
+        processSnapshot(userOrdersSnap, allOrdersRaw);
+        processSnapshot(guestOrdersSnap, allOrdersRaw);
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore:", error);
@@ -61,7 +55,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
         const result = OrderSchema.safeParse(rawOrder);
         if (result.success) {
-            acc.push(result.data);
+            acc.push(result.data as Order);
         } else {
             console.warn(`[Admin Orders] Invalid order object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
         }
@@ -69,12 +63,18 @@ async function getAllAdminOrders(): Promise<Order[]> {
     }, []);
     
     validatedOrders.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
-    return validatedOrders;
+    // Serialize date objects to strings before sending to client
+    const serializableOrders = validatedOrders.map(order => ({
+        ...order,
+        createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
+    }));
+    
+    return serializableOrders as Order[];
 }
 
 

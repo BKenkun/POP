@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -7,6 +8,7 @@ import {
   DocumentData,
   FirestoreError,
   DocumentSnapshot,
+  Timestamp,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -22,6 +24,31 @@ export interface UseDocResult<T> {
   data: WithId<T> | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
+}
+
+// Helper function to recursively convert Firestore Timestamps to JS Date objects
+function processData<T>(data: T): T {
+    if (!data) return data;
+
+    if (Array.isArray(data)) {
+        return data.map(item => processData(item)) as any;
+    }
+
+    if (data instanceof Timestamp) {
+        return data.toDate() as any;
+    }
+
+    if (typeof data === 'object' && data !== null) {
+        const processedObject: { [key: string]: any } = {};
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                processedObject[key] = processData((data as any)[key]);
+            }
+        }
+        return processedObject as T;
+    }
+
+    return data;
 }
 
 /**
@@ -63,7 +90,8 @@ export function useDoc<T = any>(
       memoizedDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
         if (snapshot.exists()) {
-          setData({ ...(snapshot.data() as T), id: snapshot.id });
+          const docData = processData(snapshot.data() as T);
+          setData({ ...docData, id: snapshot.id });
         } else {
           // Document does not exist
           setData(null);
