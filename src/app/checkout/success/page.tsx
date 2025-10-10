@@ -33,27 +33,17 @@ function SuccessContent() {
                         <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400" />
                     </div>
                     <CardTitle className="text-3xl font-headline text-primary font-bold">¡Reserva Confirmada!</CardTitle>
-                    {orderId && (
-                        <CardDescription className="text-lg text-foreground/80">
-                           Número de Pedido: <span className="font-mono font-bold text-primary">{orderId}</span>
-                        </CardDescription>
-                    )}
+                    <CardDescription className="text-lg text-foreground/80">
+                        Hemos recibido tu reserva correctamente.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {isPrepaid ? (
-                        <>
-                            <p className="text-muted-foreground">
-                                {getPrepaidMessage()}
-                            </p>
-                            <p className="font-semibold text-destructive-foreground bg-destructive p-3 rounded-md">
-                                ¡Importante! Debes responder a ese email con el justificante del pago para que podamos procesar tu envío.
-                            </p>
-                        </>
-                    ) : (
-                        <p className="text-muted-foreground">
-                            Hemos recibido tu reserva y la estamos preparando. El repartidor se pondrá en contacto contigo para coordinar la entrega. Podrás pagar en efectivo o con tarjeta.
-                        </p>
-                    )}
+                    <p className="text-muted-foreground">
+                        Recibirás un correo electrónico en breve con todos los detalles de tu pedido y las instrucciones de pago si has elegido un método por adelantado.
+                    </p>
+                    <p className="font-semibold text-destructive-foreground bg-destructive p-3 rounded-md">
+                        ¡Importante! Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar todos los detalles.
+                    </p>
                      <div className="text-sm text-muted-foreground border-t pt-4">
                         <p className="flex items-center justify-center gap-2">
                            <MessageCircle className="h-4 w-4"/> Para cualquier duda, contáctanos por WhatsApp en el 622 222 222.
