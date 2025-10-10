@@ -43,6 +43,9 @@ const getStatusVariant = (status: string) => {
 // Responsabilidad: Recibir datos y mostrarlos. No obtiene sus propios datos.
 export default function OrdersClientPage({ initialOrders }: { initialOrders: Order[] }) {
 
+  // Estrategia 3: Renderizado defensivo. Se comprueba explícitamente si initialOrders tiene contenido.
+  const hasOrders = initialOrders && initialOrders.length > 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,11 +58,11 @@ export default function OrdersClientPage({ initialOrders }: { initialOrders: Ord
             <CardDescription>Aquí se listan todas las compras y reservas de tus clientes.</CardDescription>
         </CardHeader>
         <CardContent>
-            {initialOrders.length === 0 ? (
+            {!hasOrders ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
-                    <p className="text-muted-foreground">Los nuevos pedidos aparecerán aquí cuando lleguen.</p>
+                    <p className="text-muted-foreground">Los nuevos pedidos o reservas aparecerán aquí cuando lleguen.</p>
                 </div>
             ) : (
                 <Table>
