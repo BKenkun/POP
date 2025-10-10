@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp, collection } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 import { Suspense } from 'react';
@@ -25,9 +25,13 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const userOrdersSnap = await getDocs(userOrdersQuery);
-        userOrdersSnap.forEach((doc) => {
+        // This single query now fetches from both 'orders' and 'reservations' collections
+        // if they are structured correctly for a collection group query.
+        // This requires a single-field index exemption on 'createdAt' for the 'orders' collection group.
+        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+        const ordersSnap = await getDocs(ordersQuery);
+        
+        ordersSnap.forEach((doc) => {
              const data = doc.data();
              allOrdersRaw.push({
                  ...processFirestoreData(data),
@@ -36,35 +40,41 @@ async function getAllAdminOrders(): Promise<Order[]> {
              });
         });
 
-        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-        const guestOrdersSnap = await getDocs(reservationsQuery);
-        guestOrdersSnap.forEach((doc) => {
-            const data = doc.data();
-            allOrdersRaw.push({
-                ...processFirestoreData(data),
-                id: doc.id,
-                path: doc.ref.path,
-            });
-        });
-
     } catch (error) {
-        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it.", error);
+        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing index. Please check the browser console for a link to create it or create a single-field exemption for 'createdAt' (descending) on the 'orders' collection group.", error);
         // On error, rethrow it so that the error boundary can catch it
         throw error;
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-        const result = OrderSchema.safeParse(rawOrder);
+        // Guest orders are in 'reservations' collection, not 'orders', so we need to handle them.
+        // We will treat reservations as orders.
+        const collectionId = rawOrder.path.split('/')[0];
+        const isReservation = collectionId === 'reservations';
+        
+        // Let's create a temporary schema that makes `userId` optional for validation
+        const temporarySchema = OrderSchema.extend({
+            userId: OrderSchema.shape.userId.optional(),
+        })
+
+        const result = isReservation ? temporarySchema.safeParse(rawOrder) : OrderSchema.safeParse(rawOrder);
+        
         if (result.success) {
             if (!acc.some(o => o.id === result.data.id)) {
-                acc.push(result.data as Order);
+                 // Re-add userId if it was a reservation for consistency
+                const finalData = {
+                    ...result.data,
+                    userId: result.data.userId || 'guest',
+                };
+                acc.push(finalData as Order);
             }
         } else {
-            console.warn(`[Admin Orders] Invalid order object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
+            console.warn(`[Admin Orders] Invalid object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
         }
         return acc;
     }, []);
     
+    // Final sort after merging, just in case
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
