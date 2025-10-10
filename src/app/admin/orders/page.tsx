@@ -1,11 +1,12 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp, collection } from 'firebase-admin/firestore';
+import { collection, getDocs, query, orderBy, Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { getAllAdminCustomers } from "@/app/actions/admin-data";
 
 // This function converts Firestore Timestamps to serializable Date objects (or ISO strings)
 function processFirestoreData(data: { [key: string]: any }): any {
@@ -28,20 +29,25 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     
     try {
-        // Query 1: Get all orders from the 'orders' collection group (for registered users)
-        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const ordersSnap = await getDocs(ordersQuery);
-        
-        ordersSnap.forEach((doc) => {
-             const data = doc.data();
-             allOrdersRaw.push({
-                 ...processFirestoreData(data),
-                 id: doc.id,
-                 path: doc.ref.path,
-             });
-        });
+        // Step 1: Fetch all registered customers
+        const customers = await getAllAdminCustomers();
+        const userIds = customers.map(c => c.uid);
 
-        // Query 2: Get all orders from the 'reservations' root collection (for guests)
+        // Step 2: Fetch orders for each user individually
+        for (const userId of userIds) {
+            const userOrdersRef = collection(db, `users/${userId}/orders`);
+            const ordersSnap = await getDocs(userOrdersRef);
+            ordersSnap.forEach((doc) => {
+                const data = doc.data();
+                allOrdersRaw.push({
+                    ...processFirestoreData(data),
+                    id: doc.id,
+                    path: doc.ref.path,
+                });
+            });
+        }
+
+        // Step 3: Fetch all guest reservations
         const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
         const reservationsSnap = await getDocs(reservationsQuery);
 
@@ -55,7 +61,8 @@ async function getAllAdminOrders(): Promise<Order[]> {
         });
 
     } catch (error) {
-        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check your Firestore indexes for 'orders' and 'reservations' collections.", error);
+        console.error("❌ Critical error fetching orders from Firestore.", error);
+        // We throw the error to let Next.js error boundary handle it
         throw error;
     }
 
