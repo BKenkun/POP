@@ -4,6 +4,7 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
+
 function getServiceAccount() {
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!serviceAccount) {
@@ -38,4 +39,5 @@ if (!getApps().length) {
 
 db = getFirestore(app);
 
+// Export the singleton instance directly
 export { db };
