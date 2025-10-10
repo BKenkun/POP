@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase-admin/firestore';
+import { collection, collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 import { Suspense } from 'react';
@@ -24,11 +24,12 @@ function processFirestoreData(data: { [key: string]: any }): any {
 
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
+    
     try {
-        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const ordersSnap = await getDocs(ordersQuery);
-        
-        ordersSnap.forEach((doc) => {
+        // 1. Fetch orders from the 'orders' collection group (for registered users)
+        const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+        const userOrdersSnap = await getDocs(userOrdersQuery);
+        userOrdersSnap.forEach((doc) => {
              const data = doc.data();
              allOrdersRaw.push({
                  ...processFirestoreData(data),
@@ -37,8 +38,20 @@ async function getAllAdminOrders(): Promise<Order[]> {
              });
         });
 
+        // 2. Fetch orders from the 'reservations' collection (for guest users)
+        const guestOrdersQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+        const guestOrdersSnap = await getDocs(guestOrdersQuery);
+        guestOrdersSnap.forEach((doc) => {
+            const data = doc.data();
+            allOrdersRaw.push({
+                ...processFirestoreData(data),
+                id: doc.id,
+                path: doc.ref.path,
+            });
+        });
+
     } catch (error) {
-        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it or create a single-field exemption for 'createdAt' (descending) on the 'orders' collection group.", error);
+        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it or create a single-field exemption for 'createdAt' (descending) on the 'orders' and 'reservations' collection groups.", error);
         throw error;
     }
 
@@ -46,6 +59,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
         const result = OrderSchema.safeParse(rawOrder);
         
         if (result.success) {
+            // Avoid duplicates in case of any overlap, using order ID as the key
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -55,12 +69,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
+    // Sort all combined orders by date
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
+    // Ensure data is serializable for the client component
     const serializableOrders = validatedOrders.map(order => ({
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
