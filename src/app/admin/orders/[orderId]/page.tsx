@@ -1,7 +1,7 @@
 
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collectionGroup, query, where, getDocs } from 'firebase/firestore';
-import { Order } from '@/lib/types';
+import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { notFound } from 'next/navigation';
 
@@ -27,37 +27,50 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     let orderRaw: any | null = null;
     let path: string | null = null;
 
-    const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
-    const orderSnap = await getDocs(ordersQuery);
-    
-    if (!orderSnap.empty) {
-        path = orderSnap.docs[0].ref.path;
-        const docSnap = await getDoc(orderSnap.docs[0].ref);
-        if (docSnap.exists()) {
-             const data = docSnap.data();
-             if (data) {
-                orderRaw = data;
-                orderRaw.path = path;
-             }
-        }
-    } else {
-        const reservationRef = doc(db, 'reservations', orderId);
-        const reservationSnap = await getDoc(reservationRef);
-        if (reservationSnap.exists()) {
-            const data = reservationSnap.data();
-             if (data) {
-                orderRaw = data;
-                orderRaw.path = reservationRef.path;
+    try {
+        const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
+        const orderSnap = await getDocs(ordersQuery);
+        
+        if (!orderSnap.empty) {
+            path = orderSnap.docs[0].ref.path;
+            const docSnap = await getDoc(orderSnap.docs[0].ref);
+            if (docSnap.exists()) {
+                 const data = docSnap.data();
+                 if (data) {
+                    orderRaw = data;
+                    orderRaw.path = path;
+                 }
+            }
+        } else {
+            const reservationRef = doc(db, 'reservations', orderId);
+            const reservationSnap = await getDoc(reservationRef);
+            if (reservationSnap.exists()) {
+                const data = reservationSnap.data();
+                 if (data) {
+                    orderRaw = data;
+                    orderRaw.path = reservationRef.path;
+                }
             }
         }
+    } catch (error) {
+        console.error(`❌ Critical error fetching order ${orderId} from Firestore:`, error);
+        return null;
     }
 
+
     if (orderRaw) {
-        // **CRÍTICO (Estrategia 1 & 5)**: Convertir el objeto a uno plano y serializable antes de devolverlo
-        return {
+        const sanitizedOrder = {
             ...orderRaw,
             createdAt: toDateSafe(orderRaw.createdAt),
-        } as Order;
+        };
+
+        const result = OrderSchema.safeParse(sanitizedOrder);
+        if (result.success) {
+            return result.data;
+        } else {
+            console.warn(`[Admin Order Detail] Invalid order object fetched. ID: ${orderId}, Reason:`, result.error.flatten());
+            return null;
+        }
     }
 
     return null;

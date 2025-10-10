@@ -1,4 +1,5 @@
 
+import { z } from 'zod';
 
 export interface Product {
   id: string;
@@ -49,45 +50,47 @@ export interface PackCalculationOutput {
 
 // --- NEW ORDER TYPES ---
 
-export interface OrderItem {
-  productId: string;
-  name: string;
-  price: number; // Price for a single unit
-  quantity: number;
-  imageUrl: string;
-}
+export const OrderItemSchema = z.object({
+  productId: z.string(),
+  name: z.string(),
+  price: z.number(),
+  quantity: z.number(),
+  imageUrl: z.string().url(),
+});
 
-export interface ShippingAddress {
-  line1: string | null;
-  line2: string | null;
-  city: string | null;
-  state: string | null;
-  postal_code: string | null;
-  country: string | null;
-}
+export const ShippingAddressSchema = z.object({
+  line1: z.string().nullable(),
+  line2: z.string().nullable(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  postal_code: z.string().nullable(),
+  country: z.string().nullable(),
+});
 
-export type OrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'entregado' | 'enviado' | 'pendiente' | 'cancelado' | 'Reserva Recibida' | 'Pago Pendiente de Verificación';
+export const OrderSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  createdAt: z.string(),
+  status: z.enum(['pending', 'shipped', 'delivered', 'cancelled', 'entregado', 'enviado', 'pendiente', 'cancelado', 'Reserva Recibida', 'Pago Pendiente de Verificación']),
+  total: z.number(),
+  items: z.array(OrderItemSchema),
+  customerName: z.string(),
+  customerEmail: z.string().email(),
+  shippingAddress: ShippingAddressSchema.nullable(),
+  paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer']).optional(),
+  path: z.string().optional(),
+});
 
-
-export interface Order {
-  id: string;
-  userId: string;
-  createdAt: string; // Explicitly a string for client-side safety
-  status: OrderStatus;
-  total: number; // Total amount in cents
-  items: OrderItem[];
-  customerName: string;
-  customerEmail: string;
-  shippingAddress: ShippingAddress | null;
-  paymentMethod?: 'cod_cash' | 'cod_card' | 'cod_bizum' | 'prepaid_bizum' | 'prepaid_transfer';
-  path?: string; // Added to store the document path for updates
-}
+export type Order = z.infer<typeof OrderSchema>;
+export type OrderItem = z.infer<typeof OrderItemSchema>;
+export type ShippingAddress = z.infer<typeof ShippingAddressSchema>;
+export type OrderStatus = Order['status'];
 
 
 // --- NEW SUBSCRIPTION TYPES ---
 
 export interface MonthlySelection {
-    [key: string]: string; // e.g., { popper1: 'prod_xxxx', popper2: 'prod_yyyy', ... }
+    [key:string]: string; // e.g., { popper1: 'prod_xxxx', popper2: 'prod_yyyy', ... }
 }
 
 // This type will be stored in the user's document

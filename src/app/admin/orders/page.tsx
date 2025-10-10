@@ -1,8 +1,9 @@
 
-import { Order } from "@/lib/types";
+import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
+import { z } from 'zod';
 
 // Helper para convertir Timestamps de Firestore (que no son serializables) a strings
 const toDateSafe = (timestamp: any): string => {
@@ -22,36 +23,50 @@ const toDateSafe = (timestamp: any): string => {
 
 
 async function getAllAdminOrders(): Promise<Order[]> {
-    const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+    const allOrdersRaw: any[] = [];
+    try {
+        const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
 
-    const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
-        getDocs(userOrdersQuery),
-        getDocs(reservationsQuery),
-    ]);
+        const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
+            getDocs(userOrdersQuery),
+            getDocs(reservationsQuery),
+        ]);
 
-    const allOrders: Order[] = [];
+        const processSnapshot = (snap: any) => {
+            snap.forEach((doc: any) => {
+                const data = doc.data();
+                allOrdersRaw.push({
+                    ...data,
+                    id: data.id || doc.id,
+                    createdAt: toDateSafe(data.createdAt),
+                    path: doc.ref.path,
+                });
+            });
+        }
 
-    const processSnapshot = (snap: any) => {
-        snap.forEach((doc: any) => {
-            const data = doc.data();
-            // **CRÍTICO (Estrategia 1 & 6)**: Asegurarse de que la fecha se serializa correctamente
-            // y que el objeto se ajusta al tipo `Order` antes de añadirlo.
-            allOrders.push({
-                ...data,
-                id: data.id || doc.id,
-                createdAt: toDateSafe(data.createdAt),
-                // Añadimos el `path` para futuras actualizaciones (Estrategia de Detalle de Pedido)
-                path: doc.ref.path,
-            } as Order);
-        });
+        processSnapshot(userOrdersSnap);
+        processSnapshot(guestOrdersSnap);
+    } catch (error) {
+        // STRATEGY 10: Log the detailed error on the server for monitoring
+        console.error("❌ Critical error fetching orders from Firestore:", error);
+        // Return an empty array to prevent the page from crashing.
+        return [];
     }
 
-    processSnapshot(userOrdersSnap);
-    processSnapshot(guestOrdersSnap);
+    // STRATEGY 8: Validate and filter each order using Zod
+    const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
+        const result = OrderSchema.safeParse(rawOrder);
+        if (result.success) {
+            acc.push(result.data);
+        } else {
+            console.warn(`[Admin Orders] Invalid order object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
+        }
+        return acc;
+    }, []);
     
     // Eliminar duplicados si una reserva se convirtió en pedido de usuario
-    const uniqueOrders = allOrders.filter((order, index, self) =>
+    const uniqueOrders = validatedOrders.filter((order, index, self) =>
         index === self.findIndex((o) => o.id === order.id)
     );
 
