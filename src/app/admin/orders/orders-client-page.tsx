@@ -39,8 +39,13 @@ const getStatusVariant = (status: string) => {
     }
 }
 
+// --- Componente de Presentación (Cliente) ---
+// Responsabilidad: Mostrar los datos recibidos y gestionar la interacción del usuario.
+// No tiene lógica de obtención de datos.
 export default function OrdersClientPage({ initialOrders }: { initialOrders: Order[] }) {
-  const [orders, setOrders] = useState(initialOrders);
+  // El estado local se usa para posibles interacciones futuras (filtros, etc.)
+  // pero la carga inicial viene directamente de las props.
+  const [orders] = useState(initialOrders);
 
   return (
     <div className="space-y-6">

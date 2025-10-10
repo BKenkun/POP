@@ -21,9 +21,13 @@ import {
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
 
+// --- Componente de Presentación (Cliente) ---
+// Responsabilidad: Mostrar los datos del pedido y gestionar la actualización de estado.
+// No tiene lógica de obtención de datos.
 export default function OrderDetailsClient({ initialOrder }: { initialOrder: Order }) {
   const { toast } = useToast();
   
+  // El estado local se inicializa desde las props.
   const [order, setOrder] = useState<Order>(initialOrder);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
@@ -41,6 +45,7 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
             title: "Estado del pedido actualizado",
             description: `El pedido ahora está marcado como "${newStatus}".`,
         });
+        // Actualiza el estado local para reflejar el cambio inmediatamente en la UI
         setOrder(prev => ({...prev, status: newStatus as Order['status']}));
     } else {
        toast({ title: "Error", description: result.error || "No se pudo actualizar el estado.", variant: 'destructive'});

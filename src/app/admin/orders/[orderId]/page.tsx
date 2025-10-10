@@ -46,7 +46,7 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     }
 
     if (order) {
-        // **CRÍTICO**: Convertir el objeto a uno plano y serializable antes de devolverlo
+        // **CRÍTICO (Estrategia 1)**: Convertir el objeto a uno plano y serializable antes de devolverlo
         return {
             ...order,
             createdAt: toDateSafe(order.createdAt),
@@ -56,17 +56,18 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     return null;
 }
 
-// Este es un Componente de Servidor
+// --- Componente Contenedor (Servidor) ---
+// Responsabilidad: Obtener y sanear los datos del pedido específico.
 export default async function OrderDetailPage({ params }: { params: { orderId: string }}) {
     const orderId = params.orderId;
     
-    // 1. Obtener los datos en el servidor
+    // 1. Obtener los datos en el servidor y sanearlos.
     const order = await getAdminOrderById(orderId);
 
     if (!order) {
         notFound();
     }
     
-    // 2. Pasar los datos "limpios" y serializados al componente de cliente
+    // 2. Pasar los datos "limpios" y serializados al componente de cliente para su presentación.
     return <OrderDetailsClient initialOrder={order} />;
 }

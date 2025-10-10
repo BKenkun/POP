@@ -49,18 +49,19 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return dateB - dateA;
     });
 
-    // **CRÍTICO**: Convertir los datos a un formato serializable antes de pasarlos al cliente
+    // **CRÍTICO (Estrategia 1)**: Convertir los datos a un formato serializable antes de pasarlos al cliente
     return sortedOrders.map(order => ({
         ...order,
         createdAt: toDateSafe(order.createdAt),
     }));
 }
 
-// Este es un Componente de Servidor de Next.js
+// --- Componente Contenedor (Servidor) ---
+// Responsabilidad: Obtener y sanear los datos.
 export default async function AdminOrdersPage() {
-  // 1. Obtenemos los datos en el servidor
+  // 1. Obtenemos los datos en el servidor y los saneamos.
   const allOrders = await getAllAdminOrders();
 
-  // 2. Pasamos los datos "limpios" (serializados) a un componente de cliente
+  // 2. Pasamos los datos "limpios" (serializados) a un componente de cliente para su presentación.
   return <OrdersClientPage initialOrders={allOrders} />;
 }
