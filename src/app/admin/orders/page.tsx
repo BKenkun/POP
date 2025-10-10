@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { getDocs, query, orderBy, Timestamp, collection } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 import { Suspense } from 'react';
@@ -28,10 +28,8 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     
     try {
-        // Step 1: Fetch all orders from 'orders' collection groups (for registered users)
+        // Correct Admin SDK syntax
         const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
-        
-        // Step 2: Fetch all orders from the top-level 'reservations' collection (for guests)
         const reservationsQuery = db.collection('reservations').orderBy('createdAt', 'desc');
 
         const [ordersSnap, reservationsSnap] = await Promise.all([
@@ -57,19 +55,16 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing index.", error);
-        // We throw the error to let Next.js error boundary handle it
         throw error;
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-        // Since dates are now ISO strings, we parse them to Date objects for validation
         const result = OrderSchema.safeParse({
             ...rawOrder,
             createdAt: rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date(0),
         });
         
         if (result.success) {
-            // Avoid duplicates by checking if an order with the same ID already exists
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -79,14 +74,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // Sort all combined orders by date after validation
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
-    // Ensure data is serializable for the client component by converting dates back to strings
     const serializableOrders = validatedOrders.map(order => ({
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
