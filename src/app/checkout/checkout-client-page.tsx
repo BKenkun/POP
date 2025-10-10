@@ -28,7 +28,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from '@/components/ui/label';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 
@@ -246,15 +246,15 @@ export default function CheckoutClientPage() {
             createdAt: serverTimestamp(),
         };
 
-        // If the user is logged in, ensure their user document exists.
+        // If the user is logged in, save to their subcollection.
+        // Otherwise, save to the top-level 'reservations' collection.
         if (user) {
-            const userDocRef = doc(firestore, 'users', user.uid);
-            await setDoc(userDocRef, { email: user.email, uid: user.uid }, { merge: true });
+            const userDocRef = doc(firestore, 'users', user.uid, 'orders', orderId);
+            await setDoc(userDocRef, newOrder);
+        } else {
+            const guestDocRef = doc(firestore, 'reservations', orderId);
+            await setDoc(guestDocRef, newOrder);
         }
-        
-        // Save ALL orders to the top-level 'orders' collection
-        const docRef = doc(firestore, 'orders', orderId);
-        await setDoc(docRef, newOrder);
         
         // Set data for the success page
         setCheckoutData({ orderId, paymentMethod: data.paymentMethod });
