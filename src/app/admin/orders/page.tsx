@@ -49,7 +49,8 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it.", error);
-        return [];
+        // On error, rethrow it so that the error boundary can catch it
+        throw error;
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
@@ -87,11 +88,16 @@ export default async function AdminOrdersPage() {
   return (
      <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
+          <p className="text-muted-foreground">Pedidos y Reservas de la tienda.</p>
+        </div>
       </div>
       <Suspense fallback={
-        <div className="flex items-center justify-center h-60">
+        <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg bg-secondary/50">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <h3 className="mt-4 text-lg font-semibold">Cargando pedidos...</h3>
+            <p className="text-muted-foreground">Esto puede tardar un momento.</p>
         </div>
       }>
         <OrderList />
