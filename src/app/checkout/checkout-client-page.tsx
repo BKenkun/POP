@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -29,7 +28,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from '@/components/ui/label';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { doc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 
@@ -242,6 +241,15 @@ export default function CheckoutClientPage() {
             paymentMethod: data.paymentMethod,
             createdAt: serverTimestamp(),
         };
+
+        // **FIX: Ensure user document exists before placing order**
+        if (user) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            // This is a "set" with "merge", which acts as an "upsert".
+            // It will create the document if it doesn't exist, or merge the fields if it does.
+            // This is a non-blocking operation.
+            setDoc(userDocRef, { email: user.email, uid: user.uid }, { merge: true });
+        }
         
         const collectionName = user ? `users/${user.uid}/orders` : 'reservations';
         const docRef = doc(firestore, collectionName, orderId);
