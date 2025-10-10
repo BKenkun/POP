@@ -99,7 +99,10 @@ async function getAllAdminOrders(): Promise<Order[]> {
     return validatedOrders;
 
   } catch (error) {
+    // Estrategia 10: Monitoreo y Alertas en el Servidor
     console.error("Error fetching admin orders directly in Server Component:", error);
+    // Devuelve un array vacío en caso de error para evitar que la página se rompa.
+    // El componente cliente ya está preparado para mostrar un mensaje si no hay pedidos.
     return [];
   }
 }
