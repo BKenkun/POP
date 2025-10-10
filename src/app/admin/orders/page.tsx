@@ -1,9 +1,11 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp, collection } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 
 function processFirestoreData(data: { [key: string]: any }): any {
   const processedData: { [key: string]: any } = {};
@@ -23,8 +25,6 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        // Query 1: Use collectionGroup to get all user orders.
-        // This requires a composite index, which Firestore will prompt you to create via a console error link.
         const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const userOrdersSnap = await getDocs(userOrdersQuery);
         userOrdersSnap.forEach((doc) => {
@@ -36,7 +36,6 @@ async function getAllAdminOrders(): Promise<Order[]> {
              });
         });
 
-        // Query 2: Get all guest reservations from the 'reservations' collection.
         const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
         const guestOrdersSnap = await getDocs(reservationsQuery);
         guestOrdersSnap.forEach((doc) => {
@@ -50,14 +49,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it.", error);
-        // Ensure you return an empty array on error to prevent the page from crashing.
         return [];
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
         const result = OrderSchema.safeParse(rawOrder);
         if (result.success) {
-            // Prevent duplicates if an order somehow exists in both collections
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -67,14 +64,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // Sort the combined list by date
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
-    // Make it serializable for the client
     const serializableOrders = validatedOrders.map(order => ({
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
@@ -83,8 +78,24 @@ async function getAllAdminOrders(): Promise<Order[]> {
     return serializableOrders as Order[];
 }
 
+async function OrderList() {
+    const initialOrders = await getAllAdminOrders();
+    return <OrdersClientPage initialOrders={initialOrders} />;
+}
 
 export default async function AdminOrdersPage() {
-  const initialOrders = await getAllAdminOrders();
-  return <OrdersClientPage initialOrders={initialOrders} />;
+  return (
+     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
+      </div>
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-60">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      }>
+        <OrderList />
+      </Suspense>
+    </div>
+  );
 }
