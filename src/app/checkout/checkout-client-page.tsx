@@ -254,9 +254,11 @@ export default function CheckoutClientPage() {
         toast({
             title: '¡Reserva Confirmada!',
             description: `Tu número de pedido es ${orderId}. Revisa tu email para más detalles.`,
+            duration: 10000,
         });
 
-        router.push(`/checkout/success?orderId=${orderId}&paymentMethod=${data.paymentMethod}`);
+        // Redirect to the account orders page
+        router.push(user ? '/account/orders' : '/');
 
     } catch (error: any) {
         console.error("Reservation Error: ", error);

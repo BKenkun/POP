@@ -1,30 +1,10 @@
 
-'use client';
-
-import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { CheckCircle, ShoppingBag, Home, MessageCircle } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 
-function SuccessContent() {
-    const searchParams = useSearchParams();
-    const orderId = searchParams.get('orderId');
-    const paymentMethod = searchParams.get('paymentMethod');
-
-    const isPrepaid = paymentMethod?.startsWith('prepaid');
-
-    const getPrepaidMessage = () => {
-        if (paymentMethod === 'prepaid_bizum') {
-            return "Hemos recibido tu reserva. En breve recibirás un correo electrónico con nuestro número de Bizum para realizar el pago.";
-        }
-        if (paymentMethod === 'prepaid_transfer') {
-             return "Hemos recibido tu reserva. En breve recibirás un correo electrónico con nuestro IBAN para realizar la transferencia.";
-        }
-        return "Hemos recibido tu reserva. En breve recibirás un correo electrónico con las instrucciones de pago.";
-    }
-
+export default function CheckoutSuccessPage() {
     return (
         <div className="flex flex-col items-center justify-center text-center space-y-8">
             <Card className="w-full max-w-lg">
@@ -39,10 +19,10 @@ function SuccessContent() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                        Recibirás un correo electrónico en breve con todos los detalles de tu pedido y las instrucciones de pago si has elegido un método por adelantado.
+                        Recibirás un correo electrónico en breve con todos los detalles de tu pedido.
                     </p>
                     <p className="font-semibold text-destructive-foreground bg-destructive p-3 rounded-md">
-                        ¡Importante! Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar todos los detalles.
+                        ¡Importante! Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar todos los detalles y las instrucciones de pago.
                     </p>
                      <div className="text-sm text-muted-foreground border-t pt-4">
                         <p className="flex items-center justify-center gap-2">
@@ -67,14 +47,5 @@ function SuccessContent() {
                 </CardContent>
             </Card>
         </div>
-    );
-}
-
-
-export default function CheckoutSuccessPage() {
-    return (
-        <Suspense fallback={<div>Cargando...</div>}>
-            <SuccessContent />
-        </Suspense>
     );
 }
