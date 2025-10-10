@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { Timestamp, collectionGroup, getDocs, query, collection } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -26,12 +26,12 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     try {
         // Query 1: Get all orders from the 'orders' subcollections across all users
-        const userOrdersQuery = query(collectionGroup(db, 'orders'));
-        const userOrdersSnap = await getDocs(userOrdersQuery);
+        const userOrdersQuery = db.collectionGroup('orders');
+        const userOrdersSnap = await userOrdersQuery.get();
 
         // Query 2: Get all guest reservations from the 'reservations' collection
-        const guestReservationsQuery = query(collection(db, 'reservations'));
-        const guestReservationsSnap = await getDocs(guestReservationsQuery);
+        const guestReservationsQuery = db.collection('reservations');
+        const guestReservationsSnap = await guestReservationsQuery.get();
 
         const allOrdersRaw: any[] = [];
 
