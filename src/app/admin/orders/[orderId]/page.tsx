@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { getAdminDb } from '@/lib/firebase';
 import { doc, getDoc, collectionGroup, query, where, getDocs } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
@@ -21,6 +21,7 @@ const toDateSafe = (timestamp: any): string => {
 
 
 async function getAdminOrderById(orderId: string): Promise<Order | null> {
+    const db = getAdminDb();
     if (!orderId) return null;
 
     let order: Order | null = null;
@@ -33,15 +34,21 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
         path = orderSnap.docs[0].ref.path;
         const docSnap = await getDoc(orderSnap.docs[0].ref);
         if (docSnap.exists()) {
-             order = docSnap.data() as Order;
-             order.path = path;
+             const data = docSnap.data();
+             if (data) {
+                order = data as Order;
+                order.path = path;
+             }
         }
     } else {
         const reservationRef = doc(db, 'reservations', orderId);
         const reservationSnap = await getDoc(reservationRef);
         if (reservationSnap.exists()) {
-            order = reservationSnap.data() as Order;
-            order.path = reservationRef.path;
+            const data = reservationSnap.data();
+             if (data) {
+                order = data as Order;
+                order.path = reservationRef.path;
+            }
         }
     }
 
