@@ -1,4 +1,3 @@
-
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { collection, collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
@@ -24,28 +23,37 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-        
-        const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
-            getDocs(userOrdersQuery),
+        const [guestOrdersSnap] = await Promise.all([
             getDocs(reservationsQuery),
         ]);
 
-        const processSnapshot = (snap: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>) => {
-            snap.forEach((doc) => {
-                const data = doc.data();
-                const processedData = processFirestoreData(data);
-                allOrdersRaw.push({
-                    ...processedData,
-                    id: processedData.id || doc.id,
-                    path: doc.ref.path, // Add the document path
-                });
+        guestOrdersSnap.forEach((doc) => {
+            const data = doc.data();
+            const processedData = processFirestoreData(data);
+            allOrdersRaw.push({
+                ...processedData,
+                id: processedData.id || doc.id,
+                path: doc.ref.path,
             });
-        };
+        });
 
-        processSnapshot(userOrdersSnap);
-        processSnapshot(guestOrdersSnap);
+        // Now, let's fetch orders from users
+        const usersSnap = await getDocs(collection(db, 'users'));
+        for (const userDoc of usersSnap.docs) {
+            const userOrdersCol = collection(db, 'users', userDoc.id, 'orders');
+            const userOrdersQuery = query(userOrdersCol, orderBy('createdAt', 'desc'));
+            const userOrdersSnap = await getDocs(userOrdersQuery);
+            userOrdersSnap.forEach((orderDoc) => {
+                 const data = orderDoc.data();
+                 const processedData = processFirestoreData(data);
+                 allOrdersRaw.push({
+                     ...processedData,
+                     id: processedData.id || orderDoc.id,
+                     path: orderDoc.ref.path,
+                 });
+            });
+        }
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore:", error);
