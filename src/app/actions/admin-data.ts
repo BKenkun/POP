@@ -3,6 +3,8 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, updateDoc, collectionGroup, query } from 'firebase/firestore';
+import { getAuth } from 'firebase-admin/auth';
+import type { UserRecord } from 'firebase-admin/auth';
 
 // Esta función es segura porque solo toma strings y no devuelve objetos complejos.
 export async function updateOrderStatus(orderPath: string, newStatus: string): Promise<{success: boolean, error?: string}> {
@@ -20,5 +22,32 @@ export async function updateOrderStatus(orderPath: string, newStatus: string): P
     }
 }
 
-// Se elimina getAllAdminCustomers de este archivo para evitar conflictos.
-// La lógica se moverá a un componente de servidor.
+interface SafeCustomer {
+    uid: string;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
+    disabled: boolean;
+    creationTime: string;
+}
+
+// Esta función se ejecuta en el servidor y devuelve datos serializados seguros.
+export async function getAllAdminCustomers(): Promise<SafeCustomer[]> {
+    try {
+        const auth = getAuth();
+        const listUsersResult = await auth.listUsers();
+        
+        return listUsersResult.users.map((userRecord: UserRecord) => ({
+            uid: userRecord.uid,
+            email: userRecord.email,
+            displayName: userRecord.displayName,
+            photoURL: userRecord.photoURL,
+            disabled: userRecord.disabled,
+            creationTime: userRecord.metadata.creationTime, // Esto ya es un string ISO
+        }));
+    } catch (error) {
+        console.error('Error fetching users from Firebase Auth:', error);
+        // En caso de error, devuelve un array vacío para no romper el cliente.
+        return [];
+    }
+}
