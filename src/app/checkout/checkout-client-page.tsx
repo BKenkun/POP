@@ -11,7 +11,7 @@ import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, C
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useFirestore, setDocumentNonBlocking, useAuth } from '@/firebase';
+import { useFirestore, useAuth } from '@/firebase';
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -249,25 +249,18 @@ export default function CheckoutClientPage() {
         // If the user is logged in, ensure their user document exists.
         if (user) {
             const userDocRef = doc(firestore, 'users', user.uid);
-            // This is a "set" with "merge", which acts as an "upsert".
-            // It will create the document if it doesn't exist with basic info,
-            // or do nothing if it already exists. It won't overwrite existing data.
             await setDoc(userDocRef, { email: user.email, uid: user.uid }, { merge: true });
         }
         
-        const collectionPath = user ? `users/${user.uid}/orders` : 'reservations';
-        const docRef = doc(firestore, collectionPath, orderId);
-        
+        // Save ALL orders to the top-level 'orders' collection
+        const docRef = doc(firestore, 'orders', orderId);
         await setDoc(docRef, newOrder);
         
-        // --- Optimistic UI Update ---
         // Set data for the success page
         setCheckoutData({ orderId, paymentMethod: data.paymentMethod });
         
-        // Clear the cart and redirect immediately.
         clearCart();
         
-        // Redirect to the success page without query params
         router.push('/checkout/success');
 
     } catch (error: any) {

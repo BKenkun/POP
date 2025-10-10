@@ -39,11 +39,8 @@ const getStatusVariant = (status: string) => {
     }
 }
 
-// --- Componente de Presentación (Cliente) ---
-// Responsabilidad: Recibir datos y mostrarlos. No obtiene sus propios datos.
 export default function OrdersClientPage({ initialOrders }: { initialOrders: Order[] }) {
 
-  // Estrategia 3: Renderizado defensivo. Se comprueba explícitamente si initialOrders tiene contenido.
   const hasOrders = initialOrders && initialOrders.length > 0;
 
   return (
@@ -54,15 +51,15 @@ export default function OrdersClientPage({ initialOrders }: { initialOrders: Ord
       
       <Card>
         <CardHeader>
-            <CardTitle>Pedidos y Reservas</CardTitle>
-            <CardDescription>Aquí se listan todas las compras y reservas de tus clientes.</CardDescription>
+            <CardTitle>Listado de Pedidos</CardTitle>
+            <CardDescription>Aquí se listan todos los pedidos de la tienda, tanto de usuarios como de invitados.</CardDescription>
         </CardHeader>
         <CardContent>
             {!hasOrders ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
-                    <p className="text-muted-foreground">Los nuevos pedidos o reservas aparecerán aquí cuando lleguen.</p>
+                    <p className="text-muted-foreground">Los nuevos pedidos aparecerán aquí cuando lleguen.</p>
                 </div>
             ) : (
                 <Table>
@@ -81,7 +78,12 @@ export default function OrdersClientPage({ initialOrders }: { initialOrders: Ord
                         <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
                         <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'N/A'}</TableCell>
-                        <TableCell>{order.customerName}</TableCell>
+                        <TableCell>
+                            <div>
+                                {order.customerName}
+                                {order.userId === 'guest' && <Badge variant="secondary" className="ml-2">Invitado</Badge>}
+                            </div>
+                        </TableCell>
                         <TableCell>
                             <Badge variant={getStatusVariant(order.status)}>
                             {order.status}

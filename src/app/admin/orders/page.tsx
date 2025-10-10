@@ -1,9 +1,7 @@
-
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
-import { z } from 'zod';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -25,69 +23,48 @@ function processFirestoreData(data: { [key: string]: any }): any {
 }
 
 async function getAllAdminOrders(): Promise<Order[]> {
-    const allOrdersRaw: any[] = [];
-    
     try {
-        // Use the correct Admin SDK syntax
-        const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
-        const reservationsQuery = db.collection('reservations').orderBy('createdAt', 'desc');
+        const ordersQuery = db.collection('orders').orderBy('createdAt', 'desc');
+        const ordersSnap = await ordersQuery.get();
 
-        const [ordersSnap, reservationsSnap] = await Promise.all([
-            ordersQuery.get(),
-            reservationsQuery.get()
-        ]);
-
-        ordersSnap.forEach((doc) => {
-            allOrdersRaw.push({
-                ...processFirestoreData(doc.data()),
-                id: doc.id,
-                path: doc.ref.path,
+        const allOrdersRaw = ordersSnap.docs.map(doc => ({
+            ...processFirestoreData(doc.data()),
+            id: doc.id,
+            path: doc.ref.path,
+        }));
+        
+        const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
+            const result = OrderSchema.safeParse({
+                ...rawOrder,
+                createdAt: rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date(0),
             });
-        });
-
-        reservationsSnap.forEach((doc) => {
-             allOrdersRaw.push({
-                ...processFirestoreData(doc.data()),
-                id: doc.id,
-                path: doc.ref.path,
-            });
-        });
-
-    } catch (error) {
-        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing index.", error);
-        throw error;
-    }
-
-    const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-        const result = OrderSchema.safeParse({
-            ...rawOrder,
-            createdAt: rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date(0),
+            
+            if (result.success) {
+                acc.push(result.data as Order);
+            } else {
+                console.warn(`[Admin Orders] Invalid object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
+            }
+            return acc;
+        }, []);
+        
+        // Final sort after processing, although the query should already handle it
+        validatedOrders.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
         });
         
-        if (result.success) {
-            // Prevent duplicates in case an order somehow ends up in both places
-            if (!acc.some(o => o.id === result.data.id)) {
-                acc.push(result.data as Order);
-            }
-        } else {
-            console.warn(`[Admin Orders] Invalid object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
-        }
-        return acc;
-    }, []);
-    
-    // Final sort after merging
-    validatedOrders.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-    });
-    
-    const serializableOrders = validatedOrders.map(order => ({
-        ...order,
-        createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
-    }));
-    
-    return serializableOrders as Order[];
+        const serializableOrders = validatedOrders.map(order => ({
+            ...order,
+            createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
+        }));
+        
+        return serializableOrders as Order[];
+
+    } catch (error) {
+        console.error("❌ Critical error fetching orders from Firestore.", error);
+        throw error; // Propagate error to be caught by Next.js error boundary
+    }
 }
 
 
@@ -102,7 +79,7 @@ export default async function AdminOrdersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
-          <p className="text-muted-foreground">Pedidos y Reservas de la tienda.</p>
+          <p className="text-muted-foreground">Pedidos de usuarios y reservas de invitados.</p>
         </div>
       </div>
       <Suspense fallback={

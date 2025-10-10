@@ -3,7 +3,7 @@
 
 import { useAuth } from "@/context/auth-context";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, where } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -25,7 +25,12 @@ export default function OrdersPage() {
   
   const ordersQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return query(collection(firestore, 'users', user.uid, 'orders'), orderBy('createdAt', 'desc'));
+    // Query the top-level 'orders' collection for documents where userId matches the current user's UID
+    return query(
+        collection(firestore, 'orders'), 
+        where('userId', '==', user.uid), 
+        orderBy('createdAt', 'desc')
+    );
   }, [user, firestore]);
   
   const { data: orders, isLoading: loading } = useCollection<Order>(ordersQuery);
