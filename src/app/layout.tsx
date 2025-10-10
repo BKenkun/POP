@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
 import { ReactNode, Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Setup font with next/font
 const inter = Inter({
@@ -28,7 +29,11 @@ export default function RootLayout({
         {/* The font link in head is now handled by next/font, so we can remove it */}
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-          <Providers>{children}</Providers>
+          <Providers>
+            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+              {children}
+            </Suspense>
+          </Providers>
       </body>
     </html>
   );
