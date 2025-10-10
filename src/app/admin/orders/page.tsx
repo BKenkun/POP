@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 import { Suspense } from 'react';
@@ -25,9 +25,6 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        // This single query now fetches from both 'orders' and 'reservations' collections
-        // if they are structured correctly for a collection group query.
-        // This requires a single-field index exemption on 'createdAt' for the 'orders' collection group.
         const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const ordersSnap = await getDocs(ordersQuery);
         
@@ -41,18 +38,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
         });
 
     } catch (error) {
-        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing index. Please check the browser console for a link to create it or create a single-field exemption for 'createdAt' (descending) on the 'orders' collection group.", error);
-        // On error, rethrow it so that the error boundary can catch it
+        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it or create a single-field exemption for 'createdAt' (descending) on the 'orders' collection group.", error);
         throw error;
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-        // We will treat reservations as orders.
-        // The schema is adapted to handle optional `userId` for guest checkouts.
         const result = OrderSchema.safeParse(rawOrder);
         
         if (result.success) {
-            // Ensure no duplicates are added
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -62,7 +55,6 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // Final sort after merging, just in case
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
