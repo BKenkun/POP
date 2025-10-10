@@ -1,11 +1,13 @@
 
 'use client';
 
+import { Order } from '@/lib/types';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface CheckoutData {
   orderId: string | null;
   paymentMethod: string | null;
+  orderSummary?: Omit<Order, 'createdAt'> & { createdAt: any };
 }
 
 interface CheckoutContextType {
@@ -27,7 +29,7 @@ export const CheckoutProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleClearCheckoutData = () => {
-    setCheckoutData({ orderId: null, paymentMethod: null });
+    setCheckoutData({ orderId: null, paymentMethod: null, orderSummary: undefined });
   };
 
   const value = {
@@ -46,3 +48,5 @@ export const useCheckout = () => {
   }
   return context;
 };
+
+    

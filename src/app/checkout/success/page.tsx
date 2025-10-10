@@ -5,11 +5,15 @@ import { Suspense, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
-import { CheckCircle, ShoppingBag, Home, MessageCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, ShoppingBag, Home, Gift, UserPlus, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCheckout } from '@/context/checkout-context';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
+import { formatPrice } from '@/lib/utils';
+import { OrderItem } from '@/lib/types';
 
 
 function SuccessContent() {
@@ -30,7 +34,7 @@ function SuccessContent() {
         };
     }, [checkoutData, clearCheckoutData, router]);
 
-    if (!checkoutData.orderId) {
+    if (!checkoutData.orderId || !checkoutData.orderSummary) {
         return (
             <div className="flex flex-col items-center justify-center h-[50vh] text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -40,10 +44,11 @@ function SuccessContent() {
     }
     
     const isPrepaid = checkoutData.paymentMethod?.startsWith('prepaid');
+    const order = checkoutData.orderSummary;
     
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8">
-            <Card className="w-full max-w-lg">
+            <Card className="w-full max-w-2xl">
                 <CardHeader className="items-center space-y-4">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
                         <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400" />
@@ -54,9 +59,13 @@ function SuccessContent() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <p className="text-muted-foreground">
-                        Recibirás un correo electrónico en breve con todos los detalles.
-                    </p>
+                    <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 [&>svg]:text-blue-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle className="font-bold">¡Importante!</AlertTitle>
+                        <AlertDescription>
+                           Guarda una captura de pantalla de esta página para tu referencia. Te hemos enviado un email con todos los detalles (recuerda revisar la carpeta de spam).
+                        </AlertDescription>
+                    </Alert>
                     
                     {isPrepaid && (
                         <Alert variant="destructive">
@@ -67,20 +76,52 @@ function SuccessContent() {
                             </AlertDescription>
                         </Alert>
                     )}
-
-                    {!isPrepaid && (
-                         <p className="font-semibold text-destructive-foreground bg-destructive p-3 rounded-md">
-                            ¡Importante! Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar todos los detalles de tu reserva.
-                        </p>
-                    )}
                     
-                     <div className="text-sm text-muted-foreground border-t pt-4">
-                        <p className="flex items-center justify-center gap-2">
-                           <MessageCircle className="h-4 w-4"/> Para cualquier duda, contáctanos por WhatsApp en el 622 222 222.
-                        </p>
+                    {/* Order Summary */}
+                    <div className="text-left space-y-4 pt-4">
+                        <h3 className="font-semibold text-lg text-center">Resumen de tu Pedido</h3>
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                             {order.items.map((item: OrderItem) => (
+                                <div key={item.productId} className="flex items-center gap-4">
+                                    <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
+                                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium">{item.name}</p>
+                                        <p className="text-sm text-muted-foreground">{item.quantity} x {formatPrice(item.price)}</p>
+                                    </div>
+                                    <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between font-bold text-lg">
+                            <span>TOTAL</span>
+                            <span className="text-primary">{formatPrice(order.total)}</span>
+                        </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <Separator />
+                    
+                    {order.userId === 'guest' && (
+                        <Card className="bg-secondary/50">
+                            <CardHeader>
+                                <CardTitle className="flex items-center justify-center gap-2"><Gift className="h-5 w-5 text-primary"/>¡Consigue Ventajas Exclusivas!</CardTitle>
+                                <CardDescription>Crea una cuenta para disfrutar de puntos de fidelidad, ofertas especiales y un historial de compras.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button asChild size="lg">
+                                    <Link href="/register">
+                                        <UserPlus className="mr-2"/>
+                                        Crear mi Cuenta Ahora
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+
+                    <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
                         <Button asChild>
                             <Link href="/products">
                                 <ShoppingBag className="mr-2" />
@@ -90,7 +131,7 @@ function SuccessContent() {
                         <Button asChild variant="outline">
                             <Link href="/">
                                 <Home className="mr-2" />
-                                Volver a la página principal
+                                Volver al Inicio
                             </Link>
                         </Button>
                     </div>
@@ -102,12 +143,11 @@ function SuccessContent() {
 
 
 export default function CheckoutSuccessPage() {
-    // This page is a container for the Suspense boundary,
-    // ensuring that the main page can be statically rendered,
-    // while the component that uses searchParams is loaded on the client.
     return (
         <Suspense fallback={<div>Cargando...</div>}>
             <SuccessContent />
         </Suspense>
     );
 }
+
+    

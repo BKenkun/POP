@@ -246,18 +246,16 @@ export default function CheckoutClientPage() {
             createdAt: serverTimestamp(),
         };
 
-        // If the user is logged in, save to their subcollection.
-        // Otherwise, save to the top-level 'reservations' collection.
-        if (user) {
-            const userDocRef = doc(firestore, 'users', user.uid, 'orders', orderId);
-            await setDoc(userDocRef, newOrder);
-        } else {
-            const guestDocRef = doc(firestore, 'reservations', orderId);
-            await setDoc(guestDocRef, newOrder);
-        }
+        // All orders now go to the top-level 'orders' collection
+        const orderDocRef = doc(firestore, 'orders', orderId);
+        await setDoc(orderDocRef, newOrder);
         
         // Set data for the success page
-        setCheckoutData({ orderId, paymentMethod: data.paymentMethod });
+        setCheckoutData({
+            orderId,
+            paymentMethod: data.paymentMethod,
+            orderSummary: newOrder,
+        });
         
         clearCart();
         
@@ -483,3 +481,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
