@@ -1,6 +1,7 @@
 
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { firebaseConfig } from '@/firebase/config';
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
 
@@ -9,10 +10,32 @@ let db: Firestore;
 
 // This logic ensures a single initialization of the Firebase Admin SDK.
 if (!getApps().length) {
-  // When running in a Google Cloud environment (like App Hosting),
-  // initializeApp() with no arguments will automatically use Application
-  // Default Credentials (ADC). This is the most robust authentication method.
-  app = initializeApp();
+    try {
+        // When running in a Google Cloud environment (like App Hosting),
+        // the service account credentials can be automatically discovered.
+        app = initializeApp();
+    } catch (e) {
+        console.warn("Automatic Firebase Admin SDK initialization failed, falling back to local config. This is expected in local development.", e);
+        // Fallback for local development or environments without ADC.
+        // The service account JSON must be set as an environment variable.
+        const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+            ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+            : undefined;
+
+        if (serviceAccount) {
+            app = initializeApp({
+                credential: cert(serviceAccount),
+                databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`,
+            });
+        } else if (process.env.NODE_ENV !== 'production') {
+            // In a non-production environment, if no service account is found,
+            // we can initialize without it for some functionalities, though Firestore might fail.
+            app = initializeApp({ projectId: firebaseConfig.projectId });
+        } else {
+            // In production, a service account is required if ADC fails.
+            throw new Error('Firebase Admin SDK initialization failed. Service account credentials are not available.');
+        }
+    }
 } else {
   // If already initialized, get the existing app.
   app = getApps()[0];
