@@ -28,27 +28,27 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     let path: string | null = null;
 
     try {
-        const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
-        const orderSnap = await getDocs(ordersQuery);
+        // Primero, busca en la colección de reservas (para invitados)
+        const reservationRef = doc(db, 'reservations', orderId);
+        const reservationSnap = await getDoc(reservationRef);
         
-        if (!orderSnap.empty) {
-            path = orderSnap.docs[0].ref.path;
-            const docSnap = await getDoc(orderSnap.docs[0].ref);
-            if (docSnap.exists()) {
-                 const data = docSnap.data();
-                 if (data) {
-                    orderRaw = data;
-                    orderRaw.path = path;
-                 }
+        if (reservationSnap.exists()) {
+            const data = reservationSnap.data();
+            if (data) {
+                orderRaw = data;
+                path = reservationRef.path;
             }
         } else {
-            const reservationRef = doc(db, 'reservations', orderId);
-            const reservationSnap = await getDoc(reservationRef);
-            if (reservationSnap.exists()) {
-                const data = reservationSnap.data();
-                 if (data) {
+            // Si no se encuentra en reservas, busca en todas las subcolecciones de pedidos de usuarios
+            const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
+            const orderSnap = await getDocs(ordersQuery);
+            
+            if (!orderSnap.empty) {
+                const docSnap = orderSnap.docs[0];
+                path = docSnap.ref.path;
+                const data = docSnap.data();
+                if (data) {
                     orderRaw = data;
-                    orderRaw.path = reservationRef.path;
                 }
             }
         }
@@ -61,7 +61,9 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     if (orderRaw) {
         const sanitizedOrder = {
             ...orderRaw,
+            id: orderRaw.id || orderId, // Asegura que el ID siempre esté presente
             createdAt: toDateSafe(orderRaw.createdAt),
+            path: path, // Añade la ruta del documento para futuras acciones
         };
 
         const result = OrderSchema.safeParse(sanitizedOrder);
@@ -69,6 +71,7 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
             return result.data;
         } else {
             console.warn(`[Admin Order Detail] Invalid order object fetched. ID: ${orderId}, Reason:`, result.error.flatten());
+            // No devolvemos el pedido si no es válido para evitar errores.
             return null;
         }
     }
