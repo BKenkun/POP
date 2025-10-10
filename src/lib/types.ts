@@ -69,7 +69,8 @@ export const ShippingAddressSchema = z.object({
 
 export const OrderSchema = z.object({
   id: z.string(),
-  userId: z.string(),
+  // userId is now optional to correctly validate guest reservations which may not have it
+  userId: z.string().optional(),
   createdAt: z.union([z.date(), z.string()]), // Accept Date object from client-side conversion or string from server-side
   status: z.enum(['pending', 'shipped', 'delivered', 'cancelled', 'entregado', 'enviado', 'pendiente', 'cancelado', 'Reserva Recibida', 'Pago Pendiente de Verificación']),
   total: z.number(),

@@ -47,26 +47,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-        // Guest orders are in 'reservations' collection, not 'orders', so we need to handle them.
         // We will treat reservations as orders.
-        const collectionId = rawOrder.path.split('/')[0];
-        const isReservation = collectionId === 'reservations';
-        
-        // Let's create a temporary schema that makes `userId` optional for validation
-        const temporarySchema = OrderSchema.extend({
-            userId: OrderSchema.shape.userId.optional(),
-        })
-
-        const result = isReservation ? temporarySchema.safeParse(rawOrder) : OrderSchema.safeParse(rawOrder);
+        // The schema is adapted to handle optional `userId` for guest checkouts.
+        const result = OrderSchema.safeParse(rawOrder);
         
         if (result.success) {
+            // Ensure no duplicates are added
             if (!acc.some(o => o.id === result.data.id)) {
-                 // Re-add userId if it was a reservation for consistency
-                const finalData = {
-                    ...result.data,
-                    userId: result.data.userId || 'guest',
-                };
-                acc.push(finalData as Order);
+                acc.push(result.data as Order);
             }
         } else {
             console.warn(`[Admin Orders] Invalid object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
