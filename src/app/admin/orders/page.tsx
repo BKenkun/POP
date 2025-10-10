@@ -1,46 +1,24 @@
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Package, Eye } from "lucide-react";
 import { Order } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import Link from "next/link";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, collection } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
+import OrdersClientPage from './orders-client-page';
 
-// Helper function to safely get a Date object from Firestore Timestamp, string or other types.
-const toDateSafe = (timestamp: any): Date => {
-  if (!timestamp) {
-    return new Date(0); // Return epoch for null/undefined to avoid crashes
-  }
-  // This is the most reliable check for a Firestore Timestamp
+// Helper para convertir Timestamps de Firestore (que no son serializables) a strings
+const toDateSafe = (timestamp: any): string => {
+  if (!timestamp) return new Date(0).toISOString();
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-    return timestamp.toDate();
+    return timestamp.toDate().toISOString();
   }
-  // Check for ISO string
   if (typeof timestamp === 'string') {
-    const d = new Date(timestamp);
-    if (!isNaN(d.getTime())) {
-      return d;
-    }
+    return timestamp;
   }
-  // Check for the object format { _seconds: number, _nanoseconds: number } or { seconds: number, nanoseconds: number }
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
-    return new Date(timestamp.seconds * 1000);
+    return new Date(timestamp.seconds * 1000).toISOString();
   }
-  console.warn("Could not parse timestamp, returning epoch:", timestamp);
-  return new Date(0);
-}
+  return new Date(0).toISOString();
+};
 
-// This function now runs only on the server, as part of the Server Component's rendering.
+// Esta función se ejecuta únicamente en el servidor
 async function getAllAdminOrders(): Promise<Order[]> {
     const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
@@ -64,103 +42,25 @@ async function getAllAdminOrders(): Promise<Order[]> {
         }
     });
     
-    // Sort before serializing
-    allOrders.sort((a, b) => {
-        const dateA = toDateSafe(a.createdAt).getTime();
-        const dateB = toDateSafe(b.createdAt).getTime();
+    // Ordenar y limpiar los datos para el cliente
+    const sortedOrders = allOrders.sort((a, b) => {
+        const dateA = new Date(toDateSafe(a.createdAt)).getTime();
+        const dateB = new Date(toDateSafe(b.createdAt)).getTime();
         return dateB - dateA;
     });
 
-    // **CRITICAL FIX**: Serialize data for the client component. Convert Timestamps to strings.
-    return allOrders.map(order => ({
+    // **CRÍTICO**: Convertir los datos a un formato serializable antes de pasarlos al cliente
+    return sortedOrders.map(order => ({
         ...order,
-        // This ensures that the object passed from Server to Client is a plain object.
-        createdAt: toDateSafe(order.createdAt).toISOString(),
+        createdAt: toDateSafe(order.createdAt),
     }));
 }
 
-
+// Este es un Componente de Servidor de Next.js
 export default async function AdminOrdersPage() {
+  // 1. Obtenemos los datos en el servidor
   const allOrders = await getAllAdminOrders();
 
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-        case 'delivered':
-        case 'entregado':
-            return 'default';
-        case 'shipped':
-        case 'enviado':
-            return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
-            return 'outline';
-        case 'cancelled':
-        case 'cancelado':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
-      </div>
-      
-      <Card>
-        <CardHeader>
-            <CardTitle>Pedidos y Reservas</CardTitle>
-            <CardDescription>Aquí se listan todas las compras y reservas de tus clientes.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {allOrders.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
-                    <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
-                    <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
-                    <p className="text-muted-foreground">Los nuevos pedidos aparecerán aquí cuando lleguen.</p>
-                </div>
-            ) : (
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Nº Pedido</TableHead>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {allOrders.map((order) => (
-                        <TableRow key={order.id}>
-                        <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
-                        <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'N/A'}</TableCell>
-                        <TableCell>{order.customerName}</TableCell>
-                        <TableCell>
-                            <Badge variant={getStatusVariant(order.status)}>
-                            {order.status}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{formatPrice(order.total)}</TableCell>
-                        <TableCell className="text-right">
-                           <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/orders/${order.id}`}>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    Ver
-                                </Link>
-                            </Button>
-                        </TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
-            )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+  // 2. Pasamos los datos "limpios" (serializados) a un componente de cliente
+  return <OrdersClientPage initialOrders={allOrders} />;
 }
