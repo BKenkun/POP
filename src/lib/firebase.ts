@@ -41,3 +41,6 @@ db = getFirestore(app);
 
 // Export the singleton instance directly
 export { db };
+
+// Kept for compatibility if other parts of the codebase were to use it, but db is preferred.
+export const getAdminDb = () => db;

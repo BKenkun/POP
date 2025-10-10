@@ -1,3 +1,4 @@
+
 import { Order } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
@@ -28,32 +29,32 @@ async function getAllAdminOrders(): Promise<Order[]> {
         getDocs(reservationsQuery),
     ]);
 
-    const allOrders: Order[] = [];
+    const allOrdersRaw: any[] = [];
 
     userOrdersSnap.forEach(doc => {
-        const orderData = doc.data() as Order;
-        allOrders.push({ ...orderData, path: doc.ref.path });
+        const orderData = doc.data();
+        allOrdersRaw.push({ ...orderData, path: doc.ref.path });
     });
 
     guestOrdersSnap.forEach(doc => {
-        const orderData = doc.data() as Order;
-        if (!allOrders.some(o => o.id === orderData.id)) {
-            allOrders.push({ ...orderData, path: doc.ref.path });
+        const orderData = doc.data();
+        if (!allOrdersRaw.some(o => o.id === orderData.id)) {
+            allOrdersRaw.push({ ...orderData, path: doc.ref.path });
         }
     });
     
     // Ordenar y limpiar los datos para el cliente
-    const sortedOrders = allOrders.sort((a, b) => {
+    const sortedOrders = allOrdersRaw.sort((a, b) => {
         const dateA = new Date(toDateSafe(a.createdAt)).getTime();
         const dateB = new Date(toDateSafe(b.createdAt)).getTime();
         return dateB - dateA;
     });
 
-    // **CRÍTICO (Estrategia 1)**: Convertir los datos a un formato serializable antes de pasarlos al cliente
+    // **CRÍTICO (Estrategia 1 & 5)**: Convertir los datos a un formato serializable antes de pasarlos al cliente
     return sortedOrders.map(order => ({
         ...order,
         createdAt: toDateSafe(order.createdAt),
-    }));
+    } as Order));
 }
 
 // --- Componente Contenedor (Servidor) ---

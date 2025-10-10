@@ -1,4 +1,5 @@
-import { getAdminDb } from '@/lib/firebase';
+
+import { db } from '@/lib/firebase';
 import { doc, getDoc, collectionGroup, query, where, getDocs } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
@@ -21,10 +22,9 @@ const toDateSafe = (timestamp: any): string => {
 
 
 async function getAdminOrderById(orderId: string): Promise<Order | null> {
-    const db = getAdminDb();
     if (!orderId) return null;
 
-    let order: Order | null = null;
+    let orderRaw: any | null = null;
     let path: string | null = null;
 
     const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
@@ -36,8 +36,8 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
         if (docSnap.exists()) {
              const data = docSnap.data();
              if (data) {
-                order = data as Order;
-                order.path = path;
+                orderRaw = data;
+                orderRaw.path = path;
              }
         }
     } else {
@@ -46,17 +46,17 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
         if (reservationSnap.exists()) {
             const data = reservationSnap.data();
              if (data) {
-                order = data as Order;
-                order.path = reservationRef.path;
+                orderRaw = data;
+                orderRaw.path = reservationRef.path;
             }
         }
     }
 
-    if (order) {
-        // **CRÍTICO (Estrategia 1)**: Convertir el objeto a uno plano y serializable antes de devolverlo
+    if (orderRaw) {
+        // **CRÍTICO (Estrategia 1 & 5)**: Convertir el objeto a uno plano y serializable antes de devolverlo
         return {
-            ...order,
-            createdAt: toDateSafe(order.createdAt),
+            ...orderRaw,
+            createdAt: toDateSafe(orderRaw.createdAt),
         } as Order;
     }
 

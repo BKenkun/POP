@@ -72,7 +72,7 @@ export type OrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'e
 export interface Order {
   id: string;
   userId: string;
-  createdAt: any;
+  createdAt: string; // Explicitly a string for client-side safety
   status: OrderStatus;
   total: number; // Total amount in cents
   items: OrderItem[];
