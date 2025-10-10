@@ -32,24 +32,24 @@ async function getAllAdminOrders(): Promise<Order[]> {
             getDocs(reservationsQuery),
         ]);
 
-        const processSnapshot = (snap: any, ordersArray: any[]) => {
-            snap.forEach((doc: any) => {
+        const processSnapshot = (snap: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>) => {
+            snap.forEach((doc) => {
                 const data = doc.data();
                 const processedData = processFirestoreData(data);
-                ordersArray.push({
+                allOrdersRaw.push({
                     ...processedData,
                     id: processedData.id || doc.id,
-                    path: doc.ref.path,
+                    path: doc.ref.path, // Add the document path
                 });
             });
         };
 
-        processSnapshot(userOrdersSnap, allOrdersRaw);
-        processSnapshot(guestOrdersSnap, allOrdersRaw);
+        processSnapshot(userOrdersSnap);
+        processSnapshot(guestOrdersSnap);
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore:", error);
-        return [];
+        return []; // Return empty array on critical error
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
