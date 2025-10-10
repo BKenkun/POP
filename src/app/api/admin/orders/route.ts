@@ -16,6 +16,7 @@ const toDateSafe = (timestamp: any): string => {
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000).toISOString();
   }
+  // Return a default date for invalid formats
   return new Date(0).toISOString();
 };
 
@@ -44,11 +45,11 @@ export async function GET() {
         }
     });
     
-    // Ordenar la lista combinada final por fecha
+    // Ordenar la lista combinada final por fecha de forma segura
     const sortedOrders = allOrdersRaw.sort((a, b) => {
         const dateA = new Date(toDateSafe(a.createdAt)).getTime();
         const dateB = new Date(toDateSafe(b.createdAt)).getTime();
-        return dateB - dateA;
+        return dateB - dateA; // Orden descendente (más recientes primero)
     });
 
     // **CRÍTICO**: Serializar los datos antes de enviarlos como JSON
