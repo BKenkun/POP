@@ -1,18 +1,18 @@
 
 import { Order, OrderSchema } from "@/lib/types";
-import { db } from '@/lib/firebase';
+// ¡IMPORTANTE! Importamos desde el nuevo archivo de admin para usar el SDK de Administrador
+import { db } from '@/lib/firebase-admin'; 
 import { Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
-// This function converts Firestore Timestamps to serializable Date objects (or ISO strings)
+// Esta función convierte Timestamps de Firestore a strings ISO serializables
 function processFirestoreData(data: { [key: string]: any }): any {
   const processedData: { [key: string]: any } = {};
   for (const key in data) {
     const value = data[key];
     if (value instanceof Timestamp) {
-      // Convert to ISO string for safe serialization
       processedData[key] = value.toDate().toISOString();
     } else if (value && typeof value === 'object' && !Array.isArray(value)) {
       processedData[key] = processFirestoreData(value);
@@ -25,17 +25,21 @@ function processFirestoreData(data: { [key: string]: any }): any {
 
 async function getAllAdminOrders(): Promise<Order[]> {
     try {
-        // Query 1: Get all orders from the 'orders' subcollections across all users
+        // Query 1: Get all orders from the 'orders' collection group (for registered users)
         const userOrdersQuery = db.collectionGroup('orders');
         const userOrdersSnap = await userOrdersQuery.get();
 
-        // Query 2: Get all guest reservations from the 'reservations' collection
+        // Query 2: Get all reservations from the top-level 'reservations' collection (for guests)
         const guestReservationsQuery = db.collection('reservations');
         const guestReservationsSnap = await guestReservationsQuery.get();
+        
+        // Query 3: Get all orders from the top-level 'orders' collection (new unified structure)
+        const newOrdersQuery = db.collection('orders');
+        const newOrdersSnap = await newOrdersQuery.get();
 
         const allOrdersRaw: any[] = [];
 
-        // Process user orders
+        // Process user orders from subcollections
         userOrdersSnap.forEach((doc) => {
             allOrdersRaw.push({
                 ...processFirestoreData(doc.data()),
@@ -51,6 +55,15 @@ async function getAllAdminOrders(): Promise<Order[]> {
                 id: doc.id,
                 path: doc.ref.path,
                 userId: 'guest' // Explicitly mark as guest
+            });
+        });
+        
+        // Process new unified orders
+        newOrdersSnap.forEach((doc) => {
+            allOrdersRaw.push({
+                ...processFirestoreData(doc.data()),
+                id: doc.id,
+                path: doc.ref.path,
             });
         });
         

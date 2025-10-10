@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-admin';
 import { doc, getDoc, Timestamp } from 'firebase-admin/firestore';
 import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
