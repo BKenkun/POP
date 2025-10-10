@@ -1,6 +1,7 @@
+
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp, collection } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 
@@ -22,20 +23,8 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        // Query 1: Get all guest reservations from the 'reservations' collection
-        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-        const guestOrdersSnap = await getDocs(reservationsQuery);
-        guestOrdersSnap.forEach((doc) => {
-            const data = doc.data();
-            allOrdersRaw.push({
-                ...processFirestoreData(data),
-                id: doc.id,
-                path: doc.ref.path,
-            });
-        });
-
-        // Query 2: Get all user orders using a collectionGroup query
-        // This requires a composite index, which Firestore should prompt you to create via a console error link.
+        // Query 1: Use collectionGroup to get all user orders.
+        // This requires a composite index, which Firestore will prompt you to create via a console error link.
         const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const userOrdersSnap = await getDocs(userOrdersQuery);
         userOrdersSnap.forEach((doc) => {
@@ -47,16 +36,26 @@ async function getAllAdminOrders(): Promise<Order[]> {
              });
         });
 
+        // Query 2: Get all guest reservations from the 'reservations' collection.
+        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+        const guestOrdersSnap = await getDocs(reservationsQuery);
+        guestOrdersSnap.forEach((doc) => {
+            const data = doc.data();
+            allOrdersRaw.push({
+                ...processFirestoreData(data),
+                id: doc.id,
+                path: doc.ref.path,
+            });
+        });
+
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it.", error);
-        // On critical error, return empty to prevent crashing. The UI will show "No orders".
         return [];
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
         const result = OrderSchema.safeParse(rawOrder);
         if (result.success) {
-            // Avoid duplicates if an order somehow exists in both collections
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -66,14 +65,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // Sort all combined orders by date
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
-    // Serialize date objects to strings before sending to client
     const serializableOrders = validatedOrders.map(order => ({
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
@@ -82,13 +79,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
     return serializableOrders as Order[];
 }
 
-
-// --- Server Container Component ---
-// Responsibility: Fetch and sanitize order data.
 export default async function AdminOrdersPage() {
-  // 1. Fetch data on the server, ensuring it's secure and serializable.
   const initialOrders = await getAllAdminOrders();
-
-  // 2. Pass the clean data to a Client Component for presentation.
   return <OrdersClientPage initialOrders={initialOrders} />;
 }
