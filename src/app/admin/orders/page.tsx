@@ -25,28 +25,27 @@ const toDateSafe = (timestamp: any): string => {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
+        // *** STRATEGIA FINAL: SIMPLIFICACIÓN RADICAL ***
+        // Se consulta únicamente 'orders' para aislar el problema.
+        // Se ha comentado temporalmente la consulta a 'reservations'.
         const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
+        
+        const userOrdersSnap = await getDocs(userOrdersQuery);
+        // const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
+        //     getDocs(userOrdersQuery),
+        //     getDocs(reservationsQuery),
+        // ]);
 
-        const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
-            getDocs(userOrdersQuery),
-            getDocs(reservationsQuery),
-        ]);
-
-        const processSnapshot = (snap: any) => {
-            snap.forEach((doc: any) => {
-                const data = doc.data();
-                allOrdersRaw.push({
-                    ...data,
-                    id: data.id || doc.id,
-                    createdAt: toDateSafe(data.createdAt),
-                    path: doc.ref.path,
-                });
+        userOrdersSnap.forEach((doc: any) => {
+            const data = doc.data();
+            allOrdersRaw.push({
+                ...data,
+                id: data.id || doc.id,
+                createdAt: toDateSafe(data.createdAt),
+                path: doc.ref.path,
             });
-        }
+        });
 
-        processSnapshot(userOrdersSnap);
-        processSnapshot(guestOrdersSnap);
     } catch (error) {
         // STRATEGY 10: Log the detailed error on the server for monitoring
         console.error("❌ Critical error fetching orders from Firestore:", error);
@@ -65,19 +64,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // Eliminar duplicados si una reserva se convirtió en pedido de usuario
-    const uniqueOrders = validatedOrders.filter((order, index, self) =>
-        index === self.findIndex((o) => o.id === order.id)
-    );
-
-    // Ordenar cronológicamente después de unificar y sanear las fechas
-    uniqueOrders.sort((a, b) => {
+    // La ordenación cronológica sigue siendo importante.
+    validatedOrders.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
     });
     
-    return uniqueOrders;
+    return validatedOrders;
 }
 
 
