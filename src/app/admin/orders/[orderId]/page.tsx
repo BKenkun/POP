@@ -23,9 +23,20 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     if (!orderId) return null;
 
     try {
+        // Try fetching from the new 'orders' collection first
         const orderRef = doc(db, 'orders', orderId);
-        const docSnap = await getDoc(orderRef);
+        let docSnap = await getDoc(orderRef);
+
+        // If not found, try fetching from the legacy 'reservations' collection
+        if (!docSnap.exists()) {
+            const reservationRef = doc(db, 'reservations', orderId);
+            docSnap = await getDoc(reservationRef);
+        }
         
+        // If still not found, we might need to search in user subcollections (more complex)
+        // For simplicity, we assume admin has access or it's a guest order for now.
+        // A more robust solution would involve knowing the user ID if it's a user order.
+
         if (!docSnap.exists()) {
             return null;
         }

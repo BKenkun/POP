@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, collectionGroup, getDocs, query, collection } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -25,16 +25,32 @@ function processFirestoreData(data: { [key: string]: any }): any {
 
 async function getAllAdminOrders(): Promise<Order[]> {
     try {
-        const ordersQuery = db.collection('orders').orderBy('createdAt', 'desc');
-        const ordersSnap = await ordersQuery.get();
+        // Query 1: Get all orders from the 'orders' subcollections across all users
+        const userOrdersQuery = query(collectionGroup(db, 'orders'));
+        const userOrdersSnap = await getDocs(userOrdersQuery);
+
+        // Query 2: Get all guest reservations from the 'reservations' collection
+        const guestReservationsQuery = query(collection(db, 'reservations'));
+        const guestReservationsSnap = await getDocs(guestReservationsQuery);
 
         const allOrdersRaw: any[] = [];
 
-        ordersSnap.forEach((doc) => {
+        // Process user orders
+        userOrdersSnap.forEach((doc) => {
             allOrdersRaw.push({
                 ...processFirestoreData(doc.data()),
                 id: doc.id,
                 path: doc.ref.path,
+            });
+        });
+
+        // Process guest reservations
+        guestReservationsSnap.forEach((doc) => {
+            allOrdersRaw.push({
+                ...processFirestoreData(doc.data()),
+                id: doc.id,
+                path: doc.ref.path,
+                userId: 'guest' // Explicitly mark as guest
             });
         });
         
@@ -51,6 +67,13 @@ async function getAllAdminOrders(): Promise<Order[]> {
             }
             return acc;
         }, []);
+
+        // Sort all combined orders by creation date, descending
+        validatedOrders.sort((a, b) => {
+            const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+            const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+            return dateB - dateA;
+        });
         
         const serializableOrders = validatedOrders.map(order => ({
             ...order,
