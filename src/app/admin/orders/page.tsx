@@ -3,6 +3,35 @@ import { Order } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
+import { z } from 'zod';
+
+// Zod schema for validation
+const OrderSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  createdAt: z.string(), // Ensure createdAt is expected as a string after serialization
+  status: z.string(), // Loosened to string to accept any status from DB
+  total: z.number(),
+  items: z.array(z.object({
+    productId: z.string(),
+    name: z.string(),
+    price: z.number(),
+    quantity: z.number(),
+    imageUrl: z.string(),
+  })),
+  customerName: z.string(),
+  customerEmail: z.string().email(),
+  shippingAddress: z.object({
+    line1: z.string().nullable(),
+    line2: z.string().nullable(),
+    city: z.string().nullable(),
+    state: z.string().nullable(),
+    postal_code: z.string().nullable(),
+    country: z.string().nullable(),
+  }).nullable(),
+  paymentMethod: z.string().optional(),
+  path: z.string().optional(),
+});
 
 
 // Helper para convertir Timestamps de Firestore a strings serializables
@@ -41,38 +70,42 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data();
-        // Evita duplicados si una reserva también existe como pedido (poco probable pero seguro)
         if (!allOrdersRaw.some(o => o.id === orderData.id)) {
             allOrdersRaw.push({ ...orderData, path: doc.ref.path });
         }
     });
     
-    // Ordenar la lista combinada final por fecha de forma segura
     const sortedOrders = allOrdersRaw.sort((a, b) => {
         const dateA = new Date(toDateSafe(a.createdAt)).getTime();
         const dateB = new Date(toDateSafe(b.createdAt)).getTime();
-        return dateB - dateA; // Orden descendente (más recientes primero)
+        return dateB - dateA;
     });
 
-    // **CRÍTICO**: Serializar los datos antes de enviarlos como JSON
-    const safeOrders: Order[] = sortedOrders.map(order => ({
-        ...order,
-        createdAt: toDateSafe(order.createdAt),
-    }));
+    const validatedOrders: Order[] = [];
+    sortedOrders.forEach(order => {
+        const serializedOrder = {
+            ...order,
+            createdAt: toDateSafe(order.createdAt),
+        };
+
+        const validationResult = OrderSchema.safeParse(serializedOrder);
+        if (validationResult.success) {
+            validatedOrders.push(validationResult.data as Order);
+        } else {
+            console.warn(`[DATA VALIDATION FAILED] Order with ID ${order.id} was filtered out due to invalid structure:`, validationResult.error.flatten().fieldErrors);
+        }
+    });
     
-    return safeOrders;
+    return validatedOrders;
 
   } catch (error) {
     console.error("Error fetching admin orders directly in Server Component:", error);
-    // En caso de error, devolvemos un array vacío para no romper la página.
-    // Una mejora futura podría ser pasar un objeto de error al cliente.
     return [];
   }
 }
 
 
 // --- Componente Contenedor (Servidor) ---
-// Responsabilidad: Obtener los datos y pasarlos al componente de cliente.
 export default async function AdminOrdersPage() {
   const initialOrders = await getAllAdminOrders();
   return <OrdersClientPage initialOrders={initialOrders} />;
