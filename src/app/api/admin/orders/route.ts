@@ -38,11 +38,13 @@ export async function GET() {
 
     guestOrdersSnap.forEach(doc => {
         const orderData = doc.data();
+        // Evita duplicados si una reserva también existe como pedido (poco probable pero seguro)
         if (!allOrdersRaw.some(o => o.id === orderData.id)) {
             allOrdersRaw.push({ ...orderData, path: doc.ref.path });
         }
     });
     
+    // Ordenar la lista combinada final por fecha
     const sortedOrders = allOrdersRaw.sort((a, b) => {
         const dateA = new Date(toDateSafe(a.createdAt)).getTime();
         const dateB = new Date(toDateSafe(b.createdAt)).getTime();
