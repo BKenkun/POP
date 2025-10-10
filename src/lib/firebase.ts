@@ -9,7 +9,7 @@ let db: Firestore;
 
 // This logic ensures a single initialization of the Firebase Admin SDK.
 if (!getApps().length) {
-  // When deployed to App Hosting, FIREBASE_CONFIG is automatically set.
+  // When deployed to App Hosting, FIREBASE_SERVICE_ACCOUNT is automatically set.
   // We parse this to get the project ID and use the default credential.
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) : undefined;
 
