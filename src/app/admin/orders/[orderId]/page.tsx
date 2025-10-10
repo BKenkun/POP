@@ -27,6 +27,8 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     let path: string | null = null;
 
     try {
+        // This query requires a composite index on the 'orders' collection group.
+        // If the index is missing, Firestore will provide an error with a link to create it.
         const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
         const orderSnap = await getDocs(ordersQuery);
         
@@ -35,6 +37,7 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
             orderRaw = docSnap.data();
             path = docSnap.ref.path;
         } else {
+            // Fallback to check the 'reservations' collection for guest orders
             const reservationRef = doc(db, 'reservations', orderId);
             const reservationSnap = await getDoc(reservationRef);
             if (reservationSnap.exists()) {
@@ -76,6 +79,7 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
         notFound();
     }
     
+    // Ensure the date is serializable before passing to the client component
     const serializableOrder = {
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString(),

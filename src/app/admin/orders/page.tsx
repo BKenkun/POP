@@ -50,12 +50,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it.", error);
+        // Ensure you return an empty array on error to prevent the page from crashing.
         return [];
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
         const result = OrderSchema.safeParse(rawOrder);
         if (result.success) {
+            // Prevent duplicates if an order somehow exists in both collections
             if (!acc.some(o => o.id === result.data.id)) {
                 acc.push(result.data as Order);
             }
@@ -65,12 +67,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
+    // Sort the combined list by date
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
+    // Make it serializable for the client
     const serializableOrders = validatedOrders.map(order => ({
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
@@ -78,6 +82,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
     
     return serializableOrders as Order[];
 }
+
 
 export default async function AdminOrdersPage() {
   const initialOrders = await getAllAdminOrders();
