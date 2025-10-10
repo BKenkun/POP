@@ -7,12 +7,14 @@ import { z } from 'zod';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
+// This function converts Firestore Timestamps to serializable Date objects (or ISO strings)
 function processFirestoreData(data: { [key: string]: any }): any {
   const processedData: { [key: string]: any } = {};
   for (const key in data) {
     const value = data[key];
     if (value instanceof Timestamp) {
-      processedData[key] = value.toDate();
+      // Convert to ISO string for safe serialization
+      processedData[key] = value.toDate().toISOString();
     } else if (value && typeof value === 'object' && !Array.isArray(value)) {
       processedData[key] = processFirestoreData(value);
     } else {
@@ -26,9 +28,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     
     try {
-        // 1. Fetch orders from the 'orders' collection group (for registered users)
-        const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const userOrdersSnap = await getDocs(userOrdersQuery);
+        // Query both collection groups and collections in parallel
+        const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
+            getDocs(query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'))),
+            getDocs(query(collection(db, 'reservations'), orderBy('createdAt', 'desc')))
+        ]);
+        
         userOrdersSnap.forEach((doc) => {
              const data = doc.data();
              allOrdersRaw.push({
@@ -38,9 +43,6 @@ async function getAllAdminOrders(): Promise<Order[]> {
              });
         });
 
-        // 2. Fetch orders from the 'reservations' collection (for guest users)
-        const guestOrdersQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-        const guestOrdersSnap = await getDocs(guestOrdersQuery);
         guestOrdersSnap.forEach((doc) => {
             const data = doc.data();
             allOrdersRaw.push({
@@ -56,7 +58,11 @@ async function getAllAdminOrders(): Promise<Order[]> {
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-        const result = OrderSchema.safeParse(rawOrder);
+        // Since dates are now ISO strings, we parse them to Date objects for validation
+        const result = OrderSchema.safeParse({
+            ...rawOrder,
+            createdAt: rawOrder.createdAt ? new Date(rawOrder.createdAt) : undefined,
+        });
         
         if (result.success) {
             // Avoid duplicates in case of any overlap, using order ID as the key
@@ -69,14 +75,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // Sort all combined orders by date
+    // Sort all combined orders by date after validation
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
     });
     
-    // Ensure data is serializable for the client component
+    // Ensure data is serializable for the client component by converting dates back to strings
     const serializableOrders = validatedOrders.map(order => ({
         ...order,
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
