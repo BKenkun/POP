@@ -1,3 +1,4 @@
+
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -27,11 +28,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     
     try {
-        // Step 1: Fetch all orders from 'orders' collection groups (for registered users)
-        const ordersSnap = await db.collectionGroup('orders').orderBy('createdAt', 'desc').get();
+        // Use the correct Admin SDK syntax
+        const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
+        const reservationsQuery = db.collection('reservations').orderBy('createdAt', 'desc');
 
-        // Step 2: Fetch all orders from the top-level 'reservations' collection (for guests)
-        const reservationsSnap = await db.collection('reservations').orderBy('createdAt', 'desc').get();
+        const [ordersSnap, reservationsSnap] = await Promise.all([
+            ordersQuery.get(),
+            reservationsQuery.get()
+        ]);
 
         ordersSnap.forEach((doc) => {
             allOrdersRaw.push({
