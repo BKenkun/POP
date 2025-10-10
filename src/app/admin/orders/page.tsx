@@ -5,19 +5,19 @@ import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/f
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 
-// Helper para convertir Timestamps de Firestore (que no son serializables) a strings
+// Helper para convertir Timestamps de Firestore (que no son serializables) a strings ISO
 const toDateSafe = (timestamp: any): string => {
   if (!timestamp) return new Date(0).toISOString();
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
   }
   if (typeof timestamp === 'string') {
-    return timestamp;
+    return timestamp; // It's already a string
   }
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000).toISOString();
   }
-  // Return a default date for invalid formats
+  // Return a default or invalid date string for unhandled formats
   return new Date(0).toISOString();
 };
 
@@ -25,16 +25,13 @@ const toDateSafe = (timestamp: any): string => {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        // *** STRATEGIA FINAL: SIMPLIFICACIÓN RADICAL ***
-        // Se consulta únicamente 'orders' para aislar el problema.
-        // Se ha comentado temporalmente la consulta a 'reservations'.
         const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
         
-        const userOrdersSnap = await getDocs(userOrdersQuery);
-        // const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
-        //     getDocs(userOrdersQuery),
-        //     getDocs(reservationsQuery),
-        // ]);
+        const [userOrdersSnap, guestOrdersSnap] = await Promise.all([
+            getDocs(userOrdersQuery),
+            getDocs(reservationsQuery),
+        ]);
 
         userOrdersSnap.forEach((doc: any) => {
             const data = doc.data();
@@ -46,14 +43,21 @@ async function getAllAdminOrders(): Promise<Order[]> {
             });
         });
 
+        guestOrdersSnap.forEach((doc: any) => {
+            const data = doc.data();
+            allOrdersRaw.push({
+                ...data,
+                id: data.id || doc.id,
+                createdAt: toDateSafe(data.createdAt),
+                path: doc.ref.path,
+            });
+        });
+
     } catch (error) {
-        // STRATEGY 10: Log the detailed error on the server for monitoring
         console.error("❌ Critical error fetching orders from Firestore:", error);
-        // Return an empty array to prevent the page from crashing.
         return [];
     }
 
-    // STRATEGY 8: Validate and filter each order using Zod
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
         const result = OrderSchema.safeParse(rawOrder);
         if (result.success) {
@@ -64,7 +68,6 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
-    // La ordenación cronológica sigue siendo importante.
     validatedOrders.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();

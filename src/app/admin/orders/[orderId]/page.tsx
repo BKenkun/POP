@@ -5,18 +5,19 @@ import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { notFound } from 'next/navigation';
 
-// Helper para convertir Timestamps de Firestore (que no son serializables) a strings
+// Helper para convertir Timestamps de Firestore (que no son serializables) a strings ISO
 const toDateSafe = (timestamp: any): string => {
   if (!timestamp) return new Date(0).toISOString();
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate().toISOString();
   }
   if (typeof timestamp === 'string') {
-    return timestamp;
+    return timestamp; // It's already a string
   }
   if (typeof timestamp === 'object' && typeof timestamp.seconds === 'number') {
     return new Date(timestamp.seconds * 1000).toISOString();
   }
+  // Return a default or invalid date string for unhandled formats
   return new Date(0).toISOString();
 };
 
