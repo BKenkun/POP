@@ -11,6 +11,7 @@ export function initializeFirebase() {
   if (!getApps().length) {
     throw new Error("Firebase Admin SDK not initialized. This should be handled by the central @/lib/firebase module.");
   }
+  // The app is already initialized in @/lib/firebase.ts, so we just get the existing instance.
   return getSdks(getApps()[0]);
 }
 
