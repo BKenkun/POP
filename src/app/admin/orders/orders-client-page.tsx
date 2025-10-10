@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Package, Eye } from "lucide-react";
+import { Package, Eye, Loader2 } from "lucide-react";
 import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+
 
 const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -40,12 +42,35 @@ const getStatusVariant = (status: string) => {
 }
 
 // --- Componente de Presentación (Cliente) ---
-// Responsabilidad: Mostrar los datos recibidos y gestionar la interacción del usuario.
-// No tiene lógica de obtención de datos.
-export default function OrdersClientPage({ initialOrders }: { initialOrders: Order[] }) {
-  // El estado local se usa para posibles interacciones futuras (filtros, etc.)
-  // pero la carga inicial viene directamente de las props.
-  const [orders] = useState(initialOrders);
+// Responsabilidad: Obtener sus propios datos desde la API y mostrarlos.
+export default function OrdersClientPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/admin/orders');
+        if (!response.ok) {
+          throw new Error('No se pudieron cargar los pedidos.');
+        }
+        const data: Order[] = await response.json();
+        setOrders(data);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Ocurrió un problema al obtener los pedidos.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, [toast]);
+
 
   return (
     <div className="space-y-6">
@@ -59,7 +84,11 @@ export default function OrdersClientPage({ initialOrders }: { initialOrders: Ord
             <CardDescription>Aquí se listan todas las compras y reservas de tus clientes.</CardDescription>
         </CardHeader>
         <CardContent>
-            {orders.length === 0 ? (
+            {loading ? (
+                 <div className="flex justify-center items-center h-60">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            ) : orders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
