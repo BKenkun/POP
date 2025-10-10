@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
 
 interface StockNotificationDialogProps {
   product: Product;
@@ -25,8 +26,9 @@ interface StockNotificationDialogProps {
 }
 
 export function StockNotificationDialog({ product, children }: StockNotificationDialogProps) {
+    const { user } = useAuth();
     const { toast } = useToast();
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(user?.email || '');
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -34,7 +36,7 @@ export function StockNotificationDialog({ product, children }: StockNotification
         e.preventDefault();
         setLoading(true);
 
-        if (!product?.priceId || !email) {
+        if (!product?.id || !email) {
             toast({
                 title: 'Error',
                 description: 'Falta información del producto o el email. Inténtalo de nuevo.',
@@ -48,7 +50,7 @@ export function StockNotificationDialog({ product, children }: StockNotification
             const response = await fetch('/api/stock-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, priceId: product.priceId }),
+                body: JSON.stringify({ email, productId: product.id }),
             });
 
             const result = await response.json();
