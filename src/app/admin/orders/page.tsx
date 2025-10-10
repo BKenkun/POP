@@ -3,38 +3,8 @@ import { Order } from "@/lib/types";
 import { db } from '@/lib/firebase';
 import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
-import { z } from 'zod';
 
-// Zod schema for validation
-const OrderSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  createdAt: z.string(), // Ensure createdAt is expected as a string after serialization
-  status: z.string(), // Loosened to string to accept any status from DB
-  total: z.number(),
-  items: z.array(z.object({
-    productId: z.string(),
-    name: z.string(),
-    price: z.number(),
-    quantity: z.number(),
-    imageUrl: z.string(),
-  })),
-  customerName: z.string(),
-  customerEmail: z.string().email(),
-  shippingAddress: z.object({
-    line1: z.string().nullable(),
-    line2: z.string().nullable(),
-    city: z.string().nullable(),
-    state: z.string().nullable(),
-    postal_code: z.string().nullable(),
-    country: z.string().nullable(),
-  }).nullable(),
-  paymentMethod: z.string().optional(),
-  path: z.string().optional(),
-});
-
-
-// Helper para convertir Timestamps de Firestore a strings serializables
+// Helper para convertir Timestamps de Firestore (que no son serializables) a strings
 const toDateSafe = (timestamp: any): string => {
   if (!timestamp) return new Date(0).toISOString();
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
@@ -52,7 +22,6 @@ const toDateSafe = (timestamp: any): string => {
 
 
 async function getAllAdminOrders(): Promise<Order[]> {
-  try {
     const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
 
@@ -61,55 +30,48 @@ async function getAllAdminOrders(): Promise<Order[]> {
         getDocs(reservationsQuery),
     ]);
 
-    const allOrdersRaw: any[] = [];
+    const allOrders: Order[] = [];
 
-    userOrdersSnap.forEach(doc => {
-        const orderData = doc.data();
-        allOrdersRaw.push({ ...orderData, path: doc.ref.path });
-    });
+    const processSnapshot = (snap: any) => {
+        snap.forEach((doc: any) => {
+            const data = doc.data();
+            // **CRÍTICO (Estrategia 1 & 6)**: Asegurarse de que la fecha se serializa correctamente
+            // y que el objeto se ajusta al tipo `Order` antes de añadirlo.
+            allOrders.push({
+                ...data,
+                id: data.id || doc.id,
+                createdAt: toDateSafe(data.createdAt),
+                // Añadimos el `path` para futuras actualizaciones (Estrategia de Detalle de Pedido)
+                path: doc.ref.path,
+            } as Order);
+        });
+    }
 
-    guestOrdersSnap.forEach(doc => {
-        const orderData = doc.data();
-        if (!allOrdersRaw.some(o => o.id === orderData.id)) {
-            allOrdersRaw.push({ ...orderData, path: doc.ref.path });
-        }
-    });
+    processSnapshot(userOrdersSnap);
+    processSnapshot(guestOrdersSnap);
     
-    const sortedOrders = allOrdersRaw.sort((a, b) => {
-        const dateA = new Date(toDateSafe(a.createdAt)).getTime();
-        const dateB = new Date(toDateSafe(b.createdAt)).getTime();
+    // Eliminar duplicados si una reserva se convirtió en pedido de usuario
+    const uniqueOrders = allOrders.filter((order, index, self) =>
+        index === self.findIndex((o) => o.id === order.id)
+    );
+
+    // Ordenar cronológicamente después de unificar y sanear las fechas
+    uniqueOrders.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
     });
-
-    const validatedOrders: Order[] = [];
-    sortedOrders.forEach(order => {
-        const serializedOrder = {
-            ...order,
-            createdAt: toDateSafe(order.createdAt),
-        };
-
-        const validationResult = OrderSchema.safeParse(serializedOrder);
-        if (validationResult.success) {
-            validatedOrders.push(validationResult.data as Order);
-        } else {
-            console.warn(`[DATA VALIDATION FAILED] Order with ID ${order.id} was filtered out due to invalid structure:`, validationResult.error.flatten().fieldErrors);
-        }
-    });
     
-    return validatedOrders;
-
-  } catch (error) {
-    // Estrategia 10: Monitoreo y Alertas en el Servidor
-    console.error("Error fetching admin orders directly in Server Component:", error);
-    // Devuelve un array vacío en caso de error para evitar que la página se rompa.
-    // El componente cliente ya está preparado para mostrar un mensaje si no hay pedidos.
-    return [];
-  }
+    return uniqueOrders;
 }
 
 
 // --- Componente Contenedor (Servidor) ---
+// Responsabilidad: Obtener y sanear los datos de los pedidos.
 export default async function AdminOrdersPage() {
+  // 1. Obtenemos los datos en el servidor y nos aseguramos de que son seguros y serializables.
   const initialOrders = await getAllAdminOrders();
+
+  // 2. Pasamos los datos "limpios" a un componente de cliente para su presentación.
   return <OrdersClientPage initialOrders={initialOrders} />;
 }
