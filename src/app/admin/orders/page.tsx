@@ -1,7 +1,7 @@
 
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase-admin/firestore';
+import { collection, collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 import { Suspense } from 'react';
@@ -28,9 +28,11 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     
     try {
-        // Step 1: Fetch all orders from 'orders' collection groups and 'reservations' collection
+        // Step 1: Fetch all orders from 'orders' collection groups (for registered users)
         const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const reservationsQuery = query(collectionGroup(db, 'reservations'), orderBy('createdAt', 'desc'));
+        
+        // Step 2: Fetch all orders from the top-level 'reservations' collection (for guests)
+        const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
 
         const [ordersSnap, reservationsSnap] = await Promise.all([
             getDocs(ordersQuery),
@@ -46,7 +48,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
         });
 
         reservationsSnap.forEach((doc) => {
-            allOrdersRaw.push({
+             allOrdersRaw.push({
                 ...processFirestoreData(doc.data()),
                 id: doc.id,
                 path: doc.ref.path,
