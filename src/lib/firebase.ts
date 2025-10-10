@@ -1,5 +1,5 @@
 
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
@@ -9,16 +9,10 @@ let db: Firestore;
 
 // This logic ensures a single initialization of the Firebase Admin SDK.
 if (!getApps().length) {
-  // When deployed to App Hosting, FIREBASE_SERVICE_ACCOUNT is automatically set.
-  // We parse this to get the project ID and use the default credential.
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) : undefined;
-
-  app = initializeApp({
-    credential: cert(serviceAccount),
-    // The databaseURL is crucial for the Admin SDK to know which database to connect to.
-    databaseURL: `https://${process.env.GCLOUD_PROJECT || process.env.PROJECT_ID}.firebaseio.com`,
-  });
-
+  // When running in a Google Cloud environment (like App Hosting),
+  // initializeApp() with no arguments will automatically use Application
+  // Default Credentials (ADC). This is the most robust authentication method.
+  app = initializeApp();
 } else {
   // If already initialized, get the existing app.
   app = getApps()[0];
