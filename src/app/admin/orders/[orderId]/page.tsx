@@ -5,7 +5,7 @@ import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { notFound } from 'next/navigation';
 
-// Helper para convertir Timestamps de Firestore a objetos Date de JS
+// Helper to convert Firestore Timestamps to JS Date objects
 function processFirestoreData(data: { [key: string]: any }): any {
   const processedData: { [key: string]: any } = {};
   for (const key in data) {
@@ -28,24 +28,27 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     let path: string | null = null;
 
     try {
-        const reservationRef = doc(db, 'reservations', orderId);
-        const reservationSnap = await getDoc(reservationRef);
+        // This is the most efficient way to find a document when you don't know its full path.
+        // It requires a composite index on the 'orders' collection group.
+        // If the index is missing, Firestore will log an error in the console with a link to create it.
+        const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
+        const orderSnap = await getDocs(ordersQuery);
         
-        if (reservationSnap.exists()) {
-            orderRaw = reservationSnap.data();
-            path = reservationRef.path;
+        if (!orderSnap.empty) {
+            const docSnap = orderSnap.docs[0];
+            orderRaw = docSnap.data();
+            path = docSnap.ref.path;
         } else {
-            const ordersQuery = query(collectionGroup(db, 'orders'), where('id', '==', orderId));
-            const orderSnap = await getDocs(ordersQuery);
-            
-            if (!orderSnap.empty) {
-                const docSnap = orderSnap.docs[0];
-                orderRaw = docSnap.data();
-                path = docSnap.ref.path;
+            // Fallback to check reservations if not found in user orders
+            const reservationRef = doc(db, 'reservations', orderId);
+            const reservationSnap = await getDoc(reservationRef);
+            if (reservationSnap.exists()) {
+                orderRaw = reservationSnap.data();
+                path = reservationRef.path;
             }
         }
     } catch (error) {
-        console.error(`❌ Critical error fetching order ${orderId} from Firestore:`, error);
+        console.error(`❌ Critical error fetching order ${orderId} from Firestore. This might be due to a missing composite index for the 'orders' collection group.`, error);
         return null;
     }
 
@@ -55,6 +58,7 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
 
         const sanitizedOrder = {
             ...processedData,
+            // Ensure the ID from the URL param is used if the doc data doesn't have one
             id: processedData.id || orderId,
             path: path,
         };
@@ -71,12 +75,12 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
     return null;
 }
 
-// --- Componente Contenedor (Servidor) ---
-// Responsabilidad: Obtener y sanear los datos del pedido específico.
+// --- Server Container Component ---
+// Responsibility: Fetch and sanitize data for a specific order.
 export default async function OrderDetailPage({ params }: { params: { orderId: string }}) {
     const orderId = params.orderId;
     
-    // 1. Obtener los datos en el servidor y sanearlos.
+    // 1. Fetch and sanitize data on the server.
     const order = await getAdminOrderById(orderId);
 
     if (!order) {
@@ -89,6 +93,6 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
         createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString(),
     };
     
-    // 2. Pasar los datos "limpios" y serializados al componente de cliente para su presentación.
+    // 2. Pass the clean, serializable data to the Client Component for presentation.
     return <OrderDetailsClient initialOrder={serializableOrder as Order} />;
 }

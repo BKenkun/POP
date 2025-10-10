@@ -19,45 +19,37 @@ function processFirestoreData(data: { [key: string]: any }): any {
   return processedData;
 }
 
-
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
+        // Query 1: Get all guest reservations
         const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
-        const [guestOrdersSnap] = await Promise.all([
-            getDocs(reservationsQuery),
-        ]);
-
+        const guestOrdersSnap = await getDocs(reservationsQuery);
         guestOrdersSnap.forEach((doc) => {
             const data = doc.data();
-            const processedData = processFirestoreData(data);
             allOrdersRaw.push({
-                ...processedData,
-                id: processedData.id || doc.id,
+                ...processFirestoreData(data),
+                id: doc.id,
                 path: doc.ref.path,
             });
         });
 
-        // Now, let's fetch orders from users
-        const usersSnap = await getDocs(collection(db, 'users'));
-        for (const userDoc of usersSnap.docs) {
-            const userOrdersCol = collection(db, 'users', userDoc.id, 'orders');
-            const userOrdersQuery = query(userOrdersCol, orderBy('createdAt', 'desc'));
-            const userOrdersSnap = await getDocs(userOrdersQuery);
-            userOrdersSnap.forEach((orderDoc) => {
-                 const data = orderDoc.data();
-                 const processedData = processFirestoreData(data);
-                 allOrdersRaw.push({
-                     ...processedData,
-                     id: processedData.id || orderDoc.id,
-                     path: orderDoc.ref.path,
-                 });
-            });
-        }
+        // Query 2: Get all user orders using a collectionGroup query
+        const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+        const userOrdersSnap = await getDocs(userOrdersQuery);
+        userOrdersSnap.forEach((doc) => {
+             const data = doc.data();
+             allOrdersRaw.push({
+                 ...processFirestoreData(data),
+                 id: doc.id,
+                 path: doc.ref.path,
+             });
+        });
 
     } catch (error) {
-        console.error("❌ Critical error fetching orders from Firestore:", error);
-        return []; // Return empty array on critical error
+        console.error("❌ Critical error fetching orders from Firestore. This might be due to a missing composite index. Please check the browser console for a link to create it.", error);
+        // On critical error, return empty to prevent crashing. The UI will show "No orders".
+        return [];
     }
 
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
@@ -70,6 +62,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
         return acc;
     }, []);
     
+    // Sort all combined orders by date
     validatedOrders.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -86,12 +79,12 @@ async function getAllAdminOrders(): Promise<Order[]> {
 }
 
 
-// --- Componente Contenedor (Servidor) ---
-// Responsabilidad: Obtener y sanear los datos de los pedidos.
+// --- Server Container Component ---
+// Responsibility: Fetch and sanitize order data.
 export default async function AdminOrdersPage() {
-  // 1. Obtenemos los datos en el servidor y nos aseguramos de que son seguros y serializables.
+  // 1. Fetch data on the server, ensuring it's secure and serializable.
   const initialOrders = await getAllAdminOrders();
 
-  // 2. Pasamos los datos "limpios" a un componente de cliente para su presentación.
+  // 2. Pass the clean data to a Client Component for presentation.
   return <OrdersClientPage initialOrders={initialOrders} />;
 }
