@@ -1,28 +1,16 @@
-
 // src/lib/firebase-admin.ts
 import admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
 
-// Evitar la reinicialización en entornos de desarrollo con hot-reloading
+// This logic ensures that we don't try to re-initialize the app in hot-reload environments.
 if (!admin.apps.length) {
-  try {
-    const serviceAccountString = process.env.SERVICE_ACCOUNT;
-    if (!serviceAccountString) {
-      throw new Error('The SERVICE_ACCOUNT environment variable is not set.');
-    }
-    const serviceAccount = JSON.parse(serviceAccountString);
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-  } catch (error: any) {
-    console.error('Firebase admin initialization error:', error.stack);
-    // No lanzar un error aquí para permitir que la aplicación intente iniciarse,
-    // pero los fallos ocurrirán en las llamadas a la base de datos.
-  }
+  // When deployed to Firebase App Hosting or other Google Cloud environments,
+  // initializeApp() automatically discovers the service account credentials.
+  // This is the standard and most robust way to initialize.
+  admin.initializeApp();
 }
 
-// Exporta una instancia de la base de datos que ya tiene permisos de administrador.
-const db = getFirestore();
+// Export a single, initialized instance of the Firestore database.
+// All server-side code will import this `db` object to interact with Firestore.
+const db = admin.firestore();
 
 export { db };
