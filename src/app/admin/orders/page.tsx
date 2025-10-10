@@ -1,6 +1,6 @@
 import { Order, OrderSchema } from "@/lib/types";
 import { db } from '@/lib/firebase';
-import { collection, collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp, collection } from 'firebase/firestore';
 import OrdersClientPage from './orders-client-page';
 import { z } from 'zod';
 
@@ -22,7 +22,7 @@ function processFirestoreData(data: { [key: string]: any }): any {
 async function getAllAdminOrders(): Promise<Order[]> {
     const allOrdersRaw: any[] = [];
     try {
-        // Query 1: Get all guest reservations
+        // Query 1: Get all guest reservations from the 'reservations' collection
         const reservationsQuery = query(collection(db, 'reservations'), orderBy('createdAt', 'desc'));
         const guestOrdersSnap = await getDocs(reservationsQuery);
         guestOrdersSnap.forEach((doc) => {
@@ -35,6 +35,7 @@ async function getAllAdminOrders(): Promise<Order[]> {
         });
 
         // Query 2: Get all user orders using a collectionGroup query
+        // This requires a composite index, which Firestore should prompt you to create via a console error link.
         const userOrdersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const userOrdersSnap = await getDocs(userOrdersQuery);
         userOrdersSnap.forEach((doc) => {
@@ -55,7 +56,10 @@ async function getAllAdminOrders(): Promise<Order[]> {
     const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
         const result = OrderSchema.safeParse(rawOrder);
         if (result.success) {
-            acc.push(result.data as Order);
+            // Avoid duplicates if an order somehow exists in both collections
+            if (!acc.some(o => o.id === result.data.id)) {
+                acc.push(result.data as Order);
+            }
         } else {
             console.warn(`[Admin Orders] Invalid order object filtered out. ID: ${rawOrder.id}, Reason:`, result.error.flatten());
         }

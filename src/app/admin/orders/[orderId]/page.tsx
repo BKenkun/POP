@@ -48,7 +48,7 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
             }
         }
     } catch (error) {
-        console.error(`❌ Critical error fetching order ${orderId} from Firestore. This might be due to a missing composite index for the 'orders' collection group.`, error);
+        console.error(`❌ Critical error fetching order ${orderId} from Firestore. This might be due to a missing composite index for the 'orders' collection group. Please check the console for a link.`, error);
         return null;
     }
 
