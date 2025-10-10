@@ -4,6 +4,7 @@
 import { AuthProvider } from "./auth-context";
 import { CartProvider } from "./cart-context";
 import { CookieProvider } from "./cookie-context";
+import { CheckoutProvider } from "./checkout-context";
 import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
 import { FirebaseClientProvider } from "@/firebase";
@@ -62,9 +63,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const isAdminRoute = pathname.startsWith('/admin');
 
     const PublicLayout = ({ children }: { children: React.ReactNode }) => (
-      <AppLayout>
-          {children}
-      </AppLayout>
+      <CheckoutProvider>
+        <AppLayout>
+            {children}
+        </AppLayout>
+      </CheckoutProvider>
     );
 
   return (

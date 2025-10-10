@@ -31,6 +31,7 @@ import { QuantitySelector } from '@/components/quantity-selector';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
+import { useCheckout } from '@/context/checkout-context';
 
 
 const checkoutSchema = z.object({
@@ -148,6 +149,7 @@ export default function CheckoutClientPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [primaryPaymentMethod, setPrimaryPaymentMethod] = useState<PrimaryPaymentMethod>('cod');
+  const { setCheckoutData } = useCheckout();
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -248,17 +250,14 @@ export default function CheckoutClientPage() {
         setDocumentNonBlocking(docRef, newOrder, { merge: false });
         
         // --- Optimistic UI Update ---
+        // Set data for the success page
+        setCheckoutData({ orderId, paymentMethod: data.paymentMethod });
+        
         // Clear the cart and redirect immediately. The write happens in the background.
         clearCart();
         
-        toast({
-            title: '¡Reserva Confirmada!',
-            description: `Tu número de pedido es ${orderId}. Revisa tu email para más detalles.`,
-            duration: 10000,
-        });
-
-        // Redirect to the account orders page
-        router.push(user ? '/account/orders' : '/');
+        // Redirect to the success page without query params
+        router.push('/checkout/success');
 
     } catch (error: any) {
         console.error("Reservation Error: ", error);
