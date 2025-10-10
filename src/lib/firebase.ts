@@ -6,13 +6,9 @@ import { firebaseConfig } from '@/firebase/config';
 // IMPORTANT: DO NOT MODIFY THIS FILE
 
 function getServiceAccount() {
+  // This function is now deprecated for App Hosting, but kept for legacy or alternative environments.
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!serviceAccount) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error(
-        'FIREBASE_SERVICE_ACCOUNT env var is not set. The app will not work correctly. Please add it to your secrets.'
-      );
-    }
     return undefined;
   }
   try {
@@ -27,12 +23,9 @@ let app: App;
 let db: Firestore;
 
 if (!getApps().length) {
-  const serviceAccount = getServiceAccount();
-  app = initializeApp(
-    serviceAccount
-      ? { credential: cert(serviceAccount) }
-      : { projectId: firebaseConfig.projectId }
-  );
+    // App Hosting provides service account credentials via environment variables.
+    // initializeApp() will automatically use them when no credential is provided.
+    app = initializeApp();
 } else {
   app = getApps()[0];
 }
