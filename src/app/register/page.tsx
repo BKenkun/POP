@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const auth = useFirebaseAuth().auth;
+  const { auth } = useFirebaseAuth();
   const firestore = useFirestore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +29,6 @@ export default function RegisterPage() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This ensures the component only fully renders on the client, avoiding hydration errors.
     setIsClient(true);
   }, []);
 
@@ -51,9 +50,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      // 1. Create the user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // 2. Create the user document in Firestore
       const userDocRef = doc(firestore, "users", user.uid);
       await setDoc(userDocRef, {
           email: user.email,
@@ -63,8 +64,11 @@ export default function RegisterPage() {
           loyaltyPoints: 0,
           isSubscribed: false,
       });
+      
+      // 3. Explicitly sign in to ensure the auth state is updated across the app
+      await signInWithEmailAndPassword(auth, email, password);
 
-      // On success, redirect to a dedicated success page
+      // 4. Redirect to success page ONLY after all operations are successful
       router.push('/register/success');
 
     } catch (err: any) {
@@ -80,11 +84,12 @@ export default function RegisterPage() {
         description: friendlyError,
         variant: 'destructive',
       });
-      setLoading(false); // Only set loading to false on error
+    } finally {
+        // This will run regardless of success or failure
+        setLoading(false);
     }
   };
 
-  // Render a placeholder or nothing until the component is mounted on the client
   if (!isClient) {
     return null;
   }
