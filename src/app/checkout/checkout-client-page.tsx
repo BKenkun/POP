@@ -119,6 +119,7 @@ export default function CheckoutClientPage() {
   const { setCheckoutData } = useCheckout();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(finalCheckoutSchema),
@@ -134,6 +135,12 @@ export default function CheckoutClientPage() {
   }, [cartCount, router, loading, isUserLoading]);
   
   useEffect(() => {
+    // If the user logs in during the process, move to the next step
+    if (isRegistering && user) {
+        setIsRegistering(false); // Registration complete
+        setStep(3); // Move to payment step
+    }
+    
     if (user) {
       if (!form.getValues('email')) form.setValue('email', user.email || '');
       if (!form.getValues('name')) form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
@@ -141,14 +148,79 @@ export default function CheckoutClientPage() {
     } else {
       form.setValue('userId', undefined); // Unset for guests
     }
-  }, [user, form]);
+  }, [user, form, isRegistering]);
+
+  const handleGuestRegistration = async () => {
+    if (!firestore || !auth) {
+        toast({ title: 'Error', description: 'El servicio no está disponible.', variant: 'destructive' });
+        return;
+    }
+
+    const fieldsToValidate: (keyof CheckoutFormValues)[] = ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+    const isValid = await form.trigger(fieldsToValidate);
+    
+    if (!isValid) return;
+
+    setIsRegistering(true);
+    setLoading(true);
+    toast({ title: 'Creando tu cuenta...', description: 'Por favor, espera un momento.' });
+
+    const data = form.getValues();
+    const { name, email, password } = data;
+
+    try {
+        if (!password) throw new Error("La contraseña es obligatoria.");
+        // 1. Create account
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newUser = userCredential.user;
+        
+        // 2. Create user document in Firestore
+        const userDocRef = doc(firestore, "users", newUser.uid);
+        await setDoc(userDocRef, { 
+            uid: newUser.uid, 
+            email: newUser.email, 
+            displayName: name, 
+            createdAt: serverTimestamp(), 
+            loyaltyPoints: 0, 
+            isSubscribed: false 
+        });
+
+        // 3. Force sign-in to ensure auth context is updated
+        // This will trigger the useEffect to move to the next step
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        toast({ title: "Cuenta Creada", description: "¡Bienvenido! Continúa con tu pedido..." });
+        
+    } catch (error: any) {
+        setIsRegistering(false); // Stop the registration process on error
+        setLoading(false);
+        if (error.code === 'auth/email-already-in-use') {
+            toast({
+                title: 'Email ya registrado',
+                description: 'Este email ya tiene una cuenta. Por favor, inicia sesión para continuar.',
+                variant: 'destructive',
+                action: <Button onClick={() => router.push('/login?redirect=/checkout')}>Iniciar Sesión</Button>,
+                duration: 10000,
+            });
+        } else {
+            toast({ title: 'Error de Registro', description: error.message || 'No se pudo crear la cuenta.', variant: 'destructive' });
+        }
+    } finally {
+        // Loading is handled by the useEffect watching the `user` state
+    }
+  };
+
 
   const handleNextStep = async () => {
+    // If it's a guest at step 2, trigger the registration flow instead of just going to the next step
+    if (!user && step === 2) {
+        await handleGuestRegistration();
+        return;
+    }
+
     let fieldsToValidate: (keyof CheckoutFormValues)[] = [];
-    if (step === 2) {
-      fieldsToValidate = user 
-        ? ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country']
-        : ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+    if (step === 2) { // For logged-in users
+      fieldsToValidate = ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
     }
     if (step === 3) {
       fieldsToValidate = ['paymentMethod'];
@@ -165,88 +237,29 @@ export default function CheckoutClientPage() {
   };
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
-    if (!firestore || !auth) {
-        toast({ title: 'Error', description: 'El servicio no está disponible.', variant: 'destructive' });
+    if (!firestore || !user) {
+        toast({ title: 'Error', description: 'Debes iniciar sesión para completar el pedido.', variant: 'destructive' });
         return;
     }
     setLoading(true);
     toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
-
-    let finalUserId = user?.uid;
-
-    // --- REGISTRATION & LOGIN LOGIC (ONLY FOR GUESTS) ---
-    if (!user) {
-        try {
-            const { name, email, password } = data;
-
-            if (!password) {
-                 toast({ title: 'Error de Registro', description: 'La contraseña es obligatoria.', variant: 'destructive' });
-                 setLoading(false);
-                 setStep(2); // Go back to the form
-                 return;
-            }
-            
-            // 1. Create account
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const newUser = userCredential.user;
-            
-            // 2. Create user document in Firestore
-            const userDocRef = doc(firestore, "users", newUser.uid);
-            await setDoc(userDocRef, { 
-                uid: newUser.uid, 
-                email: newUser.email, 
-                displayName: name, 
-                createdAt: serverTimestamp(), 
-                loyaltyPoints: 0, 
-                isSubscribed: false 
-            });
-
-            // 3. Force sign-in to ensure auth context is updated
-            await signInWithEmailAndPassword(auth, email, password);
-            
-            finalUserId = newUser.uid;
-            toast({ title: "Cuenta Creada", description: "¡Bienvenido! Finalizando tu pedido..." });
-            
-        } catch (error: any) {
-            setLoading(false);
-            if (error.code === 'auth/email-already-in-use') {
-                toast({
-                    title: 'Email ya registrado',
-                    description: 'Este email ya tiene una cuenta. Por favor, inicia sesión para continuar.',
-                    variant: 'destructive',
-                    action: <Button onClick={() => router.push('/login?redirect=/checkout')}>Iniciar Sesión</Button>,
-                    duration: 10000,
-                });
-            } else {
-                toast({ title: 'Error de Registro', description: error.message || 'No se pudo crear la cuenta.', variant: 'destructive' });
-            }
-            return; // Stop execution if registration fails
-        }
-    }
-
-    if (!finalUserId) {
-        setLoading(false);
-        toast({ title: 'Error de Autenticación', description: 'No se pudo verificar tu usuario. Por favor, inicia sesión de nuevo.', variant: 'destructive' });
-        return;
-    }
 
     // --- ORDER CREATION LOGIC ---
     try {
         const orderId = generateOrderCode();
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country };
         const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
-            userId: finalUserId,
+            userId: user.uid,
             status: 'Reserva Recibida',
             total: cartTotal,
             items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
             customerName: data.name,
-            customerEmail: data.email, // Use email from form
+            customerEmail: data.email,
             shippingAddress: shippingAddress,
             paymentMethod: data.paymentMethod,
         };
         
-        // **FIX**: Save order to user's subcollection
-        const orderDocRef = doc(firestore, 'users', finalUserId, 'orders', orderId);
+        const orderDocRef = doc(firestore, 'users', user.uid, 'orders', orderId);
         await setDoc(orderDocRef, { ...orderPayload, createdAt: serverTimestamp() });
 
         const orderSummaryForUI = { ...orderPayload, id: orderId, createdAt: new Date() };
@@ -462,4 +475,3 @@ export default function CheckoutClientPage() {
   );
 }
 
-    
