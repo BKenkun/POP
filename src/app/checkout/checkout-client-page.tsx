@@ -32,14 +32,11 @@ import { useCheckout } from '@/context/checkout-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 // --- Validation Schemas ---
-const registrationSchema = z.object({
+const baseRegistrationSchema = z.object({
     name: z.string().min(3, "El nombre es requerido."),
     email: z.string().email("Por favor, introduce un email válido."),
     password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
     confirmPassword: z.string().min(6, "Debes confirmar la contraseña."),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden.",
-  path: ["confirmPassword"],
 });
 
 const shippingSchema = z.object({
@@ -51,8 +48,12 @@ const shippingSchema = z.object({
   country: z.string().min(2, "El país es requerido."),
 });
 
-// Combined schema for final submission
-const finalCheckoutSchema = registrationSchema.merge(shippingSchema);
+// Combined schema with refinement at the end
+const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).refine(data => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
+});
+
 type CheckoutFormValues = z.infer<typeof finalCheckoutSchema>;
 
 // --- Helper Functions ---
