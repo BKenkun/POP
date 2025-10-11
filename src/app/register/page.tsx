@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,8 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useFirebaseAuth();
+  // 1. Usamos el contexto global para saber si hay un usuario logueado
+  const { auth, user, isUserLoading } = useFirebaseAuth();
   const firestore = useFirestore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,10 +28,23 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [registrationInitiated, setRegistrationInitiated] = useState(false);
+
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // 2. Este useEffect es el encargado de la redirección.
+  // Solo se activa cuando el `user` del contexto global cambia.
+  useEffect(() => {
+    // Si el registro se ha iniciado y el estado de carga del usuario ha terminado, y tenemos un usuario...
+    if (registrationInitiated && !isUserLoading && user) {
+        // ...significa que el login fue exitoso y el contexto se ha actualizado. Ahora SÍ es seguro redirigir.
+        router.push('/register/success');
+    }
+  }, [user, isUserLoading, registrationInitiated, router]);
+
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,30 +62,25 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+    setRegistrationInitiated(true); // Marcamos que hemos iniciado el proceso
 
     try {
-      // 1. Create the user
+      // 3. La función de registro ahora SOLO registra. No redirige.
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const newUser = userCredential.user;
 
-      // 2. Create the user document in Firestore
-      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocRef = doc(firestore, "users", newUser.uid);
       await setDoc(userDocRef, {
-          email: user.email,
-          uid: user.uid,
+          email: newUser.email,
+          uid: newUser.uid,
           createdAt: serverTimestamp(),
-          displayName: user.email?.split('@')[0] || 'Nuevo Usuario',
+          displayName: newUser.email?.split('@')[0] || 'Nuevo Usuario',
           loyaltyPoints: 0,
           isSubscribed: false,
       });
-      
-      // 3. Explicitly sign in to ensure the auth state is updated across the app
-      await signInWithEmailAndPassword(auth, email, password);
-
-      // 4. Redirect to success page ONLY after all operations are successful
-      router.push('/register/success');
-
+      // La redirección ahora es manejada por el useEffect de arriba
     } catch (err: any) {
+      setRegistrationInitiated(false); // Si hay un error, reseteamos el flag.
       let friendlyError = 'Ocurrió un error durante el registro.';
       if (err.code === 'auth/email-already-in-use') {
         friendlyError = 'Este email ya está registrado. Intenta iniciar sesión.';
@@ -84,10 +93,9 @@ export default function RegisterPage() {
         description: friendlyError,
         variant: 'destructive',
       });
-    } finally {
-        // This will run regardless of success or failure
-        setLoading(false);
+      setLoading(false);
     }
+    // No ponemos setLoading(false) en el 'finally' porque esperamos que la redirección ocurra
   };
 
   if (!isClient) {
