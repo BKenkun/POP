@@ -32,7 +32,8 @@ function SuccessContent() {
         return () => {
             clearCheckoutData();
         };
-    }, [checkoutData, clearCheckoutData, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (!checkoutData.orderId || !checkoutData.orderSummary) {
         return (
@@ -150,4 +151,3 @@ export default function CheckoutSuccessPage() {
     );
 }
 
-    
