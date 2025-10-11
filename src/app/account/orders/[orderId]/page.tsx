@@ -23,10 +23,10 @@ export default function UserOrderDetailPage() {
   const firestore = useFirestore();
   
   const orderDocRef = useMemoFirebase(() => {
-    // A user can only view their own order, so we don't need to check guest orders.
+    // A user can only view their own order
     if (!user || !orderId || !firestore) return null;
-    // The document is now in the top-level 'orders' collection.
-    return doc(firestore, 'orders', orderId);
+    // **FIX**: The document is now in the user's subcollection
+    return doc(firestore, 'users', user.uid, 'orders', orderId);
   }, [user, orderId, firestore]);
   
   const { data: order, isLoading } = useDoc<Order>(orderDocRef);
@@ -35,11 +35,7 @@ export default function UserOrderDetailPage() {
     if (!authLoading && !user) {
         router.push('/login'); // Redirect if not logged in
     }
-    // Security check: If order data has loaded and it doesn't belong to the current user, redirect.
-    if (!isLoading && order && order.userId !== user?.uid) {
-        router.replace('/account/orders');
-    }
-  }, [user, authLoading, router, order, isLoading]);
+  }, [user, authLoading, router]);
   
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -166,3 +162,5 @@ export default function UserOrderDetailPage() {
     </div>
   );
 }
+
+    

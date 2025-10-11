@@ -1,8 +1,10 @@
+
 import { db } from '@/lib/firebase-admin';
-import { doc, getDoc, Timestamp } from 'firebase-admin/firestore';
+import { getDoc, Timestamp } from 'firebase-admin/firestore';
 import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { notFound } from 'next/navigation';
+import { getAuth } from 'firebase-admin/auth';
 
 function processFirestoreData(data: { [key: string]: any }): any {
   const processedData: { [key: string]: any } = {};
@@ -19,31 +21,36 @@ function processFirestoreData(data: { [key: string]: any }): any {
   return processedData;
 }
 
+// This function needs to be more robust for admin
 async function getAdminOrderById(orderId: string): Promise<Order | null> {
     if (!orderId) return null;
 
     try {
-        // Try fetching from the new 'orders' collection first
-        let orderRef = doc(db, 'orders', orderId);
-        let docSnap = await getDoc(orderRef);
+        // Since we don't know the user ID, we have to find the order across all users.
+        const ordersQuery = db.collectionGroup('orders').where('id', '==', orderId);
+        const querySnapshot = await ordersQuery.get();
 
-        // If not found, try fetching from the legacy 'reservations' collection
-        if (!docSnap.exists()) {
-            orderRef = doc(db, 'reservations', orderId);
-            docSnap = await getDoc(orderRef);
-        }
-        
-        // If still not found, we might need to search in user subcollections (more complex)
-        // For simplicity, we assume admin has access or it's a guest order for now.
-        // A more robust solution would involve knowing the user ID if it's a user order.
-
-        if (!docSnap.exists()) {
+        if (querySnapshot.empty) {
+            console.warn(`[Admin Order Detail] No order found with ID: ${orderId}`);
             return null;
         }
-        
+
+        // Assuming order IDs are unique, there should be only one doc.
+        const docSnap = querySnapshot.docs[0];
         const orderRaw = docSnap.data();
         const path = docSnap.ref.path;
+        
         const processedData = processFirestoreData(orderRaw);
+        
+        // Let's ensure customer email is present. If not, fetch from auth.
+        if (!processedData.customerEmail && processedData.userId) {
+            try {
+                const userRecord = await getAuth().getUser(processedData.userId);
+                processedData.customerEmail = userRecord.email;
+            } catch (authError) {
+                console.error(`Could not fetch user email for order ${orderId}:`, authError);
+            }
+        }
         
         const sanitizedOrder = {
             ...processedData,
@@ -81,3 +88,5 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
     
     return <OrderDetailsClient initialOrder={serializableOrder as Order} />;
 }
+
+    

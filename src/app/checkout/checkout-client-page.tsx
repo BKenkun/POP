@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserCheck } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserCheck, Banknote, CreditCard, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
@@ -46,23 +47,15 @@ const shippingSchema = z.object({
   state: z.string().min(2, "El estado/provincia es requerido."),
   postalCode: z.string().min(3, "El código postal es requerido."),
   country: z.string().min(2, "El país es requerido."),
+  paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'], {
+    required_error: "Debes seleccionar un método de pago."
+  }),
 });
 
 // Combined schema with conditional validation
-const finalCheckoutSchema = z.object({
-  name: z.string().min(3, "El nombre es requerido."),
-  email: z.string().email("Por favor, introduce un email válido."),
-  password: z.string().optional(),
-  confirmPassword: z.string().optional(),
-  phone: z.string().min(9, "El teléfono es requerido."),
-  street: z.string().min(5, "La calle es requerida."),
-  city: z.string().min(2, "La ciudad es requerida."),
-  state: z.string().min(2, "El estado/provincia es requerido."),
-  postalCode: z.string().min(3, "El código postal es requerido."),
-  country: z.string().min(2, "El país es requerido."),
-}).superRefine((data, ctx) => {
-    // These fields are only required if one of them is filled out (i.e., for guest checkout)
-    if (data.password || data.confirmPassword) {
+const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).superRefine((data, ctx) => {
+    // These fields are only required for guest checkout
+    if (!data.userId) { // A way to check if it's a guest
         if (!data.password || data.password.length < 6) {
              ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -78,6 +71,8 @@ const finalCheckoutSchema = z.object({
             });
         }
     }
+}).extend({
+    userId: z.string().optional() // Add userId to the schema for context
 });
 
 
@@ -94,7 +89,7 @@ const generateOrderCode = (): string => {
 
 // --- Components ---
 const Stepper = ({ currentStep }: { currentStep: number }) => {
-    const steps = [{ number: 1, name: 'Carrito' }, { number: 2, name: 'Tus Datos' }, { number: 3, name: 'Revisión' }];
+    const steps = [{ number: 1, name: 'Carrito' }, { number: 2, name: 'Tus Datos' }, { number: 3, name: 'Pago' }, { number: 4, name: 'Revisión' }];
     return (
         <div className="flex items-center justify-center mb-12">
             {steps.map((step, index) => (
@@ -127,7 +122,7 @@ export default function CheckoutClientPage() {
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(finalCheckoutSchema),
-    defaultValues: { name: '', email: '', password: '', confirmPassword: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'España' },
+    defaultValues: { name: '', email: '', password: '', confirmPassword: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'España', paymentMethod: 'cod_cash' },
   });
   
   const formValues = form.watch();
@@ -142,21 +137,25 @@ export default function CheckoutClientPage() {
     if (user) {
       if (!form.getValues('email')) form.setValue('email', user.email || '');
       if (!form.getValues('name')) form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
+      form.setValue('userId', user.uid); // Set userId for validation context
+    } else {
+      form.setValue('userId', undefined); // Unset for guests
     }
   }, [user, form]);
 
   const handleNextStep = async () => {
+    let fieldsToValidate: (keyof CheckoutFormValues)[] = [];
     if (step === 2) {
-      // Validate all fields for guest, or just shipping for logged-in user
-      const isGuest = !user;
-      const fieldsToValidate: (keyof CheckoutFormValues)[] = isGuest
-        ? ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country']
-        : ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
-      
-      const isValid = await form.trigger(fieldsToValidate);
-      if (isValid) setStep(prev => prev + 1);
-
-    } else { // Step 1 to 2
+      fieldsToValidate = user 
+        ? ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country']
+        : ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+    }
+    if (step === 3) {
+      fieldsToValidate = ['paymentMethod'];
+    }
+    
+    const isValid = fieldsToValidate.length > 0 ? await form.trigger(fieldsToValidate) : true;
+    if (isValid) {
       setStep(prev => prev + 1);
     }
   };
@@ -215,7 +214,7 @@ export default function CheckoutClientPage() {
                     title: 'Email ya registrado',
                     description: 'Este email ya tiene una cuenta. Por favor, inicia sesión para continuar.',
                     variant: 'destructive',
-                    action: <Button onClick={() => router.push('/login')}>Iniciar Sesión</Button>,
+                    action: <Button onClick={() => router.push('/login?redirect=/checkout')}>Iniciar Sesión</Button>,
                     duration: 10000,
                 });
             } else {
@@ -243,14 +242,15 @@ export default function CheckoutClientPage() {
             customerName: data.name,
             customerEmail: data.email, // Use email from form
             shippingAddress: shippingAddress,
-            paymentMethod: 'cod_cash',
+            paymentMethod: data.paymentMethod,
         };
         
-        const orderDocRef = doc(firestore, 'orders', orderId);
+        // **FIX**: Save order to user's subcollection
+        const orderDocRef = doc(firestore, 'users', finalUserId, 'orders', orderId);
         await setDoc(orderDocRef, { ...orderPayload, createdAt: serverTimestamp() });
 
         const orderSummaryForUI = { ...orderPayload, id: orderId, createdAt: new Date() };
-        setCheckoutData({ orderId, paymentMethod: 'cod_cash', orderSummary: orderSummaryForUI as any });
+        setCheckoutData({ orderId, paymentMethod: data.paymentMethod, orderSummary: orderSummaryForUI as any });
         
         clearCart();
         router.push('/checkout/success');
@@ -357,10 +357,53 @@ export default function CheckoutClientPage() {
                     </CardContent>
                 </Card>
             )}
-            
+
             {step === 3 && (
                 <Card>
-                    <CardHeader><CardTitle>3. Revisa y Confirma tu Pedido</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>3. Método de Pago</CardTitle></CardHeader>
+                    <CardContent>
+                        <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                            <FormControl><RadioGroupItem value="cod_cash" /></FormControl>
+                                            <FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Banknote/>Pagar en efectivo contra-entrega</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                            <FormControl><RadioGroupItem value="cod_card" /></FormControl>
+                                            <FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><CreditCard/>Pagar con tarjeta contra-entrega</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                            <FormControl><RadioGroupItem value="cod_bizum" /></FormControl>
+                                            <FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Smartphone/>Pagar con Bizum contra-entrega</FormLabel>
+                                        </FormItem>
+                                        <Separator className="my-4"/>
+                                        <p className="text-sm text-muted-foreground px-1">O paga por adelantado y recibe un regalo:</p>
+                                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                            <FormControl><RadioGroupItem value="prepaid_bizum" /></FormControl>
+                                            <FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Smartphone/>Pago anticipado con Bizum <span className="text-primary font-bold">(+Regalo)</span></FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                            <FormControl><RadioGroupItem value="prepaid_transfer" /></FormControl>
+                                            <FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Banknote/>Pago anticipado con Transferencia <span className="text-primary font-bold">(+Regalo)</span></FormLabel>
+                                        </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </CardContent>
+                </Card>
+            )}
+            
+            {step === 4 && (
+                <Card>
+                    <CardHeader><CardTitle>4. Revisa y Confirma tu Pedido</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <div>
                             <h3 className="font-semibold mb-2">Productos:</h3>
@@ -373,20 +416,33 @@ export default function CheckoutClientPage() {
                             ))}
                         </div>
                         <Separator />
-                        <div>
-                             <h3 className="font-semibold mb-2">Tus Datos:</h3>
-                             <div className="text-sm text-muted-foreground">
-                                 <p>{formValues.name}</p>
-                                 <p>{formValues.email}</p>
-                                 <p>{formValues.phone}</p>
-                                 <p>{formValues.street}</p>
-                                 <p>{formValues.city}, {formValues.state}, {formValues.postalCode}</p>
-                                 <p>{formValues.country}</p>
-                             </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <h3 className="font-semibold mb-2">Tus Datos:</h3>
+                                <div className="text-sm text-muted-foreground">
+                                    <p>{formValues.name}</p>
+                                    <p>{formValues.email}</p>
+                                    <p>{formValues.phone}</p>
+                                    <p>{formValues.street}</p>
+                                    <p>{formValues.city}, {formValues.state}, {formValues.postalCode}</p>
+                                    <p>{formValues.country}</p>
+                                </div>
+                            </div>
+                             <div>
+                                <h3 className="font-semibold mb-2">Método de Pago:</h3>
+                                <div className="text-sm text-muted-foreground">
+                                    <p>{formValues.paymentMethod.replace(/_/g, ' ')}</p>
+                                </div>
+                            </div>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-xl"><span>Total a Pagar</span><span className="text-primary">{formatPrice(cartTotal)}</span></div>
-                         <p className="text-xs text-muted-foreground text-center">El pago se realizará contra-entrega. Revisa tu email para más detalles.</p>
+                         <p className="text-xs text-muted-foreground text-center">
+                            {formValues.paymentMethod.startsWith('prepaid') 
+                                ? 'Recibirás las instrucciones de pago por email.' 
+                                : 'El pago se realizará contra-entrega.'
+                            } Revisa tu email para más detalles.
+                        </p>
                     </CardContent>
                     <CardFooter>
                          <Button size="lg" type="submit" className="w-full" disabled={loading}>
@@ -398,7 +454,7 @@ export default function CheckoutClientPage() {
 
             <div className="mt-8 flex justify-between">
                 {step > 1 ? (<Button type="button" variant="outline" onClick={handlePrevStep}><ArrowLeft className="mr-2" /> Anterior</Button>) : (<Button asChild type="button" variant="outline"><Link href="/products">&larr; Seguir Comprando</Link></Button>)}
-                {step < 3 && (<Button type="button" onClick={handleNextStep} disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Procesando...</> : 'Siguiente'}</Button>)}
+                {step < 4 && (<Button type="button" onClick={handleNextStep} disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Procesando...</> : 'Siguiente'}</Button>)}
             </div>
         </form>
       </Form>
