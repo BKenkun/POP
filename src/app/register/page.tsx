@@ -48,7 +48,6 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // **FIX: Create the user document in Firestore right after registration**
       const userDocRef = doc(firestore, "users", user.uid);
       await setDoc(userDocRef, {
           email: user.email,
@@ -61,9 +60,13 @@ export default function RegisterPage() {
 
       toast({
         title: 'Registro completado',
-        description: 'Tu cuenta ha sido creada. Redirigiendo...',
+        description: '¡Bienvenido! Tu cuenta ha sido creada con éxito.',
       });
-      router.push('/account');
+      
+      // Force a refresh to update auth context across the app, then redirect to a safe page.
+      router.refresh();
+      router.push('/');
+
     } catch (err: any) {
       let friendlyError = 'Ocurrió un error durante el registro.';
       if (err.code === 'auth/email-already-in-use') {
