@@ -1,98 +1,35 @@
-/**
- * @fileOverview Firestore Security Rules for PuroRush.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for personal data while allowing public read access to product information.
- *
- * Data Structure:
- * - /products/{productId}: Publicly accessible product catalog.
- * - /users/{userId}: User profile information, accessible only by the user.
- * - /users/{userId}/shoppingCarts/{cartId}: User-specific shopping cart data, accessible only by the user.
- * - /users/{userId}/orders/{orderId}: User-specific order history, accessible only by the user.
- *
- * Key Security Decisions:
- * - Public read access to the /products collection.
- * - Strict ownership-based access control for all user-related data under /users/{userId}.
- * - Users can only manage their own shopping carts and orders.
- * - Users can only read and write their own user profile.
- */
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Allows public read access to product information. Write access is denied.
-     * @path /products/{productId}
-     * @allow (get, list)
-     * @deny (create, update, delete)
-     * @principle Public read access for product catalog.
-     */
+  
+    // PRODUCTS: Publicly readable, admin writable
     match /products/{productId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'maryandpopper@gmail.com';
     }
 
-    /**
-     * @description Enforces ownership for user profiles. Only the authenticated user can access their own profile.
-     * @path /users/{userId}
-     * @allow (get, create, update, delete, list) User with matching UID. (create)
-     * @deny (get, create, update, delete, list) User with mismatched UID.
-     * @principle Enforces document ownership for user profiles.
-     */
+    // USERS: Users can only read/write their own data.
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false; // Users collection shouldn't be listable
-
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && resource.data.id == userId;
-      allow delete: if isOwner(userId) && resource.data.id == userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
     }
 
-    /**
-     * @description Enforces ownership for shopping carts. Only the authenticated user can access their own shopping carts.
-     * @path /users/{userId}/shoppingCarts/{cartId}
-     * @allow (get, create, update, delete, list) User with matching UID.
-     * @deny (get, create, update, delete, list) User with mismatched UID.
-     * @principle Enforces document ownership for shopping carts.
-     */
-    match /users/{userId}/shoppingCarts/{cartId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isOwner(userId) && resource.data.userId == userId;
-      allow delete: if isOwner(userId) && resource.data.userId == userId;
+    // ORDERS:
+    // - Authenticated users can create/read their own orders.
+    // - Guests (unauthenticated) can create orders if they are marked with userId 'guest'.
+    // - Admins can read/write anything.
+    match /orders/{orderId} {
+      allow read, update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.token.email == 'maryandpopper@gmail.com');
+      allow create: if (request.auth != null && request.auth.uid == request.resource.data.userId) || 
+                       (request.auth == null && request.resource.data.userId == 'guest') ||
+                       (request.auth != null && request.auth.token.email == 'maryandpopper@gmail.com');
     }
 
-    /**
-     * @description Enforces ownership for orders. Only the authenticated user can access their own orders.
-     * @path /users/{userId}/orders/{orderId}
-     * @allow (get, create, update, delete, list) User with matching UID.
-     * @deny (get, create, update, delete, list) User with mismatched UID.
-     * @principle Enforces document ownership for orders.
-     */
-    match /users/{userId}/orders/{orderId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isOwner(userId) && resource.data.userId == userId;
-      allow delete: if isOwner(userId) && resource.data.userId == userId;
+    // USER SUBCOLLECTIONS (Legacy, kept for security)
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
