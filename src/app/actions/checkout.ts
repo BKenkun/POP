@@ -2,7 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase-admin';
-import { doc, setDoc, serverTimestamp } from 'firebase-admin/firestore';
+// Import 'admin' to access the serverTimestamp
+import admin from 'firebase-admin';
 import type { Order } from '@/lib/types';
 import { z } from 'zod';
 import { OrderSchema } from '@/lib/types';
@@ -31,15 +32,18 @@ export async function createGuestReservation(orderId: string, orderPayload: Omit
   }
   
   try {
-    const reservationRef = doc(db, 'reservations', orderId);
+    // Use the admin SDK's methods directly from the 'db' instance
+    const reservationRef = db.collection('reservations').doc(orderId);
     
     // Create the final object to save, including the server-side timestamp
     const reservationData = {
       ...validation.data,
-      createdAt: serverTimestamp(),
+      // Use the correct method for server timestamp from the admin SDK
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await setDoc(reservationRef, reservationData);
+    // Use the 'set' method on the document reference
+    await reservationRef.set(reservationData);
     
     console.log(`✅ Guest reservation ${orderId} created successfully via Server Action.`);
     return { success: true };
@@ -49,5 +53,3 @@ export async function createGuestReservation(orderId: string, orderPayload: Omit
     return { success: false, error: error.message || 'No se pudo guardar la reserva en la base de datos.' };
   }
 }
-
-    
