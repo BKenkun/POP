@@ -70,7 +70,7 @@ export const ShippingAddressSchema = z.object({
 export const OrderSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  createdAt: z.union([z.date(), z.string()]), // Accept Date object from client-side conversion or string from server-side
+  createdAt: z.union([z.date(), z.string(), z.any()]), // Loosened for server/client flexibility
   status: z.enum(['pending', 'shipped', 'delivered', 'cancelled', 'entregado', 'enviado', 'pendiente', 'cancelado', 'Reserva Recibida', 'Pago Pendiente de Verificación']),
   total: z.number(),
   items: z.array(OrderItemSchema),
@@ -80,6 +80,7 @@ export const OrderSchema = z.object({
   paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer']).optional(),
   path: z.string().optional(),
 });
+
 
 export type Order = z.infer<typeof OrderSchema>;
 export type OrderItem = z.infer<typeof OrderItemSchema>;

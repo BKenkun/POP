@@ -41,9 +41,15 @@ const checkoutSchema = z.object({
   state: z.string().min(2, "El estado/provincia es requerido."),
   postalCode: z.string().min(3, "El código postal es requerido."),
   country: z.string().min(2, "El país es requerido."),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
-  confirmPassword: z.string().min(6, "Debes confirmar la contraseña."),
-}).refine(data => data.password === data.confirmPassword, {
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres.").optional(),
+  confirmPassword: z.string().min(6, "Debes confirmar la contraseña.").optional(),
+}).refine(data => {
+    // Make password confirmation conditional
+    if (data.password || data.confirmPassword) {
+        return data.password === data.confirmPassword;
+    }
+    return true; // No validation needed if passwords are not present
+}, {
   message: "Las contraseñas no coinciden.",
   path: ["confirmPassword"],
 });
@@ -106,7 +112,7 @@ export default function CheckoutClientPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
-  const [step, setStep] = React.useState(user ? 1 : 1); // Start at step 1 for all
+  const [step, setStep] = React.useState(1); // Always start at step 1
   const { setCheckoutData } = useCheckout();
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
@@ -143,6 +149,11 @@ export default function CheckoutClientPage() {
       form.setValue('email', user.email || '');
       form.setValue('password', 'dummyPassword'); // Fill with dummy data to pass validation
       form.setValue('confirmPassword', 'dummyPassword');
+    } else {
+        // If user logs out, clear the fields
+        form.setValue('email', '');
+        form.setValue('password', '');
+        form.setValue('confirmPassword', '');
     }
   }, [user, form]);
 
@@ -176,30 +187,34 @@ export default function CheckoutClientPage() {
     });
 
     try {
-        let userId = user?.uid;
-        let userEmail = user?.email;
+        let currentUserId = user?.uid;
+        let currentUserEmail = user?.email;
 
-        // If the user is a guest, create a new account for them
+        // If there's no user, it means this is a registration flow.
         if (!user) {
+            if (!data.password) {
+                throw new Error("La contraseña es requerida para crear una nueva cuenta.");
+            }
             try {
+                // 1. Create the user
                 const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-                userId = userCredential.user.uid;
-                userEmail = userCredential.user.email;
+                currentUserId = userCredential.user.uid;
+                currentUserEmail = userCredential.user.email;
                 
-                // Create user document in Firestore
-                const userDocRef = doc(firestore, "users", userId);
+                // 2. Create user document in Firestore
+                const userDocRef = doc(firestore, "users", currentUserId);
                 await setDoc(userDocRef, {
-                    uid: userId,
-                    email: userEmail,
+                    uid: currentUserId,
+                    email: currentUserEmail,
                     displayName: data.name,
                     createdAt: serverTimestamp(),
                     loyaltyPoints: 0,
                     isSubscribed: false,
                 });
 
-                // Auto-login the new user
-                 await signInWithEmailAndPassword(auth, data.email, data.password);
-                 router.refresh();
+                // 3. Force sign-in again to ensure context is updated before next step.
+                // This is a crucial step to avoid race conditions with auth state.
+                await signInWithEmailAndPassword(auth, data.email, data.password);
 
             } catch (error: any) {
                  if (error.code === 'auth/email-already-in-use') {
@@ -212,11 +227,12 @@ export default function CheckoutClientPage() {
                     setLoading(false);
                     return; // Stop execution
                 }
+                // Re-throw a more user-friendly error for other auth issues
                 throw new Error('No se pudo crear tu cuenta. Revisa los datos.');
             }
         }
         
-        if (!userId) {
+        if (!currentUserId) {
             throw new Error('No se pudo obtener la identificación del usuario para crear el pedido.');
         }
 
@@ -231,9 +247,8 @@ export default function CheckoutClientPage() {
             country: data.country,
         }
 
-        // Now that we have a userId, we can create the order in the `orders` collection
         const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
-            userId: userId,
+            userId: currentUserId,
             status: getOrderStatus(),
             total: cartTotal,
             items: cartItems.map(item => ({
@@ -246,7 +261,7 @@ export default function CheckoutClientPage() {
             customerName: data.name,
             customerEmail: data.email,
             shippingAddress: shippingAddress,
-            paymentMethod: 'cod_cash', // Defaulting to one method as payment selection was removed for simplicity
+            paymentMethod: 'cod_cash',
         };
         
         const orderDocRef = doc(firestore, 'orders', orderId);
