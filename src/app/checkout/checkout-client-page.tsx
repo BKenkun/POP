@@ -53,7 +53,9 @@ const shippingSchema = z.object({
 });
 
 // Combined schema with conditional validation
-const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).superRefine((data, ctx) => {
+const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).extend({
+    userId: z.string().optional() // Add userId to the schema for context
+}).superRefine((data, ctx) => {
     // These fields are only required for guest checkout
     if (!data.userId) { // A way to check if it's a guest
         if (!data.password || data.password.length < 6) {
@@ -71,8 +73,6 @@ const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).superRe
             });
         }
     }
-}).extend({
-    userId: z.string().optional() // Add userId to the schema for context
 });
 
 
