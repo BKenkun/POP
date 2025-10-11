@@ -203,7 +203,14 @@ export default function CheckoutClientPage() {
 
             } catch (error: any) {
                  if (error.code === 'auth/email-already-in-use') {
-                    throw new Error('Este email ya está registrado. Por favor, inicia sesión para completar tu pedido.');
+                    toast({
+                        title: 'Email ya registrado',
+                        description: 'Este email ya tiene una cuenta. Por favor, inicia sesión para completar tu pedido.',
+                        variant: 'destructive',
+                        action: <Button onClick={() => router.push('/login')}>Iniciar Sesión</Button>,
+                    });
+                    setLoading(false);
+                    return; // Stop execution
                 }
                 throw new Error('No se pudo crear tu cuenta. Revisa los datos.');
             }
