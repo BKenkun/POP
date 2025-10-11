@@ -1,18 +1,19 @@
+
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, Truck, Wallet, Check, CreditCard, Banknote, Smartphone, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useAuth } from '@/firebase';
-import { useForm, useWatch } from "react-hook-form";
+import { useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -24,16 +25,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from '@/components/ui/label';
 import { QuantitySelector } from '@/components/quantity-selector';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
-import { createGuestReservation } from '@/app/actions/checkout';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
-
+// Validation schema updated to include password fields
 const checkoutSchema = z.object({
   name: z.string().min(3, "El nombre es requerido."),
   email: z.string().email("Por favor, introduce un email válido."),
@@ -43,21 +41,15 @@ const checkoutSchema = z.object({
   state: z.string().min(2, "El estado/provincia es requerido."),
   postalCode: z.string().min(3, "El código postal es requerido."),
   country: z.string().min(2, "El país es requerido."),
-  paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'], {
-    required_error: "Debes seleccionar un método de pago.",
-  }),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+  confirmPassword: z.string().min(6, "Debes confirmar la contraseña."),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
 });
 
-type CheckoutFormValues = z.infer<typeof checkoutSchema>;
-type PrimaryPaymentMethod = 'cod' | 'prepaid';
 
-const paymentMethodLabels: { [key in CheckoutFormValues['paymentMethod']]: string } = {
-    cod_cash: 'Contra-entrega (Efectivo)',
-    cod_card: 'Contra-entrega (Tarjeta)',
-    cod_bizum: 'Contra-entrega (Bizum)',
-    prepaid_bizum: 'Pago Anticipado (Bizum)',
-    prepaid_transfer: 'Pago Anticipado (Transferencia)',
-}
+type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 const generateOrderCode = (): string => {
   const prefix = "P";
@@ -69,26 +61,17 @@ const generateOrderCode = (): string => {
   return `${prefix}-${result}`;
 }
 
-const getOrderStatus = (paymentMethod: string): string => {
-    switch(paymentMethod) {
-        case 'prepaid_bizum':
-        case 'prepaid_transfer':
-            return 'Pago Pendiente de Verificación';
-        case 'cod_cash':
-        case 'cod_card':
-        case 'cod_bizum':
-        default:
-            return 'Reserva Recibida';
-    }
+const getOrderStatus = (): string => {
+    // All orders now start as 'Reserva Recibida' since they are associated with an account
+    return 'Reserva Recibida';
 }
 
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
     const steps = [
         { number: 1, name: 'Carrito' },
-        { number: 2, name: 'Datos' },
-        { number: 3, name: 'Pago' },
-        { number: 4, name: 'Revisión' },
+        { number: 2, name: 'Tus Datos' },
+        { number: 3, name: 'Revisión' },
     ];
     return (
         <div className="flex items-center justify-center mb-12">
@@ -99,7 +82,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
                             "flex items-center justify-center h-10 w-10 rounded-full border-2 transition-all",
                             currentStep > step.number ? "bg-primary border-primary text-primary-foreground" : (currentStep === step.number ? "border-primary text-primary" : "border-muted text-muted-foreground bg-muted/50")
                         )}>
-                            {currentStep > step.number ? <Check /> : step.number}
+                            {currentStep > step.number ? <User /> : step.number}
                         </div>
                         <p className={cn(
                             "mt-2 text-sm font-medium",
@@ -115,41 +98,19 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
     );
 };
 
-const PaymentOption = ({
-  value,
-  icon: Icon,
-  title,
-  description,
-}: {
-  value: CheckoutFormValues['paymentMethod'];
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) => (
-  <Label
-    htmlFor={value}
-    className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all hover:bg-primary/5 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
-  >
-    <Icon className="h-6 w-6 flex-shrink-0 text-primary" />
-    <div className="flex-1">
-      <p className="font-semibold">{title}</p>
-      <p className="text-xs text-muted-foreground">{description}</p>
-    </div>
-    <RadioGroupItem value={value} id={value} />
-  </Label>
-);
-
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
   const firestore = useFirestore();
-  const { user } = useAuth();
+  const { auth, user } = useFirebaseAuth(); // Get auth instance and existing user
   const { toast } = useToast();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
-  const [primaryPaymentMethod, setPrimaryPaymentMethod] = useState<PrimaryPaymentMethod>('cod');
+  const [loading, setLoading] = React.useState(false);
+  const [step, setStep] = React.useState(user ? 1 : 1); // Start at step 1 for all
   const { setCheckoutData } = useCheckout();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -162,25 +123,35 @@ export default function CheckoutClientPage() {
       state: '',
       postalCode: '',
       country: 'España',
-      paymentMethod: 'cod_cash',
+      password: '',
+      confirmPassword: '',
     },
   });
+  
+  const formValues = form.watch();
 
-  const formValues = useWatch({ control: form.control });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (cartCount === 0 && !loading) {
        router.push('/');
     }
   }, [cartCount, router, loading]);
+  
+   React.useEffect(() => {
+    // If a user is already logged in, pre-fill the email and disable password fields.
+    if (user) {
+      form.setValue('email', user.email || '');
+      form.setValue('password', 'dummyPassword'); // Fill with dummy data to pass validation
+      form.setValue('confirmPassword', 'dummyPassword');
+    }
+  }, [user, form]);
+
 
   const handleNextStep = async () => {
     let isValid = false;
-    if (step === 2) { // Validate shipping details
-        isValid = await form.trigger(['name', 'email', 'phone', 'street', 'city', 'state', 'postalCode', 'country']);
-    } else if (step === 3) { // Validate payment method
-        isValid = await form.trigger('paymentMethod');
-    } else { // Step 1
+    if (step === 2) { // Validate all form fields
+        isValid = await form.trigger();
+    } else { // Step 1 (Cart)
         isValid = true;
     }
     
@@ -193,30 +164,55 @@ export default function CheckoutClientPage() {
       setStep(prev => prev - 1);
   };
   
-  const handlePrimaryPaymentChange = (value: string) => {
-    const newPrimaryMethod = value as PrimaryPaymentMethod;
-    setPrimaryPaymentMethod(newPrimaryMethod);
-    // Set a default sub-option when the main category changes
-    if (newPrimaryMethod === 'cod') {
-        form.setValue('paymentMethod', 'cod_card');
-    } else {
-        form.setValue('paymentMethod', 'prepaid_bizum');
-    }
-  }
-
-
   const onSubmit = async (data: CheckoutFormValues) => {
-    if (!firestore) {
-        toast({ title: 'Error', description: 'La base de datos no está disponible.', variant: 'destructive' });
+    if (!firestore || !auth) {
+        toast({ title: 'Error', description: 'El servicio no está disponible. Inténtalo de nuevo.', variant: 'destructive' });
         return;
     }
     setLoading(true);
     toast({
-        title: 'Procesando tu reserva...',
+        title: 'Procesando tu pedido...',
         description: 'Por favor, espera un momento.',
     });
 
     try {
+        let userId = user?.uid;
+        let userEmail = user?.email;
+
+        // If the user is a guest, create a new account for them
+        if (!user) {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+                userId = userCredential.user.uid;
+                userEmail = userCredential.user.email;
+                
+                // Create user document in Firestore
+                const userDocRef = doc(firestore, "users", userId);
+                await setDoc(userDocRef, {
+                    uid: userId,
+                    email: userEmail,
+                    displayName: data.name,
+                    createdAt: serverTimestamp(),
+                    loyaltyPoints: 0,
+                    isSubscribed: false,
+                });
+
+                // Auto-login the new user
+                 await signInWithEmailAndPassword(auth, data.email, data.password);
+                 router.refresh();
+
+            } catch (error: any) {
+                 if (error.code === 'auth/email-already-in-use') {
+                    throw new Error('Este email ya está registrado. Por favor, inicia sesión para completar tu pedido.');
+                }
+                throw new Error('No se pudo crear tu cuenta. Revisa los datos.');
+            }
+        }
+        
+        if (!userId) {
+            throw new Error('No se pudo obtener la identificación del usuario para crear el pedido.');
+        }
+
         const orderId = generateOrderCode();
         
         const shippingAddress: ShippingAddress = {
@@ -228,9 +224,10 @@ export default function CheckoutClientPage() {
             country: data.country,
         }
 
+        // Now that we have a userId, we can create the order in the `orders` collection
         const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
-            userId: user?.uid || 'guest',
-            status: getOrderStatus(data.paymentMethod),
+            userId: userId,
+            status: getOrderStatus(),
             total: cartTotal,
             items: cartItems.map(item => ({
                 productId: item.id,
@@ -242,50 +239,38 @@ export default function CheckoutClientPage() {
             customerName: data.name,
             customerEmail: data.email,
             shippingAddress: shippingAddress,
-            paymentMethod: data.paymentMethod,
+            paymentMethod: 'cod_cash', // Defaulting to one method as payment selection was removed for simplicity
         };
         
-        // This is the order summary for the success page, it lacks serverTimestamp
+        const orderDocRef = doc(firestore, 'orders', orderId);
+        await setDoc(orderDocRef, {
+            ...orderPayload,
+            createdAt: serverTimestamp(),
+        });
+
         const orderSummaryForUI = {
             ...orderPayload,
             id: orderId,
-            createdAt: new Date(), // Use client date for immediate UI
-        }
-
-        if (user) {
-            // User is registered, write to their subcollection
-            const orderDocRef = doc(firestore, 'orders', orderId);
-            await setDoc(orderDocRef, {
-                ...orderPayload,
-                createdAt: serverTimestamp(),
-            });
-        } else {
-            // User is a guest, call the server action
-            const result = await createGuestReservation(orderId, orderPayload);
-            if (!result.success) {
-                throw new Error(result.error || 'No se pudo crear la reserva en el servidor.');
-            }
+            createdAt: new Date(),
         }
         
-        // Set data for the success page
         setCheckoutData({
             orderId,
-            paymentMethod: data.paymentMethod,
+            paymentMethod: 'cod_cash',
             orderSummary: orderSummaryForUI as any,
         });
         
         clearCart();
-        
         router.push('/checkout/success');
 
     } catch (error: any) {
-        console.error("Reservation Error: ", error);
+        console.error("Order Error: ", error);
         toast({
-            title: 'Error en la Reserva',
+            title: 'Error al realizar el pedido',
             description: error.message || 'Ocurrió un error. Por favor, inténtalo de nuevo.',
             variant: 'destructive',
         });
-        setLoading(false); // Only set loading to false on error
+        setLoading(false);
     }
   };
 
@@ -301,7 +286,7 @@ export default function CheckoutClientPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Finalizar Reserva</h1>
+      <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Finalizar Pedido</h1>
       <Stepper currentStep={step} />
 
       <Form {...form}>
@@ -339,13 +324,16 @@ export default function CheckoutClientPage() {
 
              {step === 2 && (
                 <Card>
-                    <CardHeader><CardTitle>2. Tus Datos de Entrega</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle>2. Tus Datos</CardTitle>
+                        { !user && <p className="text-muted-foreground">Crea una cuenta para finalizar tu pedido y disfrutar de beneficios.</p> }
+                    </CardHeader>
                     <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                          <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem className="md:col-span-2"><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="email" render={({ field }) => (
-                            <FormItem><FormLabel><Mail className="inline-block mr-2"/>Email de Contacto</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel><Mail className="inline-block mr-2"/>Email</FormLabel><FormControl><Input type="email" {...field} disabled={!!user} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="phone" render={({ field }) => (
                             <FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
@@ -365,69 +353,35 @@ export default function CheckoutClientPage() {
                         <FormField control={form.control} name="country" render={({ field }) => (
                             <FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        
+                        {!user && (
+                            <>
+                                <Separator className="md:col-span-2" />
+                                <FormField control={form.control} name="password" render={({ field }) => (
+                                    <FormItem><FormLabel><Lock className="inline-block mr-2" />Crear Contraseña</FormLabel>
+                                        <FormControl><div className="relative">
+                                            <Input type={showPassword ? 'text' : 'password'} {...field} className="pr-10" />
+                                            <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowPassword(!showPassword)}><EyeOff className={cn(showPassword ? 'block' : 'hidden')} /><Eye className={cn(showPassword ? 'hidden' : 'block')} /></Button>
+                                        </div></FormControl>
+                                    <FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                                    <FormItem><FormLabel>Confirmar Contraseña</FormLabel>
+                                        <FormControl><div className="relative">
+                                             <Input type={showConfirmPassword ? 'text' : 'password'} {...field} className="pr-10" />
+                                             <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><EyeOff className={cn(showConfirmPassword ? 'block' : 'hidden')} /><Eye className={cn(showConfirmPassword ? 'hidden' : 'block')} /></Button>
+                                        </div></FormControl>
+                                    <FormMessage /></FormItem>
+                                )} />
+                            </>
+                        )}
                     </CardContent>
                 </Card>
             )}
             
             {step === 3 && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle>3. Método de Pago</CardTitle>
-                        <CardDescription>Elige cómo quieres pagar tu pedido.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <RadioGroup 
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                            value={primaryPaymentMethod}
-                            onValueChange={handlePrimaryPaymentChange}
-                        >
-                            <Label className={cn("flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all", primaryPaymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-muted')}>
-                                <RadioGroupItem value="cod" id="cod" className="sr-only" />
-                                <Truck className="h-8 w-8 mb-2" />
-                                <span className="font-bold text-lg">Pago Contra-entrega</span>
-                            </Label>
-                            <Label className={cn("flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all", primaryPaymentMethod === 'prepaid' ? 'border-primary bg-primary/5' : 'border-muted')}>
-                                <RadioGroupItem value="prepaid" id="prepaid" className="sr-only" />
-                                <Wallet className="h-8 w-8 mb-2" />
-                                <span className="font-bold text-lg">Pago Anticipado</span>
-                            </Label>
-                        </RadioGroup>
-                        
-                        <Separator />
-
-                        <FormField
-                            control={form.control}
-                            name="paymentMethod"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
-                                            <Collapsible open={primaryPaymentMethod === 'cod'}>
-                                                <CollapsibleContent className="space-y-4">
-                                                     <PaymentOption value="cod_card" icon={CreditCard} title="Pagar con Tarjeta" description="El repartidor llevará un TPV móvil."/>
-                                                     <PaymentOption value="cod_cash" icon={Banknote} title="Pagar en Efectivo" description="Ten preparado el importe exacto para el repartidor."/>
-                                                     <PaymentOption value="cod_bizum" icon={Smartphone} title="Pagar con Bizum en la entrega" description="Paga con Bizum cuando recibas el paquete."/>
-                                                </CollapsibleContent>
-                                            </Collapsible>
-                                            <Collapsible open={primaryPaymentMethod === 'prepaid'}>
-                                                <CollapsibleContent className="space-y-4">
-                                                     <PaymentOption value="prepaid_bizum" icon={Smartphone} title="Pagar con Bizum (Anticipado)" description="Recibirás un email con nuestro número de teléfono."/>
-                                                     <PaymentOption value="prepaid_transfer" icon={Banknote} title="Pagar por Transferencia (Anticipado)" description="Recibirás un email con nuestro número de cuenta (IBAN)."/>
-                                                </CollapsibleContent>
-                                            </Collapsible>
-                                        </RadioGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </CardContent>
-                </Card>
-            )}
-
-            {step === 4 && (
-                <Card>
-                    <CardHeader><CardTitle>4. Revisa y Confirma tu Reserva</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>3. Revisa y Confirma tu Pedido</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <div>
                             <h3 className="font-semibold mb-2">Productos:</h3>
@@ -446,7 +400,7 @@ export default function CheckoutClientPage() {
                         </div>
                         <Separator />
                         <div>
-                             <h3 className="font-semibold mb-2">Datos de Entrega:</h3>
+                             <h3 className="font-semibold mb-2">Tus Datos:</h3>
                              <div className="text-sm text-muted-foreground">
                                  <p>{formValues.name}</p>
                                  <p>{formValues.email}</p>
@@ -456,21 +410,17 @@ export default function CheckoutClientPage() {
                                  <p>{formValues.country}</p>
                              </div>
                         </div>
-                         <Separator />
-                        <div>
-                            <h3 className="font-semibold mb-2">Método de Pago:</h3>
-                             <p className="text-sm text-muted-foreground">{paymentMethodLabels[formValues.paymentMethod]}</p>
-                        </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-xl">
                             <span>Total a Pagar</span>
                             <span className="text-primary">{formatPrice(cartTotal)}</span>
                         </div>
+                         <p className="text-xs text-muted-foreground text-center">El pago se realizará contra-entrega. Revisa tu email para más detalles.</p>
                     </CardContent>
                     <CardFooter>
                          <Button size="lg" type="submit" className="w-full" disabled={loading}>
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null }
-                            {loading ? 'Confirmando...' : 'Confirmar Reserva'}
+                            {loading ? 'Confirmando...' : 'Confirmar Pedido'}
                         </Button>
                     </CardFooter>
                 </Card>
@@ -486,7 +436,7 @@ export default function CheckoutClientPage() {
                         <Link href="/products">&larr; Seguir Comprando</Link>
                     </Button>
                 )}
-                 {step < 4 && (
+                 {step < 3 && (
                     <Button type="button" onClick={handleNextStep}>
                         Siguiente
                     </Button>
@@ -498,4 +448,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
     
