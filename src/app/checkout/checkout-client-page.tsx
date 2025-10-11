@@ -112,11 +112,13 @@ export default function CheckoutClientPage() {
     }
   }, [cartCount, router, loading, isUserLoading]);
   
+  // This effect now handles the transition from registration to shipping form
   useEffect(() => {
     if (user) {
-      form.setValue('email', user.email || '');
-      form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
-      setDataStep('shipping'); // If user is logged in, skip registration form
+      if (!form.getValues('email')) form.setValue('email', user.email || '');
+      if (!form.getValues('name')) form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
+      // If the user is logged in, move to the shipping data step.
+      setDataStep('shipping'); 
     } else {
       setDataStep('register');
     }
@@ -127,7 +129,10 @@ export default function CheckoutClientPage() {
       let isValid = false;
       if (dataStep === 'register') {
         isValid = await form.trigger(['name', 'email', 'password', 'confirmPassword']);
-        if (isValid) await handleRegistration();
+        if (isValid) {
+            await handleRegistration();
+            // The useEffect will now handle moving to the 'shipping' dataStep
+        }
       } else { // shipping
         isValid = await form.trigger(['phone', 'street', 'city', 'state', 'postalCode', 'country']);
         if (isValid) setStep(prev => prev + 1);
@@ -157,14 +162,15 @@ export default function CheckoutClientPage() {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password!);
         const newUser = userCredential.user;
+        
         const userDocRef = doc(firestore, "users", newUser.uid);
         await setDoc(userDocRef, { uid: newUser.uid, email: newUser.email, displayName: name, createdAt: serverTimestamp(), loyaltyPoints: 0, isSubscribed: false });
         
-        // Force sign-in again to ensure context updates
+        // Force sign-in again to ensure context updates robustly
         await signInWithEmailAndPassword(auth, email, password!);
 
         toast({ title: "Cuenta Creada", description: "Ahora completa tus datos de envío." });
-        setDataStep('shipping'); // Move to next part of the form
+        // The useEffect hook watching `user` will automatically change the dataStep to 'shipping'.
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
             toast({ title: 'Email ya registrado', description: 'Este email ya tiene una cuenta. Por favor, inicia sesión.', variant: 'destructive', action: <Button onClick={() => router.push('/login')}>Iniciar Sesión</Button> });
@@ -353,3 +359,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
