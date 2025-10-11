@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
@@ -25,6 +26,12 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This ensures the component only fully renders on the client, avoiding hydration errors.
+    setIsClient(true);
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +83,11 @@ export default function RegisterPage() {
       setLoading(false); // Only set loading to false on error
     }
   };
+
+  // Render a placeholder or nothing until the component is mounted on the client
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="flex items-center justify-center py-12">
