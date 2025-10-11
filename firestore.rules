@@ -3,33 +3,48 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // PRODUCTS: Publicly readable, admin writable
+
+    // Helper function to check if a user is an admin
+    function isAdmin(userId) {
+      // Ensure we don't crash on non-existent users
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
+    }
+
+    // Products are publicly readable
     match /products/{productId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email == 'maryandpopper@gmail.com';
+      // Write access should be restricted to admins in a real app
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // USERS: Users can only read/write their own data.
+    // Users can read/write their own data. Admins can read any user's data.
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      allow read, update, write: if request.auth.uid == userId;
+      allow get, list: if request.auth != null && isAdmin(request.auth.uid);
+      
+      // Orders are private to the user, but readable by admins
+      match /orders/{orderId} {
+        allow read, write: if request.auth.uid == userId;
+        allow get, list: if request.auth != null && isAdmin(request.auth.uid);
+      }
     }
-
-    // ORDERS:
-    // - Authenticated users can create/read their own orders.
-    // - Guests (unauthenticated) can create orders if they are marked with userId 'guest'.
-    // - Admins can read/write anything.
+    
+    // Top-level orders collection for unified admin view
     match /orders/{orderId} {
-      allow read, update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.token.email == 'maryandpopper@gmail.com');
-      allow create: if (request.auth != null && request.auth.uid == request.resource.data.userId) || 
-                       (request.auth == null && request.resource.data.userId == 'guest') ||
-                       (request.auth != null && request.auth.token.email == 'maryandpopper@gmail.com');
+        // Users can create their own orders
+        allow create: if request.auth.uid == request.resource.data.userId;
+        // Users can read their own orders, Admins can read any
+        allow read: if (request.auth.uid == resource.data.userId) || (request.auth != null && isAdmin(request.auth.uid));
+        // Only admins can update/delete
+        allow update, delete: if request.auth != null && isAdmin(request.auth.uid);
     }
-
-    // USER SUBCOLLECTIONS (Legacy, kept for security)
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    
+    // Guest reservations can be created by anyone (unauthenticated)
+    match /reservations/{reservationId} {
+        allow create: if request.auth == null;
+        // Only admins should be able to read/update/delete them
+        allow read, update, delete: if request.auth != null && isAdmin(request.auth.uid);
     }
   }
 }
