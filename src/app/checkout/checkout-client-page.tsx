@@ -35,8 +35,8 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 const baseRegistrationSchema = z.object({
     name: z.string().min(3, "El nombre es requerido."),
     email: z.string().email("Por favor, introduce un email válido."),
-    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
-    confirmPassword: z.string().min(6, "Debes confirmar la contraseña."),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres.").optional(),
+    confirmPassword: z.string().min(6, "Debes confirmar la contraseña.").optional(),
 });
 
 const shippingSchema = z.object({
@@ -48,11 +48,38 @@ const shippingSchema = z.object({
   country: z.string().min(2, "El país es requerido."),
 });
 
-// Combined schema with refinement at the end
-const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).refine(data => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden.",
-  path: ["confirmPassword"],
+// Combined schema with conditional validation
+const finalCheckoutSchema = z.object({
+  name: z.string().min(3, "El nombre es requerido."),
+  email: z.string().email("Por favor, introduce un email válido."),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+  phone: z.string().min(9, "El teléfono es requerido."),
+  street: z.string().min(5, "La calle es requerida."),
+  city: z.string().min(2, "La ciudad es requerida."),
+  state: z.string().min(2, "El estado/provincia es requerido."),
+  postalCode: z.string().min(3, "El código postal es requerido."),
+  country: z.string().min(2, "El país es requerido."),
+}).superRefine((data, ctx) => {
+    // These fields are only required if one of them is filled out (i.e., for guest checkout)
+    if (data.password || data.confirmPassword) {
+        if (!data.password || data.password.length < 6) {
+             ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "La contraseña debe tener al menos 6 caracteres.",
+                path: ["password"],
+            });
+        }
+        if (data.password !== data.confirmPassword) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Las contraseñas no coinciden.",
+                path: ["confirmPassword"],
+            });
+        }
+    }
 });
+
 
 type CheckoutFormValues = z.infer<typeof finalCheckoutSchema>;
 
@@ -120,9 +147,11 @@ export default function CheckoutClientPage() {
 
   const handleNextStep = async () => {
     if (step === 2) {
-      const fieldsToValidate: (keyof CheckoutFormValues)[] = user 
-        ? ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country']
-        : ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+      // Validate all fields for guest, or just shipping for logged-in user
+      const isGuest = !user;
+      const fieldsToValidate: (keyof CheckoutFormValues)[] = isGuest
+        ? ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country']
+        : ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
       
       const isValid = await form.trigger(fieldsToValidate);
       if (isValid) setStep(prev => prev + 1);
@@ -150,6 +179,13 @@ export default function CheckoutClientPage() {
     if (!user) {
         try {
             const { name, email, password } = data;
+
+            if (!password) {
+                 toast({ title: 'Error de Registro', description: 'La contraseña es obligatoria.', variant: 'destructive' });
+                 setLoading(false);
+                 setStep(2); // Go back to the form
+                 return;
+            }
             
             // 1. Create account
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -305,7 +341,12 @@ export default function CheckoutClientPage() {
                             </>
                         )}
                         <h3 className="font-bold text-lg">Dirección de Envío</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             {user && ( // Only show Name for logged-in users, as guests fill it above
+                                 <FormField control={form.control} name="name" render={({ field }) => (
+                                    <FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                             )}
                              <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                              <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>)} />
                              <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -364,3 +405,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
