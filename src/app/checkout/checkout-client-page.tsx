@@ -31,6 +31,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
+import { createGuestReservation } from '@/app/actions/checkout';
 
 
 const checkoutSchema = z.object({
@@ -227,8 +228,7 @@ export default function CheckoutClientPage() {
             country: data.country,
         }
 
-        const newOrder: Omit<Order, 'createdAt'> & { createdAt: any } = {
-            id: orderId,
+        const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
             userId: user?.uid || 'guest',
             status: getOrderStatus(data.paymentMethod),
             total: cartTotal,
@@ -243,18 +243,35 @@ export default function CheckoutClientPage() {
             customerEmail: data.email,
             shippingAddress: shippingAddress,
             paymentMethod: data.paymentMethod,
-            createdAt: serverTimestamp(),
         };
+        
+        // This is the order summary for the success page, it lacks serverTimestamp
+        const orderSummaryForUI = {
+            ...orderPayload,
+            id: orderId,
+            createdAt: new Date(), // Use client date for immediate UI
+        }
 
-        const collectionName = user ? 'orders' : 'reservations';
-        const orderDocRef = doc(firestore, collectionName, orderId);
-        await setDoc(orderDocRef, newOrder);
+        if (user) {
+            // User is registered, write to their subcollection
+            const orderDocRef = doc(firestore, 'orders', orderId);
+            await setDoc(orderDocRef, {
+                ...orderPayload,
+                createdAt: serverTimestamp(),
+            });
+        } else {
+            // User is a guest, call the server action
+            const result = await createGuestReservation(orderId, orderPayload);
+            if (!result.success) {
+                throw new Error(result.error || 'No se pudo crear la reserva en el servidor.');
+            }
+        }
         
         // Set data for the success page
         setCheckoutData({
             orderId,
             paymentMethod: data.paymentMethod,
-            orderSummary: newOrder,
+            orderSummary: orderSummaryForUI as any,
         });
         
         clearCart();
@@ -481,3 +498,4 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+    
