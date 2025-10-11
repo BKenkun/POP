@@ -24,13 +24,13 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
 
     try {
         // Try fetching from the new 'orders' collection first
-        const orderRef = doc(db, 'orders', orderId);
+        let orderRef = doc(db, 'orders', orderId);
         let docSnap = await getDoc(orderRef);
 
         // If not found, try fetching from the legacy 'reservations' collection
         if (!docSnap.exists()) {
-            const reservationRef = doc(db, 'reservations', orderId);
-            docSnap = await getDoc(reservationRef);
+            orderRef = doc(db, 'reservations', orderId);
+            docSnap = await getDoc(orderRef);
         }
         
         // If still not found, we might need to search in user subcollections (more complex)

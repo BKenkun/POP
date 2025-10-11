@@ -25,21 +25,17 @@ function processFirestoreData(data: { [key: string]: any }): any {
 
 async function getAllAdminOrders(): Promise<Order[]> {
     try {
-        // Query 1: Get all orders from the 'orders' collection group (for registered users)
-        const userOrdersQuery = db.collectionGroup('orders');
+        // Query 1: Get all orders from the top-level 'orders' collection (for registered users)
+        const userOrdersQuery = db.collection('orders');
         const userOrdersSnap = await userOrdersQuery.get();
 
         // Query 2: Get all reservations from the top-level 'reservations' collection (for guests)
         const guestReservationsQuery = db.collection('reservations');
         const guestReservationsSnap = await guestReservationsQuery.get();
-        
-        // Query 3: Get all orders from the top-level 'orders' collection (new unified structure)
-        const newOrdersQuery = db.collection('orders');
-        const newOrdersSnap = await newOrdersQuery.get();
 
         const allOrdersRaw: any[] = [];
 
-        // Process user orders from subcollections
+        // Process user orders
         userOrdersSnap.forEach((doc) => {
             allOrdersRaw.push({
                 ...processFirestoreData(doc.data()),
@@ -55,15 +51,6 @@ async function getAllAdminOrders(): Promise<Order[]> {
                 id: doc.id,
                 path: doc.ref.path,
                 userId: 'guest' // Explicitly mark as guest
-            });
-        });
-        
-        // Process new unified orders
-        newOrdersSnap.forEach((doc) => {
-            allOrdersRaw.push({
-                ...processFirestoreData(doc.data()),
-                id: doc.id,
-                path: doc.ref.path,
             });
         });
         

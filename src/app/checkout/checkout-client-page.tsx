@@ -246,8 +246,8 @@ export default function CheckoutClientPage() {
             createdAt: serverTimestamp(),
         };
 
-        // All orders now go to the top-level 'orders' collection
-        const orderDocRef = doc(firestore, 'orders', orderId);
+        const collectionName = user ? 'orders' : 'reservations';
+        const orderDocRef = doc(firestore, collectionName, orderId);
         await setDoc(orderDocRef, newOrder);
         
         // Set data for the success page
@@ -481,5 +481,3 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
-
-    
