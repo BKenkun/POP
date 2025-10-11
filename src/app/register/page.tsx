@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -58,14 +57,8 @@ export default function RegisterPage() {
           isSubscribed: false,
       });
 
-      toast({
-        title: 'Registro completado',
-        description: '¡Bienvenido! Tu cuenta ha sido creada con éxito.',
-      });
-      
-      // Force a refresh to update auth context across the app, then redirect to a safe page.
-      router.refresh();
-      router.push('/');
+      // On success, redirect to a dedicated success page
+      router.push('/register/success');
 
     } catch (err: any) {
       let friendlyError = 'Ocurrió un error durante el registro.';
@@ -80,8 +73,7 @@ export default function RegisterPage() {
         description: friendlyError,
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false on error
     }
   };
 
