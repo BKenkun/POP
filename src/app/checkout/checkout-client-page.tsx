@@ -201,7 +201,7 @@ export default function CheckoutClientPage() {
                 currentUserId = userCredential.user.uid;
                 currentUserEmail = userCredential.user.email;
                 
-                // 2. Create user document in Firestore
+                // 2. Create user document in Firestore - CRITICAL FIX
                 const userDocRef = doc(firestore, "users", currentUserId);
                 await setDoc(userDocRef, {
                     uid: currentUserId,
