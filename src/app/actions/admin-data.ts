@@ -4,10 +4,7 @@
 import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Order } from '@/lib/types';
-import { doc, updateDoc } from 'firebase/firestore';
-import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { OrderSchema } from '@/lib/types';
-
 
 // --- Data Processing Helper ---
 function processFirestoreData<T>(data: any): T {
@@ -23,7 +20,6 @@ function processFirestoreData<T>(data: any): T {
     
     return data as T;
 }
-
 
 // --- Server Actions ---
 
@@ -106,14 +102,6 @@ export async function updateOrderStatus(orderPath: string, newStatus: string): P
     }
     
     try {
-        // Here we use the standard client SDK because this function is called from the client component.
-        // The security rules should allow an admin to update any order.
-        // To do this server-side, we would need a dedicated server action.
-        // For simplicity, we assume rules allow this.
-        
-        // This is a placeholder as we can't import the client `db` here.
-        // The actual update will be done with the client SDK in the component.
-        // Let's create a real server-side update action.
         const docRef = db.doc(orderPath);
         await docRef.update({ status: newStatus });
         return { success: true };
@@ -123,32 +111,3 @@ export async function updateOrderStatus(orderPath: string, newStatus: string): P
         return { success: false, error: error.message || 'Ocurrió un error desconocido.' };
     }
 }
-
-interface SafeCustomer {
-    uid: string;
-    email?: string;
-    displayName?: string;
-    photoURL?: string;
-    disabled: boolean;
-    creationTime: string;
-}
-
-export async function getAllAdminCustomers(): Promise<SafeCustomer[]> {
-    try {
-        const auth = getAuth();
-        const listUsersResult = await auth.listUsers();
-        
-        return listUsersResult.users.map((userRecord: UserRecord) => ({
-            uid: userRecord.uid,
-            email: userRecord.email,
-            displayName: userRecord.displayName,
-            photoURL: userRecord.photoURL,
-            disabled: userRecord.disabled,
-            creationTime: userRecord.metadata.creationTime,
-        }));
-    } catch (error) {
-        console.error('Error fetching users from Firebase Auth:', error);
-        return [];
-    }
-}
-
