@@ -1,35 +1,18 @@
 
-'use client';
-
-import { Order } from '@/lib/types';
+import { notFound } from 'next/navigation';
+import { getAdminOrderById } from '@/app/actions/admin-data';
 import OrderDetailsClient from './order-details-client';
-import { notFound, useParams } from 'next/navigation';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collectionGroup, query, where } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
-export default function OrderDetailPage() {
-    const params = useParams();
-    const orderId = params.orderId as string;
-    const firestore = useFirestore();
+// --- Componente Contenedor (Servidor) ---
+// Responsabilidad: Obtener y sanear los datos de un pedido específico.
+export default async function OrderDetailPage({ params }: { params: { orderId: string } }) {
+    const { orderId } = params;
+    const order = await getAdminOrderById(orderId);
 
-    const orderQuery = useMemoFirebase(() => {
-        if (!firestore || !orderId) return null;
-        // Since we don't know the userId, we query the collection group
-        return query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
-    }, [firestore, orderId]);
-
-    const { data: orders, isLoading } = useCollection<Order>(orderQuery);
-
-    if (isLoading) {
-        return <div className="flex justify-center items-center h-60"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-    }
-
-    if (!orders || orders.length === 0) {
-        // Use notFound() for a standard 404 page, or return a custom component.
+    if (!order) {
         return (
             <div className="text-center space-y-4">
                 <h2 className="text-2xl font-bold">Pedido no encontrado</h2>
@@ -44,13 +27,5 @@ export default function OrderDetailPage() {
         );
     }
     
-    // There should only be one order with a unique ID
-    const order = orders[0];
-    // Reconstruct the path for update operations
-    const orderWithPath = {
-        ...order,
-        path: `users/${order.userId}/orders/${order.id}`,
-    };
-
-    return <OrderDetailsClient initialOrder={orderWithPath} />;
+    return <OrderDetailsClient initialOrder={order} />;
 }
