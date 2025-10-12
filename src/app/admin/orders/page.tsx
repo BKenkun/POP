@@ -1,13 +1,12 @@
 
 import { Order, OrderSchema } from "@/lib/types";
-// ¡IMPORTANTE! Importamos desde el nuevo archivo de admin para usar el SDK de Administrador
 import { db } from '@/lib/firebase-admin'; 
 import { Timestamp } from 'firebase-admin/firestore';
 import OrdersClientPage from './orders-client-page';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
-// Esta función convierte Timestamps de Firestore a strings ISO serializables
+// This function converts Firestore Timestamps to ISO strings serializable for the client.
 function processFirestoreData(data: { [key: string]: any }): any {
   const processedData: { [key: string]: any } = {};
   for (const key in data) {
@@ -25,26 +24,27 @@ function processFirestoreData(data: { [key: string]: any }): any {
 
 async function getAllAdminOrders(): Promise<Order[]> {
     try {
-        // **FIX**: Use a collectionGroup query to get all orders from all user subcollections
-        const ordersQuery = db.collectionGroup('orders');
+        const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
         const ordersSnap = await ordersQuery.get();
 
-        const allOrdersRaw: any[] = [];
+        if (ordersSnap.empty) {
+            console.log("No orders found in the database.");
+            return [];
+        }
 
-        ordersSnap.forEach((doc) => {
-            allOrdersRaw.push({
-                ...processFirestoreData(doc.data()),
+        const allOrders = ordersSnap.docs.map((doc) => {
+            const rawData = doc.data();
+            const processed = processFirestoreData(rawData);
+            return {
+                ...processed,
                 id: doc.id,
                 path: doc.ref.path,
-            });
+            };
         });
-        
-        const validatedOrders = allOrdersRaw.reduce((acc: Order[], rawOrder: any) => {
-            const result = OrderSchema.safeParse({
-                ...rawOrder,
-                createdAt: rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date(0),
-            });
-            
+
+        // Validate each object with Zod. This filters out any malformed data.
+        const validatedOrders = allOrders.reduce((acc: Order[], rawOrder: any) => {
+            const result = OrderSchema.safeParse(rawOrder);
             if (result.success) {
                 acc.push(result.data as Order);
             } else {
@@ -52,24 +52,14 @@ async function getAllAdminOrders(): Promise<Order[]> {
             }
             return acc;
         }, []);
-
-        // Sort all combined orders by creation date, descending
-        validatedOrders.sort((a, b) => {
-            const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
-            const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
-            return dateB - dateA;
-        });
         
-        const serializableOrders = validatedOrders.map(order => ({
-            ...order,
-            createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString()
-        }));
-        
-        return serializableOrders as Order[];
+        return validatedOrders;
 
     } catch (error) {
         console.error("❌ Critical error fetching orders from Firestore.", error);
-        throw error; // Propagate error to be caught by Next.js error boundary
+        // Propagate error to be caught by Next.js error boundary.
+        // This will display the `error.tsx` file to the user.
+        throw new Error("Failed to fetch orders from database. Please check server logs.");
     }
 }
 
@@ -100,5 +90,3 @@ export default async function AdminOrdersPage() {
     </div>
   );
 }
-
-    

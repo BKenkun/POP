@@ -1,25 +1,30 @@
 
 import { db } from '@/lib/firebase-admin';
-import { getDoc, Timestamp } from 'firebase-admin/firestore';
 import { Order, OrderSchema } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { notFound } from 'next/navigation';
 import { getAuth } from 'firebase-admin/auth';
+import { Timestamp } from 'firebase-admin/firestore';
 
+// Helper function to convert Firestore Timestamps to serializable format (ISO strings)
+// This is safe to use as it handles nested objects and arrays.
 function processFirestoreData(data: { [key: string]: any }): any {
-  const processedData: { [key: string]: any } = {};
-  for (const key in data) {
-    const value = data[key];
-    if (value instanceof Timestamp) {
-      processedData[key] = value.toDate();
-    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      processedData[key] = processFirestoreData(value);
-    } else {
-      processedData[key] = value;
+    if (!data) return data;
+    const processedData: { [key:string]: any } = {};
+    for (const key in data) {
+        const value = data[key];
+        if (value instanceof Timestamp) {
+            // Convert Timestamp to ISO string for serialization
+            processedData[key] = value.toDate().toISOString();
+        } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+            processedData[key] = processFirestoreData(value);
+        } else {
+            processedData[key] = value;
+        }
     }
-  }
-  return processedData;
+    return processedData;
 }
+
 
 // This function needs to be more robust for admin
 async function getAdminOrderById(orderId: string): Promise<Order | null> {
@@ -52,13 +57,13 @@ async function getAdminOrderById(orderId: string): Promise<Order | null> {
             }
         }
         
-        const sanitizedOrder = {
+        const serializableOrder = {
             ...processedData,
             id: docSnap.id,
             path: path,
         };
 
-        const result = OrderSchema.safeParse(sanitizedOrder);
+        const result = OrderSchema.safeParse(serializableOrder);
         if (result.success) {
             return result.data as Order;
         } else {
@@ -81,12 +86,7 @@ export default async function OrderDetailPage({ params }: { params: { orderId: s
         notFound();
     }
     
-    const serializableOrder = {
-        ...order,
-        createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date(0).toISOString(),
-    };
-    
-    return <OrderDetailsClient initialOrder={serializableOrder as Order} />;
+    return <OrderDetailsClient initialOrder={order} />;
 }
 
     

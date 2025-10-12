@@ -1,3 +1,4 @@
+
 // src/lib/firebase-admin.ts
 import admin from 'firebase-admin';
 
@@ -5,31 +6,25 @@ import admin from 'firebase-admin';
 if (!admin.apps.length) {
   try {
     const serviceAccountString = process.env.SERVICE_ACCOUNT;
+    
     if (!serviceAccountString) {
-      throw new Error('La variable de entorno SERVICE_ACCOUNT no está configurada.');
+      throw new Error('La variable de entorno SERVICE_ACCOUNT es requerida y no fue encontrada.');
     }
+    
     const serviceAccount = JSON.parse(serviceAccountString);
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
-     console.log("Firebase Admin SDK inicializado con éxito usando la cuenta de servicio.");
-  } catch (error) {
-    console.error("Error al inicializar Firebase Admin SDK:", error);
-    // En un entorno de producción, es posible que desees manejar esto de manera diferente,
-    // pero para el desarrollo, mostrar el error es crucial.
-    // Si la inicialización automática falla, podría ser porque las credenciales no están donde se esperan.
-     if (process.env.NODE_ENV !== 'production') {
-        console.warn("Intentando inicialización automática por defecto como fallback...");
-        try {
-          admin.initializeApp();
-          console.log("Inicialización automática por defecto exitosa como fallback.");
-        } catch (fallbackError) {
-          console.error("La inicialización automática por defecto también falló:", fallbackError);
-        }
-    }
+     console.log("Firebase Admin SDK inicializado correctamente.");
+     
+  } catch (error: any) {
+    console.error("CRITICAL: Error al inicializar Firebase Admin SDK. El panel de administrador no funcionará.", error.message);
+    // In a production environment, you might want to handle this more gracefully,
+    // but throwing the error makes it obvious during development that something is wrong.
+    throw new Error("La configuración del servidor de Firebase es inválida. Revisa las variables de entorno.");
   }
 }
-
 
 // Export a single, initialized instance of the Firestore database.
 // All server-side code will import this `db` object to interact with Firestore.
