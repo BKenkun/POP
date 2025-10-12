@@ -7,21 +7,25 @@ let app: App;
 
 if (!getApps().length) {
     try {
-        // Try to initialize with service account credentials from environment variables (for production)
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
-        app = initializeApp({
-            credential: cert(serviceAccount),
-            projectId: firebaseConfig.projectId,
-        });
+        // En producción, FIREBASE_CONFIG es una variable de entorno proporcionada por Firebase Hosting.
+        // El SDK de Admin la usará automáticamente si existe.
+        app = initializeApp();
     } catch (e) {
-        console.warn("Could not initialize Firebase Admin with service account. Falling back to default credentials (useful for local development).", e);
-        // Fallback for local development or environments where GOOGLE_APPLICATION_CREDENTIALS is set
-        app = initializeApp({
-            projectId: firebaseConfig.projectId,
-        });
+        console.warn("Inicialización automática fallida. Intentando con credenciales de servicio (entorno local)...", e);
+        try {
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+            app = initializeApp({
+                credential: cert(serviceAccount),
+                projectId: firebaseConfig.projectId,
+            });
+        } catch (e2) {
+             console.error("FALLO CRÍTICO: No se pudo inicializar Firebase Admin SDK ni de forma automática ni con credenciales de servicio.", e2);
+             // En un entorno real, esto debería detener la aplicación o alertar a los desarrolladores.
+        }
     }
 } else {
     app = getApps()[0];
 }
 
+// @ts-ignore
 export const db = getFirestore(app);

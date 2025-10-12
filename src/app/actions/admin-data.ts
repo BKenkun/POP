@@ -5,6 +5,10 @@ import 'server-only';
 import { db } from '@/lib/firebase-admin';
 import type { Order } from '@/lib/types';
 import { OrderSchema } from '@/lib/types';
+import { getAuth } from 'firebase-admin/auth';
+import type { UserRecord } from 'firebase-admin/auth';
+import type { Customer } from '@/app/admin/customers/page';
+
 
 // --- Data Processing Helper ---
 function processFirestoreData<T>(data: any): T {
@@ -109,5 +113,26 @@ export async function updateOrderStatus(orderPath: string, newStatus: string): P
     } catch (error: any) {
         console.error("Error al actualizar el estado del pedido:", error);
         return { success: false, error: error.message || 'Ocurrió un error desconocido.' };
+    }
+}
+
+export async function getAllAdminCustomers(): Promise<Customer[]> {
+    try {
+        const auth = getAuth();
+        const listUsersResult = await auth.listUsers(1000); // Get up to 1000 users
+
+        const customers = listUsersResult.users.map((userRecord: UserRecord) => ({
+            uid: userRecord.uid,
+            email: userRecord.email,
+            displayName: userRecord.displayName,
+            photoURL: userRecord.photoURL,
+            disabled: userRecord.disabled,
+            creationTime: userRecord.metadata.creationTime,
+        }));
+        
+        return customers;
+    } catch (error) {
+        console.error("❌ Critical error fetching customers from Firebase Auth.", error);
+        throw new Error("Failed to fetch customers. Please check server logs.");
     }
 }
