@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Users, Eye, Package } from 'lucide-react';
+import { Loader2, Users, Eye, Package, Truck } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -161,12 +161,16 @@ export default function AdminOrdersPage() {
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">{formatPrice(order.total)}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right flex items-center justify-end gap-2">
                            <Button asChild variant="outline" size="sm">
                                 <Link href={`/admin/orders/${order.id}`}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     Ver
                                 </Link>
+                            </Button>
+                             <Button variant="outline" size="sm" disabled>
+                                <Truck className="mr-2 h-4 w-4" />
+                                Enviar
                             </Button>
                         </TableCell>
                         </TableRow>
