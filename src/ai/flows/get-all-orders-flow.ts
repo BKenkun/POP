@@ -10,8 +10,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { OrderWithUserName, Order } from '@/lib/types';
-import { initializeApp, getApps, App, FirebaseApp } from 'firebase/app';
-import { getFirestore, collectionGroup, query, orderBy, getDocs } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 // Define the output schema for the flow
@@ -41,36 +41,51 @@ const getAllOrdersFlow = ai.defineFlow(
   },
   async () => {
     try {
-      // Query the entire 'orders' collection group using the client SDK from a trusted server environment
-      const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-      const ordersSnap = await getDocs(ordersQuery);
-
-      if (ordersSnap.empty) {
-        console.log('Admin flow: No orders found in the database.');
+      // 1. Get all users
+      const usersQuery = query(collection(db, 'users'));
+      const usersSnap = await getDocs(usersQuery);
+      
+      if (usersSnap.empty) {
+        console.log('Admin flow: No users found.');
         return [];
       }
 
-      const fetchedOrders: OrderWithUserName[] = ordersSnap.docs.map(doc => {
-        const orderData = doc.data() as Order;
-        
-        let createdAt: Date;
-        if (orderData.createdAt && (orderData.createdAt as any).toDate) {
-            createdAt = (orderData.createdAt as any).toDate();
-        } else if (typeof orderData.createdAt === 'string') {
-            createdAt = new Date(orderData.createdAt);
-        } else {
-            createdAt = new Date();
-        }
-
-        return {
-          ...orderData,
-          id: doc.id,
-          createdAt: createdAt.toISOString(),
-          userName: orderData.customerName || 'Invitado', // Use customer name from order
-        };
-      });
+      const allOrders: OrderWithUserName[] = [];
       
-      return fetchedOrders;
+      // 2. For each user, get their orders
+      for (const userDoc of usersSnap.docs) {
+          const userId = userDoc.id;
+          const userData = userDoc.data();
+          const userName = userData.displayName || userData.email || 'Invitado';
+
+          const ordersQuery = query(collection(db, 'users', userId, 'orders'), orderBy('createdAt', 'desc'));
+          const ordersSnap = await getDocs(ordersQuery);
+
+          ordersSnap.forEach(orderDoc => {
+              const orderData = orderDoc.data() as Order;
+
+              let createdAt: Date;
+              if (orderData.createdAt && (orderData.createdAt as any).toDate) {
+                  createdAt = (orderData.createdAt as any).toDate();
+              } else if (typeof orderData.createdAt === 'string') {
+                  createdAt = new Date(orderData.createdAt);
+              } else {
+                  createdAt = new Date();
+              }
+
+              allOrders.push({
+                  ...orderData,
+                  id: orderDoc.id,
+                  createdAt: createdAt.toISOString(),
+                  userName: orderData.customerName || userName, // Prefer customer name from order
+              });
+          });
+      }
+
+      // Sort all orders globally by date
+      allOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      return allOrders;
       
     } catch (error) {
       console.error('CRITICAL: Genkit flow failed to fetch orders.', error);
