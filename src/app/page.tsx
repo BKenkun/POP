@@ -1,20 +1,64 @@
 
+'use client';
+
 import { ProductCard } from '@/components/product-card';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import SubscriptionForm from '@/components/subscription-form';
 import WelcomePopupLoader from '@/components/welcome-popup-loader';
-import { cbdProducts } from '@/lib/cbd-products';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useMemo } from 'react';
+
+function ProductSection({ title, products, loading }: { title: string; products: Product[]; loading: boolean; }) {
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">{title}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">{title}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 
-export const revalidate = 60; // Revalidate the page every 60 seconds
+export default function Home() {
+  const firestore = useFirestore();
 
-export default async function Home() {
-  const allProducts: Product[] = cbdProducts;
+  const productsQuery = useMemoFirebase(() => {
+    return query(collection(firestore, 'products'), where('active', '==', true));
+  }, [firestore]);
 
-  const newArrivals = allProducts.filter(p => p.internalTags?.includes('novedad'));
-  const bestSellers = allProducts.filter(p => p.internalTags?.includes('mas-vendido'));
-  const offers = allProducts.filter(p => p.internalTags?.includes('oferta'));
+  const { data: allProducts, isLoading: loadingProducts } = useCollection<Product>(productsQuery);
+
+  const { newArrivals, bestSellers, offers } = useMemo(() => {
+    const products = allProducts || [];
+    return {
+      newArrivals: products.filter(p => p.internalTags?.includes('novedad')),
+      bestSellers: products.filter(p => p.internalTags?.includes('mas-vendido')),
+      offers: products.filter(p => p.internalTags?.includes('oferta')),
+    }
+  }, [allProducts]);
   
   return (
     <div className="space-y-16">
@@ -27,38 +71,9 @@ export default async function Home() {
         </p>
       </div>
 
-      {newArrivals.length > 0 && (
-        <section className="space-y-6">
-          <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Novedades</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {newArrivals.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-      
-      {offers.length > 0 && (
-         <section className="space-y-6">
-          <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Ofertas Especiales</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {offers.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {bestSellers.length > 0 && (
-         <section className="space-y-6">
-          <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Lo Más Vendido</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bestSellers.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+      <ProductSection title="Novedades" products={newArrivals} loading={loadingProducts} />
+      <ProductSection title="Ofertas Especiales" products={offers} loading={loadingProducts} />
+      <ProductSection title="Lo Más Vendido" products={bestSellers} loading={loadingProducts} />
       
        <div className="my-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-left max-w-5xl mx-auto">

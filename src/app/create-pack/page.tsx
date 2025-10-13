@@ -1,28 +1,36 @@
 
+'use client';
+
 import { Product } from '@/lib/types';
 import CustomPackBuilder from './custom-pack-builder';
 import { getUniqueValues } from '@/lib/utils';
-import { cbdProducts } from '@/lib/cbd-products';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 
-export const metadata = {
-    title: 'Crea tu Pack Personalizado | Popper Online',
-    description: 'Selecciona tus productos favoritos y crea tu propio pack de poppers. Descuentos por cantidad y combinaciones únicas.',
-};
+export default function CreatePackPage() {
+    const firestore = useFirestore();
+    const productsQuery = useMemoFirebase(() => {
+        return query(collection(firestore, 'products'), where('active', '==', true));
+    }, [firestore]);
 
-export const revalidate = 60; // Revalidate every 60 seconds
+    const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
-export default async function CreatePackPage() {
-    const products: Product[] = cbdProducts;
-    
-    // Filter out products that are accessories or packs themselves
-    const availableForPack = products.filter(p => 
-        !p.internalTags?.includes('accesorio') && 
-        !p.internalTags?.includes('pack')
-    );
-    
-    const uniqueBrands = getUniqueValues(availableForPack, 'brand');
-    const uniqueSizes = getUniqueValues(availableForPack, 'size');
-    const uniqueCompositions = getUniqueValues(availableForPack, 'composition');
+    const { availableForPack, uniqueBrands, uniqueSizes, uniqueCompositions } = useMemo(() => {
+        const validProducts = products || [];
+        const available = validProducts.filter(p => 
+            !p.internalTags?.includes('accesorio') && 
+            !p.internalTags?.includes('pack')
+        );
+        return {
+            availableForPack: available,
+            uniqueBrands: getUniqueValues(available, 'brand'),
+            uniqueSizes: getUniqueValues(available, 'size'),
+            uniqueCompositions: getUniqueValues(available, 'composition'),
+        };
+    }, [products]);
+
 
     return (
         <div>
@@ -32,12 +40,19 @@ export default async function CreatePackPage() {
                     Elige tus aromas favoritos de nuestro catálogo y construye el pack perfecto para ti.
                 </p>
             </div>
-            <CustomPackBuilder 
-                products={availableForPack}
-                uniqueBrands={uniqueBrands}
-                uniqueSizes={uniqueSizes}
-                uniqueCompositions={uniqueCompositions}
-             />
+            {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="ml-4 text-muted-foreground">Cargando productos...</p>
+                </div>
+            ) : (
+                <CustomPackBuilder 
+                    products={availableForPack}
+                    uniqueBrands={uniqueBrands}
+                    uniqueSizes={uniqueSizes}
+                    uniqueCompositions={uniqueCompositions}
+                />
+            )}
         </div>
     );
 }

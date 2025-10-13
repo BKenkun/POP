@@ -1,26 +1,35 @@
 
+'use client';
+
 import { Product } from '@/lib/types';
 import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cbdProducts } from '@/lib/cbd-products';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
-export const metadata = {
-    title: 'Todos los Productos | Popper Online',
-    description: 'Explora nuestro catálogo completo de poppers. Filtra por marca, categoría y ordena por precio o popularidad.',
-};
+function ProductPageContent({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+    const firestore = useFirestore();
+    const productsQuery = useMemoFirebase(() => {
+        return query(collection(firestore, 'products'), where('active', '==', true));
+    }, [firestore]);
 
-export const revalidate = 60; // Revalidate every 60 seconds
+    const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
-function ProductPageContent({ products, searchParams }: { products: Product[], searchParams: { [key: string]: string | string[] | undefined } }) {
-    const uniqueBrands = getUniqueValues(products, 'brand');
-    const uniqueSizes = getUniqueValues(products, 'size');
-    const uniqueCompositions = getUniqueValues(products, 'composition');
+    if (isLoading) {
+        return <ProductPageSkeleton />;
+    }
+
+    const validProducts = products || [];
+
+    const uniqueBrands = getUniqueValues(validProducts, 'brand');
+    const uniqueSizes = getUniqueValues(validProducts, 'size');
+    const uniqueCompositions = getUniqueValues(validProducts, 'composition');
     
     return (
         <ProductFilters 
-            products={products} 
+            products={validProducts} 
             uniqueBrands={uniqueBrands}
             uniqueSizes={uniqueSizes}
             uniqueCompositions={uniqueCompositions}
@@ -45,12 +54,11 @@ function ProductPageSkeleton() {
 }
 
 
-export default async function ProductsPage({
+export default function ProductsPage({
     searchParams,
 }: {
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
-    const products: Product[] = cbdProducts;
     
     return (
         <div>
@@ -61,7 +69,7 @@ export default async function ProductsPage({
                 </p>
             </div>
             <Suspense fallback={<ProductPageSkeleton />}>
-                 <ProductPageContent products={products} searchParams={searchParams} />
+                 <ProductPageContent searchParams={searchParams} />
             </Suspense>
         </div>
     );

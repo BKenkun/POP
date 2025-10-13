@@ -1,36 +1,50 @@
 
-import { notFound } from 'next/navigation';
+'use client';
+
+import { notFound, useParams } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { ProductGallery } from './product-gallery';
 import { ProductInfo } from './product-info';
 import { ProductDetails } from './product-details';
 import { Separator } from '@/components/ui/separator';
 import { RelatedProducts } from './related-products';
-import { cbdProducts } from '@/lib/cbd-products';
+import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, collection, query, where } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function getProduct(id: string): Promise<Product | undefined> {
-  const products = cbdProducts;
-  return products.find((p) => p.id === id);
+function ProductPageSkeleton() {
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+        <Skeleton className="h-[500px] w-full" />
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-1/4" />
+          <Skeleton className="h-10 w-3/4" />
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const resolvedParams = await params;
-  const product = await getProduct(resolvedParams.id);
-  if (!product) {
-    return {
-      title: 'Producto no encontrado',
-    };
+
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const firestore = useFirestore();
+
+  const productDocRef = useMemoFirebase(() => doc(firestore, 'products', id), [firestore, id]);
+  const { data: product, isLoading: loadingProduct } = useDoc<Product>(productDocRef);
+
+  const allProductsQuery = useMemoFirebase(() => query(collection(firestore, 'products'), where('active', '==', true)), [firestore]);
+  const { data: allProducts, isLoading: loadingAllProducts } = useCollection<Product>(allProductsQuery);
+
+  if (loadingProduct || loadingAllProducts) {
+    return <ProductPageSkeleton />;
   }
-  return {
-    title: `${product.name} | Popper Online`,
-    description: product.description || `Detalles sobre ${product.name}`,
-  };
-}
-
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-  const resolvedParams = await params;
-  const allProducts = cbdProducts;
-  const product = allProducts.find((p) => p.id === resolvedParams.id);
 
   if (!product) {
     notFound();
@@ -58,7 +72,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
       )}
 
       <Separator className="my-10" />
-      <RelatedProducts currentProduct={product} allProducts={allProducts} />
+      <RelatedProducts currentProduct={product} allProducts={allProducts || []} />
     </div>
   );
 }
