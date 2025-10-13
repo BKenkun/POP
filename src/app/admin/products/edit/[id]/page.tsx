@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/lib/types';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { useDoc, useFirestore } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
 export default function EditProductPage() {
@@ -18,10 +17,16 @@ export default function EditProductPage() {
   const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
 
-  const productDocRef = doc(firestore, 'products', id);
+  // Use useMemoFirebase to prevent re-renders from creating a new doc reference
+  const productDocRef = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return doc(firestore, 'products', id);
+  }, [firestore, id]);
+  
   const { data: product, isLoading, error } = useDoc<Product>(productDocRef);
 
   const handleSave = async (data: Product) => {
+    if (!productDocRef) return;
     setIsSaving(true);
     try {
         await updateDoc(productDocRef, { ...data });
@@ -42,16 +47,19 @@ export default function EditProductPage() {
     }
   };
 
+  // Show a loading state while fetching data
   if (isLoading) {
     return (
        <div className="flex items-center justify-center h-40">
          <Loader2 className="h-8 w-8 animate-spin" />
-         <p className="ml-2">Buscando producto...</p>
+         <p className="ml-2">Cargando datos del producto...</p>
        </div>
     );
   }
 
-  if (!product || error) {
+  // After loading, if there's an error or no product, show 404
+  if (error || !product) {
+      console.error("Error fetching product or product not found:", error);
       notFound();
   }
 
