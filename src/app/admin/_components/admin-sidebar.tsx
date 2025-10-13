@@ -8,13 +8,22 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarSeparator,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings } from 'lucide-react';
+import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings, Truck, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { useAuth } from '@/context/auth-context';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -23,15 +32,23 @@ export default function AdminSidebar() {
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/products', label: 'Catálogo', icon: ShoppingCart },
-    { href: '/admin/orders', label: 'Pedidos', icon: Package },
     { href: '/admin/customers', label: 'Clientes', icon: Users },
     { href: '/admin/b2b', label: 'B2B', icon: Briefcase },
     { href: '/admin/coupons', label: 'Cupones', icon: Ticket },
-    { href: '/admin/stock', label: 'Almacén', icon: Warehouse },
     { href: '/admin/web', label: 'Web', icon: Globe },
     { href: '/admin/blog', label: 'Blog', icon: Newspaper },
     { href: '/admin/settings', label: 'Configuración', icon: Settings },
   ];
+
+  const logisticLinks = [
+    { href: '/admin/orders', label: 'Pedidos', icon: Package },
+    { href: '/admin/stock', label: 'Almacén', icon: Warehouse },
+    { href: '/admin/shipping', label: 'Envíos', icon: Truck },
+  ];
+  
+  const isLogisticsActive = logisticLinks.some(link => pathname.startsWith(link.href));
+  const [isLogisticsOpen, setIsLogisticsOpen] = useState(isLogisticsActive);
+
 
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -57,6 +74,35 @@ export default function AdminSidebar() {
               </Link>
             </SidebarMenuItem>
           ))}
+          
+           <Collapsible open={isLogisticsOpen} onOpenChange={setIsLogisticsOpen}>
+            <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={isLogisticsActive} className="w-full justify-between">
+                        <div className="flex items-center gap-2">
+                            <Truck />
+                            <span>Logística</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", isLogisticsOpen && "rotate-180")} />
+                    </SidebarMenuButton>
+                </CollapsibleTrigger>
+            </SidebarMenuItem>
+            <CollapsibleContent>
+                <SidebarMenuSub>
+                    {logisticLinks.map((link) => (
+                        <SidebarMenuItem key={link.href}>
+                             <Link href={link.href} passHref>
+                                <SidebarMenuSubButton isActive={pathname.startsWith(link.href)}>
+                                    <link.icon />
+                                    <span>{link.label}</span>
+                                </SidebarMenuSubButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenuSub>
+            </CollapsibleContent>
+          </Collapsible>
+
         </SidebarMenu>
       </SidebarContent>
        <SidebarSeparator />
