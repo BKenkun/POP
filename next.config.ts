@@ -87,6 +87,12 @@ const nextConfig: NextConfig = {
         hostname: 'www.poppers-espana.es',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
