@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, Eye, Package } from 'lucide-react';
 import {
@@ -17,29 +17,64 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { AdminOrder } from '@/ai/flows/get-all-orders-flow';
-import { getAllOrders } from '@/ai/flows/get-all-orders-flow';
+import { useFirestore, useMemoFirebase } from '@/firebase';
+import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import type { Order } from '@/lib/types';
+
+// Using a more specific type for the orders state
+type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string };
 
 export default function AdminOrdersPage() {
-  const [allOrders, setAllOrders] = useState<AdminOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<AdminDisplayOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const firestore = useFirestore();
 
   const handleFetchAllOrders = async () => {
+    if (!firestore) {
+      toast({ title: 'Error', description: 'Firestore no está disponible.', variant: 'destructive'});
+      return;
+    }
+
     setLoading(true);
     setAllOrders([]);
     toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
 
     try {
-      // Call the secure Genkit flow to fetch orders
-      const fetchedOrders = await getAllOrders();
+      // Directly query from the client. This relies on security rules allowing the admin to do so.
+      const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(ordersQuery);
+      
+      const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
+        const data = doc.data() as Order;
+        
+        // Convert Timestamp to ISO string for serializability and consistent display
+        let createdAtISO = new Date().toISOString();
+        if (data.createdAt) {
+          if (data.createdAt instanceof Timestamp) {
+            createdAtISO = data.createdAt.toDate().toISOString();
+          } else if (typeof data.createdAt === 'string') {
+            createdAtISO = data.createdAt;
+          }
+        }
+
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: createdAtISO,
+        };
+      });
+
       setAllOrders(fetchedOrders);
       toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
+
     } catch (error: any) {
-      console.error("Error fetching all orders from Genkit flow:", error);
+      console.error("Error fetching all orders from client:", error);
       toast({ 
         title: 'Error al cargar los pedidos', 
-        description: error.message || "No se pudieron obtener los pedidos. Revisa la consola para más detalles.", 
+        description: error.message.includes('permission-denied') 
+          ? 'Permiso denegado. Revisa las reglas de seguridad de Firestore.' 
+          : 'No se pudieron obtener los pedidos.',
         variant: 'destructive' 
       });
     } finally {
@@ -98,7 +133,7 @@ export default function AdminOrdersPage() {
                  <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg bg-secondary/50">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     <h3 className="mt-4 text-lg font-semibold">Buscando pedidos...</h3>
-                    <p className="text-muted-foreground">Contactando con el servidor seguro.</p>
+                    <p className="text-muted-foreground">Consultando la base de datos.</p>
                 </div>
             ) : allOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
