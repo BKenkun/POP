@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, Eye, Package } from 'lucide-react';
 import {
@@ -17,11 +17,11 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
-// Using a more specific type for the orders state
+// Using a more specific type for the orders state to handle serializable dates
 type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string };
 
 export default function AdminOrdersPage() {
@@ -41,7 +41,8 @@ export default function AdminOrdersPage() {
     toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
 
     try {
-      // Directly query from the client. This relies on security rules allowing the admin to do so.
+      // This query now runs on the client and relies on the security rule:
+      // match /{path=**}/orders/{orderId} { allow list: if isAdmin(); }
       const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(ordersQuery);
       
@@ -66,14 +67,18 @@ export default function AdminOrdersPage() {
       });
 
       setAllOrders(fetchedOrders);
-      toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
+      if (fetchedOrders.length > 0) {
+        toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
+      } else {
+        toast({ title: 'No se encontraron pedidos', description: 'La base de datos no contiene ningún pedido por ahora.', variant: 'default' });
+      }
 
     } catch (error: any) {
       console.error("Error fetching all orders from client:", error);
       toast({ 
         title: 'Error al cargar los pedidos', 
         description: error.message.includes('permission-denied') 
-          ? 'Permiso denegado. Revisa las reglas de seguridad de Firestore.' 
+          ? 'Permiso denegado. Asegúrate de que las reglas de seguridad de Firestore son correctas.' 
           : 'No se pudieron obtener los pedidos.',
         variant: 'destructive' 
       });
