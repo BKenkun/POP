@@ -33,7 +33,7 @@ export interface Customer {
     creationTime?: string | Timestamp; // Can be string or Timestamp
 }
 
-const StatCard = ({ title, value, icon: Icon, loading, format = (v: number) => v.toLocaleString('es-ES') }: { title: string, value: number, icon: React.ElementType, loading: boolean, format?: (v: number | string) => string | number }) => {
+const StatCard = ({ title, icon: Icon, loading, children }: { title: string, icon: React.ElementType, loading: boolean, children: React.ReactNode }) => {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -42,9 +42,9 @@ const StatCard = ({ title, value, icon: Icon, loading, format = (v: number) => v
             </CardHeader>
             <CardContent>
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (
-                    <>
-                        <div className="text-2xl font-bold">{format(value)}</div>
-                    </>
+                    <div className="space-y-1">
+                        {children}
+                    </div>
                 )}
             </CardContent>
         </Card>
@@ -77,8 +77,15 @@ export default function AdminDashboardPage() {
     setLoadingProducts(false);
   }, []);
 
-  const { filteredOrders, filteredUsers, recentOrders, topCustomers } = useMemo(() => {
-      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [] };
+  const { 
+      filteredOrders, 
+      filteredUsers, 
+      recentOrders, 
+      topCustomers,
+      totalRevenue,
+      collectedRevenue
+  } = useMemo(() => {
+      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [], totalRevenue: 0, collectedRevenue: 0 };
 
       const from = dateRange?.from;
       const to = dateRange?.to;
@@ -100,6 +107,7 @@ export default function AdminDashboardPage() {
       const recentOrders = allOrders.slice(0, 5);
       
       const customerSpending = allOrders.reduce((acc, order) => {
+          if (!order.userId) return acc; // Skip guest orders for this calculation if needed
           if (!acc[order.userId]) {
               acc[order.userId] = { name: order.customerName, email: order.customerEmail, total: 0, count: 0 };
           }
@@ -109,13 +117,17 @@ export default function AdminDashboardPage() {
       }, {} as Record<string, { name: string, email: string, total: number, count: number }>);
       
       const topCustomers = Object.values(customerSpending).sort((a, b) => b.total - a.total).slice(0, 5);
+      
+      const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+      const collectedRevenue = filteredOrders
+        .filter(order => order.status === 'Entregado')
+        .reduce((sum, order) => sum + order.total, 0);
 
 
-      return { filteredOrders, filteredUsers, recentOrders, topCustomers };
+      return { filteredOrders, filteredUsers, recentOrders, topCustomers, totalRevenue, collectedRevenue };
   }, [allOrders, allUsers, dateRange]);
 
 
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
   const totalOrders = filteredOrders.length;
   const newCustomers = filteredUsers.length;
   const lowStockCount = products.filter(p => p.stock !== undefined && p.stock <= 5).length;
@@ -142,9 +154,23 @@ export default function AdminDashboardPage() {
       
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Ingresos" value={totalRevenue} icon={DollarSign} format={formatPrice} loading={loadingStats} />
-          <StatCard title="Pedidos" value={totalOrders} icon={ShoppingCart} loading={loadingStats} />
-          <StatCard title="Clientes Nuevos" value={newCustomers} icon={Users} loading={loadingStats} />
+          <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
+             <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
+             <p className="text-xs text-muted-foreground">
+                <span className="font-semibold">{formatPrice(totalRevenue)}</span> proyectados
+             </p>
+          </StatCard>
+
+          <StatCard title="Pedidos" icon={ShoppingCart} loading={loadingStats}>
+             <div className="text-2xl font-bold">{totalOrders.toLocaleString('es-ES')}</div>
+             <p className="text-xs text-muted-foreground invisible">Placeholder</p>
+          </StatCard>
+
+          <StatCard title="Clientes Nuevos" icon={Users} loading={loadingStats}>
+            <div className="text-2xl font-bold">{newCustomers.toLocaleString('es-ES')}</div>
+            <p className="text-xs text-muted-foreground invisible">Placeholder</p>
+          </StatCard>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
