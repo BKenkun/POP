@@ -102,3 +102,12 @@ export interface UserSubscription {
     currentPeriodEnd: Date;
     monthlySelection: MonthlySelection;
 }
+
+// For the Admin flow
+export type OrderWithUserName = {
+    id: string;
+    createdAt: string;
+    status: string;
+    total: number;
+    userName: string;
+};

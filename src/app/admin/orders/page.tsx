@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Eye, Package } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -15,22 +15,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
-import { Eye, Package } from 'lucide-react';
-import { collection, getDocs, query } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
-import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { OrderWithUserName, getAllOrders } from '@/ai/flows/get-all-orders-flow';
 
-// Combined type for order with its user's name
-interface OrderWithUserName extends Order {
-    userName: string;
-}
 
 export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<OrderWithUserName[]>([]);
   const [loading, setLoading] = useState(false);
-  const firestore = useFirestore();
   const { toast } = useToast();
 
   const handleFetchAllOrders = async () => {
@@ -39,43 +31,18 @@ export default function AdminOrdersPage() {
     toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
 
     try {
-      const usersSnapshot = await getDocs(collection(firestore, 'users'));
-      const ordersPromises: Promise<OrderWithUserName[]>[] = [];
-
-      usersSnapshot.forEach(userDoc => {
-        const userName = userDoc.data().displayName || userDoc.data().email || 'Usuario Desconocido';
-        const ordersRef = collection(firestore, 'users', userDoc.id, 'orders');
-        const ordersPromise = getDocs(ordersRef).then(ordersSnapshot => {
-          return ordersSnapshot.docs.map(orderDoc => {
-            const orderData = orderDoc.data() as Order;
-            // Convert Firestore Timestamps to serializable Dates
-            const createdAt = orderData.createdAt && (orderData.createdAt as any).toDate 
-                ? (orderData.createdAt as any).toDate() 
-                : new Date();
-            
-            return {
-              ...orderData,
-              id: orderDoc.id,
-              createdAt: createdAt,
-              userName: userName, // Add user's name to the order object
-            } as OrderWithUserName;
-          });
-        });
-        ordersPromises.push(ordersPromise);
-      });
-
-      const ordersByAllUsers = await Promise.all(ordersPromises);
-      const flattenedOrders = ordersByAllUsers.flat();
+      // Call the secure Genkit flow instead of accessing Firestore directly
+      const fetchedOrders = await getAllOrders();
       
-      // Sort orders by date descending
-      flattenedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      // Sort orders by date descending (Genkit flow might already do this, but defensive coding is good)
+      fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-      setAllOrders(flattenedOrders);
-      toast({ title: 'Pedidos cargados', description: `Se encontraron ${flattenedOrders.length} pedidos.` });
+      setAllOrders(fetchedOrders);
+      toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos.` });
 
     } catch (error: any) {
-      console.error("Error fetching all orders:", error);
-      toast({ title: 'Error al cargar los pedidos', description: error.message, variant: 'destructive' });
+      console.error("Error fetching all orders via Genkit flow:", error);
+      toast({ title: 'Error al cargar los pedidos', description: error.message || "No se pudieron obtener los pedidos desde el servidor.", variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -131,7 +98,7 @@ export default function AdminOrdersPage() {
             {loading ? (
                  <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg bg-secondary/50">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <h3 className="mt-4 text-lg font-semibold">Cargando pedidos...</h3>
+                    <h3 className="mt-4 text-lg font-semibold">Cargando pedidos desde el servidor...</h3>
                     <p className="text-muted-foreground">Esto puede tardar un momento.</p>
                 </div>
             ) : allOrders.length === 0 ? (
@@ -187,5 +154,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
-    
