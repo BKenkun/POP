@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
                     {popularProducts.map(product => (
                         <div key={product.productId} className="flex items-center">
                         <Avatar className="h-9 w-9 relative">
-                             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" unoptimized={true}/>
                             <AvatarFallback>{product.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="ml-4 space-y-1">

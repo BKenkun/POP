@@ -133,7 +133,7 @@ export default function AdminProductsPage() {
                                     fill 
                                     className="object-cover"
                                     sizes="48px"
-                                    unoptimized
+                                    unoptimized={true}
                                 />
                             </div>
                         </TableCell>

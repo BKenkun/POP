@@ -85,7 +85,7 @@ function SuccessContent() {
                              {order.items.map((item: OrderItem) => (
                                 <div key={item.productId} className="flex items-center gap-4">
                                     <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
-                                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized={true} />
                                     </div>
                                     <div className="flex-1">
                                         <p className="font-medium">{item.name}</p>
