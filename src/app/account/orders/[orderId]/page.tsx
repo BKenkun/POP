@@ -15,6 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 export default function UserOrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
@@ -106,7 +113,7 @@ export default function UserOrderDetailPage() {
                         {order.items.map(item => (
                             <div key={item.productId} className="flex items-center gap-4">
                                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                    <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                                    <Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.name}</p>

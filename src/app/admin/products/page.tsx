@@ -36,6 +36,13 @@ import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 export default function AdminProductsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -128,7 +135,7 @@ export default function AdminProductsPage() {
                         <TableCell>
                             <div className="relative h-12 w-12 rounded-md overflow-hidden border">
                                 <Image 
-                                    src={product.imageUrl} 
+                                    src={getImageUrl(product.imageUrl)} 
                                     alt={product.name} 
                                     fill 
                                     className="object-cover"

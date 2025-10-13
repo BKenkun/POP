@@ -30,6 +30,13 @@ interface SelectionCardProps {
     popperIndex?: number;
 }
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 const SelectionCard = ({ title, description, icon: Icon, products, selectedProductId, onSelectProduct, selectionType, popperIndex }: SelectionCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const selectedProduct = products.find(p => p.id === selectedProductId);
@@ -54,7 +61,7 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
                 {selectedProduct ? (
                      <div className="text-center space-y-2">
                         <div className="relative h-24 w-24 mx-auto">
-                            <Image src={selectedProduct.imageUrl} alt={selectedProduct.name} fill className="object-contain" />
+                            <Image src={getImageUrl(selectedProduct.imageUrl)} alt={selectedProduct.name} fill className="object-contain" />
                         </div>
                         <p className="font-semibold">{selectedProduct.name}</p>
                         <p className="text-sm text-green-600 font-bold flex items-center justify-center gap-1">

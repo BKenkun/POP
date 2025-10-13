@@ -35,6 +35,13 @@ export interface Customer {
     creationTime?: string | Timestamp; // Can be string or Timestamp
 }
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 const StatCard = ({ title, icon: Icon, loading, children }: { title: string, icon: React.ElementType, loading: boolean, children: React.ReactNode }) => {
     return (
         <Card>
@@ -265,7 +272,7 @@ export default function AdminDashboardPage() {
                     {popularProducts.map(product => (
                         <div key={product.productId} className="flex items-center">
                         <Avatar className="h-9 w-9 relative">
-                             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                             <Image src={getImageUrl(product.imageUrl)} alt={product.name} fill className="object-cover" />
                             <AvatarFallback>{product.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="ml-4 space-y-1">

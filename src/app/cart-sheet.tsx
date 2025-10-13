@@ -18,6 +18,13 @@ interface CartSheetProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
@@ -49,7 +56,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                   <div key={item.id} className="flex items-start gap-4">
                     <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
                       <Image
-                        src={item.imageUrl}
+                        src={getImageUrl(item.imageUrl)}
                         alt={item.name}
                         fill
                         className="object-cover"

@@ -35,6 +35,13 @@ interface CustomPackBuilderProps {
 const MAX_PACK_ITEMS = 18;
 const MAX_UNITS_PER_PRODUCT = 6;
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes, uniqueCompositions }: CustomPackBuilderProps) {
   const [packItems, setPackItems] = useState<PackItem[]>([]);
   const { toast } = useToast();
@@ -261,7 +268,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                                 return (
                                     <div key={item.id} className="flex items-center gap-4">
                                         <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
-                                            <Image src={productInfo.imageUrl} alt={productInfo.name} fill className="object-cover" />
+                                            <Image src={getImageUrl(productInfo.imageUrl)} alt={productInfo.name} fill className="object-cover" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-sm font-medium">{productInfo.name}</p>

@@ -22,6 +22,13 @@ import {
 } from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 // --- Componente de Presentación (Cliente) ---
 // Responsabilidad: Mostrar los datos del pedido y gestionar la actualización de estado.
 // No tiene lógica de obtención de datos.
@@ -106,7 +113,7 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
                     {order.items.map(item => (
                         <div key={item.productId} className="flex items-center gap-4">
                             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                                <Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
                             </div>
                             <div className="flex-1">
                                 <p className="font-semibold">{item.name}</p>

@@ -11,6 +11,13 @@ interface ProductGalleryProps {
   productName: string;
 }
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(images[0]);
 
@@ -20,7 +27,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         <CardContent className="p-0">
           <div className="relative aspect-square w-full">
             <Image
-              src={selectedImage}
+              src={getImageUrl(selectedImage)}
               alt={`Imagen principal de ${productName}`}
               fill
               className="object-cover"
@@ -46,7 +53,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             >
               <div className="relative aspect-square w-full">
                 <Image
-                  src={image}
+                  src={getImageUrl(image)}
                   alt={`Imagen de galería ${index + 1} de ${productName}`}
                   fill
                   className="object-cover"

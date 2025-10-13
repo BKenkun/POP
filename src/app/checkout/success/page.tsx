@@ -16,6 +16,13 @@ import { formatPrice } from '@/lib/utils';
 import { OrderItem } from '@/lib/types';
 
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
 function SuccessContent() {
     const { checkoutData, clearCheckoutData } = useCheckout();
     const router = useRouter();
@@ -85,7 +92,7 @@ function SuccessContent() {
                              {order.items.map((item: OrderItem) => (
                                 <div key={item.productId} className="flex items-center gap-4">
                                     <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
-                                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized={true} />
+                                        <Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
                                     </div>
                                     <div className="flex-1">
                                         <p className="font-medium">{item.name}</p>
@@ -150,4 +157,3 @@ export default function CheckoutSuccessPage() {
         </Suspense>
     );
 }
-

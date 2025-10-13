@@ -55,6 +55,13 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
     </div>
   );
 
+  const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  };
+
   const cardContent = (
     <Card className={cn("group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border/60 h-full", className)}>
         <div className="flex-grow flex flex-col">
@@ -66,7 +73,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                         </div>
                         <ImageContainer>
                             <Image
-                                src={product.imageUrl}
+                                src={getImageUrl(product.imageUrl)}
                                 alt={product.name}
                                 width={250}
                                 height={250}
@@ -82,7 +89,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                         </div>
                         <ImageContainer>
                              <Image
-                                src={product.imageUrl}
+                                src={getImageUrl(product.imageUrl)}
                                 alt={product.name}
                                 width={250}
                                 height={250}
