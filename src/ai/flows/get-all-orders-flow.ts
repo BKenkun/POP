@@ -10,43 +10,22 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { OrderWithUserName, Order } from '@/lib/types';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth, UserRecord } from 'firebase-admin/auth';
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, App, FirebaseApp } from 'firebase/app';
+import { getFirestore, collectionGroup, query, orderBy, getDocs } from 'firebase/firestore';
+import { firebaseConfig } from '@/firebase/config';
 
 // Define the output schema for the flow
 const GetAllOrdersOutputSchema = z.array(z.custom<OrderWithUserName>());
 
-// --- Firebase Admin Initialization ---
-// This ensures we have a single, memoized instance of the Firebase Admin app.
-const getFirebaseAdminApp = (): App => {
-  if (getApps().length > 0) {
-    return getApps()[0];
-  }
-  
-  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!serviceAccountKey) {
-    // Attempt to initialize with default credentials if the env var is not set.
-    // This works in environments like Google Cloud Run, Firebase Hosting, etc.
-    try {
-        return admin.initializeApp();
-    } catch(e) {
-        console.error("Admin SDK initialization failed. Either set FIREBASE_SERVICE_ACCOUNT_KEY or run in a GCP/Firebase environment.");
-        throw new Error("Firebase server configuration is invalid. Check environment variables.");
-    }
-  }
+// --- Firebase Client SDK Initialization (within the server environment) ---
+let app: FirebaseApp;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
+}
 
-  try {
-    const credentials = JSON.parse(serviceAccountKey);
-    return admin.initializeApp({
-      credential: admin.credential.cert(credentials),
-    });
-  } catch (error) {
-    console.error('Error parsing Firebase service account key:', error);
-    throw new Error('Failed to initialize Firebase Admin SDK.');
-  }
-};
+const db = getFirestore(app);
 
 
 // Main exported function that the client will call
@@ -61,14 +40,10 @@ const getAllOrdersFlow = ai.defineFlow(
     outputSchema: GetAllOrdersOutputSchema,
   },
   async () => {
-    const app = getFirebaseAdminApp();
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    
     try {
-      // Query the entire 'orders' collection group
-      const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
-      const ordersSnap = await ordersQuery.get();
+      // Query the entire 'orders' collection group using the client SDK from a trusted server environment
+      const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+      const ordersSnap = await getDocs(ordersQuery);
 
       if (ordersSnap.empty) {
         console.log('Admin flow: No orders found in the database.');
@@ -77,7 +52,15 @@ const getAllOrdersFlow = ai.defineFlow(
 
       const fetchedOrders: OrderWithUserName[] = ordersSnap.docs.map(doc => {
         const orderData = doc.data() as Order;
-        const createdAt = (orderData.createdAt as any)?.toDate ? (orderData.createdAt as any).toDate() : new Date();
+        
+        let createdAt: Date;
+        if (orderData.createdAt && (orderData.createdAt as any).toDate) {
+            createdAt = (orderData.createdAt as any).toDate();
+        } else if (typeof orderData.createdAt === 'string') {
+            createdAt = new Date(orderData.createdAt);
+        } else {
+            createdAt = new Date();
+        }
 
         return {
           ...orderData,
@@ -91,6 +74,7 @@ const getAllOrdersFlow = ai.defineFlow(
       
     } catch (error) {
       console.error('CRITICAL: Genkit flow failed to fetch orders.', error);
+      // This error will be propagated to the client and caught by the component.
       throw new Error('Failed to retrieve orders from the database due to a server-side error.');
     }
   }
