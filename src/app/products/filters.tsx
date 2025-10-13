@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, use } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {

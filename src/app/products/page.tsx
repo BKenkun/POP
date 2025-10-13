@@ -4,10 +4,25 @@
 import { Product } from '@/lib/types';
 import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
-import { Suspense, use } from 'react';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
+
+function ProductPageSkeleton() {
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <aside className="lg:col-span-1">
+                <Skeleton className="h-[600px] w-full" />
+            </aside>
+            <main className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-[450px] w-full" />
+                ))}
+            </main>
+        </div>
+    )
+}
 
 function ProductPageContent({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
     const firestore = useFirestore();
@@ -38,21 +53,6 @@ function ProductPageContent({ searchParams }: { searchParams: { [key: string]: s
     )
 }
 
-function ProductPageSkeleton() {
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <aside className="lg:col-span-1">
-                <Skeleton className="h-[600px] w-full" />
-            </aside>
-            <main className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-[450px] w-full" />
-                ))}
-            </main>
-        </div>
-    )
-}
-
 
 export default function ProductsPage({
     searchParams,
@@ -69,7 +69,7 @@ export default function ProductsPage({
                 </p>
             </div>
             <Suspense fallback={<ProductPageSkeleton />}>
-                 <ProductPageContent searchParams={use(Promise.resolve(searchParams))} />
+                 <ProductPageContent searchParams={searchParams} />
             </Suspense>
         </div>
     );
