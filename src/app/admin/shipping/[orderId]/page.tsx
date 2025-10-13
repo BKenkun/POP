@@ -3,14 +3,18 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Truck } from "lucide-react";
+import { useParams } from 'next/navigation';
 
-export default function AdminShippingDetailPage({ params }: { params: { orderId: string } }) {
+export default function AdminShippingDetailPage() {
+  const params = useParams();
+  const orderId = params.orderId as string;
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Envío</h1>
-          <p className="text-muted-foreground">Gestionando el envío para el pedido #{params.orderId.substring(params.orderId.length - 7)}</p>
+          <p className="text-muted-foreground">Gestionando el envío para el pedido #{orderId ? orderId.substring(orderId.length - 7) : '...'}</p>
         </div>
       </div>
       
