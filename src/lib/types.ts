@@ -20,6 +20,10 @@ export interface Product {
   size?: string;
   composition?: string;
   url?: string;
+  // --- New Accounting Fields ---
+  cost?: number; // Cost of the product in cents
+  includesVat?: boolean;
+  vatPercentage?: number; // e.g., 21 for 21%
 }
 
 export interface CartItem extends Product {

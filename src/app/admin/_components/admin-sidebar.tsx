@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,7 +18,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings, Truck, ChevronDown } from 'lucide-react';
+import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings, Truck, ChevronDown, Calculator } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
@@ -33,6 +34,7 @@ export default function AdminSidebar() {
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/products', label: 'Catálogo', icon: ShoppingCart },
     { href: '/admin/customers', label: 'Clientes', icon: Users },
+    { href: '/admin/accounting', label: 'Contabilidad', icon: Calculator },
     { href: '/admin/b2b', label: 'B2B', icon: Briefcase },
     { href: '/admin/coupons', label: 'Cupones', icon: Ticket },
     { href: '/admin/web', label: 'Web', icon: Globe },

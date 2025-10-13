@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -40,6 +41,10 @@ const productSchema = z.object({
   internalTags: z.string().optional(),
   web: z.string().optional(), // Added for web portal filtering
   url: z.string().url('Debe ser una URL válida.').optional().or(z.literal('')),
+  // New accounting fields
+  cost: z.coerce.number().int().min(0, 'El coste no puede ser negativo.').optional(),
+  includesVat: z.boolean().default(true),
+  vatPercentage: z.coerce.number().min(0, 'El IVA no puede ser negativo.').max(100, 'El IVA no puede ser mayor que 100.').optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -83,6 +88,9 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
       internalTags: product?.internalTags?.join(', ') || '',
       web: product?.internalTags?.includes('popper') ? 'popper' : '',
       url: product?.url || '',
+      cost: product?.cost || 0,
+      includesVat: product?.includesVat === undefined ? true : product.includesVat,
+      vatPercentage: product?.vatPercentage || 21,
     },
   });
 
@@ -164,11 +172,32 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
                   </FormItem>
                 )} />
                  <FormField control={form.control} name="price" render={({ field }) => (
-                  <FormItem><FormLabel>Precio (en céntimos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Precio de Venta (en céntimos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="stock" render={({ field }) => (
                     <FormItem><FormLabel>Stock Disponible</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Si es 0, se mostrará como "Agotado".</FormDescription><FormMessage /></FormItem>
                 )} />
+              </CardContent>
+            </Card>
+            <Card className="border-primary/50">
+              <CardHeader><CardTitle>Datos Económicos y Contabilidad</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                 <FormField control={form.control} name="cost" render={({ field }) => (
+                    <FormItem><FormLabel>Coste (en céntimos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>El coste de adquisición del producto.</FormDescription><FormMessage /></FormItem>
+                )} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="vatPercentage" render={({ field }) => (
+                        <FormItem><FormLabel>Porcentaje de IVA (%)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="includesVat" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
+                            <div className="space-y-0.5">
+                                <FormLabel>¿Precio incluye IVA?</FormLabel>
+                            </div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                        </FormItem>
+                    )} />
+                </div>
               </CardContent>
             </Card>
             <Card className="border-primary/50">
