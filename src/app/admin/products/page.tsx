@@ -130,6 +130,7 @@ export default function AdminProductsPage() {
                                     src={product.imageUrl} 
                                     alt={product.name} 
                                     fill 
+                                    unoptimized
                                     className="object-cover"
                                     sizes="48px"
                                 />
