@@ -2,7 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { updateOrderStatus } from '@/app/actions/admin-data';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import { Order } from '@/lib/types';
 import { Loader2, Package, User, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 // No tiene lógica de obtención de datos.
 export default function OrderDetailsClient({ initialOrder }: { initialOrder: Order }) {
   const { toast } = useToast();
+  const firestore = useFirestore();
   
   // El estado local se inicializa desde las props.
   const [order, setOrder] = useState<Order>(initialOrder);
@@ -38,17 +40,18 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
     }
     setUpdatingStatus(true);
     
-    const result = await updateOrderStatus(order.path, newStatus);
-    
-    if (result.success) {
-      toast({
+    try {
+        const docRef = doc(firestore, order.path);
+        await updateDoc(docRef, { status: newStatus });
+
+        toast({
             title: "Estado del pedido actualizado",
             description: `El pedido ahora está marcado como "${newStatus}".`,
         });
         // Actualiza el estado local para reflejar el cambio inmediatamente en la UI
         setOrder(prev => ({...prev, status: newStatus as Order['status']}));
-    } else {
-       toast({ title: "Error", description: result.error || "No se pudo actualizar el estado.", variant: 'destructive'});
+    } catch (error: any) {
+       toast({ title: "Error al actualizar", description: error.message || "No se pudo actualizar el estado.", variant: 'destructive'});
     }
     
     setUpdatingStatus(false);
@@ -167,3 +170,5 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
     </div>
   );
 }
+
+    

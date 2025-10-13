@@ -14,8 +14,8 @@ export default function OrdersError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Registrar el error en un sistema de monitoreo (ej. Sentry, LogRocket, etc.)
-    console.error("Error en el componente de pedidos:", error);
+    // Log the error to a monitoring system
+    console.error("ErrorBoundary caught an error in admin orders:", error);
   }, [error]);
 
   return (
@@ -27,13 +27,16 @@ export default function OrdersError({
                 </div>
                 <CardTitle>¡Ups! Algo salió mal</CardTitle>
                 <CardDescription>
-                    No hemos podido mostrar la lista de pedidos en este momento.
+                    No hemos podido procesar esta vista en este momento.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
-                 <p className="text-sm text-muted-foreground mb-6">
-                    Puedes intentar recargar la página. Si el problema persiste, contacta con el soporte técnico.
+            <CardContent className="space-y-4">
+                 <p className="text-sm text-muted-foreground">
+                    Esto puede ser un problema temporal. Puedes intentar recargar la página. Si el problema persiste, contacta con el soporte técnico.
                 </p>
+                <pre className="mt-2 w-full whitespace-pre-wrap rounded-md bg-secondary p-4 text-left text-xs text-secondary-foreground">
+                  <code>{error.message}</code>
+                </pre>
                 <Button onClick={() => reset()}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Intentar de nuevo
@@ -43,3 +46,5 @@ export default function OrdersError({
     </div>
   );
 }
+
+    
