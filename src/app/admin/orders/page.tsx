@@ -93,9 +93,11 @@ const OrdersTable = ({ orders }: { orders: AdminDisplayOrder[] }) => {
                             Ver
                         </Link>
                     </Button>
-                        <Button variant="outline" size="sm" disabled>
-                        <Truck className="mr-2 h-4 w-4" />
-                        Enviar
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path)}`}>
+                             <Truck className="mr-2 h-4 w-4" />
+                             Enviar
+                        </Link>
                     </Button>
                 </TableCell>
                 </TableRow>
