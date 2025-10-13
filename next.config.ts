@@ -23,8 +23,8 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https'
-,        hostname: 'files.stripe.com',
+        protocol: 'https',
+        hostname: 'files.stripe.com',
         port: '',
         pathname: '/**',
       },
