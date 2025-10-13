@@ -107,14 +107,16 @@ export default function AdminDashboardPage() {
       const recentOrders = allOrders.slice(0, 5);
       
       const customerSpending = allOrders.reduce((acc, order) => {
-          if (!order.userId) return acc; // Skip guest orders for this calculation if needed
+          if (!order.userId || order.userId === 'guest') return acc;
           if (!acc[order.userId]) {
-              acc[order.userId] = { name: order.customerName, email: order.customerEmail, total: 0, count: 0 };
+              acc[order.userId] = { userId: order.userId, name: order.customerName, email: order.customerEmail, total: 0, count: 0 };
           }
           acc[order.userId].total += order.total;
           acc[order.userId].count += 1;
+          // Use the name from the latest order in case it was updated
+          acc[order.userId].name = order.customerName;
           return acc;
-      }, {} as Record<string, { name: string, email: string, total: number, count: number }>);
+      }, {} as Record<string, { userId: string, name: string, email: string, total: number, count: number }>);
       
       const topCustomers = Object.values(customerSpending).sort((a, b) => b.total - a.total).slice(0, 5);
       
@@ -237,7 +239,7 @@ export default function AdminDashboardPage() {
             : (
                 <div className="space-y-4">
                   {topCustomers.map(customer => (
-                    <div key={customer.email} className="flex items-center">
+                    <div key={customer.userId} className="flex items-center">
                       <Avatar className="h-9 w-9">
                         <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
                       </Avatar>
