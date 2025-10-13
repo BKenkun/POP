@@ -32,6 +32,7 @@ const getStatusVariant = (status: string) => {
             return 'default';
         case 'shipped':
         case 'enviado':
+        case 'en reparto':
             return 'secondary';
         case 'pending':
         case 'pendiente':
@@ -40,6 +41,7 @@ const getStatusVariant = (status: string) => {
             return 'outline';
         case 'cancelled':
         case 'cancelado':
+        case 'incidencia':
             return 'destructive';
         default:
             return 'secondary';
@@ -166,11 +168,12 @@ export default function AdminOrdersPage() {
     handleFetchAllOrders();
   }, [firestore, toast]);
 
-  const { newOrders, pendingPaymentOrders, archivedOrders } = useMemo(() => {
+  const { newOrders, pendingPaymentOrders, inProgressOrders, archivedOrders } = useMemo(() => {
     return {
         newOrders: allOrders.filter(o => o.status === 'Reserva Recibida'),
         pendingPaymentOrders: allOrders.filter(o => o.status === 'Pago Pendiente de Verificación'),
-        archivedOrders: allOrders.filter(o => ['Enviado', 'Entregado', 'Cancelado'].includes(o.status)),
+        inProgressOrders: allOrders.filter(o => o.status === 'En Reparto'),
+        archivedOrders: allOrders.filter(o => ['Enviado', 'Entregado', 'Cancelado', 'Incidencia'].includes(o.status)),
     }
   }, [allOrders]);
 
@@ -187,7 +190,7 @@ export default function AdminOrdersPage() {
       </div>
 
        <Tabs defaultValue="new">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="new">
             <Package className="mr-2"/>
             Nuevos <Badge variant="secondary" className="ml-2">{newOrders.length}</Badge>
@@ -195,6 +198,10 @@ export default function AdminOrdersPage() {
           <TabsTrigger value="pending-payment">
              <Clock className="mr-2"/>
             Pago Pendiente <Badge variant="secondary" className="ml-2">{pendingPaymentOrders.length}</Badge>
+          </TabsTrigger>
+           <TabsTrigger value="in-progress">
+             <Truck className="mr-2"/>
+            En Reparto <Badge variant="secondary" className="ml-2">{inProgressOrders.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="archived">
              <Archive className="mr-2"/>
@@ -216,6 +223,9 @@ export default function AdminOrdersPage() {
                         </TabsContent>
                         <TabsContent value="pending-payment">
                             <OrdersTable orders={pendingPaymentOrders} />
+                        </TabsContent>
+                        <TabsContent value="in-progress">
+                            <OrdersTable orders={inProgressOrders} />
                         </TabsContent>
                          <TabsContent value="archived">
                             <OrdersTable orders={archivedOrders} />

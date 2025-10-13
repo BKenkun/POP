@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Order } from '@/lib/types';
-import { Loader2, Package, User, MapPin, ArrowLeft } from 'lucide-react';
+import { Loader2, Package, User, MapPin, ArrowLeft, Truck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
@@ -64,6 +64,7 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
             return 'default';
         case 'shipped':
         case 'enviado':
+        case 'en reparto':
             return 'secondary';
         case 'pending':
         case 'pendiente':
@@ -72,6 +73,7 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
             return 'outline';
         case 'cancelled':
         case 'cancelado':
+        case 'incidencia':
             return 'destructive';
         default:
             return 'secondary';
@@ -138,13 +140,22 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
                   <SelectContent>
                     <SelectItem value="Reserva Recibida">Reserva Recibida</SelectItem>
                     <SelectItem value="Pago Pendiente de Verificación">Pago Pendiente</SelectItem>
+                    <SelectItem value="En Reparto">En Reparto</SelectItem>
                     <SelectItem value="Enviado">Enviado</SelectItem>
                     <SelectItem value="Entregado">Entregado</SelectItem>
+                    <SelectItem value="Incidencia">Incidencia</SelectItem>
                     <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {updatingStatus && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin"/>Actualizando...</div>}
+                
+                <Button asChild className="w-full">
+                    <Link href={`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path ?? '')}`}>
+                        <Truck className="mr-2" />
+                        Gestionar Envío
+                    </Link>
+                </Button>
             </CardContent>
           </Card>
 
