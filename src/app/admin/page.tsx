@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
 
         <OverviewChart data={chartData} />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
                 <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
                 <p className="text-xs text-muted-foreground">
@@ -309,5 +309,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     
