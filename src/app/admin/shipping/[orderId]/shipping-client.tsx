@@ -3,7 +3,7 @@
 
 import { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, MapPin, Phone, Mail, Package, User, FileSignature, Save, Loader2, ArrowLeft, PenLine, Trash2 } from "lucide-react";
+import { Truck, MapPin, Phone, Mail, Package, User, FileSignature, Save, Loader2, ArrowLeft, PenLine, Trash2, Expand } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {
@@ -22,6 +22,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface ShippingClientProps {
   initialOrder: Order;
@@ -55,8 +56,10 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [dni, setDni] = useState(order.deliveryDni || '');
   const sigCanvas = useRef<SignatureCanvas>(null);
+  const fullscreenSigCanvas = useRef<SignatureCanvas>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const [isSignatureFullscreen, setIsSignatureFullscreen] = useState(false);
 
   useEffect(() => {
     if (order.status === 'Reserva Recibida' || order.status === 'Pago Pendiente de Verificación') {
@@ -111,7 +114,17 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
 
   const clearSignature = () => {
     sigCanvas.current?.clear();
+    fullscreenSigCanvas.current?.clear();
   };
+
+  const handleSaveFullscreenSignature = () => {
+    if (fullscreenSigCanvas.current && sigCanvas.current) {
+        const signatureData = fullscreenSigCanvas.current.toDataURL('image/png');
+        sigCanvas.current.fromDataURL(signatureData);
+    }
+    setIsSignatureFullscreen(false);
+  };
+
 
   const isDeliveryConfirmed = order.status === 'Entregado';
   const showDeliveryConfirmation = order.status === 'En Reparto' || isDeliveryConfirmed;
@@ -230,12 +243,37 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
                                     </div>
                                 </div>
                              ) : (
-                                <div className="relative border rounded-md">
-                                    <SignatureCanvas ref={sigCanvas} penColor='black' canvasProps={{className: 'w-full h-40'}} />
-                                    <Button size="icon" variant="ghost" className="absolute top-1 right-1 h-7 w-7" onClick={clearSignature} disabled={isSaving}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <Dialog open={isSignatureFullscreen} onOpenChange={setIsSignatureFullscreen}>
+                                    <div className="relative border rounded-md">
+                                        <SignatureCanvas ref={sigCanvas} penColor='black' canvasProps={{className: 'w-full h-40'}} />
+                                        <div className="absolute top-1 right-1 flex items-center">
+                                            <DialogTrigger asChild>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7" disabled={isSaving}>
+                                                    <Expand className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={clearSignature} disabled={isSaving}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <DialogContent className="max-w-[90vw] h-[80vh] flex flex-col">
+                                        <DialogHeader>
+                                            <DialogTitle>Firma del Receptor</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="flex-grow border rounded-md my-4">
+                                             <SignatureCanvas
+                                                ref={fullscreenSigCanvas}
+                                                penColor='black'
+                                                canvasProps={{className: 'w-full h-full'}}
+                                             />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="ghost" onClick={() => { fullscreenSigCanvas.current?.clear(); }}>Limpiar</Button>
+                                            <Button onClick={handleSaveFullscreenSignature}>Guardar Firma</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                              )}
                         </div>
                         {!isDeliveryConfirmed && (
