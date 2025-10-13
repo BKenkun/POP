@@ -26,10 +26,7 @@ export default function OrderDetailPage() {
     useEffect(() => {
         if (!orderPath || !firestore) {
             // If path is missing, we can't fetch the document.
-            // We set loading to false and let the component render the "not found" state.
-            if (!loading) setLoading(true); // Ensure loading is true if we start without path
             if (orderId && !orderPath) {
-                 // Path is missing, we can't proceed
                  console.error("Order path is missing from URL parameters.");
                  setOrder(null);
                  setLoading(false);
@@ -68,7 +65,7 @@ export default function OrderDetailPage() {
         };
 
         fetchOrder();
-    }, [orderId, orderPath, firestore, loading]);
+    }, [orderId, orderPath, firestore]);
 
     if (loading) {
         return (
