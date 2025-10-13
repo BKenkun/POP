@@ -17,26 +17,75 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { OrderWithUserName } from '@/lib/types';
-import { getAllOrders } from '@/ai/flows/get-all-orders-flow';
-
+import type { Order } from '@/lib/types';
+import { collection, getDocs, getFirestore, orderBy, query, Timestamp } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 
 export default function AdminOrdersPage() {
-  const [allOrders, setAllOrders] = useState<OrderWithUserName[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { firestore } = useFirebase();
 
   const handleFetchAllOrders = async () => {
+    if (!firestore) {
+        toast({ title: 'Error', description: 'Servicio de base de datos no disponible.', variant: 'destructive'});
+        return;
+    }
+
     setLoading(true);
     setAllOrders([]);
     toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
 
     try {
-      const fetchedOrders = await getAllOrders();
-      setAllOrders(fetchedOrders);
-      toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
+        const fetchedOrders: Order[] = [];
+        
+        // 1. Get all users
+        const usersQuery = query(collection(firestore, 'users'));
+        const usersSnap = await getDocs(usersQuery);
+
+        if (usersSnap.empty) {
+            console.warn('Admin: No user documents found.');
+        }
+
+        // 2. Iterate through users to get their orders
+        for (const userDoc of usersSnap.docs) {
+            const userId = userDoc.id;
+            const ordersQuery = query(
+                collection(firestore, 'users', userId, 'orders'),
+                orderBy('createdAt', 'desc')
+            );
+            const ordersSnap = await getDocs(ordersQuery);
+
+            ordersSnap.forEach(orderDoc => {
+                const orderData = orderDoc.data();
+                
+                let createdAt: Date;
+                if (orderData.createdAt instanceof Timestamp) {
+                    createdAt = orderData.createdAt.toDate();
+                } else if (typeof orderData.createdAt === 'string') {
+                    createdAt = new Date(orderData.createdAt);
+                } else {
+                    createdAt = new Date(); // Fallback
+                }
+                
+                fetchedOrders.push({
+                    id: orderDoc.id,
+                    ...orderData,
+                    createdAt: createdAt.toISOString(), // Standardize to string
+                    customerName: orderData.customerName || userDoc.data().displayName || 'Usuario Desconocido',
+                } as Order);
+            });
+        }
+        
+        // 3. Sort all collected orders by date
+        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        setAllOrders(fetchedOrders);
+        toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
+
     } catch (error: any) {
-      console.error("Error fetching all orders from Genkit flow:", error);
+      console.error("Error fetching all orders from client:", error);
       toast({ 
         title: 'Error al cargar los pedidos', 
         description: error.message || "No se pudieron obtener los pedidos. Revisa la consola para más detalles.", 
@@ -125,7 +174,7 @@ export default function AdminOrdersPage() {
                         <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'N/A'}</TableCell>
                         <TableCell>
                             <div>
-                                {order.userName}
+                                {order.customerName}
                             </div>
                         </TableCell>
                         <TableCell>
