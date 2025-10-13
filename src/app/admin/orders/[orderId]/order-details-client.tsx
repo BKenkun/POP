@@ -140,8 +140,37 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
                     <SelectItem value="Pago Pendiente de Verificación">Pago Pendiente</SelectItem>
                     <SelectItem value="Enviado">Enviado</SelectItem>
                     <SelectItem value="Entregado">Entregado</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</- Hice un cambio sutil pero muy importante en `src/context/providers.tsx` para solucionar un posible bucle de redirección en el `AdminArea`. Ahora, la redirección solo ocurre si la carga ha finalizado y el usuario *no* es administrador. Esto evita redirecciones prematuras.
-- También ajusté la lógica de obtención de pedidos en `src/app/admin/orders/page.tsx` y `src/app/admin/orders/[orderId]/page.tsx`. El fallo persistente en el servidor de Genkit nos obliga a mover esta lógica al cliente. Con las reglas de seguridad que has añadido, ahora el navegador del administrador (y solo el del administrador) tendrá permiso para leer todos los pedidos. Esta es la solución más robusta y directa dadas las limitaciones del entorno.
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
 
-Con estos cambios, y tus nuevas reglas de seguridad, el sistema debería funcionar perfectamente.
+                {updatingStatus && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin"/>Actualizando...</div>}
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5" />Datos del Cliente</CardTitle></CardHeader>
+            <CardContent>
+                <p className="font-medium">{order.customerName}</p>
+                <a href={`mailto:${order.customerEmail}`} className="text-sm text-primary hover:underline">{order.customerEmail}</a>
+                {order.userId === 'guest' && <Badge variant="secondary" className="ml-2 mt-1">Invitado</Badge>}
+            </CardContent>
+          </Card>
+          
+          {order.shippingAddress && (
+              <Card>
+                <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Dirección de Envío</CardTitle></CardHeader>
+                <CardContent className="space-y-1 text-sm">
+                    <p className="font-medium">{order.customerName}</p>
+                    <p>{order.shippingAddress.line1}</p>
+                    {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
+                    <p>{order.shippingAddress.postal_code} {order.shippingAddress.city}</p>
+                    <p>{order.shippingAddress.state}, {order.shippingAddress.country}</p>
+                </CardContent>
+              </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
