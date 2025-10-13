@@ -11,7 +11,6 @@ import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/types';
 import { useEffect, useState, useMemo } from 'react';
-import { cbdProducts } from '@/lib/cbd-products';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,53 +33,61 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        // Simulate an async fetch, but use local data
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setProducts(cbdProducts);
-      } catch (err: any) {
-        setError('Failed to load local products.');
-      } finally {
-        setLoading(false);
-      }
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'products');
+  }, [firestore]);
+
+  const { data: products, isLoading: loading, error } = useCollection<Product>(productsQuery);
+
+  const handleToggleActive = async (product: Product) => {
+    if (!firestore) return;
+    const newStatus = product.active === false; // If currently false, new status is true
+    const productRef = doc(firestore, 'products', product.id);
+    
+    try {
+        await updateDoc(productRef, { active: newStatus });
+        toast({
+            title: `Producto ${newStatus ? 'Activado' : 'Archivado'}`,
+            description: `"${product.name}" ha sido movido a la sección correspondiente.`,
+        });
+    } catch (err) {
+        toast({
+            title: "Error",
+            description: "No se pudo actualizar el estado del producto.",
+            variant: "destructive"
+        });
     }
-    loadProducts();
-  }, []);
-  
-  const handleToggleActive = (productId: string) => {
-    setProducts(prev => prev.map(p => {
-        if (p.id === productId) {
-            const newStatus = p.active === false; // Toggle the status
-            toast({
-                title: `Producto ${newStatus ? 'Activado' : 'Archivado'}`,
-                description: `"${p.name}" ha sido movido a la sección correspondiente (simulación).`,
-            });
-            return { ...p, active: newStatus };
-        }
-        return p;
-    }));
   };
 
-  const handleDelete = (productId: string, productName: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    toast({
-        title: "Producto Eliminado (Simulación)",
-        description: `El producto "${productName}" ha sido eliminado.`,
-        variant: "destructive",
-    });
+  const handleDelete = async (productId: string, productName: string) => {
+     if (!firestore) return;
+     const productRef = doc(firestore, 'products', productId);
+     try {
+        await deleteDoc(productRef);
+        toast({
+            title: "Producto Eliminado",
+            description: `El producto "${productName}" ha sido eliminado permanentemente.`,
+            variant: "destructive",
+        });
+     } catch (err) {
+         toast({
+            title: "Error",
+            description: "No se pudo eliminar el producto.",
+            variant: "destructive"
+        });
+     }
   }
 
   const { activeProducts, archivedProducts } = useMemo(() => {
+    if (!products) return { activeProducts: [], archivedProducts: [] };
     return products.reduce(
         (acc, product) => {
             if (product.active === false) { // Explicitly check for false
@@ -135,7 +142,7 @@ export default function AdminProductsPage() {
                             <div className="flex items-center gap-2">
                                 <Switch
                                     checked={product.active !== false}
-                                    onCheckedChange={() => handleToggleActive(product.id)}
+                                    onCheckedChange={() => handleToggleActive(product)}
                                     aria-label="Activar o archivar producto"
                                 />
                                 <Badge variant={product.active === false ? 'outline' : 'default'}>
@@ -168,7 +175,7 @@ export default function AdminProductsPage() {
                                                 <span>Editar</span>
                                             </Link>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleToggleActive(product.id)}>
+                                        <DropdownMenuItem onClick={() => handleToggleActive(product)}>
                                             {product.active !== false ? (
                                                 <><Archive className="mr-2 h-4 w-4" /><span>Archivar</span></>
                                             ) : (
@@ -188,7 +195,7 @@ export default function AdminProductsPage() {
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el producto (simulación).
+                                            Esta acción no se puede deshacer. Se eliminará permanentemente el producto de la base de datos.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -229,7 +236,7 @@ export default function AdminProductsPage() {
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="text-center text-destructive py-8">{error}</div>
+        <div className="text-center text-destructive py-8">{error.message}</div>
       ) : (
         <div className="space-y-8">
             <ProductTable products={activeProducts} tableTitle="Productos Activos" />

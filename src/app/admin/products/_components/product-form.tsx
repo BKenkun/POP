@@ -20,7 +20,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Save } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { cbdProducts } from '@/lib/cbd-products';
 
 // Define the schema outside the component
 const productSchema = z.object({
@@ -50,26 +49,15 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
-  product?: Product;
+  product?: Partial<Product>;
   onSave: (data: Product) => void;
+  isSaving: boolean;
 }
 
-export default function ProductForm({ product, onSave }: ProductFormProps) {
-  // Create a refined schema for uniqueness validation
-  const productSchemaWithUniqueness = productSchema.refine(
-    (data) => {
-        // Check if there's any other product with the same SKU
-        const isSkuDuplicate = cbdProducts.some(p => p.sku === data.sku && p.id !== product?.id);
-        return !isSkuDuplicate;
-    },
-    {
-      message: "Este SKU ya está en uso por otro producto.",
-      path: ["sku"], // Apply the error to the 'sku' field
-    }
-  );
+export default function ProductForm({ product, onSave, isSaving }: ProductFormProps) {
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchemaWithUniqueness),
+    resolver: zodResolver(productSchema),
     defaultValues: {
       name: product?.name || '',
       sku: product?.sku || '',
@@ -249,9 +237,9 @@ export default function ProductForm({ product, onSave }: ProductFormProps) {
             </Card>
         </div>
         <div className="flex justify-end gap-2">
-          <Button type="submit">
+          <Button type="submit" disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            Guardar Producto
+            {isSaving ? 'Guardando...' : 'Guardar Producto'}
           </Button>
         </div>
       </form>

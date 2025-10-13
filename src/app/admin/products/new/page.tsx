@@ -6,33 +6,70 @@ import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { generateSKU } from '@/lib/utils';
+import { useState } from 'react';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 export default function NewProductPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const firestore = useFirestore();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newSku, setNewSku] = useState('');
 
-  const handleSave = (data: Product) => {
-    const newProduct: Product = {
-      ...data,
-      sku: data.sku || generateSKU('P'), // Generate SKU if it wasn't somehow provided
-      active: data.active === undefined ? true : data.active,
-    };
+  // Generate SKU on client to ensure it's available for the form
+  useState(() => {
+    setNewSku(generateSKU('P'));
+    setIsLoading(false);
+  });
+
+  const handleSave = async (data: Product) => {
+    if (!firestore) {
+        toast({ title: 'Error de Conexión', description: 'No se puede conectar a la base de datos.', variant: 'destructive'});
+        return;
+    }
     
-    console.log('--- CREATING NEW PRODUCT (SIMULATION) ---');
-    console.log(newProduct);
+    setIsSaving(true);
+    const productRef = doc(firestore, 'products', data.id);
 
-    toast({
-      title: 'Producto Creado (Simulación)',
-      description: `El producto "${newProduct.name}" ha sido añadido. Esta es una simulación y los datos no se persistirán.`,
-    });
-    router.push('/admin/products');
+    try {
+        await setDoc(productRef, data);
+        toast({
+            title: 'Producto Creado',
+            description: `El producto "${data.name}" ha sido guardado en la base de datos.`,
+        });
+        router.push('/admin/products');
+    } catch (err) {
+        console.error("Error creating product:", err);
+        toast({
+            title: 'Error',
+            description: 'No se pudo crear el producto.',
+            variant: 'destructive'
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+       <div className="flex items-center justify-center h-40">
+         <Loader2 className="h-8 w-8 animate-spin" />
+         <p className="ml-2">Generando SKU...</p>
+       </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Crear Nuevo Producto</h1>
-      {/* Pass a product-like object with a generated SKU to the form */}
-      <ProductForm onSave={handleSave} product={{ sku: generateSKU('P') } as Product} />
+      <ProductForm 
+        onSave={handleSave} 
+        isSaving={isSaving}
+        product={{ sku: newSku }} 
+      />
     </div>
   );
 }
