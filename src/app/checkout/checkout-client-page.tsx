@@ -247,7 +247,7 @@ export default function CheckoutClientPage() {
     // --- ORDER CREATION LOGIC ---
     try {
         const orderId = generateOrderCode();
-        const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country };
+        const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
         const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
             userId: user.uid,
             status: 'Reserva Recibida',

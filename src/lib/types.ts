@@ -65,6 +65,7 @@ export const ShippingAddressSchema = z.object({
   state: z.string().nullable(),
   postal_code: z.string().nullable(),
   country: z.string().nullable(),
+  phone: z.string().nullable(),
 });
 
 export const OrderSchema = z.object({

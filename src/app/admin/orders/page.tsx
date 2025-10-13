@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Eye, Package, Truck, Inbox, Archive, CircleCheck, XCircle, Clock } from 'lucide-react';
+import { Loader2, Eye, Package, Truck, Inbox, Archive, Clock, Phone } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -66,6 +66,7 @@ const OrdersTable = ({ orders }: { orders: AdminDisplayOrder[] }) => {
                 <TableHead>Nº Pedido</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>Contacto</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -81,6 +82,9 @@ const OrdersTable = ({ orders }: { orders: AdminDisplayOrder[] }) => {
                         {order.customerName}
                         {order.userId === 'guest' && <Badge variant="secondary" className="ml-2">Invitado</Badge>}
                     </div>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                    {order.shippingAddress?.phone || 'N/A'}
                 </TableCell>
                 <TableCell>
                     <Badge variant={getStatusVariant(order.status)}>

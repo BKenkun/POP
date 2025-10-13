@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Truck, Eye, Inbox } from 'lucide-react';
+import { Loader2, Truck, Eye, Inbox, Phone } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -108,6 +108,7 @@ export default function AdminShippingPage() {
                         <TableHead>Nº Pedido</TableHead>
                         <TableHead>Fecha Salida</TableHead>
                         <TableHead>Cliente</TableHead>
+                        <TableHead>Contacto</TableHead>
                         <TableHead>Dirección</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
@@ -118,6 +119,10 @@ export default function AdminShippingPage() {
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
                         <TableCell>{new Date(order.createdAt).toLocaleDateString('es-ES')}</TableCell>
                         <TableCell>{order.customerName}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground flex items-center gap-2">
+                             <Phone className="h-4 w-4" />
+                            {order.shippingAddress?.phone || 'N/A'}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                             {order.shippingAddress ? `${order.shippingAddress.line1}, ${order.shippingAddress.city}` : 'No disponible'}
                         </TableCell>
