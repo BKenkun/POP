@@ -22,7 +22,8 @@ import type { Order, Product } from "@/lib/types";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, collectionGroup, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { addDays, startOfMonth } from "date-fns";
+import { addDays, startOfMonth, format as formatDate } from "date-fns";
+import { OverviewChart } from "./_components/overview-chart";
 
 // Define a type for the user data we expect
 export interface Customer {
@@ -83,9 +84,10 @@ export default function AdminDashboardPage() {
       recentOrders, 
       topCustomers,
       totalRevenue,
-      collectedRevenue
+      collectedRevenue,
+      chartData,
   } = useMemo(() => {
-      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [], totalRevenue: 0, collectedRevenue: 0 };
+      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [], totalRevenue: 0, collectedRevenue: 0, chartData: [] };
 
       const from = dateRange?.from;
       const to = dateRange?.to;
@@ -113,8 +115,7 @@ export default function AdminDashboardPage() {
           }
           acc[order.userId].total += order.total;
           acc[order.userId].count += 1;
-          // Use the name from the latest order in case it was updated
-          acc[order.userId].name = order.customerName;
+          acc[order.userId].name = order.customerName; // Use latest name
           return acc;
       }, {} as Record<string, { userId: string, name: string, email: string, total: number, count: number }>);
       
@@ -124,9 +125,24 @@ export default function AdminDashboardPage() {
       const collectedRevenue = filteredOrders
         .filter(order => order.status === 'Entregado')
         .reduce((sum, order) => sum + order.total, 0);
+      
+      // Process data for chart
+        const dailyData = filteredOrders.reduce((acc, order) => {
+            const date = formatDate(order.createdAt instanceof Timestamp ? order.createdAt.toDate() : new Date(order.createdAt), 'yyyy-MM-dd');
+            if (!acc[date]) {
+                acc[date] = { date, proyectados: 0, recogidos: 0 };
+            }
+            acc[date].proyectados += order.total / 100;
+            if (order.status === 'Entregado') {
+                acc[date].recogidos += order.total / 100;
+            }
+            return acc;
+        }, {} as Record<string, { date: string; proyectados: number; recogidos: number }>);
+        
+        const chartData = Object.values(dailyData).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
 
-      return { filteredOrders, filteredUsers, recentOrders, topCustomers, totalRevenue, collectedRevenue };
+      return { filteredOrders, filteredUsers, recentOrders, topCustomers, totalRevenue, collectedRevenue, chartData };
   }, [allOrders, allUsers, dateRange]);
 
 
@@ -153,42 +169,50 @@ export default function AdminDashboardPage() {
             />
         </div>
       </div>
-      
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
-             <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
-             <p className="text-xs text-muted-foreground">
-                <span className="font-semibold">{formatPrice(totalRevenue)}</span> proyectados
-             </p>
-          </StatCard>
 
-          <StatCard title="Pedidos" icon={ShoppingCart} loading={loadingStats}>
-             <div className="text-2xl font-bold">{totalOrders.toLocaleString('es-ES')}</div>
-             <p className="text-xs text-muted-foreground invisible">Placeholder</p>
-          </StatCard>
+      {/* Chart */}
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="col-span-full lg:col-span-4">
+          <OverviewChart data={chartData} />
+        </div>
+        <div className="col-span-full lg:col-span-3 space-y-4">
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
+                 <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
+                 <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold">{formatPrice(totalRevenue)}</span> proyectados
+                 </p>
+              </StatCard>
 
-          <StatCard title="Clientes Nuevos" icon={Users} loading={loadingStats}>
-            <div className="text-2xl font-bold">{newCustomers.toLocaleString('es-ES')}</div>
-            <p className="text-xs text-muted-foreground invisible">Placeholder</p>
-          </StatCard>
+              <StatCard title="Pedidos" icon={ShoppingCart} loading={loadingStats}>
+                 <div className="text-2xl font-bold">{totalOrders.toLocaleString('es-ES')}</div>
+                 <p className="text-xs text-muted-foreground invisible">Placeholder</p>
+              </StatCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loadingProducts ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
-                <div className="text-2xl font-bold">{products.length}</div>
-                <Link href="/admin/products">
-                    <p className={cn("text-xs font-bold hover:underline cursor-pointer", lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
-                        {lowStockCount} con bajo stock
-                    </p>
-                </Link>
-              </>}
-            </CardContent>
-          </Card>
+              <StatCard title="Clientes Nuevos" icon={Users} loading={loadingStats}>
+                <div className="text-2xl font-bold">{newCustomers.toLocaleString('es-ES')}</div>
+                <p className="text-xs text-muted-foreground invisible">Placeholder</p>
+              </StatCard>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loadingProducts ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
+                    <div className="text-2xl font-bold">{products.length}</div>
+                    <Link href="/admin/products">
+                        <p className={cn("text-xs font-bold hover:underline cursor-pointer", lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
+                            {lowStockCount} con bajo stock
+                        </p>
+                    </Link>
+                  </>}
+                </CardContent>
+              </Card>
+            </div>
+        </div>
       </div>
 
 
