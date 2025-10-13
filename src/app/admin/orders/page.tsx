@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Eye, Package, Truck, Inbox, Archive, CircleCheck, XCircle } from 'lucide-react';
+import { Loader2, Eye, Package, Truck, Inbox, Archive, CircleCheck, XCircle, Clock } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -162,14 +162,13 @@ export default function AdminOrdersPage() {
     };
 
     handleFetchAllOrders();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestore]);
+  }, [firestore, toast]);
 
-  const { newOrders, inProgressOrders, archivedOrders } = useMemo(() => {
+  const { newOrders, pendingPaymentOrders, archivedOrders } = useMemo(() => {
     return {
         newOrders: allOrders.filter(o => o.status === 'Reserva Recibida'),
-        inProgressOrders: allOrders.filter(o => ['Pago Pendiente de Verificación', 'Enviado'].includes(o.status)),
-        archivedOrders: allOrders.filter(o => ['Entregado', 'Cancelado'].includes(o.status)),
+        pendingPaymentOrders: allOrders.filter(o => o.status === 'Pago Pendiente de Verificación'),
+        archivedOrders: allOrders.filter(o => ['Enviado', 'Entregado', 'Cancelado'].includes(o.status)),
     }
   }, [allOrders]);
 
@@ -191,9 +190,9 @@ export default function AdminOrdersPage() {
             <Package className="mr-2"/>
             Nuevos <Badge variant="secondary" className="ml-2">{newOrders.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="in-progress">
-             <Truck className="mr-2"/>
-            En Proceso <Badge variant="secondary" className="ml-2">{inProgressOrders.length}</Badge>
+          <TabsTrigger value="pending-payment">
+             <Clock className="mr-2"/>
+            Pago Pendiente <Badge variant="secondary" className="ml-2">{pendingPaymentOrders.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="archived">
              <Archive className="mr-2"/>
@@ -213,8 +212,8 @@ export default function AdminOrdersPage() {
                         <TabsContent value="new">
                             <OrdersTable orders={newOrders} />
                         </TabsContent>
-                        <TabsContent value="in-progress">
-                            <OrdersTable orders={inProgressOrders} />
+                        <TabsContent value="pending-payment">
+                            <OrdersTable orders={pendingPaymentOrders} />
                         </TabsContent>
                          <TabsContent value="archived">
                             <OrdersTable orders={archivedOrders} />
@@ -227,4 +226,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
