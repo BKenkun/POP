@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
-import { collectionGroup, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
 // Using a more specific type for the orders state to handle serializable dates
@@ -39,14 +39,12 @@ export default function AdminShippingPage() {
 
       setLoading(true);
       try {
-        const ordersQuery = query(
-            collectionGroup(firestore, 'orders'), 
-            where('status', '==', 'En Reparto'),
-            orderBy('createdAt', 'desc')
-        );
+        // Fetch ALL orders first, then filter on the client.
+        // This avoids needing a composite index for `where('status', '==', 'En Reparto')` and `orderBy('createdAt')`.
+        const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(ordersQuery);
         
-        const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
+        const allOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
           const data = doc.data() as Order;
           const createdAtISO = data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
 
@@ -58,7 +56,10 @@ export default function AdminShippingPage() {
           };
         });
 
-        setShippingOrders(fetchedOrders);
+        // Now filter for the ones "En Reparto"
+        const inShipping = allOrders.filter(order => order.status === 'En Reparto');
+        setShippingOrders(inShipping);
+
       } catch (error: any) {
         console.error("Error fetching shipping orders:", error);
         toast({ 
@@ -85,7 +86,7 @@ export default function AdminShippingPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle>Pedidos en Reparto</CardTitle>
+            <CardTitle>Pedidos en Reparto ({shippingOrders.length})</CardTitle>
             <CardDescription>Esta es la lista de todos los paquetes que han salido del almacén y están en camino a ser entregados.</CardDescription>
         </CardHeader>
         <CardContent>
