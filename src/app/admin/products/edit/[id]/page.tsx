@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import ProductForm from '../../_components/product-form';
 import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/lib/types';
