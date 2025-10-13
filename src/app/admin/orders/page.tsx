@@ -17,71 +17,33 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import type { Order } from '@/lib/types';
+import type { OrderWithUserName } from '@/lib/types';
+import { getAllOrders } from '@/ai/flows/get-all-orders-flow';
 
-interface OrderWithUserName extends Order {
-    userName: string;
-}
 
 export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<OrderWithUserName[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const firestore = useFirestore();
 
   const handleFetchAllOrders = async () => {
-    if (!firestore) {
-        toast({ title: 'Error', description: 'El servicio de base de datos no está disponible.', variant: 'destructive'});
-        return;
-    }
-
     setLoading(true);
     setAllOrders([]);
     toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
 
     try {
-        // 1. Get all user documents from the 'users' collection.
-        const usersCollection = collection(firestore, 'users');
-        const usersSnapshot = await getDocs(usersCollection);
-        const userIds = usersSnapshot.docs.map(doc => doc.id);
-
-        let fetchedOrders: OrderWithUserName[] = [];
-
-        // 2. Iterate through each user to fetch their orders.
-        for (const userId of userIds) {
-            const userDoc = usersSnapshot.docs.find(doc => doc.id === userId);
-            const userName = userDoc?.data().displayName || userDoc?.data().email || 'Usuario Desconocido';
-            
-            const ordersQuery = query(
-                collection(firestore, 'users', userId, 'orders'),
-                orderBy('createdAt', 'desc')
-            );
-            const ordersSnapshot = await getDocs(ordersQuery);
-
-            ordersSnapshot.forEach(orderDoc => {
-                 const orderData = orderDoc.data() as Order;
-                 const createdAt = (orderData.createdAt as any)?.toDate ? (orderData.createdAt as any).toDate() : new Date();
-
-                 fetchedOrders.push({
-                    ...orderData,
-                    id: orderDoc.id,
-                    createdAt: createdAt.toISOString(),
-                    userName: userName,
-                 });
-            });
+        const fetchedOrders = await getAllOrders();
+        
+        if (!fetchedOrders) {
+             throw new Error("La función de obtención de pedidos no devolvió resultados.");
         }
         
-        // 3. Sort all collected orders by date descending.
-        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
         setAllOrders(fetchedOrders);
         toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos.` });
 
     } catch (error: any) {
-        console.error("Error fetching all orders from client:", error);
-        toast({ title: 'Error al cargar los pedidos', description: error.message || "No se pudieron obtener los pedidos. Revisa los permisos.", variant: 'destructive' });
+        console.error("Error fetching all orders from Genkit flow:", error);
+        toast({ title: 'Error al cargar los pedidos', description: error.message || "No se pudieron obtener los pedidos.", variant: 'destructive' });
     } finally {
         setLoading(false);
     }
