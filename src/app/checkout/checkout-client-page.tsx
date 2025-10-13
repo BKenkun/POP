@@ -180,7 +180,7 @@ export default function CheckoutClientPage() {
             uid: newUser.uid, 
             email: newUser.email, 
             displayName: name, 
-            createdAt: serverTimestamp(), 
+            creationTime: serverTimestamp(), 
             loyaltyPoints: 0, 
             isSubscribed: false 
         });
@@ -474,4 +474,3 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
-

@@ -73,7 +73,7 @@ export default function RegisterPage() {
       await setDoc(userDocRef, {
           email: newUser.email,
           uid: newUser.uid,
-          createdAt: serverTimestamp(),
+          creationTime: serverTimestamp(),
           displayName: newUser.email?.split('@')[0] || 'Nuevo Usuario',
           loyaltyPoints: 0,
           isSubscribed: false,
