@@ -24,7 +24,7 @@ function ProductPageSkeleton() {
     )
 }
 
-function ProductPageContent({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default function ProductsPage() {
     const firestore = useFirestore();
     const productsQuery = useMemoFirebase(() => {
         return query(collection(firestore, 'products'), where('active', '==', true));
@@ -33,7 +33,17 @@ function ProductPageContent({ searchParams }: { searchParams: { [key: string]: s
     const { data: products, isLoading } = useCollection<Product>(productsQuery);
 
     if (isLoading) {
-        return <ProductPageSkeleton />;
+        return (
+             <div>
+                <div className="text-center space-y-4 mb-12">
+                    <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Catálogo</h1>
+                    <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
+                        Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección.
+                    </p>
+                </div>
+                <ProductPageSkeleton />
+            </div>
+        );
     }
 
     const validProducts = products || [];
@@ -41,24 +51,6 @@ function ProductPageContent({ searchParams }: { searchParams: { [key: string]: s
     const uniqueBrands = getUniqueValues(validProducts, 'brand');
     const uniqueSizes = getUniqueValues(validProducts, 'size');
     const uniqueCompositions = getUniqueValues(validProducts, 'composition');
-    
-    return (
-        <ProductFilters 
-            products={validProducts} 
-            uniqueBrands={uniqueBrands}
-            uniqueSizes={uniqueSizes}
-            uniqueCompositions={uniqueCompositions}
-            searchParams={searchParams}
-        />
-    )
-}
-
-
-export default function ProductsPage({
-    searchParams,
-}: {
-    searchParams: { [key: string]: string | string[] | undefined };
-}) {
     
     return (
         <div>
@@ -69,7 +61,12 @@ export default function ProductsPage({
                 </p>
             </div>
             <Suspense fallback={<ProductPageSkeleton />}>
-                 <ProductPageContent searchParams={searchParams} />
+                 <ProductFilters 
+                    products={validProducts} 
+                    uniqueBrands={uniqueBrands}
+                    uniqueSizes={uniqueSizes}
+                    uniqueCompositions={uniqueCompositions}
+                />
             </Suspense>
         </div>
     );

@@ -26,7 +26,6 @@ interface ProductFiltersProps {
   uniqueBrands: string[];
   uniqueSizes: string[];
   uniqueCompositions: string[];
-  searchParams?: { [key: string]: string | string[] | undefined }; // Optional for reusability
   onFilterChange?: (filteredProducts: Product[]) => void; // Optional callback
   showSort?: boolean;
   showCategories?: boolean;
@@ -46,7 +45,6 @@ export default function ProductFilters({
     uniqueBrands, 
     uniqueSizes, 
     uniqueCompositions,
-    searchParams,
     onFilterChange,
     showSort = true,
     showCategories = true,
@@ -54,18 +52,15 @@ export default function ProductFilters({
 }: ProductFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const currentParams = useSearchParams();
+  const searchParams = useSearchParams();
 
   const getInitialState = <T extends string>(paramName: string, defaultValue: T[] = []): T[] => {
-    if (!searchParams) return defaultValue;
-    const paramValue = searchParams[paramName];
-    if (Array.isArray(paramValue)) return paramValue as T[];
-    if (typeof paramValue === 'string') return [paramValue as T];
-    return defaultValue;
+    const paramValues = searchParams.getAll(paramName);
+    return paramValues.length > 0 ? (paramValues as T[]) : defaultValue;
   }
 
   // Component-local state for filters
-  const [searchQuery, setSearchQuery] = useState(searchParams?.search as string || '');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedBrands, setSelectedBrands] = useState<string[]>(getInitialState('brand'));
   const [selectedSizes, setSelectedSizes] = useState<string[]>(getInitialState('size'));
   const [selectedCompositions, setSelectedCompositions] = useState<string[]>(getInitialState('composition'));
@@ -75,7 +70,7 @@ export default function ProductFilters({
   // Logic to update URL params when a filter changes
   const updateURLParams = (key: string, values: string[]) => {
       if (!searchParams) return; // Only update URL if used on a page with searchParams
-      const params = new URLSearchParams(currentParams.toString());
+      const params = new URLSearchParams(searchParams.toString());
       params.delete(key);
       values.forEach(value => params.append(key, value));
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -196,7 +191,7 @@ export default function ProductFilters({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' && searchParams) {
-                        const params = new URLSearchParams(currentParams.toString());
+                        const params = new URLSearchParams(searchParams.toString());
                         if(searchQuery) {
                             params.set('search', searchQuery);
                         } else {
