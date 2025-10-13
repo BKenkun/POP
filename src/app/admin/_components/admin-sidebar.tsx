@@ -91,12 +91,10 @@ export default function AdminSidebar() {
                 <SidebarMenuSub>
                     {logisticLinks.map((link) => (
                         <SidebarMenuItem key={link.href}>
-                             <Link href={link.href} passHref legacyBehavior>
-                                <SidebarMenuSubButton asChild isActive={pathname.startsWith(link.href)}>
-                                    <a>
-                                        <link.icon />
-                                        <span>{link.label}</span>
-                                    </a>
+                            <Link href={link.href} passHref>
+                                <SidebarMenuSubButton isActive={pathname.startsWith(link.href)}>
+                                    <link.icon />
+                                    <span>{link.label}</span>
                                 </SidebarMenuSubButton>
                             </Link>
                         </SidebarMenuItem>
