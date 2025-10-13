@@ -49,6 +49,12 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
     addToCart(product, quantity);
   }
 
+  const ImageContainer = ({ children }: { children: React.ReactNode }) => (
+    <div className="relative aspect-square w-full h-64 flex items-center justify-center">
+      {children}
+    </div>
+  );
+
   const cardContent = (
     <Card className={cn("group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border/60 h-full", className)}>
         <div className="flex-grow flex flex-col">
@@ -58,32 +64,32 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                         <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Eye className="text-white h-10 w-10" />
                         </div>
-                        <div className="relative h-64 w-full">
+                        <ImageContainer>
                             <Image
                                 src={product.imageUrl}
                                 alt={product.name}
-                                fill
-                                className="object-contain p-4"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                width={250}
+                                height={250}
+                                className="object-contain"
                                 data-ai-hint={product.imageHint}
                             />
-                        </div>
+                        </ImageContainer>
                     </div>
                 ) : (
                     <Link href={`/product/${product.id}`}>
                         <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Eye className="text-white h-10 w-10" />
                         </div>
-                        <div className="relative h-64 w-full">
+                        <ImageContainer>
                              <Image
                                 src={product.imageUrl}
                                 alt={product.name}
-                                fill
-                                className="object-contain p-4"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                width={250}
+                                height={250}
+                                className="object-contain"
                                 data-ai-hint={product.imageHint}
                             />
-                        </div>
+                        </ImageContainer>
                     </Link>
                 )}
                  {isSoldOut && (
