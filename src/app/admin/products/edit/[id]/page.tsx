@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -59,7 +60,9 @@ export default function EditProductPage() {
 
   // After loading, if there's an error or no product, show 404
   if (error || !product) {
-      console.error("Error fetching product or product not found:", error);
+      if (error) {
+        console.error("Error fetching product:", error);
+      }
       notFound();
   }
 
