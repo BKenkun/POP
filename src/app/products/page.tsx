@@ -4,7 +4,7 @@
 import { Product } from '@/lib/types';
 import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
-import { Suspense } from 'react';
+import { Suspense, use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
@@ -69,7 +69,7 @@ export default function ProductsPage({
                 </p>
             </div>
             <Suspense fallback={<ProductPageSkeleton />}>
-                 <ProductPageContent searchParams={searchParams} />
+                 <ProductPageContent searchParams={use(Promise.resolve(searchParams))} />
             </Suspense>
         </div>
     );
