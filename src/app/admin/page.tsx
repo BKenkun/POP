@@ -8,21 +8,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Users, Package, ShoppingCart } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { cbdProducts } from "@/lib/cbd-products";
-import type { Product } from "@/lib/types";
+import type { Order, Product } from "@/lib/types";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, collectionGroup, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { addDays, startOfMonth } from "date-fns";
 
-const StatCard = ({ title, value, icon: Icon, loading, format = (v: number) => v }: { title: string, value: number, icon: React.ElementType, loading: boolean, format?: (v: number) => string | number }) => {
-    if (loading) return <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{title}</CardTitle></CardHeader><CardContent><Loader2 className="h-6 w-6 animate-spin" /></CardContent></Card>;
+// Define a type for the user data we expect
+export interface Customer {
+    uid: string;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
+    creationTime?: string | Timestamp; // Can be string or Timestamp
+}
 
+const StatCard = ({ title, value, icon: Icon, loading, format = (v: number) => v.toLocaleString('es-ES') }: { title: string, value: number, icon: React.ElementType, loading: boolean, format?: (v: number | string) => string | number }) => {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -30,29 +41,85 @@ const StatCard = ({ title, value, icon: Icon, loading, format = (v: number) => v
                 <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{format(value)}</div>
-                 <p className="text-xs text-muted-foreground">
-                    Datos de ejemplo
-                </p>
+                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (
+                    <>
+                        <div className="text-2xl font-bold">{format(value)}</div>
+                    </>
+                )}
             </CardContent>
         </Card>
     );
 };
 
 export default function AdminDashboardPage() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const today = new Date();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(today),
+    to: today,
+  });
+  
   const [compareDateRange, setCompareDateRange] = useState<DateRange | undefined>();
   const [isCompareEnabled, setIsCompareEnabled] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  const firestore = useFirestore();
+
+  // --- Data Fetching ---
+  const ordersQuery = useMemoFirebase(() => query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')), [firestore]);
+  const { data: allOrders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
+  
+  const usersQuery = useMemoFirebase(() => query(collection(firestore, 'users')), [firestore]);
+  const { data: allUsers, isLoading: loadingUsers } = useCollection<Customer>(usersQuery);
 
   useEffect(() => {
-    // Simulate loading
     setProducts(cbdProducts);
-    setLoading(false);
+    setLoadingProducts(false);
   }, []);
 
+  const { filteredOrders, filteredUsers, recentOrders, topCustomers } = useMemo(() => {
+      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [] };
+
+      const from = dateRange?.from;
+      const to = dateRange?.to;
+
+      const filteredOrders = allOrders.filter(order => {
+          if (!from) return true;
+          const orderDate = order.createdAt instanceof Timestamp ? order.createdAt.toDate() : new Date(order.createdAt);
+          const toDate = to ? addDays(to, 1) : new Date(); // include the whole "to" day
+          return orderDate >= from && orderDate < toDate;
+      });
+
+      const filteredUsers = allUsers.filter(user => {
+          if (!from || !user.creationTime) return false;
+          const userDate = user.creationTime instanceof Timestamp ? user.creationTime.toDate() : new Date(user.creationTime);
+          const toDate = to ? addDays(to, 1) : new Date();
+          return userDate >= from && userDate < toDate;
+      });
+
+      const recentOrders = allOrders.slice(0, 5);
+      
+      const customerSpending = allOrders.reduce((acc, order) => {
+          if (!acc[order.userId]) {
+              acc[order.userId] = { name: order.customerName, email: order.customerEmail, total: 0, count: 0 };
+          }
+          acc[order.userId].total += order.total;
+          acc[order.userId].count += 1;
+          return acc;
+      }, {} as Record<string, { name: string, email: string, total: number, count: number }>);
+      
+      const topCustomers = Object.values(customerSpending).sort((a, b) => b.total - a.total).slice(0, 5);
+
+
+      return { filteredOrders, filteredUsers, recentOrders, topCustomers };
+  }, [allOrders, allUsers, dateRange]);
+
+
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalOrders = filteredOrders.length;
+  const newCustomers = filteredUsers.length;
   const lowStockCount = products.filter(p => p.stock !== undefined && p.stock <= 5).length;
+  const loadingStats = loadingOrders || loadingUsers;
 
   return (
     <div className="space-y-6">
@@ -70,37 +137,21 @@ export default function AdminDashboardPage() {
                 isCompareEnabled={isCompareEnabled}
                 setIsCompareEnabled={setIsCompareEnabled}
             />
-            <Button disabled>Ver Reportes</Button>
         </div>
       </div>
       
-      <Card>
-          <CardHeader>
-              <CardTitle>Tendencia de Ingresos</CardTitle>
-              <CardDescription>
-                  Los datos de la gráfica se cargarán aquí.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground bg-secondary/30 rounded-md">
-                <p>Gráfica de ingresos no disponible.</p>
-            </div>
-          </CardContent>
-      </Card>
-
-
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Ingresos" value={0} icon={Package} format={(v) => formatPrice(v)} loading={loading} />
-          <StatCard title="Pedidos" value={0} icon={ShoppingCart} loading={loading} />
-          <StatCard title="Clientes Nuevos" value={0} icon={Users} loading={loading} />
+          <StatCard title="Ingresos" value={totalRevenue} icon={DollarSign} format={formatPrice} loading={loadingStats} />
+          <StatCard title="Pedidos" value={totalOrders} icon={ShoppingCart} loading={loadingStats} />
+          <StatCard title="Clientes Nuevos" value={newCustomers} icon={Users} loading={loadingStats} />
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
+              {loadingProducts ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
                 <div className="text-2xl font-bold">{products.length}</div>
                 <Link href="/admin/products">
                     <p className={cn("text-xs font-bold hover:underline cursor-pointer", lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
@@ -114,13 +165,30 @@ export default function AdminDashboardPage() {
 
 
        {/* Recent Orders and Popular Products */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Pedidos Recientes</CardTitle>
           </CardHeader>
           <CardContent>
-             <div className="text-center text-muted-foreground py-4">No hay pedidos recientes.</div>
+             {loadingOrders ? <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div> 
+             : recentOrders.length === 0 ? <div className="text-center text-muted-foreground py-4">No hay pedidos recientes.</div>
+             : (
+                <div className="space-y-4">
+                  {recentOrders.map(order => (
+                    <div key={order.id} className="flex items-center">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>{order.customerName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">{order.customerName}</p>
+                        <p className="text-sm text-muted-foreground">{order.customerEmail}</p>
+                      </div>
+                      <div className="ml-auto font-medium text-primary">{formatPrice(order.total)}</div>
+                    </div>
+                  ))}
+                </div>
+             )}
           </CardContent>
         </Card>
 
@@ -138,7 +206,24 @@ export default function AdminDashboardPage() {
             <CardTitle>Top Clientes</CardTitle>
           </CardHeader>
           <CardContent>
-             <div className="text-center text-muted-foreground py-4">No hay datos de clientes.</div>
+            {loadingOrders ? <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
+            : topCustomers.length === 0 ? <div className="text-center text-muted-foreground py-4">No hay datos de clientes.</div>
+            : (
+                <div className="space-y-4">
+                  {topCustomers.map(customer => (
+                    <div key={customer.email} className="flex items-center">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">{customer.name}</p>
+                        <p className="text-sm text-muted-foreground">{customer.count} pedidos</p>
+                      </div>
+                      <div className="ml-auto font-medium text-primary">{formatPrice(customer.total)}</div>
+                    </div>
+                  ))}
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>
