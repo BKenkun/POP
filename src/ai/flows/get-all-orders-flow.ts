@@ -9,10 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { UserRecord } from 'firebase-admin/auth';
-import {getAuth} from "firebase-admin/auth";
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { Order } from '@/lib/types';
 
 
@@ -53,16 +51,8 @@ const getAllOrdersFlow = ai.defineFlow(
     console.log('Admin flow started: Fetching all orders...');
     const adminApp = getAdminApp();
     const db = getFirestore(adminApp);
-    const auth = getAuth(adminApp);
 
-    // 1. Get all users to map user ID to user name
-    const allUsers: Record<string, string> = {};
-    const listUsersResult = await auth.listUsers();
-    listUsersResult.users.forEach((userRecord: UserRecord) => {
-      allUsers[userRecord.uid] = userRecord.displayName || userRecord.email || 'Usuario Desconocido';
-    });
-    
-    // 2. Query the entire 'orders' collection group
+    // Query the entire 'orders' collection group
     const ordersQuery = db.collectionGroup('orders').orderBy('createdAt', 'desc');
     const ordersSnap = await ordersQuery.get();
 
@@ -71,7 +61,7 @@ const getAllOrdersFlow = ai.defineFlow(
       return [];
     }
 
-    // 3. Map orders and add user names
+    // Map orders and use customer name directly from the order data
     const orders: OrderWithUserName[] = ordersSnap.docs.map(doc => {
       const orderData = doc.data() as Order;
       const createdAt = (orderData.createdAt as any)?.toDate ? (orderData.createdAt as any).toDate() : new Date();
@@ -81,7 +71,7 @@ const getAllOrdersFlow = ai.defineFlow(
         createdAt: createdAt.toISOString(), // Convert to ISO string for serialization
         status: orderData.status,
         total: orderData.total,
-        userName: allUsers[orderData.userId] || orderData.customerName || 'Invitado',
+        userName: orderData.customerName || 'Invitado', // Use customerName from order
       };
     });
     
