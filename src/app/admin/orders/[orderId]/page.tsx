@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams, notFound, useSearchParams } from 'next/navigation';
 import { useFirestore } from '@/firebase';
-import { collectionGroup, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { Loader2, ArrowLeft } from 'lucide-react';
@@ -14,36 +15,47 @@ import Link from 'next/link';
 // Responsabilidad: Obtener los datos de un pedido específico desde el cliente.
 export default function OrderDetailPage() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const orderId = params.orderId as string;
+    const orderPath = searchParams.get('path'); // Get the document path from URL
     const firestore = useFirestore();
 
     const [order, setOrder] = useState<Order | null | undefined>(undefined);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!orderId || !firestore) return;
+        if (!orderPath || !firestore) {
+            // If path is missing, we can't fetch the document.
+            // We set loading to false and let the component render the "not found" state.
+            if (!loading) setLoading(true); // Ensure loading is true if we start without path
+            if (orderId && !orderPath) {
+                 // Path is missing, we can't proceed
+                 console.error("Order path is missing from URL parameters.");
+                 setOrder(null);
+                 setLoading(false);
+            }
+            return;
+        };
 
         const fetchOrder = async () => {
             setLoading(true);
             try {
-                // Find the order across all user subcollections
-                const ordersQuery = query(collectionGroup(firestore, 'orders'), where('id', '==', orderId));
-                const querySnapshot = await getDocs(ordersQuery);
+                // Use the full path to get the document directly
+                const orderDocRef = doc(firestore, decodeURIComponent(orderPath));
+                const docSnap = await getDoc(orderDocRef);
 
-                if (querySnapshot.empty) {
+                if (!docSnap.exists()) {
                     setOrder(null); // Not found
                 } else {
-                    const orderDoc = querySnapshot.docs[0];
-                    const orderData = orderDoc.data() as Omit<Order, 'id'>;
-
+                    const orderData = docSnap.data() as Omit<Order, 'id'>;
                      const createdAt = orderData.createdAt && (orderData.createdAt as any).toDate 
                         ? (orderData.createdAt as any).toDate().toISOString()
                         : new Date().toISOString();
 
                     setOrder({
                         ...orderData,
-                        id: orderDoc.id,
-                        path: orderDoc.ref.path, // Save the path for updates
+                        id: docSnap.id,
+                        path: docSnap.ref.path, // Save the path for updates
                         createdAt,
                     } as Order);
                 }
@@ -56,13 +68,13 @@ export default function OrderDetailPage() {
         };
 
         fetchOrder();
-    }, [orderId, firestore]);
+    }, [orderId, orderPath, firestore, loading]);
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-60">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="ml-4">Buscando pedido...</p>
+                <p className="ml-4">Cargando datos del pedido...</p>
             </div>
         );
     }

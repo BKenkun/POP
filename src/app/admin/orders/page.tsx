@@ -22,7 +22,7 @@ import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/fi
 import type { Order } from '@/lib/types';
 
 // Using a more specific type for the orders state to handle serializable dates
-type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string };
+type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string, path: string };
 
 export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<AdminDisplayOrder[]>([]);
@@ -59,6 +59,7 @@ export default function AdminOrdersPage() {
           return {
             ...data,
             id: doc.id,
+            path: doc.ref.path, // Capture the full path
             createdAt: createdAtISO,
           };
         });
@@ -163,7 +164,7 @@ export default function AdminOrdersPage() {
                         <TableCell className="text-right">{formatPrice(order.total)}</TableCell>
                         <TableCell className="text-right flex items-center justify-end gap-2">
                            <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/orders/${order.id}`}>
+                                <Link href={`/admin/orders/${order.id}?path=${encodeURIComponent(order.path)}`}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     Ver
                                 </Link>
