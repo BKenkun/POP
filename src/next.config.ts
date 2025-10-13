@@ -93,6 +93,13 @@ const nextConfig: NextConfig = {
         hostname: 'www.svgrepo.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        id: 'poppers-espana',
+        protocol: 'https',
+        hostname: 'www.poppers-espana.es',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
