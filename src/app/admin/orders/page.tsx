@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -67,7 +68,7 @@ export default function AdminOrdersPage() {
 
       setAllOrders(fetchedOrders);
       if (fetchedOrders.length > 0) {
-        toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
+        toast({ title: '¡Pedidos cargados con éxito!', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
       } else {
         toast({ title: 'No se encontraron pedidos', description: 'La base de datos no contiene ningún pedido por ahora.', variant: 'default' });
       }
