@@ -1,3 +1,4 @@
+
 export interface Comment {
     id: string;
     author: string;
@@ -59,7 +60,7 @@ export interface Comment {
         <h3 class="font-bold text-xl my-4">Conclusión</h3>
         <p>La elección entre Rush y Gold Rush depende de tus preferencias personales. Si buscas un golpe rápido y fuerte, el Rush clásico puede ser tu mejor opción. Si prefieres una subida más gradual y una experiencia más refinada, Gold Rush podría ser el indicado.</p>
       `,
-      imageUrl: 'https://picsum.photos/800/400?random=11',
+      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/purorush.firebasestorage.app/o/media%2Fproductos%2Fpopper%2Frush%2Fpopper-rush-amarillo-10ml.webp?alt=media&token=c39918f4-c8db-4814-9e74-5a4fe35381fa',
       author: 'Dr. Popper',
       date: '2024-07-15T09:00:00Z',
       comments: [],
