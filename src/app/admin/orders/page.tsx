@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -16,80 +17,33 @@ import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { OrderWithUserName, Order } from '@/lib/types';
-import { useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import type { OrderWithUserName } from '@/lib/types';
+import { getAllOrders } from '@/ai/flows/get-all-orders-flow';
 
 
 export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<OrderWithUserName[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const firestore = useFirestore();
 
   const handleFetchAllOrders = async () => {
-    if (!firestore) {
-        toast({ title: 'Error', description: 'Firestore no está disponible.', variant: 'destructive' });
-        return;
-    }
     setLoading(true);
     setAllOrders([]);
     toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
 
     try {
-        // 1. Get all users
-        const usersQuery = query(collection(firestore, 'users'));
-        const usersSnap = await getDocs(usersQuery);
-        
-        if (usersSnap.empty) {
-            toast({ title: 'Información', description: 'No se encontraron usuarios registrados.', variant: 'default' });
-            setLoading(false);
-            return;
-        }
-
-        const fetchedOrders: OrderWithUserName[] = [];
-        
-        // 2. For each user, get their orders
-        for (const userDoc of usersSnap.docs) {
-            const userId = userDoc.id;
-            const userData = userDoc.data();
-            const userName = userData.displayName || userData.email || 'Invitado';
-
-            const ordersQuery = query(collection(firestore, 'users', userId, 'orders'), orderBy('createdAt', 'desc'));
-            const ordersSnap = await getDocs(ordersQuery);
-
-            ordersSnap.forEach(orderDoc => {
-                const orderData = orderDoc.data() as Order;
-
-                let createdAt: Date;
-                if (orderData.createdAt && (orderData.createdAt as any).toDate) {
-                    createdAt = (orderData.createdAt as any).toDate();
-                } else if (typeof orderData.createdAt === 'string') {
-                    createdAt = new Date(orderData.createdAt);
-                } else {
-                    createdAt = new Date(); // Fallback
-                }
-
-                fetchedOrders.push({
-                    ...orderData,
-                    id: orderDoc.id,
-                    createdAt: createdAt.toISOString(),
-                    userName: orderData.customerName || userName, // Prefer customer name from order
-                });
-            });
-        }
-        
-        // Sort all orders globally by date
-        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-        setAllOrders(fetchedOrders);
-        toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
-
+      const fetchedOrders = await getAllOrders();
+      setAllOrders(fetchedOrders);
+      toast({ title: 'Pedidos cargados', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
     } catch (error: any) {
-        console.error("Error fetching all orders from client:", error);
-        toast({ title: 'Error al cargar los pedidos', description: error.message || "No se pudieron obtener los pedidos. Revisa los permisos de Firestore.", variant: 'destructive' });
+      console.error("Error fetching all orders from Genkit flow:", error);
+      toast({ 
+        title: 'Error al cargar los pedidos', 
+        description: error.message || "No se pudieron obtener los pedidos. Revisa la consola para más detalles.", 
+        variant: 'destructive' 
+      });
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
