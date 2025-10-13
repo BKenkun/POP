@@ -24,6 +24,7 @@ import { collection, collectionGroup, query, where, orderBy, limit, Timestamp } 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { addDays, startOfMonth, format as formatDate } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
+import Image from "next/image";
 
 // Define a type for the user data we expect
 export interface Customer {
@@ -263,8 +264,8 @@ export default function AdminDashboardPage() {
                     <div className="space-y-4">
                     {popularProducts.map(product => (
                         <div key={product.productId} className="flex items-center">
-                        <Avatar className="h-9 w-9">
-                             <AvatarImage src={product.imageUrl} alt={product.name} />
+                        <Avatar className="h-9 w-9 relative">
+                             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" unoptimized />
                             <AvatarFallback>{product.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="ml-4 space-y-1">
@@ -309,7 +310,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
-
-    

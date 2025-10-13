@@ -54,6 +54,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                         fill
                         className="object-cover"
                         data-ai-hint={item.imageHint}
+                        unoptimized
                       />
                     </div>
                     <div className="flex-1">

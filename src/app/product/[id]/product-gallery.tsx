@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -26,6 +27,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               sizes="(max-width: 768px) 100vw, 50vw"
               data-ai-hint="product image"
               priority
+              unoptimized
             />
           </div>
         </CardContent>
@@ -51,6 +53,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   className="object-cover"
                    sizes="25vw"
                   data-ai-hint="product thumbnail"
+                  unoptimized
                 />
               </div>
             </button>
