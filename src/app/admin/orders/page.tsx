@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, Eye, Package } from 'lucide-react';
 import {
@@ -26,66 +26,60 @@ type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string };
 
 export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<AdminDisplayOrder[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start loading immediately
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const handleFetchAllOrders = async () => {
-    if (!firestore) {
-      toast({ title: 'Error', description: 'Firestore no está disponible.', variant: 'destructive'});
-      return;
-    }
-
-    setLoading(true);
-    setAllOrders([]);
-    toast({ title: 'Cargando todos los pedidos...', description: 'Esto puede tardar un momento.' });
-
-    try {
-      // This query now runs on the client and relies on the security rule:
-      // match /{path=**}/orders/{orderId} { allow list: if isAdmin(); }
-      const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(ordersQuery);
-      
-      const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
-        const data = doc.data() as Order;
-        
-        // Convert Timestamp to ISO string for serializability and consistent display
-        let createdAtISO = new Date().toISOString();
-        if (data.createdAt) {
-          if (data.createdAt instanceof Timestamp) {
-            createdAtISO = data.createdAt.toDate().toISOString();
-          } else if (typeof data.createdAt === 'string') {
-            createdAtISO = data.createdAt;
-          }
-        }
-
-        return {
-          ...data,
-          id: doc.id,
-          createdAt: createdAtISO,
-        };
-      });
-
-      setAllOrders(fetchedOrders);
-      if (fetchedOrders.length > 0) {
-        toast({ title: '¡Pedidos cargados con éxito!', description: `Se encontraron ${fetchedOrders.length} pedidos en total.` });
-      } else {
-        toast({ title: 'No se encontraron pedidos', description: 'La base de datos no contiene ningún pedido por ahora.', variant: 'default' });
+  useEffect(() => {
+    const handleFetchAllOrders = async () => {
+      if (!firestore) {
+        toast({ title: 'Error', description: 'Firestore no está disponible.', variant: 'destructive'});
+        setLoading(false);
+        return;
       }
 
-    } catch (error: any) {
-      console.error("Error fetching all orders from client:", error);
-      toast({ 
-        title: 'Error al cargar los pedidos', 
-        description: error.message.includes('permission-denied') 
-          ? 'Permiso denegado. Asegúrate de que las reglas de seguridad de Firestore son correctas.' 
-          : 'No se pudieron obtener los pedidos.',
-        variant: 'destructive' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(true);
+
+      try {
+        const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(ordersQuery);
+        
+        const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
+          const data = doc.data() as Order;
+          
+          let createdAtISO = new Date().toISOString();
+          if (data.createdAt) {
+            if (data.createdAt instanceof Timestamp) {
+              createdAtISO = data.createdAt.toDate().toISOString();
+            } else if (typeof data.createdAt === 'string') {
+              createdAtISO = data.createdAt;
+            }
+          }
+
+          return {
+            ...data,
+            id: doc.id,
+            createdAt: createdAtISO,
+          };
+        });
+
+        setAllOrders(fetchedOrders);
+      } catch (error: any) {
+        console.error("Error fetching all orders from client:", error);
+        toast({ 
+          title: 'Error al cargar los pedidos', 
+          description: error.message.includes('permission-denied') 
+            ? 'Permiso denegado. Asegúrate de que las reglas de seguridad de Firestore son correctas.' 
+            : 'No se pudieron obtener los pedidos.',
+          variant: 'destructive' 
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    handleFetchAllOrders();
+  }, [firestore, toast]); // Dependency array ensures this runs once on mount
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -118,33 +112,25 @@ export default function AdminOrdersPage() {
             Visualiza y gestiona todos los pedidos de la tienda.
           </p>
         </div>
-        <Button onClick={handleFetchAllOrders} disabled={loading}>
-          {loading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Users className="mr-2 h-4 w-4" />
-          )}
-          {loading ? 'Cargando...' : 'Cargar Todos los Pedidos'}
-        </Button>
       </div>
 
        <Card>
         <CardHeader>
             <CardTitle>Listado de Pedidos</CardTitle>
-            <CardDescription>Aquí se listan todos los pedidos de la tienda. Haz clic en el botón para empezar.</CardDescription>
+            <CardDescription>Aquí se listan todos los pedidos de la tienda, cargados automáticamente.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (
                  <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg bg-secondary/50">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <h3 className="mt-4 text-lg font-semibold">Buscando pedidos...</h3>
+                    <h3 className="mt-4 text-lg font-semibold">Cargando pedidos...</h3>
                     <p className="text-muted-foreground">Consultando la base de datos.</p>
                 </div>
             ) : allOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
-                    <h3 className="mt-4 text-lg font-semibold">No hay pedidos cargados</h3>
-                    <p className="text-muted-foreground">Haz clic en "Cargar Todos los Pedidos" para buscarlos en la base de datos.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No se encontraron pedidos</h3>
+                    <p className="text-muted-foreground">La base de datos no contiene ningún pedido por ahora.</p>
                 </div>
             ) : (
                 <Table>
