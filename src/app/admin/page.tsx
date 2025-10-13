@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { cbdProducts } from "@/lib/cbd-products";
-import type { Order, Product } from "@/lib/types";
+import type { Order, OrderItem, Product } from "@/lib/types";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, collectionGroup, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -86,8 +86,9 @@ export default function AdminDashboardPage() {
       totalRevenue,
       collectedRevenue,
       chartData,
+      popularProducts,
   } = useMemo(() => {
-      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [], totalRevenue: 0, collectedRevenue: 0, chartData: [] };
+      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [], totalRevenue: 0, collectedRevenue: 0, chartData: [], popularProducts: [] };
 
       const from = dateRange?.from;
       const to = dateRange?.to;
@@ -126,7 +127,6 @@ export default function AdminDashboardPage() {
         .filter(order => order.status === 'Entregado')
         .reduce((sum, order) => sum + order.total, 0);
       
-      // Process data for chart
         const dailyData = filteredOrders.reduce((acc, order) => {
             const date = formatDate(order.createdAt instanceof Timestamp ? order.createdAt.toDate() : new Date(order.createdAt), 'yyyy-MM-dd');
             if (!acc[date]) {
@@ -140,10 +140,25 @@ export default function AdminDashboardPage() {
         }, {} as Record<string, { date: string; proyectados: number; recogidos: number }>);
         
         const chartData = Object.values(dailyData).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+        const productSales = filteredOrders.flatMap(o => o.items).reduce((acc, item: OrderItem) => {
+            if (!acc[item.productId]) {
+                const productInfo = products.find(p => p.id === item.productId);
+                acc[item.productId] = { 
+                    productId: item.productId, 
+                    name: productInfo?.name || item.name, 
+                    imageUrl: productInfo?.imageUrl || item.imageUrl,
+                    unitsSold: 0 
+                };
+            }
+            acc[item.productId].unitsSold += item.quantity;
+            return acc;
+        }, {} as Record<string, { productId: string; name: string; imageUrl: string; unitsSold: number; }>);
 
+        const popularProducts = Object.values(productSales).sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 5);
 
-      return { filteredOrders, filteredUsers, recentOrders, topCustomers, totalRevenue, collectedRevenue, chartData };
-  }, [allOrders, allUsers, dateRange]);
+      return { filteredOrders, filteredUsers, recentOrders, topCustomers, totalRevenue, collectedRevenue, chartData, popularProducts };
+  }, [allOrders, allUsers, dateRange, products]);
 
 
   const totalOrders = filteredOrders.length;
@@ -170,54 +185,47 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Chart */}
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-full lg:col-span-4">
-          <OverviewChart data={chartData} />
-        </div>
-        <div className="col-span-full lg:col-span-3 space-y-4">
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
-                 <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
-                 <p className="text-xs text-muted-foreground">
+        <OverviewChart data={chartData} />
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
+                <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
+                <p className="text-xs text-muted-foreground">
                     <span className="font-semibold">{formatPrice(totalRevenue)}</span> proyectados
-                 </p>
-              </StatCard>
+                </p>
+            </StatCard>
 
-              <StatCard title="Pedidos" icon={ShoppingCart} loading={loadingStats}>
-                 <div className="text-2xl font-bold">{totalOrders.toLocaleString('es-ES')}</div>
-                 <p className="text-xs text-muted-foreground invisible">Placeholder</p>
-              </StatCard>
-
-              <StatCard title="Clientes Nuevos" icon={Users} loading={loadingStats}>
-                <div className="text-2xl font-bold">{newCustomers.toLocaleString('es-ES')}</div>
+            <StatCard title="Pedidos" icon={ShoppingCart} loading={loadingStats}>
+                <div className="text-2xl font-bold">{totalOrders.toLocaleString('es-ES')}</div>
                 <p className="text-xs text-muted-foreground invisible">Placeholder</p>
-              </StatCard>
+            </StatCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  {loadingProducts ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
-                    <div className="text-2xl font-bold">{products.length}</div>
-                    <Link href="/admin/products">
-                        <p className={cn("text-xs font-bold hover:underline cursor-pointer", lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
-                            {lowStockCount} con bajo stock
-                        </p>
-                    </Link>
-                  </>}
-                </CardContent>
-              </Card>
-            </div>
+            <StatCard title="Clientes Nuevos" icon={Users} loading={loadingStats}>
+            <div className="text-2xl font-bold">{newCustomers.toLocaleString('es-ES')}</div>
+            <p className="text-xs text-muted-foreground invisible">Placeholder</p>
+            </StatCard>
+
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                {loadingProducts ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
+                <div className="text-2xl font-bold">{products.length}</div>
+                <Link href="/admin/products">
+                    <p className={cn("text-xs font-bold hover:underline cursor-pointer", lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
+                        {lowStockCount} con bajo stock
+                    </p>
+                </Link>
+                </>}
+            </CardContent>
+            </Card>
         </div>
-      </div>
 
 
        {/* Recent Orders and Popular Products */}
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Pedidos Recientes</CardTitle>
@@ -245,12 +253,31 @@ export default function AdminDashboardPage() {
         </Card>
 
         <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Productos Populares</CardTitle>
-          </CardHeader>
-          <CardContent>
-             <div className="text-center text-muted-foreground py-4">No hay datos de productos.</div>
-          </CardContent>
+            <CardHeader>
+                <CardTitle>Productos Populares</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {loadingOrders ? <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
+                : popularProducts.length === 0 ? <div className="text-center text-muted-foreground py-4">No hay datos de ventas.</div>
+                : (
+                    <div className="space-y-4">
+                    {popularProducts.map(product => (
+                        <div key={product.productId} className="flex items-center">
+                        <Avatar className="h-9 w-9">
+                             <AvatarImage src={product.imageUrl} alt={product.name} />
+                            <AvatarFallback>{product.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="ml-4 space-y-1">
+                            <p className="text-sm font-medium leading-none">{product.name}</p>
+                             <p className="text-sm text-muted-foreground">
+                                {product.unitsSold} {product.unitsSold === 1 ? 'unidad vendida' : 'unidades vendidas'}
+                            </p>
+                        </div>
+                        </div>
+                    ))}
+                    </div>
+                )}
+            </CardContent>
         </Card>
 
         <Card className="lg:col-span-1">
@@ -282,3 +309,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
