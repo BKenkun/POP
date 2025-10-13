@@ -72,7 +72,6 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                                 height={250}
                                 className="object-contain"
                                 data-ai-hint={product.imageHint}
-                                unoptimized={true}
                             />
                         </ImageContainer>
                     </div>
@@ -89,7 +88,6 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                                 height={250}
                                 className="object-contain"
                                 data-ai-hint={product.imageHint}
-                                unoptimized={true}
                             />
                         </ImageContainer>
                     </Link>
