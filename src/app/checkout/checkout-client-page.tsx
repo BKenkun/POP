@@ -296,7 +296,7 @@ export default function CheckoutClientPage() {
                     <CardContent className="space-y-4">
                         {cartItems.map((item) => (
                             <div key={item.id} className="flex items-center gap-4">
-                                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border"><Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized /></div>
+                                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border"><Image src={item.imageUrl} alt={item.name} fill className="object-cover" /></div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.name}</p>
                                     <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
@@ -422,7 +422,7 @@ export default function CheckoutClientPage() {
                             <h3 className="font-semibold mb-2">Productos:</h3>
                              {cartItems.map((item) => (
                                 <div key={item.id} className="flex items-center gap-4 py-1">
-                                    <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border"><Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized /></div>
+                                    <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border"><Image src={item.imageUrl} alt={item.name} fill className="object-cover" /></div>
                                     <div className="flex-1"><p className="font-medium">{item.name}</p><p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p></div>
                                     <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
                                 </div>

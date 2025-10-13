@@ -106,7 +106,7 @@ export default function UserOrderDetailPage() {
                         {order.items.map(item => (
                             <div key={item.productId} className="flex items-center gap-4">
                                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                    <Image src={item.imageUrl} alt={item.name} fill className="object-cover" unoptimized />
+                                    <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.name}</p>
