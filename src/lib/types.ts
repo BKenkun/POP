@@ -78,7 +78,7 @@ const paymentMethods = ['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'p
 export const OrderSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  createdAt: z.union([z.date(), z.string(), z.any()]), // Loosened for server/client flexibility
+  createdAt: z.any(), // Loosened for server/client flexibility
   status: z.enum(['pending', 'shipped', 'delivered', 'cancelled', 'entregado', 'enviado', 'pendiente', 'cancelado', 'Reserva Recibida', 'Pago Pendiente de Verificación', 'En Reparto', 'Incidencia']),
   total: z.number(),
   items: z.array(OrderItemSchema),
