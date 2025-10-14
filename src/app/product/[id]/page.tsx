@@ -10,8 +10,9 @@ import { Separator } from '@/components/ui/separator';
 import { RelatedProducts } from './related-products';
 import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function ProductPageContent() {
     const params = useParams();
@@ -19,7 +20,7 @@ function ProductPageContent() {
     const firestore = useFirestore();
 
     const productDocRef = useMemoFirebase(() => doc(firestore, 'products', id), [firestore, id]);
-    const { data: product, isLoading: loadingProduct } = useDoc<Product>(productDocRef);
+    const { data: product, isLoading: loadingProduct, error: productError } = useDoc<Product>(productDocRef);
 
     const allProductsQuery = useMemoFirebase(() => query(collection(firestore, 'products'), where('active', '!=', false)), [firestore]);
     const { data: allProducts, isLoading: loadingAllProducts } = useCollection<Product>(allProductsQuery);
@@ -48,6 +49,25 @@ function ProductPageContent() {
                         </div>
                     </div>
                 </div>
+            </div>
+        );
+    }
+
+    if (productError) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Card className="w-full max-w-lg text-center border-destructive">
+                    <CardHeader>
+                        <div className="mx-auto bg-destructive/10 h-16 w-16 rounded-full flex items-center justify-center mb-4">
+                            <AlertTriangle className="h-8 w-8 text-destructive" />
+                        </div>
+                        <CardTitle>Error al Cargar el Producto</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">No hemos podido cargar los datos de este producto. Por favor, inténtalo de nuevo más tarde.</p>
+                        <p className="text-xs text-muted-foreground mt-4">{productError.message}</p>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
@@ -94,4 +114,3 @@ export default function ProductDetailPage() {
     // can only be used in client components.
     return <ProductPageContent />;
 }
-
