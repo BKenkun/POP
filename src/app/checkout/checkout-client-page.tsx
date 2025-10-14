@@ -88,6 +88,7 @@ const generateOrderCode = (): string => {
 }
 
 const getImageUrl = (url: string) => {
+    if (!url) return '';
     if (url.includes('firebasestorage.googleapis.com')) {
       return `/api/image-proxy?url=${encodeURIComponent(url)}`;
     }
@@ -255,11 +256,27 @@ export default function CheckoutClientPage() {
     try {
         const orderId = generateOrderCode();
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
+        
+        // Ensure imageUrl is the original URL, not the proxied one.
+        const itemsForPayload = cartItems.map(item => {
+            const originalUrl = item.imageUrl.includes('/api/image-proxy?url=')
+                ? decodeURIComponent(item.imageUrl.split('url=')[1] || '')
+                : item.imageUrl;
+
+            return { 
+                productId: item.id, 
+                name: item.name, 
+                price: item.price, 
+                quantity: item.quantity, 
+                imageUrl: originalUrl 
+            };
+        });
+        
         const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
             userId: user.uid,
             status: 'Reserva Recibida',
             total: cartTotal,
-            items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
+            items: itemsForPayload,
             customerName: data.name,
             customerEmail: data.email,
             shippingAddress: shippingAddress,
@@ -481,3 +498,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
