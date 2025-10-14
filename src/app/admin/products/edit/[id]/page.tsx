@@ -30,6 +30,7 @@ export default function EditProductPage() {
     if (!productDocRef) return;
     setIsSaving(true);
     try {
+        // We shouldn't update the ID, so we destructure it out.
         const { id, ...productData } = data;
         await updateDoc(productDocRef, { ...productData });
         toast({
@@ -52,9 +53,9 @@ export default function EditProductPage() {
   // Show a loading state while fetching data
   if (isLoading) {
     return (
-       <div className="flex items-center justify-center h-40">
-         <Loader2 className="h-8 w-8 animate-spin" />
-         <p className="ml-2">Cargando datos del producto...</p>
+       <div className="flex items-center justify-center h-60">
+         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+         <p className="ml-4 text-muted-foreground">Cargando datos del producto...</p>
        </div>
     );
   }

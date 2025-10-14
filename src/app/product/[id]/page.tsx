@@ -17,7 +17,15 @@ function ProductPageSkeleton() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        <Skeleton className="h-[500px] w-full" />
+        <div className="space-y-4">
+            <Skeleton className="h-[450px] w-full" />
+            <div className="grid grid-cols-4 gap-2">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        </div>
         <div className="space-y-6">
           <Skeleton className="h-8 w-1/4" />
           <Skeleton className="h-10 w-3/4" />
@@ -53,7 +61,8 @@ export default function ProductDetailPage() {
     return <ProductPageSkeleton />;
   }
 
-  if (!product || error) {
+  // Después de cargar, si hay un error o el producto no existe, muestra el 404
+  if (error || !product) {
     if(error) console.error("Error fetching product:", error);
     notFound();
   }
