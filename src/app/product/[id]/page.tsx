@@ -1,4 +1,3 @@
-
 import { notFound } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { firestore } from '@/lib/firebase-admin';
