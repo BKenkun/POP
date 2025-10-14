@@ -85,6 +85,10 @@ const dateSchema = z.preprocess((arg) => {
   if (typeof arg === 'string' || arg instanceof Date) {
     return new Date(arg);
   }
+  // This handles the Firestore Admin SDK Timestamp which is an object with _seconds and _nanoseconds
+  if (typeof arg === 'object' && arg !== null && '_seconds' in arg && '_nanoseconds' in arg) {
+    return new Timestamp((arg as any)._seconds, (arg as any)._nanoseconds).toDate();
+  }
   // Return undefined for zod to handle validation error
   return undefined;
 }, z.date({ required_error: "Invalid date" }));
