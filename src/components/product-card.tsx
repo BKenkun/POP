@@ -23,6 +23,13 @@ interface ProductCardProps {
   onImageClick?: () => void;
 }
 
+const getImageUrl = (url: string) => {
+  if (url.includes('firebasestorage.googleapis.com')) {
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 export function ProductCard({ product, className, children, onImageClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -54,13 +61,6 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
       {children}
     </div>
   );
-
-  const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-  };
 
   const cardContent = (
     <Card className={cn("group flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border/60 h-full", className)}>

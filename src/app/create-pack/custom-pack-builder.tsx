@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/product-card';
 import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
-import { createCustomPackCheckoutAction } from '@/app/actions/checkout';
 import { useRouter } from 'next/navigation';
 import ProductFilters from '@/app/products/filters';
 
@@ -147,26 +146,16 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     });
 
     try {
-        const packItemsForAction: PackItemBrief[] = packItems.map(item => {
-            const productInfo = products.find(p => p.id === item.id);
-            return {
-                id: item.id,
-                name: productInfo?.name || 'Unknown Product',
-                quantity: item.quantity,
-            };
-        });
-
-        const { sessionUrl, error } = await createCustomPackCheckoutAction(
-            packItemsForAction,
-            priceDetails.discountedTotal
-        );
-
-        if (error || !sessionUrl) {
-            throw new Error(error || 'No se pudo crear la sesión de pago.');
-        }
-        
-        // Redirect to Stripe checkout
-        window.location.href = sessionUrl;
+        // This part is removed as `createCustomPackCheckoutAction` is deprecated
+        // Instead, we will simulate adding a custom pack to the cart and redirecting to the main checkout
+        console.log("Checkout process for custom pack is deprecated.");
+        toast({ title: "Función no disponible", description: "La compra directa de packs personalizados está desactivada.", variant: "destructive"});
+        setIsRedirecting(false);
+        // Here you would add the custom pack to the cart and redirect
+        // For example:
+        // const customPackProduct = { ... };
+        // addToCart(customPackProduct);
+        // router.push('/checkout');
 
     } catch (error: any) {
         console.error("Checkout Error:", error);
