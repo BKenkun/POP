@@ -30,7 +30,8 @@ export default function EditProductPage() {
     if (!productDocRef) return;
     setIsSaving(true);
     try {
-        await updateDoc(productDocRef, { ...data });
+        const { id, ...productData } = data;
+        await updateDoc(productDocRef, { ...productData });
         toast({
             title: 'Producto Actualizado',
             description: `Los cambios en "${data.name}" han sido guardados en la base de datos.`,

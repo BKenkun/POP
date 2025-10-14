@@ -36,17 +36,25 @@ export default function ProductDetailPage() {
   const id = params.id as string;
   const firestore = useFirestore();
 
-  const productDocRef = useMemoFirebase(() => doc(firestore, 'products', id), [firestore, id]);
-  const { data: product, isLoading: loadingProduct } = useDoc<Product>(productDocRef);
+  const productDocRef = useMemoFirebase(() => {
+      if (!firestore || !id) return null;
+      return doc(firestore, 'products', id);
+  }, [firestore, id]);
+  
+  const { data: product, isLoading: loadingProduct, error } = useDoc<Product>(productDocRef);
 
-  const allProductsQuery = useMemoFirebase(() => query(collection(firestore, 'products'), where('active', '==', true)), [firestore]);
+  const allProductsQuery = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return query(collection(firestore, 'products'), where('active', '==', true));
+  }, [firestore]);
   const { data: allProducts, isLoading: loadingAllProducts } = useCollection<Product>(allProductsQuery);
 
   if (loadingProduct || loadingAllProducts) {
     return <ProductPageSkeleton />;
   }
 
-  if (!product) {
+  if (!product || error) {
+    if(error) console.error("Error fetching product:", error);
     notFound();
   }
 
