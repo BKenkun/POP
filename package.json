@@ -1,9 +1,8 @@
-
 {
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
-  "description": "Forcing config reload.",
+  "description": "Forcing a server config reload.",
   "scripts": {
     "dev": "next dev --turbopack",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
