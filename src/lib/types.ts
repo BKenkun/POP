@@ -10,7 +10,7 @@ export interface Product {
   longDescription?: string | null;
   price: number; // Price in cents
   imageUrl: string;
-  imageHint: string;
+  imageHint?: string; // Optional hint for AI image search
   tags?: string[];
   internalTags?: string[];
   galleryImages?: string[];
@@ -73,6 +73,8 @@ export const ShippingAddressSchema = z.object({
   phone: z.string().nullable(),
 });
 
+const paymentMethods = ['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'] as const;
+
 export const OrderSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -83,7 +85,7 @@ export const OrderSchema = z.object({
   customerName: z.string(),
   customerEmail: z.string().email(),
   shippingAddress: ShippingAddressSchema.nullable(),
-  paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer']).optional(),
+  paymentMethod: z.enum(paymentMethods).optional(),
   path: z.string().optional(),
   deliveryDni: z.string().optional(),
   deliverySignature: z.string().optional(),

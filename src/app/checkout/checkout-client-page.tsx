@@ -27,10 +27,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
-import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createOrder } from '@/app/actions/checkout';
 
 // --- Validation Schemas ---
 const baseRegistrationSchema = z.object({
@@ -79,14 +80,6 @@ const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).extend(
 type CheckoutFormValues = z.infer<typeof finalCheckoutSchema>;
 
 // --- Helper Functions ---
-const generateOrderCode = (): string => {
-  const prefix = "P";
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = '';
-  for (let i = 0; i < 7; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-  return `${prefix}-${result}`;
-}
-
 const getImageUrl = (url: string) => {
     if (!url) return '';
     if (url.includes('firebasestorage.googleapis.com')) {
@@ -245,7 +238,7 @@ export default function CheckoutClientPage() {
   };
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
-    if (!firestore || !user) {
+    if (!user) {
         toast({ title: 'Error', description: 'Debes iniciar sesión para completar el pedido.', variant: 'destructive' });
         return;
     }
@@ -254,40 +247,44 @@ export default function CheckoutClientPage() {
 
     // --- ORDER CREATION LOGIC ---
     try {
-        const orderId = generateOrderCode();
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
         
-        // Ensure imageUrl is the original URL, not the proxied one.
-        const itemsForPayload = cartItems.map(item => {
-            const originalUrl = item.imageUrl.includes('/api/image-proxy?url=')
-                ? decodeURIComponent(item.imageUrl.split('url=')[1] || '')
-                : item.imageUrl;
-
-            return { 
-                productId: item.id, 
-                name: item.name, 
-                price: item.price, 
-                quantity: item.quantity, 
-                imageUrl: originalUrl 
-            };
-        });
-        
-        const orderPayload: Omit<Order, 'createdAt' | 'id'> = {
+        const result = await createOrder({
             userId: user.uid,
+            cartItems: cartItems,
+            cartTotal: cartTotal,
+            customerName: data.name,
+            customerEmail: data.email,
+            shippingAddress: shippingAddress,
+            paymentMethod: data.paymentMethod,
+        });
+
+        if (result.error || !result.orderId) {
+            throw new Error(result.error || "No se pudo obtener el ID del pedido.");
+        }
+        
+        const { orderId } = result;
+
+        const orderSummaryForUI: Order = {
+            id: orderId,
+            userId: user.uid,
+            createdAt: new Date().toISOString(),
             status: 'Reserva Recibida',
             total: cartTotal,
-            items: itemsForPayload,
+            items: cartItems.map(item => ({
+                productId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                imageUrl: item.imageUrl,
+            })),
             customerName: data.name,
             customerEmail: data.email,
             shippingAddress: shippingAddress,
             paymentMethod: data.paymentMethod,
         };
-        
-        const orderDocRef = doc(firestore, 'users', user.uid, 'orders', orderId);
-        await setDoc(orderDocRef, { ...orderPayload, createdAt: serverTimestamp() });
 
-        const orderSummaryForUI = { ...orderPayload, id: orderId, createdAt: new Date() };
-        setCheckoutData({ orderId, paymentMethod: data.paymentMethod, orderSummary: orderSummaryForUI as any });
+        setCheckoutData({ orderId, paymentMethod: data.paymentMethod, orderSummary: orderSummaryForUI });
         
         clearCart();
         router.push('/checkout/success');
@@ -468,14 +465,14 @@ export default function CheckoutClientPage() {
                              <div>
                                 <h3 className="font-semibold mb-2">Método de Pago:</h3>
                                 <div className="text-sm text-muted-foreground">
-                                    <p>{formValues.paymentMethod.replace(/_/g, ' ')}</p>
+                                    <p>{formValues.paymentMethod?.replace(/_/g, ' ')}</p>
                                 </div>
                             </div>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-xl"><span>Total a Pagar</span><span className="text-primary">{formatPrice(cartTotal)}</span></div>
                          <p className="text-xs text-muted-foreground text-center">
-                            {formValues.paymentMethod.startsWith('prepaid') 
+                            {formValues.paymentMethod?.startsWith('prepaid') 
                                 ? 'Recibirás las instrucciones de pago por email.' 
                                 : 'El pago se realizará contra-entrega.'
                             } Revisa tu email para más detalles.
@@ -498,5 +495,3 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
-
-    
