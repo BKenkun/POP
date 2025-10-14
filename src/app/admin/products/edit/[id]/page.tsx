@@ -81,14 +81,14 @@ export default function EditProductPage() {
     );
   }
 
-  if (!product) {
+  if (!isLoading && !product) {
       notFound();
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Editar Producto</h1>
-      <ProductForm product={product} onSave={handleSave} isSaving={isSaving} />
+      <ProductForm product={product!} onSave={handleSave} isSaving={isSaving} />
     </div>
   );
 }

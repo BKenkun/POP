@@ -40,9 +40,7 @@ export function ProductInfoClient({ product }: { product: Product }) {
   };
 
   return (
-    <div className="flex flex-col space-y-6">
-      <ProductInfo product={product} />
-      
+    <>
       {isSoldOut ? (
           <StockNotificationDialog product={product}>
                <Button size="lg" variant="outline">
@@ -84,7 +82,7 @@ export function ProductInfoClient({ product }: { product: Product }) {
           <p>Embalaje 100% discreto sin marcas externas.</p>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

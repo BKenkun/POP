@@ -1,5 +1,7 @@
 
 import { z } from 'zod';
+import { Timestamp } from 'firebase/firestore';
+
 
 export interface Product {
   id: string;
@@ -75,10 +77,23 @@ export const ShippingAddressSchema = z.object({
 
 const paymentMethods = ['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'] as const;
 
+// Helper function to handle different date types (Timestamp, Date, string)
+const dateSchema = z.preprocess((arg) => {
+  if (arg instanceof Timestamp) {
+    return arg.toDate();
+  }
+  if (typeof arg === 'string' || arg instanceof Date) {
+    return new Date(arg);
+  }
+  // Return undefined for zod to handle validation error
+  return undefined;
+}, z.date({ required_error: "Invalid date" }));
+
+
 export const OrderSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  createdAt: z.any(), // Loosened for server/client flexibility
+  createdAt: dateSchema,
   status: z.enum(['pending', 'shipped', 'delivered', 'cancelled', 'entregado', 'enviado', 'pendiente', 'cancelado', 'Reserva Recibida', 'Pago Pendiente de Verificación', 'En Reparto', 'Incidencia']),
   total: z.number(),
   items: z.array(OrderItemSchema),
