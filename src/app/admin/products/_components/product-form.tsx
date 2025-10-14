@@ -35,6 +35,7 @@ const productSchema = z.object({
   size: z.string().optional(),
   composition: z.string().optional(),
   imageUrl: z.string().url('Debe ser una URL válida.'),
+  imageHint: z.string().optional(), // Added imageHint
   galleryImages: z.string().optional(),
   tags: z.string().optional(),
   internalTags: z.string().optional(),
@@ -71,6 +72,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
       size: product?.size || '',
       composition: product?.composition || '',
       imageUrl: product?.imageUrl || '',
+      imageHint: product?.imageHint || 'product image',
       galleryImages: product?.galleryImages?.join(', ') || '',
       tags: product?.tags?.join(', ') || '',
       internalTags: product?.internalTags?.join(', ') || '',
@@ -87,10 +89,10 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
     const finalData: Product = {
       id: product?.id || `prod_${Date.now()}`, // Keep existing ID or generate a new one
       ...values,
+      imageHint: values.imageHint || 'product image',
       galleryImages: values.galleryImages?.split(',').map(s => s.trim()).filter(Boolean) || [],
       tags: values.tags?.split(',').map(s => s.trim()).filter(Boolean) || [],
       internalTags: values.internalTags?.split(',').map(s => s.trim()).filter(Boolean) || [],
-      imageHint: product?.imageHint || 'product image', // Keep existing or default
     };
     onSave(finalData);
   };
@@ -121,6 +123,14 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                 <CardContent className="space-y-4">
                      <FormField control={form.control} name="imageUrl" render={({ field }) => (
                         <FormItem><FormLabel>URL de la Imagen Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="imageHint" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Pista de la Imagen (para IA)</FormLabel>
+                            <FormDescription>Una o dos palabras que describan la imagen. Ej: "yellow bottle", "black bottle".</FormDescription>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
                     )} />
                      <FormField control={form.control} name="galleryImages" render={({ field }) => (
                         <FormItem>
