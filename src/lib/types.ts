@@ -20,6 +20,7 @@ export interface Product {
   size?: string;
   composition?: string;
   url?: string;
+  web?: string; // To which web portal it belongs
   // --- New Accounting Fields ---
   cost?: number; // Cost of the product in cents
   includesVat?: boolean;

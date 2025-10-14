@@ -76,7 +76,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
       galleryImages: product?.galleryImages?.join(', ') || '',
       tags: product?.tags?.join(', ') || '',
       internalTags: product?.internalTags?.join(', ') || '',
-      web: product?.internalTags?.includes('popper') ? 'popper' : '',
+      web: product?.web || (product?.internalTags?.includes('popper') ? 'popper' : ''),
       url: product?.url || '',
       cost: product?.cost || 0,
       includesVat: product?.includesVat === undefined ? true : product.includesVat,
