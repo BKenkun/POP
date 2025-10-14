@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Product } from '@/lib/types';
@@ -10,13 +9,29 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface RelatedProductsProps {
   currentProduct: Product;
   allProducts: Product[];
+  loading: boolean;
 }
 
-export function RelatedProducts({ currentProduct, allProducts }: RelatedProductsProps) {
+export function RelatedProducts({ currentProduct, allProducts, loading }: RelatedProductsProps) {
+  if (loading) {
+    return (
+       <div className="space-y-6">
+        <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Productos Relacionados</h2>
+        <div className="flex space-x-6">
+          <Skeleton className="h-[400px] w-full min-w-60" />
+          <Skeleton className="h-[400px] w-full min-w-60 hidden sm:block" />
+          <Skeleton className="h-[400px] w-full min-w-60 hidden lg:block" />
+          <Skeleton className="h-[400px] w-full min-w-60 hidden xl:block" />
+        </div>
+      </div>
+    )
+  }
+  
   const relatedProducts = allProducts.filter(p => {
     if (p.id === currentProduct.id) return false;
     const currentTags = currentProduct.tags || [];

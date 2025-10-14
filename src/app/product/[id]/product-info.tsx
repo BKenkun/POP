@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -13,8 +12,8 @@ import { StockNotificationDialog } from '@/components/stock-notification-dialog'
 import { QuantitySelector } from '@/components/quantity-selector';
 import { useToast } from '@/hooks/use-toast';
 
-// This is the new Client Component that handles user interactions.
-export function ProductInfoClient({ product }: { product: Product }) {
+// This component now handles both displaying info and client-side actions.
+export function ProductInfo({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
@@ -41,6 +40,26 @@ export function ProductInfoClient({ product }: { product: Product }) {
 
   return (
     <>
+      <div>
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+            {isSoldOut && (
+                <Badge variant="destructive">Agotado</Badge>
+            )}
+            {!isSoldOut && product.tags?.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+        </div>
+        <h1 className="text-3xl md:text-4xl font-headline text-primary font-bold">
+          {product.name}
+        </h1>
+        <p className="text-3xl font-bold mt-2">{formatPrice(product.price)}</p>
+        {product.description && (
+            <p className="text-foreground/80 mt-4">{product.description}</p>
+        )}
+      </div>
+
       {isSoldOut ? (
           <StockNotificationDialog product={product}>
                <Button size="lg" variant="outline">
@@ -83,32 +102,5 @@ export function ProductInfoClient({ product }: { product: Product }) {
         </div>
       </div>
     </>
-  );
-}
-
-// This is the new Server Component for displaying static info.
-export function ProductInfo({ product }: { product: Product }) {
-  const isSoldOut = product.stock === 0;
-
-  return (
-    <div>
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-            {isSoldOut && (
-                <Badge variant="destructive">Agotado</Badge>
-            )}
-            {!isSoldOut && product.tags?.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
-        </div>
-        <h1 className="text-3xl md:text-4xl font-headline text-primary font-bold">
-          {product.name}
-        </h1>
-        <p className="text-3xl font-bold mt-2">{formatPrice(product.price)}</p>
-        {product.description && (
-            <p className="text-foreground/80 mt-4">{product.description}</p>
-        )}
-    </div>
   );
 }
