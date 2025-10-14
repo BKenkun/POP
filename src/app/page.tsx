@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ProductCard } from '@/components/product-card';
@@ -46,7 +45,7 @@ export default function Home() {
   const firestore = useFirestore();
 
   const productsQuery = useMemoFirebase(() => {
-    return query(collection(firestore, 'products'), where('active', '==', true));
+    return query(collection(firestore, 'products'), where('active', '!=', false));
   }, [firestore]);
 
   const { data: allProducts, isLoading: loadingProducts } = useCollection<Product>(productsQuery);

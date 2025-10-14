@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Product } from '@/lib/types';
@@ -27,7 +26,7 @@ function ProductPageSkeleton() {
 export default function ProductsPage() {
     const firestore = useFirestore();
     const productsQuery = useMemoFirebase(() => {
-        return query(collection(firestore, 'products'), where('active', '==', true));
+        return query(collection(firestore, 'products'), where('active', '!=', false));
     }, [firestore]);
 
     const { data: products, isLoading } = useCollection<Product>(productsQuery);
