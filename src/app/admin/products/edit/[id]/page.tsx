@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -80,10 +81,12 @@ export default function EditProductPage() {
     );
   }
 
+  // If loading is finished and there is still no product, then it's a 404.
   if (!product) {
       notFound();
   }
 
+  // Only render the form if the product data exists.
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Editar Producto</h1>
