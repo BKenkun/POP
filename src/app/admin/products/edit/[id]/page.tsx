@@ -30,7 +30,8 @@ export default function EditProductPage() {
     if (!productDocRef) return;
     setIsSaving(true);
     try {
-        const { id, ...productData } = data;
+        // Exclude the 'id' from the data being sent to Firestore to avoid overwriting the document ID with a field.
+        const { id: productId, ...productData } = data;
         await updateDoc(productDocRef, { ...productData });
         toast({
             title: 'Producto Actualizado',
@@ -49,6 +50,7 @@ export default function EditProductPage() {
     }
   };
 
+  // While loading, show a spinner. This is the "patient" part.
   if (isLoading) {
     return (
        <div className="flex items-center justify-center h-60">
@@ -58,6 +60,7 @@ export default function EditProductPage() {
     );
   }
 
+  // If there was a Firestore error
   if (error) {
     return (
         <div className="flex items-center justify-center py-12">
@@ -79,10 +82,12 @@ export default function EditProductPage() {
     );
   }
 
+  // If loading is finished and there is still no product, then it's a real 404.
   if (!product) {
       notFound();
   }
 
+  // Only render the form if we have the product data.
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Editar Producto</h1>
