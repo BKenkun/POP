@@ -30,6 +30,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import ProductForm from './_components/product-form';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
@@ -46,6 +54,8 @@ const getImageUrl = (url: string) => {
 export default function AdminProductsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -53,6 +63,41 @@ export default function AdminProductsPage() {
   }, [firestore]);
 
   const { data: products, isLoading: loading, error } = useCollection<Product>(productsQuery);
+  
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+  };
+
+  const handleEditDialogClose = (open: boolean) => {
+    if (!open) {
+      setEditingProduct(null);
+    }
+  };
+
+  const handleSave = async (data: Product) => {
+    if (!editingProduct) return;
+    setIsSaving(true);
+    const productDocRef = doc(firestore, 'products', editingProduct.id);
+    try {
+        const { id: productId, ...productData } = data;
+        await updateDoc(productDocRef, { ...productData });
+        toast({
+            title: 'Producto Actualizado',
+            description: `Los cambios en "${data.name}" han sido guardados.`,
+        });
+        setEditingProduct(null); // Close the dialog on success
+    } catch (err) {
+        console.error("Error updating product:", err);
+        toast({
+            title: 'Error',
+            description: 'No se pudo actualizar el producto.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
 
   const handleToggleActive = async (product: Product) => {
     if (!firestore) return;
@@ -176,11 +221,9 @@ export default function AdminProductsPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                        <DropdownMenuItem asChild>
-                                             <Link href={`/admin/products/edit/${product.id}`}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                <span>Editar</span>
-                                            </Link>
+                                        <DropdownMenuItem onSelect={() => handleEditClick(product)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            <span>Editar</span>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleToggleActive(product)}>
                                             {product.active !== false ? (
@@ -255,6 +298,26 @@ export default function AdminProductsPage() {
             )}
         </div>
       )}
+
+      <Dialog open={!!editingProduct} onOpenChange={handleEditDialogClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Editar Producto</DialogTitle>
+            <DialogDescription>
+              Realiza cambios en el producto. Haz clic en guardar cuando termines.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto pr-4 -mr-4">
+            {editingProduct && (
+                <ProductForm
+                    product={editingProduct}
+                    onSave={handleSave}
+                    isSaving={isSaving}
+                />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
