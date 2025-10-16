@@ -19,7 +19,6 @@ export default function EditProductPage() {
   const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
 
-  // Use useMemoFirebase to prevent re-renders from creating a new doc reference
   const productDocRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
     return doc(firestore, 'products', id);
@@ -31,12 +30,11 @@ export default function EditProductPage() {
     if (!productDocRef) return;
     setIsSaving(true);
     try {
-        // We shouldn't update the ID, so we destructure it out.
         const { id, ...productData } = data;
         await updateDoc(productDocRef, { ...productData });
         toast({
             title: 'Producto Actualizado',
-            description: `Los cambios en "${data.name}" han sido guardados en la base de datos.`,
+            description: `Los cambios en "${data.name}" han sido guardados.`,
         });
         router.push('/admin/products');
     } catch (err) {
@@ -71,7 +69,7 @@ export default function EditProductPage() {
                     <CardTitle>Error al Cargar el Producto</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">No hemos podido cargar los datos de este producto. Esto puede deberse a un problema de permisos o de red.</p>
+                    <p className="text-muted-foreground">No se pudo cargar los datos. Esto puede ser un problema de permisos o de red.</p>
                     <pre className="mt-4 w-full whitespace-pre-wrap rounded-md bg-secondary p-4 text-left text-xs text-secondary-foreground">
                         <code>{error.message}</code>
                     </pre>
@@ -81,12 +79,10 @@ export default function EditProductPage() {
     );
   }
 
-  // If loading is finished and there is still no product, then it's a 404.
   if (!product) {
       notFound();
   }
 
-  // Only render the form if the product data exists.
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Editar Producto</h1>
