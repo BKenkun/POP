@@ -1,3 +1,4 @@
+
 import admin from 'firebase-admin';
 
 // Re-enable server-side admin capabilities.
@@ -13,16 +14,21 @@ const serviceAccount = process.env.SERVICE_ACCOUNT_KEY
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     };
 
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log("Firebase Admin SDK initialized successfully.");
-  } catch (error) {
-    console.error("Firebase Admin SDK initialization error:", error);
-  }
+function getFirebaseAdmin() {
+    if (!admin.apps.length) {
+      try {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+        console.log("Firebase Admin SDK initialized successfully.");
+      } catch (error: any) {
+        console.error("Firebase Admin SDK initialization error:", error.stack);
+      }
+    }
+    return {
+        firestore: admin.firestore(),
+        auth: admin.auth(),
+    }
 }
 
-export const firestore = admin.firestore();
-export const auth = admin.auth();
+export const { firestore, auth } = getFirebaseAdmin();
