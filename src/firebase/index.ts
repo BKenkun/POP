@@ -3,8 +3,8 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -24,6 +24,19 @@ export function initializeFirebase() {
         console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
       }
       firebaseApp = initializeApp(firebaseConfig);
+    }
+    const auth = getAuth(firebaseApp);
+    const firestore = getFirestore(firebaseApp);
+
+    // Development only: Connect to emulators
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+        connectFirestoreEmulator(firestore, "127.0.0.1", 8080);
+        console.log("Firebase emulators connected.");
+      } catch (e) {
+        console.warn("Could not connect to Firebase emulators. This is expected if they are not running.", e);
+      }
     }
 
     return getSdks(firebaseApp);
@@ -45,6 +58,7 @@ export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';
 export * from './firestore/use-doc';
+export * from './auth/use-user';
 export * from './non-blocking-updates';
 export * from './errors';
 export * from './error-emitter';

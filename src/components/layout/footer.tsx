@@ -1,16 +1,7 @@
 
-'use client';
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
     
 export function Footer() {
-    const pathname = usePathname();
-    
-    // Do not render the footer on admin or verify routes.
-    if (pathname.startsWith('/admin') || pathname.startsWith('/verify')) {
-      return null;
-    }
     
     const footerLinks = [
         { href: "/informacion-legal", text: "Información legal" },
