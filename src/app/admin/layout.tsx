@@ -9,10 +9,16 @@ import {
   SidebarContent,
   SidebarInset,
   SidebarProvider,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import AdminSidebar from './_components/admin-sidebar';
 import { Loader2 } from 'lucide-react';
 import ThemeToggleButton from './_components/theme-toggle-button';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
+import { Logo } from '@/components/logo';
+import Link from 'next/link';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
@@ -48,13 +54,23 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // If user is an admin, render the admin layout
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <AdminSidebar />
       </Sidebar>
       <SidebarInset>
-        <div className="p-4 sm:p-6 lg:p-8">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+          <SidebarTrigger className="md:hidden" />
+          <div className="hidden md:block">
+            {/* You can place a breadcrumb or title here */}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Additional header items can go here */}
+          </div>
+        </header>
+        <main className="p-4 sm:p-6 lg:p-8">
             {children}
-        </div>
+        </main>
       </SidebarInset>
       <ThemeToggleButton />
     </SidebarProvider>

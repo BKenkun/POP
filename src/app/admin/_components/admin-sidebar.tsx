@@ -11,6 +11,7 @@ import {
   SidebarSeparator,
   SidebarMenuSub,
   SidebarMenuSubButton,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   Collapsible,
@@ -60,18 +61,23 @@ export default function AdminSidebar() {
   return (
     <>
       <SidebarHeader className="flex items-center justify-between p-2">
-        <Link href="/admin">
-           <Logo className="h-8 group-data-[collapsible=icon]:hidden" />
+        <Link href="/admin" className="flex items-center gap-2 font-semibold">
+           <Logo className="h-8 w-auto" />
+           <span className="group-data-[collapsible=icon]:hidden">PuroRush</span>
         </Link>
+        <SidebarTrigger className="hidden md:flex" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
           {navLinks.map((link) => (
             <SidebarMenuItem key={link.href}>
               <Link href={link.href} passHref>
-                <SidebarMenuButton isActive={pathname === link.href || (link.href !== '/admin' && pathname.startsWith(link.href))}>
+                <SidebarMenuButton 
+                  isActive={pathname === link.href || (link.href !== '/admin' && pathname.startsWith(link.href))}
+                  tooltip={{children: link.label}}
+                >
                   <link.icon />
-                  <span>{link.label}</span>
+                  <span className="group-data-[collapsible=icon]:hidden">{link.label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
@@ -80,12 +86,16 @@ export default function AdminSidebar() {
            <Collapsible open={isLogisticsOpen} onOpenChange={setIsLogisticsOpen}>
             <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={isLogisticsActive} className="w-full justify-between">
+                    <SidebarMenuButton 
+                      isActive={isLogisticsActive} 
+                      className="w-full justify-between group-data-[collapsible=icon]:justify-center"
+                      tooltip={{children: 'Logística'}}
+                    >
                         <div className="flex items-center gap-2">
                             <Truck />
-                            <span>Logística</span>
+                            <span className="group-data-[collapsible=icon]:hidden">Logística</span>
                         </div>
-                        <ChevronDown className={cn("h-4 w-4 transition-transform", isLogisticsOpen && "rotate-180")} />
+                        <ChevronDown className={cn("h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden", isLogisticsOpen && "rotate-180")} />
                     </SidebarMenuButton>
                 </CollapsibleTrigger>
             </SidebarMenuItem>
@@ -111,16 +121,18 @@ export default function AdminSidebar() {
       <SidebarFooter className="flex flex-col gap-1">
          <SidebarMenuItem>
             <Link href="/" passHref>
-              <SidebarMenuButton>
+              <SidebarMenuButton tooltip={{children: 'Ver tienda'}}>
                 <Store />
-                <span>Ver tienda</span>
+                <span className="group-data-[collapsible=icon]:hidden">Ver tienda</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
-         <Button variant="ghost" className="justify-start w-full gap-2" onClick={handleLogout}>
-            <LogOut />
-            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-         </Button>
+         <SidebarMenuItem>
+            <Button variant="ghost" className="w-full justify-center p-2 group-data-[collapsible=icon]:h-8" onClick={handleLogout}>
+                <LogOut />
+                <span className="sr-only group-data-[collapsible=icon]:hidden">Logout</span>
+            </Button>
+         </SidebarMenuItem>
       </SidebarFooter>
     </>
   );
