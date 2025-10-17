@@ -3,9 +3,8 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 
-// Setup font with next/font
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -25,12 +24,12 @@ export default function RootLayout({
   return (
     <html lang="es" className="light" suppressHydrationWarning>
       <head>
-        {/* The font link in head is now handled by next/font, so we can remove it */}
+        {/* The font link in head is now handled by next/font */}
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-          <Providers>
-            {children}
-          </Providers>
+        <Suspense>
+          <Providers>{children}</Providers>
+        </Suspense>
       </body>
     </html>
   );

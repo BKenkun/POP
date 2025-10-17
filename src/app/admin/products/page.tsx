@@ -35,8 +35,6 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import ProductForm from './_components/product-form';
 
 
 const getImageUrl = (url: string) => {
@@ -45,55 +43,6 @@ const getImageUrl = (url: string) => {
     }
     return url;
 };
-
-// --- Edit Product Dialog Component ---
-function EditProductDialog({ product, children }: { product: Product, children: React.ReactNode }) {
-    const { toast } = useToast();
-    const firestore = useFirestore();
-    const [isSaving, setIsSaving] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
-
-    const handleSave = async (data: Product) => {
-        if (!firestore) return;
-        setIsSaving(true);
-        const productRef = doc(firestore, 'products', data.id);
-        
-        try {
-            // Exclude 'id' from the data being sent to Firestore
-            const { id: productId, ...productData } = data;
-            await updateDoc(productRef, { ...productData });
-            toast({
-                title: 'Producto Actualizado',
-                description: `Los cambios en "${data.name}" han sido guardados.`,
-            });
-            setIsOpen(false); // Close dialog on success
-        } catch (err) {
-            console.error("Error updating product:", err);
-            toast({
-                title: 'Error',
-                description: 'No se pudo actualizar el producto.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Editar Producto</DialogTitle>
-                </DialogHeader>
-                <div className="p-4">
-                    <ProductForm product={product} onSave={handleSave} isSaving={isSaving} />
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
@@ -228,14 +177,12 @@ export default function AdminProductsPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                        
-                                        <EditProductDialog product={product}>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/admin/products/edit/${product.id}`}>
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 <span>Editar</span>
-                                            </DropdownMenuItem>
-                                        </EditProductDialog>
-
+                                            </Link>
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleToggleActive(product)}>
                                             {product.active !== false ? (
                                                 <><Archive className="mr-2 h-4 w-4" /><span>Archivar</span></>
@@ -311,3 +258,4 @@ export default function AdminProductsPage() {
       )}
     </div>
   );
+}
