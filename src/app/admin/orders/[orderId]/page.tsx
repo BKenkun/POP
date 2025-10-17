@@ -91,5 +91,6 @@ export default function OrderDetailPage() {
         );
     }
     
+    // Pass the fetched order to the client component for rendering.
     return <OrderDetailsClient initialOrder={order} />;
 }
