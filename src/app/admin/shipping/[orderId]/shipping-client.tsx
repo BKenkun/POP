@@ -21,12 +21,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
-interface ShippingClientProps {
-  initialOrder: Order;
-}
+import { useParams, useSearchParams, notFound } from 'next/navigation';
 
 const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -51,30 +48,80 @@ const getStatusVariant = (status: string) => {
     }
 };
 
-export default function ShippingClient({ initialOrder }: ShippingClientProps) {
-  const [order, setOrder] = useState<Order>(initialOrder);
+export default function ShippingClient() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const orderId = params.orderId as string;
+  const orderPath = searchParams.get('path');
+  const firestore = useFirestore();
+
+  const [order, setOrder] = useState<Order | null | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
   const [isSaving, setIsSaving] = useState(false);
-  const [dni, setDni] = useState(order.deliveryDni || '');
+  const [dni, setDni] = useState('');
   const sigCanvas = useRef<SignatureCanvas>(null);
   const fullscreenSigCanvas = useRef<SignatureCanvas>(null);
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isSignatureFullscreen, setIsSignatureFullscreen] = useState(false);
 
   useEffect(() => {
-    if (order.status === 'Reserva Recibida' || order.status === 'Pago Pendiente de Verificación') {
-        handleStatusChange('En Reparto');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!orderPath || !firestore) {
+        if (orderId && !orderPath) {
+             console.error("Order path is missing from URL parameters.");
+             setOrder(null);
+        }
+        setLoading(false);
+        return;
+    };
 
-  const handleStatusChange = async (newStatus: Order['status']) => {
-    if (!order.path) return;
+    const fetchOrder = async () => {
+        setLoading(true);
+        try {
+            const orderDocRef = doc(firestore, decodeURIComponent(orderPath));
+            const docSnap = await getDoc(orderDocRef);
+
+            if (!docSnap.exists()) {
+                setOrder(null);
+            } else {
+                const orderData = docSnap.data() as Omit<Order, 'id'>;
+                 const createdAt = orderData.createdAt && (orderData.createdAt as any).toDate 
+                    ? (orderData.createdAt as any).toDate().toISOString()
+                    : new Date().toISOString();
+                
+                const fullOrder = {
+                    ...orderData,
+                    id: docSnap.id,
+                    path: docSnap.ref.path,
+                    createdAt,
+                } as Order;
+
+                setOrder(fullOrder);
+                setDni(fullOrder.deliveryDni || '');
+
+                if (fullOrder.status === 'Reserva Recibida' || fullOrder.status === 'Pago Pendiente de Verificación') {
+                    handleStatusChange(fullOrder, 'En Reparto');
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching order details:", error);
+            setOrder(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchOrder();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, orderPath, firestore]);
+
+  const handleStatusChange = async (targetOrder: Order, newStatus: Order['status']) => {
+    if (!targetOrder.path) return;
     setIsSaving(true);
     try {
-        const docRef = doc(firestore, order.path);
+        const docRef = doc(firestore, targetOrder.path);
         await updateDoc(docRef, { status: newStatus });
-        setOrder(prev => ({...prev, status: newStatus}));
+        setOrder(prev => prev ? ({...prev, status: newStatus}) : null);
         toast({ title: "Estado actualizado", description: `El pedido ahora está: ${newStatus}`});
     } catch (error) {
         console.error("Error updating status:", error);
@@ -85,7 +132,7 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
   };
 
   const handleConfirmDelivery = async () => {
-    if (!order.path) return;
+    if (!order || !order.path) return;
     if (sigCanvas.current?.isEmpty()) {
         toast({ title: "Falta la firma", description: "El cliente debe firmar para confirmar la entrega.", variant: "destructive" });
         return;
@@ -102,7 +149,7 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
             deliverySignature: signatureDataUrl,
         });
 
-        setOrder(prev => ({...prev, status: 'Entregado', deliveryDni: dni, deliverySignature: signatureDataUrl }));
+        setOrder(prev => prev ? ({...prev, status: 'Entregado', deliveryDni: dni, deliverySignature: signatureDataUrl }) : null);
         toast({ title: "¡Entrega Confirmada!", description: "El pedido ha sido marcado como entregado."});
     } catch (error) {
         console.error("Error confirming delivery:", error);
@@ -124,7 +171,19 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
     }
     setIsSignatureFullscreen(false);
   };
-
+  
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-60">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-4">Cargando datos del pedido...</p>
+        </div>
+    );
+  }
+    
+  if (!order) {
+    notFound();
+  }
 
   const isDeliveryConfirmed = order.status === 'Entregado';
   const showDeliveryConfirmation = order.status === 'En Reparto' || isDeliveryConfirmed;
@@ -145,8 +204,6 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
       </div>
       
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-
-        {/* Columna Izquierda: Datos Cliente y Paquete */}
         <div className="lg:col-span-1 space-y-6">
             <Card>
                 <CardHeader>
@@ -193,7 +250,6 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
             </Card>
         </div>
 
-        {/* Columna Derecha: Estado y Firma */}
         <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
@@ -204,7 +260,7 @@ export default function ShippingClient({ initialOrder }: ShippingClientProps) {
                         <span className="font-semibold">Estado actual:</span>
                         <Badge variant={getStatusVariant(order.status)} className="text-base">{order.status}</Badge>
                     </div>
-                     <Select onValueChange={(val) => handleStatusChange(val as Order['status'])} defaultValue={order.status} disabled={isSaving || isDeliveryConfirmed}>
+                     <Select onValueChange={(val) => handleStatusChange(order, val as Order['status'])} defaultValue={order.status} disabled={isSaving || isDeliveryConfirmed}>
                       <SelectTrigger>
                         <SelectValue placeholder="Cambiar estado..." />
                       </SelectTrigger>
