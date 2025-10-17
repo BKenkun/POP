@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import {
   Sidebar,
-  SidebarContent,
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
@@ -14,11 +13,6 @@ import {
 import AdminSidebar from './_components/admin-sidebar';
 import { Loader2 } from 'lucide-react';
 import ThemeToggleButton from './_components/theme-toggle-button';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
-import { Logo } from '@/components/logo';
-import Link from 'next/link';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
