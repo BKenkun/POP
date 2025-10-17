@@ -4,15 +4,9 @@
 import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import {
-  Sidebar,
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
-import AdminSidebar from './_components/admin-sidebar';
 import { Loader2 } from 'lucide-react';
 import ThemeToggleButton from './_components/theme-toggle-button';
+import AdminSidebar from './_components/admin-sidebar';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
@@ -47,26 +41,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   // If user is an admin, render the admin layout
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon">
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <aside className="hidden w-64 flex-col border-r bg-background sm:flex">
         <AdminSidebar />
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <SidebarTrigger className="md:hidden" />
-          <div className="hidden md:block">
-            {/* You can place a breadcrumb or title here */}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Additional header items can go here */}
-          </div>
-        </header>
-        <main className="p-4 sm:p-6 lg:p-8">
+      </aside>
+      <div className="flex flex-1 flex-col sm:gap-4 sm:py-4 sm:pl-14">
+        <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             {children}
         </main>
-      </SidebarInset>
+      </div>
       <ThemeToggleButton />
-    </SidebarProvider>
+    </div>
   );
 }
