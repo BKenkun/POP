@@ -300,14 +300,14 @@ export default function AdminProductsPage() {
       )}
 
       <Dialog open={!!editingProduct} onOpenChange={handleEditDialogClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
             <DialogDescription>
               Realiza cambios en el producto. Haz clic en guardar cuando termines.
             </DialogDescription>
           </DialogHeader>
-          <div className="overflow-y-auto pr-4 -mr-4">
+          <div className="overflow-y-auto pr-6 -mr-6">
             {editingProduct && (
                 <ProductForm
                     product={editingProduct}
