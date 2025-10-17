@@ -29,11 +29,11 @@ export default function RootLayout({
         {/* The font link in head is now handled by next/font, so we can remove it */}
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-          <Providers>
-            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+          <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+            <Providers>
               {children}
-            </Suspense>
-          </Providers>
+            </Providers>
+          </Suspense>
       </body>
     </html>
   );

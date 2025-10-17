@@ -1,7 +1,11 @@
+'use client'
 
 import { Button } from '@/components/ui/button'
 import { Home } from 'lucide-react'
 import Link from 'next/link'
+
+// Ensure dynamic rendering (avoids prerender crash)
+export const dynamic = 'force-dynamic'
 
 export default function NotFound() {
   return (
@@ -13,8 +17,8 @@ export default function NotFound() {
       </p>
       <Button asChild className="mt-8">
         <Link href="/">
-            <Home className="mr-2 h-4 w-4" />
-            Volver a la página principal
+          <Home className="mr-2 h-4 w-4" />
+          Volver a la página principal
         </Link>
       </Button>
     </div>

@@ -1,5 +1,7 @@
+'use client'
 
-'use client';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
