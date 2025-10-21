@@ -9,9 +9,11 @@ import { useCookieConsent } from '@/context/cookie-context';
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import CookieConsentBanner from '../cookie-consent-banner';
+import { usePathname } from 'next/navigation';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
+  const pathname = usePathname();
 
   // Load Clarity script if consent is given
   useEffect(() => {
@@ -23,6 +25,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       })(window, document, "clarity", "script", "tc3cngb8to");
     }
   }, [consent.analytics]);
+
+  const isAdminRoute = pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    // For admin routes, we render the children directly,
+    // as the AdminLayout from providers.tsx will wrap it.
+    return (
+        <>
+            {children}
+            <Toaster />
+        </>
+    );
+  }
 
   return (
     <>

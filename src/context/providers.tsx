@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { AuthProvider } from "./auth-context";
@@ -10,13 +9,12 @@ import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
 import { FirebaseClientProvider } from "@/firebase";
 import { usePathname } from "next/navigation";
-import AdminLayout from "../app/admin/layout"; // Assuming this is the correct path for AdminLayout
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const isAdminRoute = pathname.startsWith('/admin');
-
-    const Layout = isAdminRoute ? AdminLayout : AppLayout;
+    // The admin layout is now part of the main AppLayout logic via the Header component,
+    // so we don't need a separate layout switcher here.
+    const Layout = AppLayout;
 
   return (
     <ThemeProvider
