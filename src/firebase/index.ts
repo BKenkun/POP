@@ -38,10 +38,8 @@ if (process.env.NODE_ENV === 'development') {
     }
 }
 
-export function initializeFirebase() {
-    // This function now just returns the already initialized services.
-    return { firebaseApp, auth, firestore };
-}
+// Export the initialized services directly
+export { firebaseApp, auth, firestore };
 
 // --- End of corrected initialization ---
 
@@ -53,3 +51,9 @@ export * from './auth/use-user';
 export * from './non-blocking-updates';
 export * from './errors';
 export * from './error-emitter';
+
+// This function is kept for compatibility in case any component still calls it,
+// but it just returns the already initialized services.
+export function initializeFirebase() {
+    return { firebaseApp, auth, firestore };
+}

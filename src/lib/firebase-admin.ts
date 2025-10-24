@@ -1,4 +1,3 @@
-
 import admin from 'firebase-admin';
 
 // Re-enable server-side admin capabilities.
@@ -19,6 +18,8 @@ function getFirebaseAdmin() {
       try {
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
+          // Add the storage bucket to the admin config
+          storageBucket: "purorush.appspot.com"
         });
         console.log("Firebase Admin SDK initialized successfully.");
       } catch (error: any) {
@@ -28,7 +29,8 @@ function getFirebaseAdmin() {
     return {
         firestore: admin.firestore(),
         auth: admin.auth(),
+        storage: admin.storage()
     }
 }
 
-export const { firestore, auth } = getFirebaseAdmin();
+export const { firestore, auth, storage } = getFirebaseAdmin();
