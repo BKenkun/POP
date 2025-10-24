@@ -1,4 +1,3 @@
-
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -9,17 +8,21 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 // --- This is the corrected, simplified, and robust initialization ---
 
 let firebaseApp: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
 
-if (getApps().length) {
-    firebaseApp = getApp();
-} else {
+// This logic now correctly handles both development and production environments.
+if (getApps().length === 0) {
+    // If no app is initialized, initialize one with the provided config.
+    // This is safe for both dev and prod. In production, Firebase Hosting
+    // may provide configuration, but using the explicit config is also correct.
     firebaseApp = initializeApp(firebaseConfig);
+} else {
+    // If an app is already initialized, use it.
+    // This prevents re-initialization errors in development with hot-reloading.
+    firebaseApp = getApp();
 }
 
-auth = getAuth(firebaseApp);
-firestore = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
+const firestore = getFirestore(firebaseApp);
 
 if (process.env.NODE_ENV === 'development') {
     // This check prevents connection attempts in production.
@@ -31,7 +34,7 @@ if (process.env.NODE_ENV === 'development') {
         connectFirestoreEmulator(firestore, "127.0.0.1", 8080);
         console.log("Firebase emulators connected.");
     } catch (e) {
-        console.warn("Could not connect to Firebase emulators. This is expected if they are not running or if you are in production.", e);
+        console.warn("Could not connect to Firebase emulators. This is expected if they are not running.", e);
     }
 }
 
