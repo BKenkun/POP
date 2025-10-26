@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Save } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import RichTextEditor from '@/components/rich-text-editor';
 
 // Define the schema outside the component
 const productSchema = z.object({
@@ -111,9 +112,16 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                 )} />
                 <FormField control={form.control} name="longDescription" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descripción Larga (HTML)</FormLabel>
-                    <FormDescription>Permite añadir una descripción extensa con formato HTML, superando los límites de un solo campo de Stripe. Los fragmentos se unen en orden numérico (ej: long_description_1, _2...).</FormDescription>
-                    <FormControl><Textarea rows={8} {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormLabel>Descripción Larga</FormLabel>
+                    <FormDescription>Editor de texto enriquecido para descripciones detalladas de productos.</FormDescription>
+                    <FormControl>
+                        <RichTextEditor
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
               </CardContent>
             </Card>

@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Save } from 'lucide-react';
+import RichTextEditor from '@/components/rich-text-editor';
 
 const postSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long'),
@@ -81,9 +82,9 @@ export default function NewPostPage() {
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content (HTML supported)</FormLabel>
+                    <FormLabel>Content</FormLabel>
                     <FormControl>
-                      <Textarea rows={10} placeholder="Write your post content here..." {...field} />
+                      <RichTextEditor value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 import { posts } from '@/lib/posts';
 import { notFound, useParams } from 'next/navigation';
+import RichTextEditor from '@/components/rich-text-editor';
 
 const postSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long'),
@@ -100,13 +101,9 @@ export default function EditPostPage() {
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content (HTML supported)</FormLabel>
+                    <FormLabel>Content</FormLabel>
                     <FormControl>
-                      <Textarea
-                        rows={10}
-                        placeholder="Write your post content here..."
-                        {...field}
-                      />
+                       <RichTextEditor value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
