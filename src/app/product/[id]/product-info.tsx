@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,12 +13,24 @@ import { StockNotificationDialog } from '@/components/stock-notification-dialog'
 import { QuantitySelector } from '@/components/quantity-selector';
 import { useToast } from '@/hooks/use-toast';
 
+function isOfferActive(product: Product): boolean {
+  const now = new Date();
+  const startDate = product.offerStartDate ? new Date(product.offerStartDate) : null;
+  const endDate = product.offerEndDate ? new Date(product.offerEndDate) : null;
+
+  if (startDate && now < startDate) return false;
+  if (endDate && now > endDate) return false;
+
+  return !!product.originalPrice && product.originalPrice > product.price;
+}
+
 // This component now handles both displaying info and client-side actions.
 export function ProductInfo({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
+  const offerActive = isOfferActive(product);
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -45,6 +58,7 @@ export function ProductInfo({ product }: { product: Product }) {
             {isSoldOut && (
                 <Badge variant="destructive">Agotado</Badge>
             )}
+            {offerActive && <Badge variant="destructive">OFERTA</Badge>}
             {!isSoldOut && product.tags?.map((tag) => (
               <Badge key={tag} variant="secondary">
                 {tag}
@@ -54,7 +68,14 @@ export function ProductInfo({ product }: { product: Product }) {
         <h1 className="text-3xl md:text-4xl font-headline text-primary font-bold">
           {product.name}
         </h1>
-        <p className="text-3xl font-bold mt-2">{formatPrice(product.price)}</p>
+        <div className="flex items-baseline gap-3 mt-2">
+          <p className="text-3xl font-bold text-primary">{formatPrice(product.price)}</p>
+          {offerActive && product.originalPrice && (
+            <p className="text-2xl font-medium text-muted-foreground line-through">
+              {formatPrice(product.originalPrice)}
+            </p>
+          )}
+        </div>
         {product.description && (
             <p className="text-foreground/80 mt-4">{product.description}</p>
         )}

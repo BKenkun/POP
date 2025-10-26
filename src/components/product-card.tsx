@@ -30,11 +30,23 @@ const getImageUrl = (url: string) => {
   return url;
 };
 
+function isOfferActive(product: Product): boolean {
+  const now = new Date();
+  const startDate = product.offerStartDate ? new Date(product.offerStartDate) : null;
+  const endDate = product.offerEndDate ? new Date(product.offerEndDate) : null;
+
+  if (startDate && now < startDate) return false; // Offer hasn't started
+  if (endDate && now > endDate) return false;   // Offer has ended
+
+  return !!product.originalPrice && product.originalPrice > product.price;
+}
+
 export function ProductCard({ product, className, children, onImageClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
+  const offerActive = isOfferActive(product);
 
    const handleQuantityChange = (newQuantity: number) => {
       if (product.stock !== undefined && newQuantity > product.stock) {
@@ -103,6 +115,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                     <Badge variant="secondary" className="absolute bottom-4 left-4 text-sm z-20">Agotado</Badge>
                 )}
                 <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                    {offerActive && <Badge variant="destructive">OFERTA</Badge>}
                     {product.tags?.map((tag) => (
                         <Badge key={tag} variant="secondary">{tag}</Badge>
                     ))}
@@ -116,7 +129,14 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                       {product.name}
                   </CardTitle>
               </Link>
-              <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
+               <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-bold text-primary">{formatPrice(product.price)}</p>
+                  {offerActive && product.originalPrice && (
+                    <p className="text-lg font-medium text-muted-foreground line-through">
+                      {formatPrice(product.originalPrice)}
+                    </p>
+                  )}
+              </div>
             </CardContent>
         </div>
         {children ? (

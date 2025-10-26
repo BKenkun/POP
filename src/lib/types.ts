@@ -10,7 +10,8 @@ export interface Product {
   name: string;
   description?: string | null;
   longDescription?: string | null;
-  price: number; // Price in cents
+  price: number; // Price in cents. If offer is active, this is the sale price.
+  originalPrice?: number; // Original price in cents, only set when an offer is active.
   imageUrl: string;
   imageHint?: string; // Optional hint for AI image search
   tags?: string[];
@@ -23,6 +24,9 @@ export interface Product {
   composition?: string;
   url?: string;
   web?: string; // To which web portal it belongs
+  // --- New Offer Fields ---
+  offerStartDate?: string | null; // ISO Date string
+  offerEndDate?: string | null; // ISO Date string
   // --- New Accounting Fields ---
   cost?: number; // Cost of the product in cents
   includesVat?: boolean;
