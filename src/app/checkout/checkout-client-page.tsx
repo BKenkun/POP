@@ -273,10 +273,10 @@ export default function CheckoutClientPage() {
 
     let fieldsToValidate: (keyof CheckoutFormValues)[] = [];
     if (step === 2) {
-      // For guests, password fields are required
       const baseFields: (keyof CheckoutFormValues)[] = ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
       if(!user) {
-        fieldsToValidate = [...baseFields, 'password', 'confirmPassword'];
+        // For guests, password fields are required
+        fieldsToValidate = [...baseFields, 'email', 'password', 'confirmPassword'];
       } else {
         fieldsToValidate = baseFields;
       }
