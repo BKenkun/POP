@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { doc, serverTimestamp, setDoc, onSnapshot } from 'firebase/firestore';
@@ -285,30 +286,30 @@ export default function CheckoutClientPage() {
   const handlePrevStep = () => { setStep(prev => prev - 1); };
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
-    if (!user) {
+    setLoading(true);
+    try {
+      if (!user) {
         toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido. Por favor, vuelve atrás y comprueba tus datos.', variant: 'destructive' });
         return;
-    }
-    setLoading(true);
-    toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
-
-    try {
-        const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
-        
-        const result = await createOrder({
-            userId: user.uid, cartItems: cartItems, cartTotal: cartTotal, customerName: data.name, customerEmail: data.email, shippingAddress: shippingAddress, paymentMethod: data.paymentMethod,
-        });
-
-        if (result.error || !result.orderId) throw new Error(result.error || "No se pudo obtener el ID del pedido.");
-        
-        const orderSummaryForUI: Order = {
-            id: result.orderId, userId: user.uid, createdAt: new Date(), status: 'Reserva Recibida', total: cartTotal, items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl, })), customerName: data.name, customerEmail: data.email, shippingAddress: shippingAddress, paymentMethod: data.paymentMethod,
-        };
-
-        setCheckoutData({ orderId: result.orderId, paymentMethod: data.paymentMethod, orderSummary: orderSummaryForUI });
-        clearCart();
-        router.push('/checkout/success');
-
+      }
+      toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
+  
+      const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
+      
+      const result = await createOrder({
+          userId: user.uid, cartItems: cartItems, cartTotal: cartTotal, customerName: data.name, customerEmail: data.email, shippingAddress: shippingAddress, paymentMethod: data.paymentMethod,
+      });
+  
+      if (result.error || !result.orderId) throw new Error(result.error || "No se pudo obtener el ID del pedido.");
+      
+      const orderSummaryForUI: Order = {
+          id: result.orderId, userId: user.uid, createdAt: new Date(), status: 'Reserva Recibida', total: cartTotal, items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl, })), customerName: data.name, customerEmail: data.email, shippingAddress: shippingAddress, paymentMethod: data.paymentMethod,
+      };
+  
+      setCheckoutData({ orderId: result.orderId, paymentMethod: data.paymentMethod, orderSummary: orderSummaryForUI });
+      clearCart();
+      router.push('/checkout/success');
+  
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
         toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
