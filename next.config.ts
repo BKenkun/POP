@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com'
+      },
       // Ya no necesitamos firebasestorage aquí porque lo gestionará nuestro proxy.
       // Dejamos los otros para las imágenes de relleno y ejemplos.
       {
