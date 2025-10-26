@@ -10,11 +10,31 @@ import type { Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
-
-const names = ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."];
-const locations = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Palma", "Las Palmas", "Bilbao", "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón", "A Coruña", "Granada", "Elche", "Oviedo", "Cartagena", "Jerez", "Pamplona", "Almería", "San Sebastián", "Burgos", "Albacete", "Santander", "Castellón", "Badajoz", "Logroño", "Salamanca", "Huelva", "Lleida", "Tarragona", "Cádiz", "Jaén", "Ourense", "Lugo"];
+const internationalData = {
+  "España": {
+    names: ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."],
+    cities: ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Bilbao", "Alicante"],
+  },
+  "France": {
+    names: ["Lucas M.", "Chloé D.", "Léo P.", "Manon L.", "Gabriel F.", "Emma R."],
+    cities: ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Bordeaux"],
+  },
+  "Deutschland": {
+    names: ["Lukas S.", "Hanna M.", "Felix W.", "Mia K.", "Leon B.", "Sophie Z."],
+    cities: ["Berlin", "Hamburg", "München", "Köln", "Frankfurt", "Stuttgart", "Düsseldorf", "Leipzig"],
+  },
+  "Italia": {
+    names: ["Leonardo R.", "Sofia C.", "Alessandro F.", "Giulia G.", "Francesco M.", "Chiara B."],
+    cities: ["Roma", "Milano", "Napoli", "Torino", "Palermo", "Genova", "Bologna", "Firenze"],
+  },
+  "Portugal": {
+    names: ["Tiago S.", "Beatriz F.", "Diogo P.", "Mariana A.", "João C.", "Leonor M."],
+    cities: ["Lisboa", "Porto", "Coimbra", "Braga", "Faro", "Aveiro"],
+  },
+};
 
 const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const getRandomCountry = () => getRandomItem(Object.keys(internationalData));
 
 export function SalesNotification() {
   const { toast } = useToast();
@@ -23,24 +43,26 @@ export function SalesNotification() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    // Fetch products from Firestore instead of a static file
     const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(fetchedProducts);
     });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [])
 
   const isAdminPath = pathname.startsWith('/admin');
 
   const showRandomToast = useCallback(() => {
     if (products.length === 0) return;
+    
+    const country = getRandomCountry();
+    const { names, cities } = internationalData[country as keyof typeof internationalData];
 
     const product = getRandomItem(products);
     const quantity = Math.floor(Math.random() * 2) + 1;
     const name = getRandomItem(names);
-    const location = getRandomItem(locations);
+    const location = getRandomItem(cities);
     const total = product.price * quantity;
 
     toast({
@@ -79,7 +101,6 @@ export function SalesNotification() {
       return;
     }
 
-    // Start the first notification after an initial delay
     const initialDelay = setTimeout(() => {
         showRandomToast();
         scheduleNextToast();
@@ -93,5 +114,5 @@ export function SalesNotification() {
     };
   }, [isAdminPath, products, toast, showRandomToast, scheduleNextToast]);
 
-  return null; // This component doesn't render anything itself
+  return null;
 }
