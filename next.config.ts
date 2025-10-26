@@ -36,6 +36,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    // Permitir orígenes cruzados en desarrollo para Firebase Studio
+    allowedDevOrigins: ["*.cloudworkstations.dev"],
+  }
 };
 
 export default nextConfig;
