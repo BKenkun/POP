@@ -1,4 +1,3 @@
-
 'use client'
 
 import { Suspense, useEffect } from 'react'
@@ -150,29 +149,6 @@ function SuccessContent() {
           </div>
 
           <Separator />
-
-          {order.userId === 'guest' && (
-            <Card className="bg-secondary/50">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-center gap-2">
-                  <Gift className="h-5 w-5 text-primary" />
-                  ¡Consigue Ventajas Exclusivas!
-                </CardTitle>
-                <CardDescription>
-                  Crea una cuenta para disfrutar de puntos de fidelidad, ofertas
-                  especiales y un historial de compras.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild size="lg">
-                  <Link href="/register">
-                    <UserPlus className="mr-2" />
-                    Crear mi Cuenta Ahora
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             <Button asChild>

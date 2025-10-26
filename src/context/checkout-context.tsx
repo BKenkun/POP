@@ -2,12 +2,12 @@
 'use client';
 
 import { Order } from '@/lib/types';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
 interface CheckoutData {
   orderId: string | null;
   paymentMethod: string | null;
-  orderSummary?: Omit<Order, 'createdAt'> & { createdAt: any };
+  orderSummary?: Order; // Use the full Order type
 }
 
 interface CheckoutContextType {
@@ -24,13 +24,34 @@ export const CheckoutProvider = ({ children }: { children: ReactNode }) => {
     paymentMethod: null,
   });
 
-  const handleSetCheckoutData = (data: CheckoutData) => {
+  const handleSetCheckoutData = useCallback((data: CheckoutData) => {
+    // sessionStorage allows data to persist across page reloads for this session only.
+    sessionStorage.setItem('checkout_data', JSON.stringify(data));
     setCheckoutData(data);
-  };
+  }, []);
   
-  const handleClearCheckoutData = () => {
+  const handleClearCheckoutData = useCallback(() => {
+    sessionStorage.removeItem('checkout_data');
     setCheckoutData({ orderId: null, paymentMethod: null, orderSummary: undefined });
-  };
+  }, []);
+  
+  // On initial load, try to restore from sessionStorage.
+  useState(() => {
+    try {
+      const storedData = sessionStorage.getItem('checkout_data');
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        // We need to convert the stored date string back to a Date object
+        if (parsedData.orderSummary?.createdAt) {
+          parsedData.orderSummary.createdAt = new Date(parsedData.orderSummary.createdAt);
+        }
+        setCheckoutData(parsedData);
+      }
+    } catch (e) {
+      console.error("Could not restore checkout data from session storage", e);
+    }
+  });
+
 
   const value = {
     checkoutData,
