@@ -2,7 +2,7 @@
 'use client';
 
 import { Order } from '@/lib/types';
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 
 interface CheckoutData {
   orderId: string | null;
@@ -24,9 +24,12 @@ export const CheckoutProvider = ({ children }: { children: ReactNode }) => {
     paymentMethod: null,
   });
 
+  // On initial mount, we don't load from sessionStorage anymore.
+  // The success page is now responsible for reading it once.
+  
   const handleSetCheckoutData = useCallback((data: CheckoutData) => {
-    // sessionStorage allows data to persist across page reloads for this session only.
-    sessionStorage.setItem('checkout_data', JSON.stringify(data));
+    // This is primarily for in-app state management now.
+    // The checkout page will write to sessionStorage directly before redirect.
     setCheckoutData(data);
   }, []);
   
@@ -34,24 +37,6 @@ export const CheckoutProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('checkout_data');
     setCheckoutData({ orderId: null, paymentMethod: null, orderSummary: undefined });
   }, []);
-  
-  // On initial load, try to restore from sessionStorage.
-  useState(() => {
-    try {
-      const storedData = sessionStorage.getItem('checkout_data');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        // We need to convert the stored date string back to a Date object
-        if (parsedData.orderSummary?.createdAt) {
-          parsedData.orderSummary.createdAt = new Date(parsedData.orderSummary.createdAt);
-        }
-        setCheckoutData(parsedData);
-      }
-    } catch (e) {
-      console.error("Could not restore checkout data from session storage", e);
-    }
-  });
-
 
   const value = {
     checkoutData,
@@ -69,5 +54,3 @@ export const useCheckout = () => {
   }
   return context;
 };
-
-    

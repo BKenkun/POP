@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,22 +13,17 @@ import Link from 'next/link'
 import {
   CheckCircle,
   ShoppingBag,
-  Home,
-  Gift,
-  UserPlus,
+  Package,
   AlertTriangle,
   Loader2,
-  Package,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { useCheckout } from '@/context/checkout-context'
 import { useRouter } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils'
-import { OrderItem } from '@/lib/types'
+import { Order } from '@/lib/types'
 
-// 🚀 IMPORTANT: prevent Next.js/Firebase from prerendering this page
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -39,24 +34,36 @@ const getImageUrl = (url: string) => {
   return url
 }
 
-function SuccessContent() {
-  const { checkoutData, clearCheckoutData } = useCheckout()
-  const router = useRouter()
+interface CheckoutData {
+  orderId: string | null;
+  paymentMethod: string | null;
+  orderSummary?: Order;
+}
+
+export default function CheckoutSuccessPage() {
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    if (!checkoutData?.orderId) {
-      router.replace('/')
+    // This effect runs only once on mount to get data from session storage
+    const storedData = sessionStorage.getItem('checkout_data');
+    if (storedData) {
+      const parsedData: CheckoutData = JSON.parse(storedData);
+      // Ensure createdAt is a Date object if it exists
+      if (parsedData.orderSummary?.createdAt) {
+          parsedData.orderSummary.createdAt = new Date(parsedData.orderSummary.createdAt);
+      }
+      setCheckoutData(parsedData);
+      sessionStorage.removeItem('checkout_data'); // Clean up immediately after reading
+    } else {
+      // If no data, redirect to home
+      router.replace('/');
     }
+    setLoading(false);
+  }, [router]);
 
-    // Don't clear data immediately to allow re-renders
-    // The cleanup can be done on unmount
-    return () => {
-      clearCheckoutData()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  if (!checkoutData?.orderId || !checkoutData?.orderSummary) {
+  if (loading || !checkoutData) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -67,8 +74,15 @@ function SuccessContent() {
     )
   }
 
-  const isPrepaid = checkoutData.paymentMethod?.startsWith('prepaid')
-  const order = checkoutData.orderSummary
+  const { orderId, paymentMethod, orderSummary } = checkoutData;
+
+  if (!orderId || !orderSummary) {
+      // This is a fallback if data is somehow malformed
+      router.replace('/');
+      return null;
+  }
+  
+  const isPrepaid = paymentMethod?.startsWith('prepaid');
 
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-8">
@@ -83,7 +97,7 @@ function SuccessContent() {
           <CardDescription className="text-lg text-foreground/80">
             Hemos recibido tu reserva con el ID:{' '}
             <span className="font-bold text-primary">
-              #{checkoutData.orderId.substring(checkoutData.orderId.length - 7)}
+              #{orderId.substring(orderId.length - 7)}
             </span>
             .
           </CardDescription>
@@ -119,7 +133,7 @@ function SuccessContent() {
               Resumen de tu Pedido
             </h3>
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-              {order.items.map((item: OrderItem) => (
+              {orderSummary.items.map((item) => (
                 <div key={item.productId} className="flex items-center gap-4">
                   <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
                     <Image
@@ -144,7 +158,7 @@ function SuccessContent() {
             <Separator />
             <div className="flex justify-between font-bold text-lg">
               <span>TOTAL</span>
-              <span className="text-primary">{formatPrice(order.total)}</span>
+              <span className="text-primary">{formatPrice(orderSummary.total)}</span>
             </div>
           </div>
 
@@ -158,7 +172,7 @@ function SuccessContent() {
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={`/account/orders/${order.id}`}>
+              <Link href={`/account/orders/${orderId}`}>
                 <Package className="mr-2" />
                 Ver Estado del Pedido
               </Link>
@@ -167,13 +181,5 @@ function SuccessContent() {
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-export default function CheckoutSuccessPage() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <SuccessContent />
-    </Suspense>
   )
 }

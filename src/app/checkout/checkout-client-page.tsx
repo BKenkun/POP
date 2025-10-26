@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserCheck, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -278,7 +278,16 @@ export default function CheckoutClientPage() {
             paymentMethod: data.paymentMethod,
         };
 
-        setCheckoutData({ orderId: newOrderRef.id, paymentMethod: data.paymentMethod, orderSummary: orderSummaryForUI });
+        const checkoutData = { 
+            orderId: newOrderRef.id, 
+            paymentMethod: data.paymentMethod, 
+            orderSummary: orderSummaryForUI 
+        };
+
+        // Save to context AND sessionStorage to guarantee availability
+        setCheckoutData(checkoutData);
+        sessionStorage.setItem('checkout_data', JSON.stringify(checkoutData));
+
         clearCart();
         router.push('/checkout/success');
 
