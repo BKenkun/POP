@@ -238,14 +238,16 @@ export default function CheckoutClientPage() {
   };
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
+    setLoading(true);
+    
     if (!user) {
-        toast({ title: 'Error', description: 'Debes iniciar sesión para completar el pedido.', variant: 'destructive' });
+        toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido. Por favor, vuelve atrás y comprueba tus datos.', variant: 'destructive' });
+        setLoading(false);
         return;
     }
-    setLoading(true);
+
     toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
 
-    // --- ORDER CREATION LOGIC ---
     try {
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
         
@@ -288,9 +290,11 @@ export default function CheckoutClientPage() {
         
         clearCart();
         router.push('/checkout/success');
+
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
         toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
+    } finally {
         setLoading(false);
     }
   };
@@ -310,7 +314,7 @@ export default function CheckoutClientPage() {
       <Stepper currentStep={step} />
 
       <Form {...form}>
-        <form>
+        <form onSubmit={form.handleSubmit(onFinalSubmit)}>
             {step === 1 && (
                 <Card>
                     <CardHeader><CardTitle>1. Confirma tu Carrito</CardTitle></CardHeader>
@@ -479,7 +483,7 @@ export default function CheckoutClientPage() {
                         </p>
                     </CardContent>
                     <CardFooter>
-                         <Button size="lg" type="button" onClick={form.handleSubmit(onFinalSubmit)} className="w-full" disabled={loading}>
+                         <Button size="lg" type="submit" className="w-full" disabled={loading}>
                             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
                         </Button>
                     </CardFooter>
@@ -495,3 +499,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
