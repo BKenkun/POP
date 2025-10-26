@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound, useSearchParams } from 'next/navigation';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Order, OrderStatus } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
@@ -65,7 +65,6 @@ export default function ShippingClient() {
   const searchParams = useSearchParams();
   const orderId = params.orderId as string;
   const orderPath = searchParams.get('path');
-  const firestore = useFirestore();
   const { toast } = useToast();
   
   const [order, setOrder] = useState<Order | null | undefined>(undefined);
@@ -76,7 +75,7 @@ export default function ShippingClient() {
   const sigCanvas = useRef<SignatureCanvas>(null);
 
   useEffect(() => {
-    if (!orderPath || !firestore) {
+    if (!orderPath) {
       if (orderId && !orderPath) {
         setOrder(null);
         setLoading(false);
@@ -87,7 +86,7 @@ export default function ShippingClient() {
     const fetchOrder = async () => {
       setLoading(true);
       try {
-        const orderDocRef = doc(firestore, decodeURIComponent(orderPath));
+        const orderDocRef = doc(db, decodeURIComponent(orderPath));
         const docSnap = await getDoc(orderDocRef);
         if (docSnap.exists()) {
           const orderData = docSnap.data() as Omit<Order, 'id'>;
@@ -107,12 +106,12 @@ export default function ShippingClient() {
       }
     };
     fetchOrder();
-  }, [orderId, orderPath, firestore]);
+  }, [orderId, orderPath]);
   
   const clearSignature = () => sigCanvas.current?.clear();
 
   const handleDeliveryConfirmation = async (status: 'Entregado' | 'Incidencia') => {
-    if (!order?.path || !firestore) return;
+    if (!order?.path) return;
     
     if (status === 'Entregado' && (!dni.trim() || sigCanvas.current?.isEmpty())) {
         toast({ title: 'Faltan datos', description: 'El DNI y la firma son obligatorios para confirmar la entrega.', variant: 'destructive'});
@@ -121,7 +120,7 @@ export default function ShippingClient() {
 
     setIsSaving(true);
     try {
-        const orderDocRef = doc(firestore, order.path);
+        const orderDocRef = doc(db, order.path);
         
         let signatureDataUrl = order.deliverySignature || null;
         if(status === 'Entregado' && sigCanvas.current && !sigCanvas.current.isEmpty()){

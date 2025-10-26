@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
@@ -118,20 +118,13 @@ export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<AdminDisplayOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const firestore = useFirestore();
-
+  
   useEffect(() => {
     const handleFetchAllOrders = async () => {
-      if (!firestore) {
-        toast({ title: 'Error', description: 'Firestore no está disponible.', variant: 'destructive'});
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
 
       try {
-        const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(ordersQuery);
         
         const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
@@ -170,7 +163,7 @@ export default function AdminOrdersPage() {
     };
 
     handleFetchAllOrders();
-  }, [firestore, toast]);
+  }, [toast]);
 
   const { newOrders, pendingPaymentOrders, inProgressOrders, archivedOrders } = useMemo(() => {
     return {

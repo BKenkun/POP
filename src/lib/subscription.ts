@@ -19,13 +19,15 @@ export async function getUserSelection(): Promise<MonthlySelectionData | null> {
     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
     
     try {
-        const storedSelection = localStorage.getItem('monthly_selection');
-        if (storedSelection) {
-            const parsed = JSON.parse(storedSelection);
-            // Basic validation
-            if (Array.isArray(parsed.poppers) && 'accessory' in parsed) {
-                console.log("Found selection in localStorage:", parsed);
-                return parsed;
+        if (typeof window !== 'undefined') {
+            const storedSelection = localStorage.getItem('monthly_selection');
+            if (storedSelection) {
+                const parsed = JSON.parse(storedSelection);
+                // Basic validation
+                if (Array.isArray(parsed.poppers) && 'accessory' in parsed) {
+                    console.log("Found selection in localStorage:", parsed);
+                    return parsed;
+                }
             }
         }
     } catch (error) {
@@ -45,8 +47,10 @@ export async function saveUserSelection(selection: MonthlySelectionData): Promis
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
 
     try {
-        localStorage.setItem('monthly_selection', JSON.stringify(selection));
-        console.log("Successfully saved selection to localStorage.");
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('monthly_selection', JSON.stringify(selection));
+            console.log("Successfully saved selection to localStorage.");
+        }
     } catch (error) {
         console.error("Could not save user selection to localStorage", error);
         throw new Error("Failed to save selection.");

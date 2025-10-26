@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
@@ -27,21 +27,14 @@ export default function AdminShippingPage() {
   const [shippingOrders, setShippingOrders] = useState<AdminDisplayOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const firestore = useFirestore();
 
   useEffect(() => {
     const fetchShippingOrders = async () => {
-      if (!firestore) {
-        toast({ title: 'Error', description: 'Firestore no está disponible.', variant: 'destructive'});
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       try {
         // Fetch ALL orders first, then filter on the client.
         // This avoids needing a composite index for `where('status', '==', 'En Reparto')` and `orderBy('createdAt')`.
-        const ordersQuery = query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc'));
+        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(ordersQuery);
         
         const allOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
@@ -73,7 +66,7 @@ export default function AdminShippingPage() {
     };
 
     fetchShippingOrders();
-  }, [firestore, toast]);
+  }, [toast]);
 
   return (
     <div className="space-y-6">

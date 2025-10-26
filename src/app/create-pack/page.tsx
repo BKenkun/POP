@@ -4,18 +4,28 @@
 import { Product } from '@/lib/types';
 import CustomPackBuilder from './custom-pack-builder';
 import { getUniqueValues } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
 
 export default function CreatePackPage() {
-    const firestore = useFirestore();
-    const productsQuery = useMemoFirebase(() => {
-        return query(collection(firestore, 'products'), where('active', '==', true));
-    }, [firestore]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const { data: products, isLoading } = useCollection<Product>(productsQuery);
+    useEffect(() => {
+        const productsQuery = query(collection(db, 'products'), where('active', '==', true));
+        const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+            const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+            setProducts(fetchedProducts);
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching products for pack builder:", error);
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const { availableForPack, uniqueBrands, uniqueSizes, uniqueCompositions } = useMemo(() => {
         const validProducts = products || [];

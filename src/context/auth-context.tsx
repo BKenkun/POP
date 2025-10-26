@@ -5,7 +5,7 @@ import React, { createContext, useContext, ReactNode, useMemo, useState, useEffe
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase'; // Simplified import
+import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {

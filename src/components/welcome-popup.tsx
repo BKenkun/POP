@@ -15,6 +15,8 @@ const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const lastVisit = localStorage.getItem('lastPopperStoreVisit');
     const now = new Date().getTime();
     const oneDayInMs = 24 * 60 * 60 * 1000;
