@@ -47,7 +47,7 @@ export default function AdminCustomersPage() {
             const fetchedCustomers: Customer[] = snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
-                    uid: data.uid,
+                    uid: doc.id, // Use doc.id as the unique key
                     email: data.email,
                     displayName: data.displayName,
                     photoURL: data.photoURL,
