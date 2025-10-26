@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { StockNotificationDialog } from '@/components/stock-notification-dialog';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { useToast } from '@/hooks/use-toast';
+import OfferCountdown from '@/components/offer-countdown';
 
 function isOfferActive(product: Product): boolean {
   const now = new Date();
@@ -19,6 +20,10 @@ function isOfferActive(product: Product): boolean {
   const endDate = product.offerEndDate ? new Date(product.offerEndDate) : null;
 
   if (startDate && now < startDate) return false;
+  if (endDate && now < endDate) return true; // Offer is active if it has an end date in the future
+  if (!startDate && !endDate && product.originalPrice && product.originalPrice > product.price) return true; // Permanent offer without dates
+  
+  // If we are past the end date, it is no longer active
   if (endDate && now > endDate) return false;
 
   return !!product.originalPrice && product.originalPrice > product.price;
@@ -31,6 +36,7 @@ export function ProductInfo({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
   const offerActive = isOfferActive(product);
+  const offerHasEndDate = offerActive && !!product.offerEndDate && new Date(product.offerEndDate) > new Date();
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -80,6 +86,12 @@ export function ProductInfo({ product }: { product: Product }) {
             <p className="text-foreground/80 mt-4">{product.description}</p>
         )}
       </div>
+
+      {offerHasEndDate && (
+          <div className="my-4">
+              <OfferCountdown endDate={product.offerEndDate!} />
+          </div>
+      )}
 
       {isSoldOut ? (
           <StockNotificationDialog product={product}>
