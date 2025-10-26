@@ -179,6 +179,7 @@ export default function CheckoutClientPage() {
                     setSelectedAddressId(defaultAddress.id);
                     form.setValue('street', defaultAddress.street);
                     form.setValue('city', defaultAddress.city);
+                    form.setValue('state', defaultAddress.city); // Best guess if state is missing
                     form.setValue('postalCode', defaultAddress.postalCode);
                     form.setValue('country', defaultAddress.country);
                 }
@@ -210,9 +211,9 @@ export default function CheckoutClientPage() {
             if (selectedAddr) {
                 form.setValue('street', selectedAddr.street);
                 form.setValue('city', selectedAddr.city);
+                form.setValue('state', selectedAddr.city); // Province/State often same as city in Spain
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
-                if(!form.getValues('state')) form.setValue('state', selectedAddr.city); // Best guess if state is missing
             }
         }
     };
@@ -272,7 +273,14 @@ export default function CheckoutClientPage() {
 
     let fieldsToValidate: (keyof CheckoutFormValues)[] = [];
     if (step === 2) {
-      fieldsToValidate = ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+      // For guests, password fields are required
+      const baseFields: (keyof CheckoutFormValues)[] = ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+      if(!user) {
+        fieldsToValidate = [...baseFields, 'password', 'confirmPassword'];
+      } else {
+        fieldsToValidate = baseFields;
+      }
+
       if(form.getValues('useDifferentBilling')) {
         fieldsToValidate.push('billing');
       }
@@ -290,6 +298,7 @@ export default function CheckoutClientPage() {
     try {
       if (!user) {
         toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido. Por favor, vuelve atrás y comprueba tus datos.', variant: 'destructive' });
+        setLoading(false);
         return;
       }
       toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
@@ -313,7 +322,6 @@ export default function CheckoutClientPage() {
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
         toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
-    } finally {
         setLoading(false);
     }
   };
@@ -483,7 +491,11 @@ export default function CheckoutClientPage() {
                         <div className="flex justify-between font-bold text-xl"><span>Total a Pagar</span><span className="text-primary">{formatPrice(cartTotal)}</span></div>
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
                     </CardContent>
-                    <CardFooter><Button size="lg" type="submit" className="w-full" disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}</Button></CardFooter>
+                    <CardFooter>
+                        <Button size="lg" type="submit" className="w-full" disabled={loading}>
+                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
+                        </Button>
+                    </CardFooter>
                 </Card>
             )}
 
