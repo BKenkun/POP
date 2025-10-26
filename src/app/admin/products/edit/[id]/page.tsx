@@ -6,8 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/lib/types';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -17,26 +17,34 @@ export default function EditProductPage() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
-  const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const id = params.id as string;
 
-  const productDocRef = useMemoFirebase(() => {
-    if (!firestore || !id) return null;
-    return doc(firestore, 'products', id);
-  }, [firestore, id]);
-
-  const { data: product, isLoading, error } = useDoc<Product>(productDocRef);
+  useEffect(() => {
+    if (!id) return;
+    const productDocRef = doc(db, 'products', id);
+    const unsubscribe = onSnapshot(productDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+        } else {
+            setProduct(null);
+        }
+        setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [id]);
 
   const handleSave = async (data: Product) => {
-    if (!firestore || !product) {
+    if (!product) {
         toast({ title: 'Error de Conexión', description: 'No se puede conectar a la base de datos.', variant: 'destructive'});
         return;
     }
     
     setIsSaving(true);
-    const productRef = doc(firestore, 'products', product.id);
+    const productRef = doc(db, 'products', product.id);
 
     try {
         const { id: productId, ...productData } = data; // Exclude 'id' for the update operation

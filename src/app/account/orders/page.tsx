@@ -2,8 +2,8 @@
 'use client';
 
 import { useAuth } from "@/context/auth-context";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, where, onSnapshot, Timestamp } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -18,21 +18,34 @@ import { Loader2, ShoppingBag, Eye } from "lucide-react";
 import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function OrdersPage() {
   const { user } = useAuth();
-  const firestore = useFirestore();
-  
-  const ordersQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    // **FIX**: Query the user's subcollection for orders
-    return query(
-        collection(firestore, 'users', user.uid, 'orders'), 
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const ordersQuery = query(
+        collection(db, 'users', user.uid, 'orders'), 
         orderBy('createdAt', 'desc')
     );
-  }, [user, firestore]);
-  
-  const { data: orders, isLoading: loading } = useCollection<Order>(ordersQuery);
+
+    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
+        const fetchedOrders: Order[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt);
+            fetchedOrders.push({ id: doc.id, ...data, createdAt } as Order);
+        });
+        setOrders(fetchedOrders);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -112,5 +125,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-
-    

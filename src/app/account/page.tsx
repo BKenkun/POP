@@ -2,9 +2,7 @@
 'use client';
 
 import { useAuth } from "@/context/auth-context";
-import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter } from "@/components/ui/card"
-import { doc } from "firebase/firestore";
 import { formatPrice } from "@/lib/utils";
 import { Gift, PackagePlus, Settings, Shield, KeyRound } from "lucide-react";
 import Link from "next/link";
@@ -12,17 +10,8 @@ import { Button } from "@/components/ui/button";
 
 export default function AccountDashboardPage() {
   const { user, isSubscribed, loyaltyPoints, isAdmin } = useAuth();
-  const firestore = useFirestore();
-
-  const userDocRef = useMemoFirebase(() => {
-    // We fetch the doc for ANY user now, but check isAdmin to display specific UI
-    if (!user || !firestore) return null;
-    return doc(firestore, "users", user.uid);
-  }, [user, firestore]);
-
-  const { data: userData } = useDoc<{ displayName: string }>(userDocRef);
-
-  const userName = isAdmin ? "Administrador" : (userData?.displayName || user?.displayName || user?.email?.split('@')[0] || "Usuario");
+  
+  const userName = isAdmin ? "Administrador" : (user?.displayName || user?.email?.split('@')[0] || "Usuario");
   const userEmail = user?.email || "No email provided";
   
   // 100 points = 2€ discount

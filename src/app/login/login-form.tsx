@@ -11,13 +11,14 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-context';
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { auth } = useFirebaseAuth();
+  const { isAdmin } = useAuth(); // We can get isAdmin from context now
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,27 +31,19 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
 
-    if (!auth) {
-        setError('Servicio de autenticación no disponible.');
-        setLoading(false);
-        return;
-    }
-
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      const isAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
+      const loggedInIsAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
       
       toast({
           title: "Inicio de sesión exitoso",
-          description: isAdmin ? "¡Bienvenido, Administrador!" : "¡Bienvenido de nuevo!",
+          description: loggedInIsAdmin ? "¡Bienvenido, Administrador!" : "¡Bienvenido de nuevo!",
       });
 
       const redirectUrl = searchParams.get('redirect');
 
-      // Prioritize admin redirection
-      if (isAdmin) {
-          // If admin was trying to access a specific admin page, go there. Otherwise, go to dashboard.
+      if (loggedInIsAdmin) {
           router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
       } else if (redirectUrl) {
           router.push(redirectUrl);
@@ -58,7 +51,7 @@ export default function LoginForm() {
           router.push('/account');
       }
       
-      router.refresh(); // Force a refresh to ensure all states are updated
+      router.refresh(); 
 
     } catch (err: any) {
         let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';

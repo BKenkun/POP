@@ -6,10 +6,10 @@ import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/lib/types';
 import SubscriptionForm from '@/components/subscription-form';
 import WelcomePopupLoader from '@/components/welcome-popup-loader';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 function ProductSection({ title, products, loading }: { title: string; products: Product[]; loading: boolean; }) {
   if (loading) {
@@ -43,13 +43,18 @@ function ProductSection({ title, products, loading }: { title: string; products:
 
 
 export default function Home() {
-  const firestore = useFirestore();
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const productsQuery = useMemoFirebase(() => {
-    return query(collection(firestore, 'products'), where('active', '!=', false));
-  }, [firestore]);
-
-  const { data: allProducts, isLoading: loadingProducts } = useCollection<Product>(productsQuery);
+  useEffect(() => {
+    const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
+    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setAllProducts(products);
+      setLoadingProducts(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const { newArrivals, bestSellers, offers } = useMemo(() => {
     const products = allProducts || [];

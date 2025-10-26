@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/types';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +33,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, doc, updateDoc, deleteDoc, onSnapshot, query } from 'firebase/firestore';
 
 
 const getImageUrl = (url: string) => {
@@ -46,19 +46,22 @@ const getImageUrl = (url: string) => {
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
-  const firestore = useFirestore();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'products');
-  }, [firestore]);
-
-  const { data: products, isLoading: loading, error } = useCollection<Product>(productsQuery);
+  useEffect(() => {
+    const productsQuery = query(collection(db, 'products'));
+    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+        const fetchedProducts: Product[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setProducts(fetchedProducts);
+        setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
   
   const handleToggleActive = async (product: Product) => {
-    if (!firestore) return;
     const newStatus = product.active === false; // If currently false, new status is true
-    const productRef = doc(firestore, 'products', product.id);
+    const productRef = doc(db, 'products', product.id);
     
     try {
         await updateDoc(productRef, { active: newStatus });
@@ -76,8 +79,7 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (productId: string, productName: string) => {
-     if (!firestore) return;
-     const productRef = doc(firestore, 'products', productId);
+     const productRef = doc(db, 'products', productId);
      try {
         await deleteDoc(productRef);
         toast({
@@ -239,12 +241,10 @@ export default function AdminProductsPage() {
         </Link>
       </div>
       
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center items-center h-60">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      ) : error ? (
-        <div className="text-center text-destructive py-8">{error.message}</div>
       ) : (
         <div className="space-y-8">
             <ProductTable products={activeProducts} tableTitle="Productos Activos" />

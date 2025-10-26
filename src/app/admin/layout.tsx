@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Loader2, Menu } from 'lucide-react';
@@ -18,18 +18,23 @@ import {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !loading) {
       if (!user) {
         router.push('/login?redirect=/admin');
       } else if (!isAdmin) {
         router.push('/account');
       }
     }
-  }, [user, isAdmin, loading, router]);
+  }, [user, isAdmin, loading, router, isClient]);
 
-  if (loading || !user || !isAdmin) {
+  if (!isClient || loading || !user || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

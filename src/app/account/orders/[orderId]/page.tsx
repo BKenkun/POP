@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { Loader2, Package, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,23 +27,31 @@ export default function UserOrderDetailPage() {
   const orderId = params.orderId as string;
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const firestore = useFirestore();
   
-  const orderDocRef = useMemoFirebase(() => {
-    // A user can only view their own order
-    if (!user || !orderId || !firestore) return null;
-    // **FIX**: The document is now in the user's subcollection
-    return doc(firestore, 'users', user.uid, 'orders', orderId);
-  }, [user, orderId, firestore]);
-  
-  const { data: order, isLoading } = useDoc<Order>(orderDocRef);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
-        router.push('/login'); // Redirect if not logged in
+        router.push('/login');
+        return;
     }
-  }, [user, authLoading, router]);
-  
+    if (user && orderId) {
+        const orderDocRef = doc(db, 'users', user.uid, 'orders', orderId);
+        const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                 const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                setOrder({ id: docSnap.id, ...data, createdAt } as Order);
+            } else {
+                setOrder(null);
+            }
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }
+  }, [user, orderId, authLoading, router]);
+
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
         case 'delivered':

@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableHeader,
@@ -21,10 +22,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCollection } from "@/firebase";
-import { collection } from "firebase/firestore";
-import { useFirestore, useMemoFirebase } from "@/firebase";
-
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 
 // Define a type for the user data we expect from the server action
 export interface Customer {
@@ -33,15 +32,35 @@ export interface Customer {
     displayName?: string;
     photoURL?: string;
     disabled: boolean;
-    creationTime: string; // ISO string
+    creationTime: string | Date; // Can be ISO string or Date object
 }
 
 // --- Componente Contenedor (Servidor) ---
 // Responsabilidad: Obtener y sanear los datos de los clientes.
 export default function AdminCustomersPage() {
-    const firestore = useFirestore();
-    const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
-    const { data: customers, isLoading } = useCollection<Customer>(usersQuery);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const usersQuery = collection(db, 'users');
+        const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+            const fetchedCustomers: Customer[] = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    uid: data.uid,
+                    email: data.email,
+                    displayName: data.displayName,
+                    photoURL: data.photoURL,
+                    disabled: data.disabled || false,
+                    creationTime: data.creationTime instanceof Timestamp ? data.creationTime.toDate() : new Date(data.creationTime),
+                };
+            });
+            setCustomers(fetchedCustomers);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
   return (
     <div className="space-y-6">
@@ -118,6 +137,3 @@ export default function AdminCustomersPage() {
     </div>
   );
 }
-
-
-    

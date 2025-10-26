@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Users, Package, ShoppingCart, DollarSign, BarChart2 } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
@@ -19,8 +19,8 @@ import { formatPrice } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { cbdProducts } from "@/lib/cbd-products";
 import type { Order, OrderItem, Product } from "@/lib/types";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, collectionGroup, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { collection, collectionGroup, query, where, orderBy, limit, Timestamp, onSnapshot } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { addDays, startOfMonth, format as formatDate } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
@@ -72,18 +72,33 @@ export default function AdminDashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const firestore = useFirestore();
-
-  // --- Data Fetching ---
-  const ordersQuery = useMemoFirebase(() => query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')), [firestore]);
-  const { data: allOrders, isLoading: loadingOrders } = useCollection<Order>(ordersQuery);
-  
-  const usersQuery = useMemoFirebase(() => query(collection(firestore, 'users')), [firestore]);
-  const { data: allUsers, isLoading: loadingUsers } = useCollection<Customer>(usersQuery);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [allUsers, setAllUsers] = useState<Customer[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
   useEffect(() => {
+    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+      const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+      setAllOrders(orders);
+      setLoadingOrders(false);
+    });
+
+    const usersQuery = query(collection(db, 'users'));
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as Customer));
+      setAllUsers(users);
+      setLoadingUsers(false);
+    });
+
     setProducts(cbdProducts);
     setLoadingProducts(false);
+
+    return () => {
+      unsubscribeOrders();
+      unsubscribeUsers();
+    };
   }, []);
 
   const { 

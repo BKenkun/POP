@@ -1,11 +1,12 @@
 
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
-import { User, signOut as firebaseSignOut } from 'firebase/auth';
+import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { doc } from 'firebase/firestore';
-import { useAuth as useFirebaseAuthHook, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase'; // Simplified import
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -19,45 +20,50 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading: authLoading, auth } = useFirebaseAuthHook();
-  const firestore = useFirestore();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+
   const router = useRouter();
 
-  // Memoize the admin check.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        // User is signed in, get custom data
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          setIsSubscribed(userData.isSubscribed || false);
+          setLoyaltyPoints(userData.loyaltyPoints || 0);
+        }
+      } else {
+        // User is signed out, reset data
+        setIsSubscribed(false);
+        setLoyaltyPoints(0);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const isAdmin = useMemo(() => {
     return !!user && user.email === 'maryandpopper@gmail.com';
   }, [user]);
 
-  const userDocRef = useMemoFirebase(() => {
-    // Prevent Firestore reads if there's no user OR if the user is an admin.
-    if (!user || !firestore || isAdmin) return null;
-    return doc(firestore, "users", user.uid);
-  }, [user, firestore, isAdmin]);
-
-  const { data: userData, isLoading: userDocLoading } = useDoc<{ loyaltyPoints?: number, isSubscribed?: boolean }>(userDocRef);
-
-  const isSubscribed = userData?.isSubscribed ?? false;
-  const loyaltyPoints = userData?.loyaltyPoints ?? 0;
-  
   const logout = async () => {
     try {
-        // First, sign out from Firebase client
-        if (auth) {
-            await firebaseSignOut(auth);
-        }
-        // Then, hit the API endpoint to clear the server-side session cookie
+        await firebaseSignOut(auth);
         await fetch('/api/logout', { method: 'POST' });
-
-        // Redirect to home
         router.push('/');
         router.refresh();
     } catch (error) {
       console.error("Error signing out: ", error);
     }
   };
-  
-  // Doc is only loading if we are fetching it (i.e., not an admin)
-  const loading = authLoading || (user && !isAdmin ? userDocLoading : false);
 
   const value = { 
       user, 
@@ -67,6 +73,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       loyaltyPoints,
       isAdmin,
     };
+
+    // Show a global loader while Firebase is initializing auth state
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-background">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        )
+    }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

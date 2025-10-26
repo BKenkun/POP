@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Edit, Trash2, Loader2, Home, Briefcase } from "lucide-react"
@@ -133,23 +133,30 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Ad
 
 export default function AddressesPage() {
     const { user } = useAuth();
-    const firestore = useFirestore();
     const { toast } = useToast();
+    const [loading, setLoading] = useState(true);
+    const [addresses, setAddresses] = useState<Address[]>([]);
     
-    const userDocRef = useMemoFirebase(() => {
-        if (!user || !firestore) return null;
-        return doc(firestore, "users", user.uid);
-    }, [user, firestore]);
-    
-    const { data: userData, isLoading: loading } = useDoc<{ addresses: Address[] }>(userDocRef);
-    const addresses = userData?.addresses || [];
+    useEffect(() => {
+        if (!user) return;
+        const userDocRef = doc(db, "users", user.uid);
+        const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const userData = docSnap.data();
+                setAddresses(userData.addresses || []);
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [user]);
+
 
     const handleSaveAddress = async (data: AddressFormData, addressId?: string) => {
-        if (!user || !userDocRef) return;
+        if (!user) return;
+        const userDocRef = doc(db, "users", user.uid);
         
         let newAddresses = [...addresses];
 
-        // If setting a new default, unset the old one
         if (data.isDefault) {
             newAddresses = newAddresses.map(addr => ({ ...addr, isDefault: false }));
         }
@@ -161,7 +168,6 @@ export default function AddressesPage() {
             newAddresses.push({ ...data, id: newId });
         }
 
-        // Ensure there's always at least one default address if there are any addresses
         if (newAddresses.length > 0 && !newAddresses.some(addr => addr.isDefault)) {
             newAddresses[0].isDefault = true;
         }
@@ -176,11 +182,11 @@ export default function AddressesPage() {
     };
     
     const handleDeleteAddress = async (addressId: string) => {
-        if (!user || !userDocRef) return;
+        if (!user) return;
+        const userDocRef = doc(db, "users", user.uid);
         
         let newAddresses = addresses.filter(addr => addr.id !== addressId);
         
-        // If the deleted address was the default one, make another one default
         if (newAddresses.length > 0 && !newAddresses.some(addr => addr.isDefault)) {
             newAddresses[0].isDefault = true;
         }

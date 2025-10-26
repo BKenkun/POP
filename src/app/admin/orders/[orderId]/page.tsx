@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, notFound, useSearchParams } from 'next/navigation';
-import { useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import OrderDetailsClient from './order-details-client';
 import { Loader2, ArrowLeft } from 'lucide-react';
@@ -19,15 +18,13 @@ export default function OrderDetailPage() {
     const searchParams = useSearchParams();
     const orderId = params.orderId as string;
     const orderPath = searchParams.get('path'); // Get the document path from URL
-    const firestore = useFirestore();
 
     const [order, setOrder] = useState<Order | null | undefined>(undefined);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!orderPath || !firestore) {
-            // If path is missing, we can't fetch the document.
-            if (orderId && !orderPath) {
+        if (!orderPath) {
+            if (orderId) {
                  console.error("Order path is missing from URL parameters.");
                  setOrder(null);
                  setLoading(false);
@@ -39,7 +36,7 @@ export default function OrderDetailPage() {
             setLoading(true);
             try {
                 // Use the full path to get the document directly
-                const orderDocRef = doc(firestore, decodeURIComponent(orderPath));
+                const orderDocRef = doc(db, decodeURIComponent(orderPath));
                 const docSnap = await getDoc(orderDocRef);
 
                 if (!docSnap.exists()) {
@@ -47,8 +44,8 @@ export default function OrderDetailPage() {
                 } else {
                     const orderData = docSnap.data() as Omit<Order, 'id'>;
                      const createdAt = orderData.createdAt && (orderData.createdAt as any).toDate 
-                        ? (orderData.createdAt as any).toDate().toISOString()
-                        : new Date().toISOString();
+                        ? (orderData.createdAt as any).toDate()
+                        : new Date();
 
                     setOrder({
                         ...orderData,
@@ -66,7 +63,7 @@ export default function OrderDetailPage() {
         };
 
         fetchOrder();
-    }, [orderId, orderPath, firestore]);
+    }, [orderId, orderPath]);
 
     if (loading) {
         return (

@@ -12,7 +12,8 @@ import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock,
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
+import { db, auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-context';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -110,8 +111,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
-  const firestore = useFirestore();
-  const { auth, user, isUserLoading } = useFirebaseAuth();
+  const { user, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
@@ -152,7 +152,7 @@ export default function CheckoutClientPage() {
   }, [user, form, isRegistering]);
 
   const handleGuestRegistration = async () => {
-    if (!firestore || !auth) {
+    if (!auth) {
         toast({ title: 'Error', description: 'El servicio no está disponible.', variant: 'destructive' });
         return;
     }
@@ -176,7 +176,7 @@ export default function CheckoutClientPage() {
         const newUser = userCredential.user;
         
         // 2. Create user document in Firestore
-        const userDocRef = doc(firestore, "users", newUser.uid);
+        const userDocRef = doc(db, "users", newUser.uid);
         await setDoc(userDocRef, { 
             uid: newUser.uid, 
             email: newUser.email, 
@@ -268,7 +268,7 @@ export default function CheckoutClientPage() {
         const orderSummaryForUI: Order = {
             id: orderId,
             userId: user.uid,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date(),
             status: 'Reserva Recibida',
             total: cartTotal,
             items: cartItems.map(item => ({

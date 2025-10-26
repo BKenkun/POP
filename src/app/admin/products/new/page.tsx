@@ -7,14 +7,13 @@ import { Product } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { generateSKU } from '@/lib/utils';
 import { useState } from 'react';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 export default function NewProductPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [newSku, setNewSku] = useState('');
@@ -26,13 +25,8 @@ export default function NewProductPage() {
   });
 
   const handleSave = async (data: Product) => {
-    if (!firestore) {
-        toast({ title: 'Error de Conexión', description: 'No se puede conectar a la base de datos.', variant: 'destructive'});
-        return;
-    }
-    
     setIsSaving(true);
-    const productRef = doc(firestore, 'products', data.id);
+    const productRef = doc(db, 'products', data.id);
 
     try {
         await setDoc(productRef, data);

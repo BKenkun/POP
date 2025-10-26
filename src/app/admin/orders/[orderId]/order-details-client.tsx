@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, ArrowLeft, Loader2, Save, MapPin, Truck, History, MessageSquare, Phone, User as UserIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useFirestore } from '@/firebase';
+import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
 
@@ -53,21 +53,20 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
   const [order, setOrder] = useState(initialOrder);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
-  const firestore = useFirestore();
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     setOrder(prev => ({ ...prev, status: newStatus }));
   };
 
   const handleSaveChanges = async () => {
-    if (!order.path || !firestore) {
+    if (!order.path) {
         toast({ title: 'Error', description: 'No se puede guardar el pedido. Ruta no encontrada.', variant: 'destructive'});
         return;
     }
     setIsSaving(true);
     
     try {
-      const orderDocRef = doc(firestore, order.path);
+      const orderDocRef = doc(db, order.path);
       await updateDoc(orderDocRef, {
         status: order.status,
       });

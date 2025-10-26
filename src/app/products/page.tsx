@@ -1,12 +1,13 @@
+
 'use client';
 
 import { Product } from '@/lib/types';
 import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 function ProductPageSkeleton() {
     return (
@@ -24,12 +25,19 @@ function ProductPageSkeleton() {
 }
 
 export default function ProductsPage() {
-    const firestore = useFirestore();
-    const productsQuery = useMemoFirebase(() => {
-        return query(collection(firestore, 'products'), where('active', '!=', false));
-    }, [firestore]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const { data: products, isLoading } = useCollection<Product>(productsQuery);
+    useEffect(() => {
+        const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
+        const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+            const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+            setProducts(fetchedProducts);
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
 
     if (isLoading) {
         return (
@@ -45,11 +53,9 @@ export default function ProductsPage() {
         );
     }
 
-    const validProducts = products || [];
-
-    const uniqueBrands = getUniqueValues(validProducts, 'brand');
-    const uniqueSizes = getUniqueValues(validProducts, 'size');
-    const uniqueCompositions = getUniqueValues(validProducts, 'composition');
+    const uniqueBrands = getUniqueValues(products, 'brand');
+    const uniqueSizes = getUniqueValues(products, 'size');
+    const uniqueCompositions = getUniqueValues(products, 'composition');
     
     return (
         <div>
@@ -61,7 +67,7 @@ export default function ProductsPage() {
             </div>
             <Suspense fallback={<ProductPageSkeleton />}>
                  <ProductFilters 
-                    products={validProducts} 
+                    products={products} 
                     uniqueBrands={uniqueBrands}
                     uniqueSizes={uniqueSizes}
                     uniqueCompositions={uniqueCompositions}

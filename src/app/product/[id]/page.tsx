@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams, notFound } from 'next/navigation';
@@ -7,32 +8,46 @@ import { ProductInfo } from './product-info';
 import { ProductDetails } from './product-details';
 import { Separator } from '@/components/ui/separator';
 import { RelatedProducts } from './related-products';
-import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 // This is now a Client Component that fetches its own data.
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const firestore = useFirestore();
-
-  // Fetch the specific product using its ID
-  const productDocRef = useMemoFirebase(() => {
-    if (!firestore || !id) return null;
-    return doc(firestore, 'products', id);
-  }, [firestore, id]);
   
-  const { data: product, isLoading: loadingProduct } = useDoc<Product>(productDocRef);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingAllProducts, setLoadingAllProducts] = useState(true);
 
-  // Fetch all active products for the "related" section
-  const allProductsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'products'), where('active', '!=', false));
-  }, [firestore]);
-  
-  const { data: allProducts, isLoading: loadingAllProducts } = useCollection<Product>(allProductsQuery);
+  useEffect(() => {
+    if (!id) return;
+    const productDocRef = doc(db, 'products', id);
+    const unsubscribeProduct = onSnapshot(productDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+        } else {
+            setProduct(null);
+        }
+        setLoadingProduct(false);
+    });
+
+    const allProductsQuery = query(collection(db, 'products'), where('active', '!=', false));
+    const unsubscribeAll = onSnapshot(allProductsQuery, (snapshot) => {
+        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setAllProducts(products);
+        setLoadingAllProducts(false);
+    });
+
+    return () => {
+        unsubscribeProduct();
+        unsubscribeAll();
+    };
+  }, [id]);
+
 
   // Show a loading spinner while data is being fetched.
   if (loadingProduct) {
@@ -60,7 +75,6 @@ export default function ProductDetailPage() {
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
         <ProductGallery images={galleryImages} productName={product.name} />
         <div className="flex flex-col space-y-6">
-          {/* ProductInfo now handles both display and user actions */}
           <ProductInfo product={product} />
         </div>
       </div>
@@ -74,10 +88,9 @@ export default function ProductDetailPage() {
 
       <Separator className="my-10" />
       
-      {/* RelatedProducts receives the already fetched list */}
       <RelatedProducts 
         currentProduct={product} 
-        allProducts={allProducts || []} 
+        allProducts={allProducts} 
         loading={loadingAllProducts} 
       />
     </div>
