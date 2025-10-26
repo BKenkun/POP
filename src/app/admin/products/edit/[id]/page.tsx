@@ -7,7 +7,7 @@ import { Product } from '@/lib/types';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, deleteField } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,13 @@ export default function EditProductPage() {
 
     try {
         const { id: productId, ...productData } = data; // Exclude 'id' for the update operation
+        
+        // Firestore doesn't accept `undefined`. If originalPrice is not a number,
+        // we should remove it or set it to be deleted.
+        if (typeof productData.originalPrice !== 'number') {
+            (productData as any).originalPrice = deleteField();
+        }
+
         await updateDoc(productRef, productData);
         toast({
             title: 'Producto Actualizado',

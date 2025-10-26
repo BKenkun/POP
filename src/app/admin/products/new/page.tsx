@@ -29,7 +29,14 @@ export default function NewProductPage() {
     const productRef = doc(db, 'products', data.id);
 
     try {
-        await setDoc(productRef, data);
+        const { id: productId, ...productData } = data;
+        
+        // Firestore doesn't accept `undefined`. If originalPrice is not a number, remove it.
+        if (typeof productData.originalPrice !== 'number') {
+            delete (productData as Partial<Product>).originalPrice;
+        }
+
+        await setDoc(productRef, productData);
         toast({
             title: 'Producto Creado',
             description: `El producto "${data.name}" ha sido guardado en la base de datos.`,
