@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '../quantity-selector';
+import { QuantitySelector } from '@/components/quantity-selector';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
@@ -310,7 +310,7 @@ export default function CheckoutClientPage() {
       <Stepper currentStep={step} />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onFinalSubmit)}>
+        <form>
             {step === 1 && (
                 <Card>
                     <CardHeader><CardTitle>1. Confirma tu Carrito</CardTitle></CardHeader>
@@ -479,7 +479,7 @@ export default function CheckoutClientPage() {
                         </p>
                     </CardContent>
                     <CardFooter>
-                         <Button size="lg" onClick={form.handleSubmit(onFinalSubmit)} className="w-full" disabled={loading}>
+                         <Button size="lg" type="button" onClick={form.handleSubmit(onFinalSubmit)} className="w-full" disabled={loading}>
                             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
                         </Button>
                     </CardFooter>
@@ -495,3 +495,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
