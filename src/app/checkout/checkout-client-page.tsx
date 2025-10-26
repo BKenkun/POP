@@ -34,6 +34,7 @@ import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ToastAction } from '@/components/ui/toast';
 
 
 interface Address {
@@ -228,8 +229,6 @@ export default function CheckoutClientPage() {
     }
     setLoading(true);
     try {
-        toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
-
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
 
         const itemsForPayload = cartItems.map(item => ({
@@ -265,31 +264,24 @@ export default function CheckoutClientPage() {
             })
         });
 
-        const orderSummaryForUI: Order = {
-            id: newOrderRef.id,
-            userId: user.uid,
-            createdAt: new Date(),
-            status: 'Reserva Recibida',
-            total: cartTotal,
-            items: itemsForPayload,
-            customerName: data.name,
-            customerEmail: data.email,
-            shippingAddress: shippingAddress,
-            paymentMethod: data.paymentMethod,
-        };
-
-        const checkoutData = { 
-            orderId: newOrderRef.id, 
-            paymentMethod: data.paymentMethod, 
-            orderSummary: orderSummaryForUI 
-        };
-
-        // Save to context AND sessionStorage to guarantee availability
-        setCheckoutData(checkoutData);
-        sessionStorage.setItem('checkout_data', JSON.stringify(checkoutData));
+        toast({
+            duration: 10000, // Keep toast visible for 10 seconds
+            title: "¡Reserva Confirmada!",
+            description: `Tu pedido #${newOrderRef.id.substring(newOrderRef.id.length - 7)} ha sido recibido.`,
+            action: (
+                <div className="flex flex-col gap-2">
+                    <ToastAction asChild altText="Ver Pedido">
+                        <Link href={`/account/orders/${newOrderRef.id}`}>Ver Pedido</Link>
+                    </ToastAction>
+                    <ToastAction asChild altText="Seguir Comprando">
+                        <Link href="/">Seguir Comprando</Link>
+                    </ToastAction>
+                </div>
+            ),
+        });
 
         clearCart();
-        router.push('/checkout/success');
+        router.push('/');
 
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
@@ -487,3 +479,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
