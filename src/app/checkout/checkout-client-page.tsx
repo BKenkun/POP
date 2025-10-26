@@ -303,7 +303,8 @@ export default function CheckoutClientPage() {
       <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Finalizar Pedido</h1>
       <Stepper currentStep={step} />
 
-      <form onSubmit={form.handleSubmit(onFinalSubmit)}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onFinalSubmit)}>
             {step === 1 && (
                 <Card>
                     <CardHeader><CardTitle>1. Confirma tu Carrito</CardTitle></CardHeader>
@@ -473,6 +474,7 @@ export default function CheckoutClientPage() {
                 )}
             </div>
         </form>
+      </Form>
     </div>
   );
 }
