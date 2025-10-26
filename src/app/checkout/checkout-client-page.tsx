@@ -164,33 +164,38 @@ export default function CheckoutClientPage() {
         }
     }, [cartCount, router, loading, isUserLoading]);
     
-    // Fetch user addresses
+    // Fetch user addresses and set default form values
     useEffect(() => {
-        if (!user) {
-            setAddresses([]);
-            return;
-        };
-        const userDocRef = doc(db, "users", user.uid);
-        const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const userData = docSnap.data();
-                const userAddresses = userData.addresses || [];
-                setAddresses(userAddresses);
-                // Pre-select default address if it exists
-                const defaultAddress = userAddresses.find((addr: Address) => addr.isDefault);
-                if (defaultAddress) {
-                    setSelectedAddressId(defaultAddress.id);
-                    form.setValue('name', defaultAddress.name);
-                    form.setValue('phone', defaultAddress.phone);
-                    form.setValue('street', defaultAddress.street);
-                    form.setValue('city', defaultAddress.city);
-                    form.setValue('state', defaultAddress.state);
-                    form.setValue('postalCode', defaultAddress.postalCode);
-                    form.setValue('country', defaultAddress.country);
+        if (user) {
+            form.setValue('email', user.email || '');
+            form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
+            form.setValue('userId', user.uid);
+            
+            const userDocRef = doc(db, "users", user.uid);
+            const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    const userAddresses = userData.addresses || [];
+                    setAddresses(userAddresses);
+                    
+                    const defaultAddress = userAddresses.find((addr: Address) => addr.isDefault);
+                    if (defaultAddress) {
+                        setSelectedAddressId(defaultAddress.id);
+                        form.setValue('name', defaultAddress.name);
+                        form.setValue('phone', defaultAddress.phone);
+                        form.setValue('street', defaultAddress.street);
+                        form.setValue('city', defaultAddress.city);
+                        form.setValue('state', defaultAddress.state || defaultAddress.city);
+                        form.setValue('postalCode', defaultAddress.postalCode);
+                        form.setValue('country', defaultAddress.country);
+                    }
                 }
-            }
-        });
-        return () => unsubscribe();
+            });
+            return () => unsubscribe();
+        } else {
+            form.setValue('userId', undefined);
+            setAddresses([]);
+        }
     }, [user, form]);
     
     useEffect(() => {
@@ -198,14 +203,7 @@ export default function CheckoutClientPage() {
             setIsRegistering(false);
             setStep(3); 
         }
-        if (user) {
-        if (!form.getValues('email')) form.setValue('email', user.email || '');
-        if (!form.getValues('name')) form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
-        form.setValue('userId', user.uid);
-        } else {
-        form.setValue('userId', undefined);
-        }
-    }, [user, form, isRegistering]);
+    }, [user, isRegistering]);
     
     const handleAddressSelection = (addressId: string) => {
         setSelectedAddressId(addressId);
@@ -213,7 +211,12 @@ export default function CheckoutClientPage() {
             form.reset({ 
                 ...form.getValues(), 
                 name: user?.displayName || user?.email?.split('@')[0] || '',
-                street: '', city: '', state: '', postalCode: '', phone: '', country: 'España' 
+                phone: '',
+                street: '', 
+                city: '', 
+                state: '', 
+                postalCode: '', 
+                country: 'España' 
             });
         } else {
             const selectedAddr = addresses.find(a => a.id === addressId);
@@ -222,7 +225,7 @@ export default function CheckoutClientPage() {
                 form.setValue('phone', selectedAddr.phone);
                 form.setValue('street', selectedAddr.street);
                 form.setValue('city', selectedAddr.city);
-                form.setValue('state', selectedAddr.state);
+                form.setValue('state', selectedAddr.state || selectedAddr.city);
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
             }
@@ -289,7 +292,7 @@ export default function CheckoutClientPage() {
         // For guests, password fields are required
         fieldsToValidate = [...baseFields, 'email', 'password', 'confirmPassword'];
       } else {
-        fieldsToValidate = baseFields;
+        fieldsToValidate = ['name', ...baseFields];
       }
 
       if(form.getValues('useDifferentBilling')) {
@@ -305,13 +308,13 @@ export default function CheckoutClientPage() {
   const handlePrevStep = () => { setStep(prev => prev - 1); };
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
+    if (!user) {
+      toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido. Por favor, vuelve atrás y comprueba tus datos.', variant: 'destructive' });
+      return;
+    }
+
     setLoading(true);
     try {
-      if (!user) {
-        toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido. Por favor, vuelve atrás y comprueba tus datos.', variant: 'destructive' });
-        setLoading(false);
-        return;
-      }
       toast({ title: 'Procesando tu pedido...', description: 'Por favor, espera un momento.' });
   
       const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
@@ -333,6 +336,7 @@ export default function CheckoutClientPage() {
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
         toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
+    } finally {
         setLoading(false);
     }
   };
@@ -502,22 +506,20 @@ export default function CheckoutClientPage() {
                         <div className="flex justify-between font-bold text-xl"><span>Total a Pagar</span><span className="text-primary">{formatPrice(cartTotal)}</span></div>
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
                     </CardContent>
-                    <CardFooter>
-                         <Button size="lg" type="submit" className="w-full" disabled={loading}>
-                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
-                        </Button>
-                    </CardFooter>
                 </Card>
             )}
 
             <div className="mt-8 flex justify-between">
                 {step > 1 ? (<Button type="button" variant="outline" onClick={handlePrevStep}><ArrowLeft className="mr-2" /> Anterior</Button>) : (<Button asChild type="button" variant="outline"><Link href="/products">&larr; Seguir Comprando</Link></Button>)}
                 {step < 4 && (<Button type="button" onClick={handleNextStep} disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Procesando...</> : 'Siguiente'}</Button>)}
+                {step === 4 && (
+                    <Button size="lg" type="submit" className="w-full max-w-xs mx-auto" disabled={loading}>
+                        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
+                    </Button>
+                )}
             </div>
         </form>
       </Form>
     </div>
   );
 }
-
-    
