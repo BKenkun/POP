@@ -22,6 +22,7 @@ import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
 import { Separator } from '../ui/separator';
+import type { SiteSettings } from '@/app/actions/site-settings';
 
 const compositionLinks = [
   { title: 'POPPERS DE AMILO', composition: 'Amilo' },
@@ -44,9 +45,10 @@ const productLinks = [
 interface NavigationMenuComponentProps {
   onNavigate?: () => void;
   isMobile?: boolean;
+  settings: SiteSettings | null;
 }
 
-export default function NavigationMenuComponent({ onNavigate, isMobile = false }: NavigationMenuComponentProps) {
+export default function NavigationMenuComponent({ onNavigate, isMobile = false, settings }: NavigationMenuComponentProps) {
   
   const subscriptionUrl = "/subscription";
 
@@ -81,9 +83,11 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false }
                <Button variant="ghost" asChild className="w-full justify-start font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
                   <Link href="/create-pack" onClick={onNavigate}>Crea tu Pack</Link>
               </Button>
-              <Button variant="secondary" asChild className="w-full justify-start font-headline uppercase font-bold bg-accent text-accent-foreground hover:bg-accent/90">
-                  <Link href={subscriptionUrl} onClick={onNavigate}>Dosis Mensual</Link>
-              </Button>
+              {settings?.showSubscriptionFeature && (
+                <Button variant="secondary" asChild className="w-full justify-start font-headline uppercase font-bold bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Link href={subscriptionUrl} onClick={onNavigate}>Dosis Mensual</Link>
+                </Button>
+              )}
 
               <div className="mt-2">
                  <SearchForm onSearch={onNavigate} />
@@ -146,13 +150,15 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false }
                 </Link>
             </NavigationMenuLink>
         </NavigationMenuItem>
-        <NavigationMenuItem>
-            <Button asChild variant="secondary" className="h-10 font-headline uppercase font-bold text-sm px-3 bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link href={subscriptionUrl}> 
-                    Dosis Mensual
-                </Link>
-            </Button>
-        </NavigationMenuItem>
+        {settings?.showSubscriptionFeature && (
+            <NavigationMenuItem>
+                <Button asChild variant="secondary" className="h-10 font-headline uppercase font-bold text-sm px-3 bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Link href={subscriptionUrl}> 
+                        Dosis Mensual
+                    </Link>
+                </Button>
+            </NavigationMenuItem>
+        )}
       </NavigationMenuList>
     </NavigationMenu>
   );

@@ -12,10 +12,21 @@ import { Menu } from 'lucide-react';
 import { SidebarHeader, SidebarContent, SidebarMenu } from '../ui/sidebar';
 import { Logo } from '../logo';
 import NavigationMenuComponent from "./navigation-menu";
+import { getSiteSettings } from "@/app/actions/site-settings";
+import type { SiteSettings } from "@/app/actions/site-settings";
 
 export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [settings, setSettings] = React.useState<SiteSettings | null>(null);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      const siteSettings = await getSiteSettings();
+      setSettings(siteSettings);
+    }
+    fetchSettings();
+  }, []);
 
   // No renderizar el header en las rutas de admin
   if (pathname.startsWith('/admin')) {
@@ -30,7 +41,7 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
-           <SheetTitle className="sr-only">Menú de Navegación Principal</SheetTitle>
+           <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
              <Link href="/" className="flex items-center space-x-2 group" onClick={() => setIsOpen(false)}>
                 <Logo />
@@ -38,7 +49,7 @@ export function Header() {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu className="flex flex-col gap-2 p-2">
-              <NavigationMenuComponent onNavigate={() => setIsOpen(false)} isMobile={true} />
+              <NavigationMenuComponent onNavigate={() => setIsOpen(false)} isMobile={true} settings={settings} />
             </SidebarMenu>
           </SidebarContent>
         </SheetContent>
@@ -58,7 +69,7 @@ export function Header() {
                 <Link href="/" className="flex items-center">
                     <Logo />
                 </Link>
-                <NavigationMenuComponent />
+                <NavigationMenuComponent settings={settings} />
                 <SearchForm />
             </div>
         </div>

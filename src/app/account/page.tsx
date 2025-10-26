@@ -9,10 +9,22 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useState, useEffect } from 'react';
+import { getSiteSettings } from '../actions/site-settings';
+import type { SiteSettings } from '../actions/site-settings';
 
 export default function AccountDashboardPage() {
   const { user, isSubscribed, loyaltyPoints, isAdmin, isViewingAsCustomer, setIsViewingAsCustomer } = useAuth();
-  
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const siteSettings = await getSiteSettings();
+      setSettings(siteSettings);
+    }
+    fetchSettings();
+  }, []);
+
   const userName = isAdmin ? "Administrador" : (user?.displayName || user?.email?.split('@')[0] || "Usuario");
   const userEmail = user?.email || "No email provided";
   
@@ -63,7 +75,7 @@ export default function AccountDashboardPage() {
             </Card>
         )}
 
-        {isSubscribed && !isAdmin && (
+        {isSubscribed && !isAdmin && settings?.showSubscriptionFeature && (
             <Card className="border-primary border-2">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-primary">
