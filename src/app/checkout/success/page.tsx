@@ -20,6 +20,7 @@ import {
   UserPlus,
   AlertTriangle,
   Loader2,
+  Package,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useCheckout } from '@/context/checkout-context'
@@ -49,6 +50,8 @@ function SuccessContent() {
       router.replace('/')
     }
 
+    // Don't clear data immediately to allow re-renders
+    // The cleanup can be done on unmount
     return () => {
       clearCheckoutData()
     }
@@ -174,15 +177,15 @@ function SuccessContent() {
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             <Button asChild>
-              <Link href="/products">
+              <Link href="/">
                 <ShoppingBag className="mr-2" />
-                Seguir Comprando
+                Continuar Comprando
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/">
-                <Home className="mr-2" />
-                Volver al Inicio
+              <Link href={`/account/orders/${order.id}`}>
+                <Package className="mr-2" />
+                Ver Estado del Pedido
               </Link>
             </Button>
           </div>
