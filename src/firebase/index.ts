@@ -1,22 +1,7 @@
 'use client';
 
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-
-// This is a simplified initialization. The primary initialization now happens in FirebaseClientProvider.
-let firebaseApp: FirebaseApp;
-if (!getApps().length) {
-  firebaseApp = initializeApp(firebaseConfig);
-} else {
-  firebaseApp = getApp();
-}
-
-const auth = getAuth(firebaseApp);
-const firestore = getFirestore(firebaseApp);
-
-export { firebaseApp, auth, firestore };
+// This file is now primarily for re-exporting the modules for easy access.
+// The core initialization logic has been moved to `client-provider.tsx`.
 
 export * from './provider';
 export * from './client-provider';
@@ -27,7 +12,12 @@ export * from './non-blocking-updates';
 export * from './errors';
 export * from './error-emitter';
 
-// This function is kept for compatibility but the core initialization is now client-side.
+// Legacy exports kept for compatibility, but client-provider is the source of truth
+export { auth, firestore, firebaseApp } from './client-provider';
+
+// This function is deprecated and no longer necessary.
+// Kept for compatibility to avoid breaking imports.
 export function initializeFirebase() {
+    const { auth, firestore, firebaseApp } = require('./client-provider');
     return { firebaseApp, auth, firestore };
 }
