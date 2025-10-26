@@ -12,6 +12,7 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
 } from '@/components/ui/sheet';
 
 
@@ -59,6 +60,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
+                <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
                 <AdminSidebar />
             </SheetContent>
           </Sheet>
