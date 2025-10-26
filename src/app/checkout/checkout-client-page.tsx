@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserCheck, Banknote, CreditCard, Smartphone, FileText, PlusCircle } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserCheck, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -26,14 +26,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { doc, serverTimestamp, setDoc, onSnapshot, collection, addDoc } from 'firebase/firestore';
 import { Order, ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 interface Address {
@@ -50,61 +50,37 @@ interface Address {
 }
 
 // --- Validation Schemas ---
-const baseRegistrationSchema = z.object({
+const checkoutSchema = z.object({
     name: z.string().min(3, "El nombre es requerido."),
     email: z.string().email("Por favor, introduce un email válido."),
-    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres.").optional(),
-    confirmPassword: z.string().min(6, "Debes confirmar la contraseña.").optional(),
-});
-
-const shippingSchema = z.object({
-  phone: z.string().min(9, "El teléfono es requerido."),
-  street: z.string().min(5, "La calle es requerida."),
-  city: z.string().min(2, "La ciudad es requerida."),
-  state: z.string().min(2, "El estado/provincia es requerido."),
-  postalCode: z.string().min(3, "El código postal es requerido."),
-  country: z.string().min(2, "El país es requerido."),
-});
-
-const billingSchema = z.object({
-  billing_name: z.string().min(3, "El nombre de facturación es requerido."),
-  billing_street: z.string().min(5, "La calle de facturación es requerida."),
-  billing_city: z.string().min(2, "La ciudad de facturación es requerida."),
-  billing_state: z.string().min(2, "El estado/provincia de facturación es requerido."),
-  billing_postalCode: z.string().min(3, "El código postal de facturación es requerido."),
-  billing_country: z.string().min(2, "El país de facturación es requerido."),
-}).optional();
-
-// Combined schema with conditional validation
-const finalCheckoutSchema = baseRegistrationSchema.merge(shippingSchema).merge(z.object({
+    phone: z.string().min(9, "El teléfono es requerido."),
+    street: z.string().min(5, "La calle es requerida."),
+    city: z.string().min(2, "La ciudad es requerida."),
+    state: z.string().min(2, "El estado/provincia es requerido."),
+    postalCode: z.string().min(3, "El código postal es requerido."),
+    country: z.string().min(2, "El país es requerido."),
     paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'], {
         required_error: "Debes seleccionar un método de pago."
     }),
-    userId: z.string().optional(),
     useDifferentBilling: z.boolean().default(false),
-    billing: billingSchema,
-})).superRefine((data, ctx) => {
-    // Password validation for guest checkout
-    if (!data.userId) { 
-        if (!data.password || data.password.length < 6) {
-             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "La contraseña debe tener al menos 6 caracteres.", path: ["password"] });
-        }
-        if (data.password !== data.confirmPassword) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Las contraseñas no coinciden.", path: ["confirmPassword"] });
-        }
-    }
-    // Billing address validation if checkbox is checked
+    billing_name: z.string().optional(),
+    billing_street: z.string().optional(),
+    billing_city: z.string().optional(),
+    billing_state: z.string().optional(),
+    billing_postalCode: z.string().optional(),
+    billing_country: z.string().optional(),
+}).superRefine((data, ctx) => {
     if (data.useDifferentBilling) {
-        if (!data.billing?.billing_name) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing.billing_name"] });
-        if (!data.billing?.billing_street) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing.billing_street"] });
-        if (!data.billing?.billing_city) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing.billing_city"] });
-        if (!data.billing?.billing_state) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing.billing_state"] });
-        if (!data.billing?.billing_postalCode) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing.billing_postalCode"] });
-        if (!data.billing?.billing_country) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing.billing_country"] });
+        if (!data.billing_name) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_name"] });
+        if (!data.billing_street) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_street"] });
+        if (!data.billing_city) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_city"] });
+        if (!data.billing_state) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_state"] });
+        if (!data.billing_postalCode) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_postalCode"] });
+        if (!data.billing_country) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_country"] });
     }
 });
 
-type CheckoutFormValues = z.infer<typeof finalCheckoutSchema>;
+type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 // --- Helper Functions ---
 const getImageUrl = (url: string) => {
@@ -144,15 +120,12 @@ export default function CheckoutClientPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const { setCheckoutData } = useCheckout();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
 
   const form = useForm<CheckoutFormValues>({
-    resolver: zodResolver(finalCheckoutSchema),
-    defaultValues: { name: '', email: '', password: '', confirmPassword: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'España', paymentMethod: 'cod_cash', useDifferentBilling: false },
+    resolver: zodResolver(checkoutSchema),
+    defaultValues: { name: '', email: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'España', paymentMethod: 'cod_cash', useDifferentBilling: false },
   });
   
   const formValues = form.watch();
@@ -163,52 +136,37 @@ export default function CheckoutClientPage() {
         }
     }, [cartCount, router, loading, isUserLoading]);
     
-    // Fetch user addresses and set default form values
     useEffect(() => {
         if (user) {
             form.setValue('email', user.email || '');
             form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
-            form.setValue('userId', user.uid);
             
             const userDocRef = doc(db, "users", user.uid);
             const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const userData = docSnap.data();
-                    const userAddresses = userData.addresses || [];
+                    const userAddresses: Address[] = userData.addresses || [];
                     setAddresses(userAddresses);
                     
-                    const defaultAddress = userAddresses.find((addr: Address) => addr.isDefault);
-                    if (defaultAddress) {
-                        setSelectedAddressId(defaultAddress.id);
-                        form.setValue('name', defaultAddress.name);
-                        form.setValue('phone', defaultAddress.phone);
-                        form.setValue('street', defaultAddress.street);
-                        form.setValue('city', defaultAddress.city);
-                        form.setValue('state', defaultAddress.state || defaultAddress.city);
-                        form.setValue('postalCode', defaultAddress.postalCode);
-                        form.setValue('country', defaultAddress.country);
+                    const defaultAddress = userAddresses.find(addr => addr.isDefault);
+                    if (defaultAddress && selectedAddressId !== 'new') {
+                        handleAddressSelection(defaultAddress.id, userAddresses);
+                    } else if (userAddresses.length > 0 && selectedAddressId === 'new') {
+                        // If there are addresses but 'new' is selected, don't auto-select one.
+                    } else if (defaultAddress) {
+                        handleAddressSelection(defaultAddress.id, userAddresses);
                     }
                 }
             });
             return () => unsubscribe();
-        } else {
-            form.setValue('userId', undefined);
-            setAddresses([]);
         }
     }, [user, form]);
     
-    useEffect(() => {
-        if (isRegistering && user) {
-            setIsRegistering(false);
-            setStep(3); 
-        }
-    }, [user, isRegistering]);
-    
-    const handleAddressSelection = (addressId: string) => {
+    const handleAddressSelection = (addressId: string, currentAddresses: Address[] = addresses) => {
         setSelectedAddressId(addressId);
         if (addressId === 'new') {
             form.reset({ 
-                ...form.getValues(), 
+                ...form.getValues(),
                 name: user?.displayName || user?.email?.split('@')[0] || '',
                 phone: '',
                 street: '', 
@@ -218,7 +176,7 @@ export default function CheckoutClientPage() {
                 country: 'España' 
             });
         } else {
-            const selectedAddr = addresses.find(a => a.id === addressId);
+            const selectedAddr = currentAddresses.find(a => a.id === addressId);
             if (selectedAddr) {
                 form.setValue('name', selectedAddr.name);
                 form.setValue('phone', selectedAddr.phone);
@@ -232,80 +190,31 @@ export default function CheckoutClientPage() {
     };
 
 
-  const handleGuestRegistration = async () => {
-    if (!auth) {
-        toast({ title: 'Error', description: 'El servicio no está disponible.', variant: 'destructive' });
-        return false;
-    }
-
-    const fieldsToValidate: (keyof CheckoutFormValues)[] = ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
-    const isValid = await form.trigger(fieldsToValidate);
-    
-    if (!isValid) return false;
-
-    setIsRegistering(true);
-    setLoading(true);
-    toast({ title: 'Creando tu cuenta...', description: 'Por favor, espera un momento.' });
-
-    const data = form.getValues();
-    const { name, email, password } = data;
-
-    try {
-        if (!password) throw new Error("La contraseña es obligatoria.");
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const newUser = userCredential.user;
-        
-        const userDocRef = doc(db, "users", newUser.uid);
-        await setDoc(userDocRef, { 
-            uid: newUser.uid, email: newUser.email, displayName: name, creationTime: serverTimestamp(), loyaltyPoints: 0, isSubscribed: false 
-        });
-
-        // The onAuthStateChanged listener will update the user state.
-        // We will wait for the `user` object to be available before proceeding.
-        toast({ title: "Cuenta Creada", description: "¡Bienvenido! Continúa con tu pedido..." });
-        return true;
-        
-    } catch (error: any) {
-        setIsRegistering(false);
-        setLoading(false);
-        if (error.code === 'auth/email-already-in-use') {
-            toast({
-                title: 'Email ya registrado', description: 'Este email ya tiene una cuenta. Por favor, inicia sesión para continuar.', variant: 'destructive', action: <Button onClick={() => router.push('/login?redirect=/checkout')}>Iniciar Sesión</Button>, duration: 10000,
-            });
-        } else {
-            toast({ title: 'Error de Registro', description: error.message || 'No se pudo crear la cuenta.', variant: 'destructive' });
-        }
-        return false;
-    }
-  };
-
-
   const handleNextStep = async () => {
-    let fieldsToValidate: (keyof CheckoutFormValues)[] = [];
+    let isValid = false;
     if (step === 2) {
-      const baseFields: (keyof CheckoutFormValues)[] = ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
-      if(!user) {
-        fieldsToValidate = [...baseFields, 'email', 'password', 'confirmPassword'];
-      } else {
-        fieldsToValidate = baseFields;
+      if (!user) {
+         toast({
+            title: "Requiere inicio de sesión",
+            description: "Por favor, inicia sesión o regístrate para continuar.",
+            variant: "destructive",
+         });
+         router.push('/login?redirect=/checkout');
+         return;
       }
-
-      if(form.getValues('useDifferentBilling')) {
-        fieldsToValidate.push('billing');
+      const fieldsToValidate: (keyof CheckoutFormValues)[] = ['name', 'email', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+      if (form.getValues('useDifferentBilling')) {
+        fieldsToValidate.push('billing_name', 'billing_street', 'billing_city', 'billing_state', 'billing_postalCode', 'billing_country');
       }
+      isValid = await form.trigger(fieldsToValidate);
+    } else if (step === 3) {
+      isValid = await form.trigger(['paymentMethod']);
+    } else {
+      isValid = true;
     }
-    if (step === 3) fieldsToValidate = ['paymentMethod'];
-    
-    const isValid = fieldsToValidate.length > 0 ? await form.trigger(fieldsToValidate) : true;
     
     if (isValid) {
-        if (!user && step === 2) {
-            const registrationSuccess = await handleGuestRegistration();
-            if (!registrationSuccess) return; // Stop if registration failed
-            // The useEffect will handle moving to the next step once user state is updated
-        } else {
-            setStep(prev => prev + 1);
-        }
+        setStep(prev => prev + 1);
     }
   };
 
@@ -313,7 +222,8 @@ export default function CheckoutClientPage() {
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
     if (!user) {
-      toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido. Por favor, vuelve atrás y comprueba tus datos.', variant: 'destructive' });
+      toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido.', variant: 'destructive' });
+      setStep(2);
       return;
     }
     setLoading(true);
@@ -343,6 +253,16 @@ export default function CheckoutClientPage() {
             shippingAddress: shippingAddress,
             paymentMethod: data.paymentMethod,
             createdAt: serverTimestamp(),
+            ...(data.useDifferentBilling && {
+                billingDetails: {
+                    name: data.billing_name,
+                    street: data.billing_street,
+                    city: data.billing_city,
+                    state: data.billing_state,
+                    postalCode: data.billing_postalCode,
+                    country: data.billing_country
+                }
+            })
         });
 
         const orderSummaryForUI: Order = {
@@ -365,6 +285,7 @@ export default function CheckoutClientPage() {
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
         toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
+    } finally {
         setLoading(false);
     }
   };
@@ -382,8 +303,7 @@ export default function CheckoutClientPage() {
       <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Finalizar Pedido</h1>
       <Stepper currentStep={step} />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onFinalSubmit)}>
+      <form onSubmit={form.handleSubmit(onFinalSubmit)}>
             {step === 1 && (
                 <Card>
                     <CardHeader><CardTitle>1. Confirma tu Carrito</CardTitle></CardHeader>
@@ -411,82 +331,86 @@ export default function CheckoutClientPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>2. Tus Datos</CardTitle>
-                        <p className="text-muted-foreground">{user ? 'Confirma tus datos de envío.' : 'Crea una cuenta y dinos dónde enviar tu pedido.'}</p>
+                        <p className="text-muted-foreground">{user ? 'Confirma tus datos de envío.' : 'Inicia sesión para continuar.'}</p>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {!user ? (
-                            <>
-                                <h3 className="font-bold text-lg">Datos de la Cuenta</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline-block mr-2"/>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel><Lock className="inline-block mr-2" />Crear Contraseña</FormLabel><FormControl><div className="relative"><Input type={showPassword ? 'text' : 'password'} {...field} className="pr-10" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowPassword(!showPassword)}><EyeOff className={cn(showPassword ? 'block' : 'hidden')} /><Eye className={cn(showPassword ? 'hidden' : 'block')} /></Button></div></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirmar Contraseña</FormLabel><FormControl><div className="relative"><Input type={showConfirmPassword ? 'text' : 'password'} {...field} className="pr-10" /><Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><EyeOff className={cn(showConfirmPassword ? 'block' : 'hidden')} /><Eye className={cn(showConfirmPassword ? 'hidden' : 'block')} /></Button></div></FormControl><FormMessage /></FormItem>)} />
-                                </div>
-                                <Separator />
-                            </>
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Inicio de Sesión Requerido</AlertTitle>
+                                <AlertDescription>
+                                    Debes iniciar sesión o registrarte para poder continuar con tu pedido.
+                                    <div className="mt-4 flex gap-4">
+                                        <Button asChild><Link href="/login?redirect=/checkout">Iniciar Sesión</Link></Button>
+                                        <Button asChild variant="outline"><Link href="/register">Registrarse</Link></Button>
+                                    </div>
+                                </AlertDescription>
+                            </Alert>
                         ) : (
-                            addresses.length > 0 && (
-                                <RadioGroup value={selectedAddressId} onValueChange={handleAddressSelection} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {addresses.map(addr => (
-                                        <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-semibold">{addr.alias}</span>
-                                                <RadioGroupItem value={addr.id} id={addr.id} />
-                                            </div>
-                                            <div className="text-sm text-muted-foreground mt-2">
-                                                <p>{addr.street}</p>
-                                                <p>{addr.postalCode} {addr.city}</p>
-                                            </div>
+                           <>
+                                {addresses.length > 0 && (
+                                    <RadioGroup value={selectedAddressId} onValueChange={handleAddressSelection} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {addresses.map(addr => (
+                                            <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold">{addr.alias}</span>
+                                                    <RadioGroupItem value={addr.id} id={addr.id} />
+                                                </div>
+                                                <div className="text-sm text-muted-foreground mt-2">
+                                                    <p>{addr.street}</p>
+                                                    <p>{addr.postalCode} {addr.city}</p>
+                                                </div>
+                                            </Label>
+                                        ))}
+                                        <Label htmlFor="new" className={cn("flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === 'new' && "border-primary ring-2 ring-primary bg-accent/50")}>
+                                            <PlusCircle className="h-5 w-5" />
+                                            <span>Usar nueva dirección</span>
+                                            <RadioGroupItem value="new" id="new" className="sr-only" />
                                         </Label>
-                                    ))}
-                                    <Label htmlFor="new" className={cn("flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === 'new' && "border-primary ring-2 ring-primary bg-accent/50")}>
-                                        <PlusCircle className="h-5 w-5" />
-                                        <span>Usar nueva dirección</span>
-                                        <RadioGroupItem value="new" id="new" className="sr-only" />
-                                    </Label>
-                                </RadioGroup>
-                            )
-                        )}
-                        <div className={cn(user && addresses.length > 0 && selectedAddressId !== 'new' && "hidden")}>
-                            <h3 className="font-bold text-lg mb-4">Dirección de Envío</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado / Provincia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-
-                         <Separator />
-
-                        <FormField control={form.control} name="useDifferentBilling" render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base">Usar una dirección de facturación diferente</FormLabel>
-                                    <p className="text-sm text-muted-foreground">Activa esta opción si los datos de facturación no coinciden con los de envío.</p>
+                                    </RadioGroup>
+                                )}
+                                <div className={cn(user && addresses.length > 0 && selectedAddressId !== 'new' && "hidden")}>
+                                    <h3 className="font-bold text-lg mb-4">Dirección de Envío</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado / Provincia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    </div>
                                 </div>
-                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                            </FormItem>
-                        )} />
-
-                        {formValues.useDifferentBilling && (
-                            <div className="space-y-4 pt-4 border-t">
-                                <h3 className="font-bold text-lg">Dirección de Facturación</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField control={form.control} name="billing.billing_name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="billing.billing_street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="billing.billing_city" render={({ field }) => (<FormItem><FormLabel>Ciudad (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="billing.billing_state" render={({ field }) => (<FormItem><FormLabel>Provincia (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="billing.billing_postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="billing.billing_country" render={({ field }) => (<FormItem><FormLabel>País (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                </div>
-                            </div>
+                           </>
                         )}
-
+                        {user && (
+                            <>
+                                <Separator />
+                                <FormField control={form.control} name="useDifferentBilling" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">Usar una dirección de facturación diferente</FormLabel>
+                                            <p className="text-sm text-muted-foreground">Activa esta opción si los datos de facturación no coinciden con los de envío.</p>
+                                        </div>
+                                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                    </FormItem>
+                                )} />
+        
+                                {formValues.useDifferentBilling && (
+                                    <div className="space-y-4 pt-4 border-t">
+                                        <h3 className="font-bold text-lg">Dirección de Facturación</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormField control={form.control} name="billing_name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_city" render={({ field }) => (<FormItem><FormLabel>Ciudad (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_state" render={({ field }) => (<FormItem><FormLabel>Provincia (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_country" render={({ field }) => (<FormItem><FormLabel>País (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </CardContent>
                 </Card>
             )}
@@ -519,12 +443,12 @@ export default function CheckoutClientPage() {
                             <div><h3 className="font-semibold mb-2">Dirección de Envío:</h3><div className="text-sm text-muted-foreground"><p>{formValues.name}</p><p>{formValues.phone}</p><p>{formValues.street}</p><p>{formValues.city}, {formValues.state}, {formValues.postalCode}</p><p>{formValues.country}</p></div></div>
                             <div>
                                 <h3 className="font-semibold mb-2">Dirección de Facturación:</h3>
-                                {formValues.useDifferentBilling && formValues.billing ? (
+                                {formValues.useDifferentBilling ? (
                                     <div className="text-sm text-muted-foreground">
-                                        <p>{formValues.billing.billing_name}</p>
-                                        <p>{formValues.billing.billing_street}</p>
-                                        <p>{formValues.billing.billing_city}, {formValues.billing.billing_state}, {formValues.billing.billing_postalCode}</p>
-                                        <p>{formValues.billing.billing_country}</p>
+                                        <p>{formValues.billing_name}</p>
+                                        <p>{formValues.billing_street}</p>
+                                        <p>{formValues.billing_city}, {formValues.billing_state}, {formValues.billing_postalCode}</p>
+                                        <p>{formValues.billing_country}</p>
                                     </div>
                                 ) : (<p className="text-sm text-muted-foreground">La misma que la de envío.</p>)}
                             </div>
@@ -537,19 +461,18 @@ export default function CheckoutClientPage() {
                 </Card>
             )}
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-8 flex justify-between items-center">
                 {step > 1 ? (<Button type="button" variant="outline" onClick={handlePrevStep}><ArrowLeft className="mr-2" /> Anterior</Button>) : (<Button asChild type="button" variant="outline"><Link href="/products">&larr; Seguir Comprando</Link></Button>)}
+                
                 {step < 4 && (<Button type="button" onClick={handleNextStep} disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Procesando...</> : 'Siguiente'}</Button>)}
+                
                 {step === 4 && (
-                    <Button size="lg" type="submit" className="w-full max-w-xs mx-auto" disabled={loading}>
+                    <Button size="lg" type="submit" disabled={loading}>
                         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
                     </Button>
                 )}
             </div>
         </form>
-      </Form>
     </div>
   );
 }
-
-    

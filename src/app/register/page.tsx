@@ -26,19 +26,13 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isClient, setIsClient] = useState(false);
-  const [registrationInitiated, setRegistrationInitiated] = useState(false);
-
-
+  
+  // Redirect if user is already logged in
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (registrationInitiated && !isUserLoading && user) {
-        router.push('/register/success');
+    if (!isUserLoading && user) {
+        router.push('/account');
     }
-  }, [user, isUserLoading, registrationInitiated, router]);
+  }, [user, isUserLoading, router]);
 
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -51,7 +45,6 @@ export default function RegisterPage() {
     }
     
     setLoading(true);
-    setRegistrationInitiated(true);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -65,10 +58,17 @@ export default function RegisterPage() {
           displayName: newUser.email?.split('@')[0] || 'Nuevo Usuario',
           loyaltyPoints: 0,
           isSubscribed: false,
+          addresses: [], // Initialize with an empty array of addresses
       });
-      // The useEffect will handle redirection
+      
+      toast({
+          title: "¡Cuenta Creada!",
+          description: "Hemos creado tu cuenta. Ahora serás redirigido.",
+      });
+
+      router.push('/register/success');
+
     } catch (err: any) {
-      setRegistrationInitiated(false);
       let friendlyError = 'Ocurrió un error durante el registro.';
       if (err.code === 'auth/email-already-in-use') {
         friendlyError = 'Este email ya está registrado. Intenta iniciar sesión.';
@@ -81,13 +81,10 @@ export default function RegisterPage() {
         description: friendlyError,
         variant: 'destructive',
       });
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
-
-  if (!isClient) {
-    return null;
-  }
 
   return (
     <div className="flex items-center justify-center py-12">
