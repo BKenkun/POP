@@ -8,7 +8,7 @@ import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { Order, OrderStatus } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
@@ -291,3 +291,5 @@ export default function ShippingClient() {
     </div>
   );
 }
+
+    
