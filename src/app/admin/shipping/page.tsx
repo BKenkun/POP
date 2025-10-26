@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, where, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
 // Using a more specific type for the orders state to handle serializable dates
@@ -29,43 +29,41 @@ export default function AdminShippingPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchShippingOrders = async () => {
-      setLoading(true);
-      try {
-        // Fetch ALL orders first, then filter on the client.
-        // This avoids needing a composite index for `where('status', '==', 'En Reparto')` and `orderBy('createdAt')`.
-        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(ordersQuery);
-        
-        const allOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
-          const data = doc.data() as Order;
-          const createdAtISO = data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
+    setLoading(true);
+    // This query now directly targets orders that are "En Reparto"
+    const ordersQuery = query(
+        collectionGroup(db, 'orders'), 
+        where('status', '==', 'En Reparto'),
+        orderBy('createdAt', 'desc')
+    );
 
-          return {
-            ...data,
-            id: doc.id,
-            path: doc.ref.path,
-            createdAt: createdAtISO,
-          };
+    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
+        const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
+            const data = doc.data() as Order;
+            const createdAtISO = data.createdAt instanceof Timestamp 
+                ? data.createdAt.toDate().toISOString() 
+                : new Date().toISOString();
+
+            return {
+                ...data,
+                id: doc.id,
+                path: doc.ref.path,
+                createdAt: createdAtISO,
+            };
         });
-
-        // Now filter for the ones "En Reparto"
-        const inShipping = allOrders.filter(order => order.status === 'En Reparto');
-        setShippingOrders(inShipping);
-
-      } catch (error: any) {
+        setShippingOrders(fetchedOrders);
+        setLoading(false);
+    }, (error) => {
         console.error("Error fetching shipping orders:", error);
         toast({ 
           title: 'Error al cargar los envíos', 
           description: error.message || 'No se pudieron obtener los envíos en reparto.',
           variant: 'destructive' 
         });
-      } finally {
         setLoading(false);
-      }
-    };
+    });
 
-    fetchShippingOrders();
+    return () => unsubscribe();
   }, [toast]);
 
   return (

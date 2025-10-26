@@ -16,6 +16,7 @@ import { ShoppingBag, ArrowLeft, Loader2, Save, MapPin, Truck, History, MessageS
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 
 const getImageUrl = (url: string) => {
@@ -52,7 +53,9 @@ const getStatusVariant = (status: string) => {
 export default function OrderDetailsClient({ initialOrder }: { initialOrder: Order }) {
   const [order, setOrder] = useState(initialOrder);
   const [isSaving, setIsSaving] = useState(false);
+  const [isShipping, setIsShipping] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     setOrder(prev => ({ ...prev, status: newStatus }));
@@ -82,6 +85,25 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
       setOrder(initialOrder);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleShipping = async () => {
+    if (!order.path) {
+      toast({ title: 'Error', description: 'No se puede enviar el pedido. Ruta no encontrada.', variant: 'destructive' });
+      return;
+    }
+    setIsShipping(true);
+    try {
+      const orderDocRef = doc(db, order.path);
+      await updateDoc(orderDocRef, { status: 'En Reparto' });
+      toast({ title: 'Pedido en camino', description: 'El pedido se ha marcado como "En Reparto".' });
+      router.push(`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path)}`);
+    } catch (error) {
+      console.error('Error setting order to shipping:', error);
+      toast({ title: 'Error', description: 'No se pudo poner el pedido en reparto.', variant: 'destructive' });
+    } finally {
+      setIsShipping(false);
     }
   };
   
@@ -186,10 +208,9 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
                              <SelectItem value="Incidencia">Incidencia</SelectItem>
                         </SelectContent>
                     </Select>
-                     <Button className="w-full">
-                        <Link href={`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path || '')}`} className="flex items-center">
-                            <Truck className="mr-2" />Gestionar Envío
-                        </Link>
+                     <Button className="w-full" onClick={handleShipping} disabled={isShipping}>
+                        {isShipping ? <Loader2 className="mr-2 animate-spin" /> : <Truck className="mr-2" />}
+                        {isShipping ? 'Enviando...' : 'Gestionar Envío'}
                     </Button>
                 </CardContent>
             </Card>
