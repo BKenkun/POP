@@ -235,13 +235,13 @@ export default function CheckoutClientPage() {
   const handleGuestRegistration = async () => {
     if (!auth) {
         toast({ title: 'Error', description: 'El servicio no está disponible.', variant: 'destructive' });
-        return;
+        return false;
     }
 
     const fieldsToValidate: (keyof CheckoutFormValues)[] = ['name', 'email', 'password', 'confirmPassword', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
     const isValid = await form.trigger(fieldsToValidate);
     
-    if (!isValid) return;
+    if (!isValid) return false;
 
     setIsRegistering(true);
     setLoading(true);
@@ -260,9 +260,10 @@ export default function CheckoutClientPage() {
             uid: newUser.uid, email: newUser.email, displayName: name, creationTime: serverTimestamp(), loyaltyPoints: 0, isSubscribed: false 
         });
 
-        await signInWithEmailAndPassword(auth, email, password);
-        
+        // The onAuthStateChanged listener will update the user state.
+        // We will wait for the `user` object to be available before proceeding.
         toast({ title: "Cuenta Creada", description: "¡Bienvenido! Continúa con tu pedido..." });
+        return true;
         
     } catch (error: any) {
         setIsRegistering(false);
@@ -274,24 +275,19 @@ export default function CheckoutClientPage() {
         } else {
             toast({ title: 'Error de Registro', description: error.message || 'No se pudo crear la cuenta.', variant: 'destructive' });
         }
+        return false;
     }
   };
 
 
   const handleNextStep = async () => {
-    if (!user && step === 2) {
-        await handleGuestRegistration();
-        return;
-    }
-
     let fieldsToValidate: (keyof CheckoutFormValues)[] = [];
     if (step === 2) {
       const baseFields: (keyof CheckoutFormValues)[] = ['name', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
       if(!user) {
-        // For guests, password fields are required
         fieldsToValidate = [...baseFields, 'email', 'password', 'confirmPassword'];
       } else {
-        fieldsToValidate = ['name', ...baseFields];
+        fieldsToValidate = baseFields;
       }
 
       if(form.getValues('useDifferentBilling')) {
@@ -301,7 +297,16 @@ export default function CheckoutClientPage() {
     if (step === 3) fieldsToValidate = ['paymentMethod'];
     
     const isValid = fieldsToValidate.length > 0 ? await form.trigger(fieldsToValidate) : true;
-    if (isValid) setStep(prev => prev + 1);
+    
+    if (isValid) {
+        if (!user && step === 2) {
+            const registrationSuccess = await handleGuestRegistration();
+            if (!registrationSuccess) return; // Stop if registration failed
+            // The useEffect will handle moving to the next step once user state is updated
+        } else {
+            setStep(prev => prev + 1);
+        }
+    }
   };
 
   const handlePrevStep = () => { setStep(prev => prev - 1); };
@@ -327,7 +332,6 @@ export default function CheckoutClientPage() {
                 : item.imageUrl,
         }));
         
-        // Use addDoc to let Firestore generate the ID
         const orderCollectionRef = collection(db, 'users', user.uid, 'orders');
         const newOrderRef = await addDoc(orderCollectionRef, {
             userId: user.uid,
@@ -361,10 +365,9 @@ export default function CheckoutClientPage() {
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
         toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
-    } finally {
         setLoading(false);
     }
-};
+  };
 
   if ((isUserLoading && !user) || (cartCount === 0 && !loading)) {
     return (
@@ -548,3 +551,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
