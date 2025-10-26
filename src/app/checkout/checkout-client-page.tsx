@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from '@/components/ui/label';
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { doc, serverTimestamp, setDoc, onSnapshot } from 'firebase/firestore';
@@ -39,9 +39,12 @@ import { Switch } from '@/components/ui/switch';
 
 interface Address {
     id: string;
+    alias: string;
     name: string;
+    phone: string;
     street: string;
     city: string;
+    state: string;
     postalCode: string;
     country: string;
     isDefault?: boolean;
@@ -177,9 +180,11 @@ export default function CheckoutClientPage() {
                 const defaultAddress = userAddresses.find((addr: Address) => addr.isDefault);
                 if (defaultAddress) {
                     setSelectedAddressId(defaultAddress.id);
+                    form.setValue('name', defaultAddress.name);
+                    form.setValue('phone', defaultAddress.phone);
                     form.setValue('street', defaultAddress.street);
                     form.setValue('city', defaultAddress.city);
-                    form.setValue('state', defaultAddress.city); // Best guess if state is missing
+                    form.setValue('state', defaultAddress.state);
                     form.setValue('postalCode', defaultAddress.postalCode);
                     form.setValue('country', defaultAddress.country);
                 }
@@ -205,13 +210,19 @@ export default function CheckoutClientPage() {
     const handleAddressSelection = (addressId: string) => {
         setSelectedAddressId(addressId);
         if (addressId === 'new') {
-            form.reset({ ...form.getValues(), street: '', city: '', state: '', postalCode: '', country: 'España' });
+            form.reset({ 
+                ...form.getValues(), 
+                name: user?.displayName || user?.email?.split('@')[0] || '',
+                street: '', city: '', state: '', postalCode: '', phone: '', country: 'España' 
+            });
         } else {
             const selectedAddr = addresses.find(a => a.id === addressId);
             if (selectedAddr) {
+                form.setValue('name', selectedAddr.name);
+                form.setValue('phone', selectedAddr.phone);
                 form.setValue('street', selectedAddr.street);
                 form.setValue('city', selectedAddr.city);
-                form.setValue('state', selectedAddr.city); // Province/State often same as city in Spain
+                form.setValue('state', selectedAddr.state);
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
             }
@@ -388,7 +399,7 @@ export default function CheckoutClientPage() {
                                     {addresses.map(addr => (
                                         <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                             <div className="flex items-center justify-between">
-                                                <span className="font-semibold">{addr.name}</span>
+                                                <span className="font-semibold">{addr.alias}</span>
                                                 <RadioGroupItem value={addr.id} id={addr.id} />
                                             </div>
                                             <div className="text-sm text-muted-foreground mt-2">
@@ -408,7 +419,7 @@ export default function CheckoutClientPage() {
                         <div className={cn(user && addresses.length > 0 && selectedAddressId !== 'new' && "hidden")}>
                             <h3 className="font-bold text-lg mb-4">Dirección de Envío</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {user && (<FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -492,7 +503,7 @@ export default function CheckoutClientPage() {
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
                     </CardContent>
                     <CardFooter>
-                        <Button size="lg" type="submit" className="w-full" disabled={loading}>
+                         <Button size="lg" type="submit" className="w-full" disabled={loading}>
                             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
                         </Button>
                     </CardFooter>

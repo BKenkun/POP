@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Edit, Trash2, Loader2, Home, Briefcase } from "lucide-react"
+import { PlusCircle, Edit, Trash2, Loader2, Home, Briefcase, User, Phone } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -45,18 +45,24 @@ import {
 
 interface Address {
     id: string;
+    alias: string;
     name: string;
+    phone: string;
     street: string;
     city: string;
+    state: string;
     postalCode: string;
     country: string;
     isDefault: boolean;
 }
 
 const addressSchema = z.object({
-  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres."),
+  alias: z.string().min(2, "El alias debe tener al menos 2 caracteres (ej. Casa, Trabajo)."),
+  name: z.string().min(3, "El nombre del destinatario es requerido."),
+  phone: z.string().min(9, "El teléfono es requerido."),
   street: z.string().min(5, "La calle debe tener al menos 5 caracteres."),
   city: z.string().min(2, "La ciudad debe tener al menos 2 caracteres."),
+  state: z.string().min(2, "El estado/provincia es requerido."),
   postalCode: z.string().regex(/^\d{5}$/, "El código postal debe tener 5 dígitos."),
   country: z.string().min(2, "El país debe tener al menos 2 caracteres."),
   isDefault: z.boolean().default(false),
@@ -69,9 +75,12 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Ad
     const form = useForm<AddressFormData>({
         resolver: zodResolver(addressSchema),
         defaultValues: address || {
+            alias: "",
             name: "",
+            phone: "",
             street: "",
             city: "",
+            state: "",
             postalCode: "",
             country: "España",
             isDefault: false,
@@ -93,20 +102,29 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Ad
                     <Button><PlusCircle className="mr-2"/>Añadir Dirección</Button>
                 )}
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{address ? 'Editar Dirección' : 'Añadir Nueva Dirección'}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField control={form.control} name="alias" render={({ field }) => (
+                            <FormItem><FormLabel>Alias de la dirección (ej. Casa, Trabajo)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
                         <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem><FormLabel>Nombre de la dirección (ej. Casa, Trabajo)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Nombre completo (Destinatario)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="phone" render={({ field }) => (
+                            <FormItem><FormLabel>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="street" render={({ field }) => (
                             <FormItem><FormLabel>Calle y número</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="city" render={({ field }) => (
                             <FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="state" render={({ field }) => (
+                            <FormItem><FormLabel>Estado / Provincia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <FormField control={form.control} name="postalCode" render={({ field }) => (
                             <FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -222,16 +240,18 @@ export default function AddressesPage() {
                     <CardHeader>
                         <CardTitle className="flex justify-between items-center">
                             <span className="flex items-center gap-2">
-                                {address.name.toLowerCase() === 'casa' ? <Home className="h-5 w-5"/> : (address.name.toLowerCase() === 'trabajo' ? <Briefcase className="h-5 w-5"/> : null) }
-                                {address.name}
+                                {address.alias?.toLowerCase() === 'casa' ? <Home className="h-5 w-5"/> : (address.alias?.toLowerCase() === 'trabajo' ? <Briefcase className="h-5 w-5"/> : null) }
+                                {address.alias}
                             </span>
                             {address.isDefault && <span className="text-xs font-normal bg-primary text-primary-foreground px-2 py-1 rounded-full">Por defecto</span>}
                         </CardTitle>
-                        <CardDescription>{address.street}</CardDescription>
+                        <CardDescription className="flex items-center gap-2 pt-2"><User className="h-4 w-4"/> {address.name}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground">{address.city}, {address.postalCode}</p>
+                        <p className="text-sm text-muted-foreground">{address.street}</p>
+                        <p className="text-sm text-muted-foreground">{address.city}, {address.state}, {address.postalCode}</p>
                         <p className="text-sm text-muted-foreground">{address.country}</p>
+                        <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2"><Phone className="h-4 w-4" /> {address.phone}</p>
                         <div className="flex gap-2 mt-4">
                             <AddressForm address={address} onSave={handleSaveAddress} />
                             
