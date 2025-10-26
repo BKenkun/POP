@@ -35,8 +35,8 @@ function isOfferActive(product: Product): boolean {
   const startDate = product.offerStartDate ? new Date(product.offerStartDate) : null;
   const endDate = product.offerEndDate ? new Date(product.offerEndDate) : null;
 
-  if (startDate && now < startDate) return false; // Offer hasn't started
-  if (endDate && now > endDate) return false;   // Offer has ended
+  if (startDate && now < startDate) return false;
+  if (endDate && now > endDate) return false;
 
   return !!product.originalPrice && product.originalPrice > product.price;
 }

@@ -56,7 +56,7 @@ export function ProductInfo({ product }: { product: Product }) {
       <div>
         <div className="flex flex-wrap items-center gap-2 mb-2">
             {isSoldOut && (
-                <Badge variant="destructive">Agotado</Badge>
+                <Badge variant="secondary">Agotado</Badge>
             )}
             {offerActive && <Badge variant="destructive">OFERTA</Badge>}
             {!isSoldOut && product.tags?.map((tag) => (
