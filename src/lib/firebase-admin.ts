@@ -1,27 +1,32 @@
+
 import admin from 'firebase-admin';
 
-// Re-enable server-side admin capabilities.
-// This is safe because it's only used by server actions, not during the page build process.
-
-// Ensure that the service account details are set in the environment variables.
-// In Firebase App Hosting, these are set automatically.
-const serviceAccount = process.env.SERVICE_ACCOUNT_KEY
-  ? JSON.parse(process.env.SERVICE_ACCOUNT_KEY)
-  : {
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    };
+// This configuration uses the service account details you provided,
+// ensuring the server-side Admin SDK can always authenticate correctly.
+const serviceAccount = {
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "purorush",
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "firebase-adminsdk-fbsvc@purorush.iam.gserviceaccount.com",
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+};
 
 function getFirebaseAdmin() {
     if (!admin.apps.length) {
       try {
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          // Add the storage bucket to the admin config
-          storageBucket: "purorush.appspot.com"
-        });
-        console.log("Firebase Admin SDK initialized successfully.");
+        // We only initialize with a credential if the private key is available.
+        // In Firebase App Hosting, it initializes automatically without needing the key.
+        if (serviceAccount.privateKey) {
+            admin.initializeApp({
+              credential: admin.credential.cert(serviceAccount),
+              storageBucket: "purorush.appspot.com"
+            });
+            console.log("Firebase Admin SDK initialized with service account.");
+        } else {
+            // Initialize without explicit credentials, relying on the hosting environment
+            admin.initializeApp({
+                storageBucket: "purorush.appspot.com"
+            });
+            console.log("Firebase Admin SDK initialized via Application Default Credentials.");
+        }
       } catch (error: any) {
         console.error("Firebase Admin SDK initialization error:", error.stack);
       }
