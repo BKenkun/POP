@@ -3,11 +3,13 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { cbdProducts as staticProducts } from '@/lib/cbd-products';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { Product } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
 
 const names = ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."];
 const locations = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Murcia", "Palma", "Las Palmas", "Bilbao", "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón", "A Coruña", "Granada", "Elche", "Oviedo", "Cartagena", "Jerez", "Pamplona", "Almería", "San Sebastián", "Burgos", "Albacete", "Santander", "Castellón", "Badajoz", "Logroño", "Salamanca", "Huelva", "Lleida", "Tarragona", "Cádiz", "Jaén", "Ourense", "Lugo"];
@@ -21,8 +23,13 @@ export function SalesNotification() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    // Use the static product list for notifications
-    setProducts(staticProducts);
+    // Fetch products from Firestore instead of a static file
+    const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
+    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+      const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setProducts(fetchedProducts);
+    });
+    return () => unsubscribe(); // Cleanup subscription on unmount
   }, [])
 
   const isAdminPath = pathname.startsWith('/admin');
