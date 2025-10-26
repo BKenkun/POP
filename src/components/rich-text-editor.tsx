@@ -6,6 +6,7 @@ import Underline from '@tiptap/extension-underline';
 import TextStyle from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Bold,
@@ -18,6 +19,10 @@ import {
   Heading3,
   Paintbrush,
   Palette,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from './ui/separator';
@@ -60,6 +65,37 @@ const EditorToolbar = ({ editor }: ToolbarProps) => {
         onPressedChange={() => editor.chain().focus().toggleStrike().run()}
       >
         <Strikethrough className="h-4 w-4" />
+      </Toggle>
+
+      <Separator orientation="vertical" className="h-8 mx-1" />
+
+      <Toggle
+        size="sm"
+        pressed={editor.isActive({ textAlign: 'left' })}
+        onPressedChange={() => editor.chain().focus().setTextAlign('left').run()}
+      >
+        <AlignLeft className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive({ textAlign: 'center' })}
+        onPressedChange={() => editor.chain().focus().setTextAlign('center').run()}
+      >
+        <AlignCenter className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive({ textAlign: 'right' })}
+        onPressedChange={() => editor.chain().focus().setTextAlign('right').run()}
+      >
+        <AlignRight className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive({ textAlign: 'justify' })}
+        onPressedChange={() => editor.chain().focus().setTextAlign('justify').run()}
+      >
+        <AlignJustify className="h-4 w-4" />
       </Toggle>
 
       <Separator orientation="vertical" className="h-8 mx-1" />
@@ -138,7 +174,6 @@ const RichTextEditor = ({ value, onChange, className }: RichTextEditorProps) => 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Configure extensions if needed, e.g., heading levels
         heading: {
           levels: [2, 3],
         },
@@ -147,6 +182,9 @@ const RichTextEditor = ({ value, onChange, className }: RichTextEditorProps) => 
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
     ],
     content: value,
     editorProps: {

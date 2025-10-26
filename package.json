@@ -42,6 +42,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tiptap/extension-color": "^2.5.7",
     "@tiptap/extension-highlight": "^2.5.7",
+    "@tiptap/extension-text-align": "^2.5.7",
     "@tiptap/extension-text-style": "^2.5.7",
     "@tiptap/extension-underline": "^2.5.7",
     "@tiptap/react": "^2.5.7",
