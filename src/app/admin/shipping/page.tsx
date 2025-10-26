@@ -31,10 +31,10 @@ export default function AdminShippingPage() {
   useEffect(() => {
     setLoading(true);
     // This query now directly targets orders that are "En Reparto"
+    // REMOVED orderBy to prevent composite index requirement. Sorting is now done on the client.
     const ordersQuery = query(
         collectionGroup(db, 'orders'), 
-        where('status', '==', 'En Reparto'),
-        orderBy('createdAt', 'desc')
+        where('status', '==', 'En Reparto')
     );
 
     const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
@@ -51,6 +51,10 @@ export default function AdminShippingPage() {
                 createdAt: createdAtISO,
             };
         });
+        
+        // Sort by date on the client side
+        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
         setShippingOrders(fetchedOrders);
         setLoading(false);
     }, (error) => {
