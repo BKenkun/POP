@@ -53,7 +53,8 @@ export default function ProductsPage() {
         );
     }
 
-    const uniqueBrands = getUniqueValues(products, 'brand');
+    // Filtra la marca incorrecta antes de pasarla a los filtros
+    const uniqueBrands = getUniqueValues(products, 'brand').filter(brand => brand !== 'Rsuh');
     const uniqueSizes = getUniqueValues(products, 'size');
     const uniqueCompositions = getUniqueValues(products, 'composition');
     
