@@ -479,7 +479,7 @@ export default function CheckoutClientPage() {
                         </p>
                     </CardContent>
                     <CardFooter>
-                         <Button size="lg" type="submit" className="w-full" disabled={loading}>
+                        <Button size="lg" type="button" onClick={form.handleSubmit(onFinalSubmit)} className="w-full" disabled={loading}>
                             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
                         </Button>
                     </CardFooter>
@@ -495,3 +495,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
