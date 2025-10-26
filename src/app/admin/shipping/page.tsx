@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Truck, Eye, Inbox, Phone } from 'lucide-react';
+import { Loader2, Truck, Inbox, Phone } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -12,12 +12,11 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, where, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
 // Using a more specific type for the orders state to handle serializable dates
@@ -29,45 +28,45 @@ export default function AdminShippingPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setLoading(true);
-    // This query now directly targets orders that are "En Reparto"
-    // REMOVED orderBy to prevent composite index requirement. Sorting is now done on the client.
-    const ordersQuery = query(
-        collectionGroup(db, 'orders'), 
-        where('status', '==', 'En Reparto')
-    );
+    const fetchAndFilterOrders = async () => {
+        setLoading(true);
+        try {
+            // Fetch ALL orders without a 'where' clause to avoid needing an index
+            const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+            const querySnapshot = await getDocs(ordersQuery);
 
-    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
-        const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
-            const data = doc.data() as Order;
-            const createdAtISO = data.createdAt instanceof Timestamp 
-                ? data.createdAt.toDate().toISOString() 
-                : new Date().toISOString();
+            const allFetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
+                const data = doc.data() as Order;
+                const createdAtISO = data.createdAt instanceof Timestamp 
+                    ? data.createdAt.toDate().toISOString() 
+                    : new Date().toISOString();
 
-            return {
-                ...data,
-                id: doc.id,
-                path: doc.ref.path,
-                createdAt: createdAtISO,
-            };
-        });
-        
-        // Sort by date on the client side
-        fetchedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                return {
+                    ...data,
+                    id: doc.id,
+                    path: doc.ref.path,
+                    createdAt: createdAtISO,
+                };
+            });
+            
+            // Filter on the client side
+            const filtered = allFetchedOrders.filter(order => order.status === 'En Reparto');
+            setShippingOrders(filtered);
 
-        setShippingOrders(fetchedOrders);
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching shipping orders:", error);
-        toast({ 
-          title: 'Error al cargar los envíos', 
-          description: error.message || 'No se pudieron obtener los envíos en reparto.',
-          variant: 'destructive' 
-        });
-        setLoading(false);
-    });
+        } catch (error: any) {
+            console.error("Error fetching shipping orders:", error);
+            toast({ 
+              title: 'Error al cargar los envíos', 
+              description: error.message || 'No se pudieron obtener los envíos en reparto.',
+              variant: 'destructive' 
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    return () => unsubscribe();
+    fetchAndFilterOrders();
+    // No need for onSnapshot here as we are fetching all and filtering client-side
   }, [toast]);
 
   return (

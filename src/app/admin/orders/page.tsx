@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Eye, Package, Truck, Inbox, Archive, Clock, Phone } from 'lucide-react';
+import { Loader2, Eye, Package, Truck, Inbox, Archive, Clock } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -167,10 +167,10 @@ export default function AdminOrdersPage() {
 
   const { newOrders, pendingPaymentOrders, inProgressOrders, archivedOrders } = useMemo(() => {
     return {
-        newOrders: allOrders.filter(o => o.status === 'Reserva Recibida'),
-        pendingPaymentOrders: allOrders.filter(o => o.status === 'Pago Pendiente de Verificación'),
-        inProgressOrders: allOrders.filter(o => o.status === 'En Reparto'),
-        archivedOrders: allOrders.filter(o => ['Enviado', 'Entregado', 'Cancelado', 'Incidencia'].includes(o.status)),
+        newOrders: allOrders.filter(o => o.status === 'Reserva Recibida').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+        pendingPaymentOrders: allOrders.filter(o => o.status === 'Pago Pendiente de Verificación').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+        inProgressOrders: allOrders.filter(o => o.status === 'En Reparto').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+        archivedOrders: allOrders.filter(o => ['Enviado', 'Entregado', 'Cancelado', 'Incidencia'].includes(o.status)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     }
   }, [allOrders]);
 
