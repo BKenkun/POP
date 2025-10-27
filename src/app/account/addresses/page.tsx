@@ -3,8 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { db } from "@/lib/firebase";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Edit, Trash2, Loader2, Home, Briefcase, User, Phone } from "lucide-react"
@@ -42,6 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { manageUserAddress, getCurrentUser } from "@/app/actions/user-data";
 
 interface Address {
     id: string;
@@ -70,7 +69,7 @@ const addressSchema = z.object({
 
 type AddressFormData = z.infer<typeof addressSchema>;
 
-const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: AddressFormData, addressId?: string) => void }) => {
+const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Partial<Address>, action: 'add' | 'update') => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const form = useForm<AddressFormData>({
         resolver: zodResolver(addressSchema),
@@ -88,7 +87,9 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Ad
     });
 
     const onSubmit = (data: AddressFormData) => {
-        onSave(data, address?.id);
+        const action = address ? 'update' : 'add';
+        const payload = address ? { ...data, id: address.id } : data;
+        onSave(payload, action);
         setIsOpen(false);
         form.reset();
     };
@@ -157,64 +158,45 @@ export default function AddressesPage() {
     
     useEffect(() => {
         if (!user) return;
-        const userDocRef = doc(db, "users", user.uid);
-        const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const userData = docSnap.data();
-                setAddresses(userData.addresses || []);
+        
+        const fetchAddresses = async () => {
+            setLoading(true);
+            const userData = await getCurrentUser();
+            if (userData && userData.addresses) {
+                setAddresses(userData.addresses);
             }
             setLoading(false);
-        });
-        return () => unsubscribe();
+        };
+        fetchAddresses();
     }, [user]);
 
-
-    const handleSaveAddress = async (data: AddressFormData, addressId?: string) => {
+    const handleSaveAddress = async (data: Partial<Address>, action: 'add' | 'update') => {
         if (!user) return;
-        const userDocRef = doc(db, "users", user.uid);
         
-        let newAddresses = [...addresses];
-
-        if (data.isDefault) {
-            newAddresses = newAddresses.map(addr => ({ ...addr, isDefault: false }));
-        }
-
-        if (addressId) { // Editing existing address
-            newAddresses = newAddresses.map(addr => addr.id === addressId ? { ...addr, ...data, id: addressId } : addr);
-        } else { // Adding new address
-            const newId = `addr_${Date.now()}`;
-            newAddresses.push({ ...data, id: newId });
-        }
-
-        if (newAddresses.length > 0 && !newAddresses.some(addr => addr.isDefault)) {
-            newAddresses[0].isDefault = true;
-        }
-
-        try {
-            await setDoc(userDocRef, { addresses: newAddresses }, { merge: true });
+        const result = await manageUserAddress(action, data);
+        if (result.success) {
             toast({ title: "Dirección guardada", description: "Tu lista de direcciones ha sido actualizada." });
-        } catch (error) {
-            console.error("Error saving address:", error);
-            toast({ title: "Error", description: "No se pudo guardar la dirección.", variant: "destructive" });
+            const updatedUser = await getCurrentUser();
+            if (updatedUser && updatedUser.addresses) {
+                setAddresses(updatedUser.addresses);
+            }
+        } else {
+            toast({ title: "Error", description: result.message || "No se pudo guardar la dirección.", variant: "destructive" });
         }
     };
     
     const handleDeleteAddress = async (addressId: string) => {
         if (!user) return;
-        const userDocRef = doc(db, "users", user.uid);
-        
-        let newAddresses = addresses.filter(addr => addr.id !== addressId);
-        
-        if (newAddresses.length > 0 && !newAddresses.some(addr => addr.isDefault)) {
-            newAddresses[0].isDefault = true;
-        }
 
-        try {
-            await setDoc(userDocRef, { addresses: newAddresses }, { merge: true });
+        const result = await manageUserAddress('delete', { id: addressId });
+        if (result.success) {
             toast({ title: "Dirección eliminada", description: "La dirección ha sido eliminada.", variant: "destructive" });
-        } catch (error) {
-            console.error("Error deleting address:", error);
-            toast({ title: "Error", description: "No se pudo eliminar la dirección.", variant: "destructive" });
+            const updatedUser = await getCurrentUser();
+            if (updatedUser && updatedUser.addresses) {
+                setAddresses(updatedUser.addresses);
+            }
+        } else {
+             toast({ title: "Error", description: result.message || "No se pudo eliminar la dirección.", variant: "destructive" });
         }
     };
 
