@@ -123,6 +123,7 @@ export default function CheckoutClientPage() {
   const { setCheckoutData } = useCheckout();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
+  const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | null>('cod');
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -291,6 +292,18 @@ export default function CheckoutClientPage() {
     }
   };
 
+  const paymentMethods = {
+      cod: [
+          { value: 'cod_cash', label: 'Pagar en efectivo contra-entrega', icon: Banknote },
+          { value: 'cod_card', label: 'Pagar con tarjeta contra-entrega', icon: CreditCard },
+          { value: 'cod_bizum', label: 'Pagar con Bizum contra-entrega', icon: Smartphone }
+      ],
+      prepaid: [
+          { value: 'prepaid_bizum', label: 'Pago anticipado con Bizum (+Regalo)', icon: Smartphone },
+          { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia (+Regalo)', icon: Banknote }
+      ]
+  };
+
   if ((isUserLoading && !user) || (cartCount === 0 && !loading)) {
     return (
        <div className="flex flex-col items-center justify-center h-[50vh] text-center">
@@ -421,16 +434,59 @@ export default function CheckoutClientPage() {
                 <Card>
                     <CardHeader><CardTitle>3. Método de Pago</CardTitle></CardHeader>
                     <CardContent>
-                        <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                            <FormItem className="space-y-3"><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"><FormControl><RadioGroupItem value="cod_cash" /></FormControl><FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Banknote/>Pagar en efectivo contra-entrega</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"><FormControl><RadioGroupItem value="cod_card" /></FormControl><FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><CreditCard/>Pagar con tarjeta contra-entrega</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"><FormControl><RadioGroupItem value="cod_bizum" /></FormControl><FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Smartphone/>Pagar con Bizum contra-entrega</FormLabel></FormItem>
-                                <Separator className="my-4"/><p className="text-sm text-muted-foreground px-1">O paga por adelantado y recibe un regalo:</p>
-                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"><FormControl><RadioGroupItem value="prepaid_bizum" /></FormControl><FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Smartphone/>Pago anticipado con Bizum <span className="text-primary font-bold">(+Regalo)</span></FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"><FormControl><RadioGroupItem value="prepaid_transfer" /></FormControl><FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer"><Banknote/>Pago anticipado con Transferencia <span className="text-primary font-bold">(+Regalo)</span></FormLabel></FormItem>
-                            </RadioGroup></FormControl><FormMessage /></FormItem>
-                        )} />
+                        <FormField
+                            control={form.control}
+                            name="paymentMethod"
+                            render={({ field }) => (
+                                <FormItem className="space-y-4">
+                                    <RadioGroup
+                                        value={paymentCategory ?? ''}
+                                        onValueChange={(value: 'cod' | 'prepaid') => {
+                                            setPaymentCategory(value);
+                                            // Set a default sub-option when category changes
+                                            const defaultSubOption = paymentMethods[value][0].value;
+                                            field.onChange(defaultSubOption);
+                                        }}
+                                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                    >
+                                        <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
+                                            <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
+                                            <CreditCard className="mb-2 h-8 w-8" />
+                                            <span className="font-bold">Contrareembolso</span>
+                                        </Label>
+                                        <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
+                                            <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
+                                            <Banknote className="mb-2 h-8 w-8" />
+                                            <span className="font-bold">Pago por adelantado</span>
+                                            <span className="text-xs text-primary">(+Regalo)</span>
+                                        </Label>
+                                    </RadioGroup>
+
+                                    {paymentCategory && (
+                                        <div className="pt-4 mt-4 border-t">
+                                            <RadioGroup
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                                className="flex flex-col space-y-1"
+                                            >
+                                                {paymentMethods[paymentCategory].map(method => (
+                                                    <FormItem key={method.value} className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                                        <FormControl>
+                                                            <RadioGroupItem value={method.value} />
+                                                        </FormControl>
+                                                        <FormLabel className="font-normal w-full flex items-center gap-3 cursor-pointer">
+                                                            <method.icon />
+                                                            {method.label}
+                                                        </FormLabel>
+                                                    </FormItem>
+                                                ))}
+                                            </RadioGroup>
+                                        </div>
+                                    )}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </CardContent>
                 </Card>
             )}
