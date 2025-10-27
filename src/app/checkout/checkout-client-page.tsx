@@ -366,7 +366,7 @@ export default function CheckoutClientPage() {
                                 {addresses.length > 0 && (
                                     <RadioGroup value={selectedAddressId} onValueChange={handleAddressSelection} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {addresses.map(addr => (
-                                            <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
+                                            <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-semibold">{addr.alias}</span>
                                                     <RadioGroupItem value={addr.id} id={addr.id} />
@@ -377,7 +377,7 @@ export default function CheckoutClientPage() {
                                                 </div>
                                             </Label>
                                         ))}
-                                        <Label htmlFor="new" className={cn("flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 cursor-pointer hover:bg-accent/50 transition-colors", selectedAddressId === 'new' && "border-primary ring-2 ring-primary bg-accent/50")}>
+                                        <Label htmlFor="new" className={cn("flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === 'new' && "border-primary ring-2 ring-primary bg-primary/10")}>
                                             <PlusCircle className="h-5 w-5" />
                                             <span>Usar nueva dirección</span>
                                             <RadioGroupItem value="new" id="new" className="sr-only" />
@@ -449,12 +449,12 @@ export default function CheckoutClientPage() {
                                         }}
                                         className="grid grid-cols-1 md:grid-cols-2 gap-4"
                                     >
-                                        <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
+                                        <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
                                             <CreditCard className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Contrareembolso</span>
                                         </Label>
-                                        <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-accent/50 transition-colors", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
+                                        <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
                                             <Banknote className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Pago por adelantado</span>
@@ -470,7 +470,7 @@ export default function CheckoutClientPage() {
                                                 className="flex flex-col space-y-1"
                                             >
                                                 {paymentMethods[paymentCategory].map(method => (
-                                                    <FormItem key={method.value} className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+                                                    <FormItem key={method.value} className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-primary/10 transition-colors">
                                                         <FormControl>
                                                             <RadioGroupItem value={method.value} />
                                                         </FormControl>
