@@ -1,14 +1,14 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle, UserCheck } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle, UserCheck, Gift } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -93,6 +93,10 @@ const getImageUrl = (url: string) => {
     return url;
 };
 
+const SHIPPING_COST = 695; // 6,95€ en céntimos
+const COD_SURCHARGE = 300; // 3€ en céntimos
+const FREE_SHIPPING_THRESHOLD = 4000; // 40€ en céntimos
+
 // --- Components ---
 const Stepper = ({ currentStep }: { currentStep: number }) => {
     const steps = [{ number: 1, name: 'Carrito' }, { number: 2, name: 'Tus Datos' }, { number: 3, name: 'Pago' }, { number: 4, name: 'Revisión' }];
@@ -114,7 +118,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 };
 
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
+  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -130,6 +134,20 @@ export default function CheckoutClientPage() {
   });
   
   const formValues = form.watch();
+
+  const isPrepaid = formValues.paymentMethod?.startsWith('prepaid');
+
+  const finalTotals = useMemo(() => {
+    const subtotal = cartTotal;
+    const discount = isPrepaid ? volumeDiscount : 0;
+    const subtotalWithDiscount = subtotal - discount;
+    const shipping = isPrepaid ? 0 : (subtotalWithDiscount > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST);
+    const surcharge = isPrepaid ? 0 : COD_SURCHARGE;
+    const total = subtotalWithDiscount + shipping + surcharge;
+
+    return { subtotal, discount, shipping, surcharge, total };
+  }, [cartTotal, volumeDiscount, isPrepaid]);
+
 
     useEffect(() => {
         if (!isUserLoading && cartCount === 0 && !loading) {
@@ -237,7 +255,7 @@ export default function CheckoutClientPage() {
         const newOrderRef = await addDoc(orderCollectionRef, {
             userId: user.uid,
             status: 'Reserva Recibida',
-            total: totalWithDiscount,
+            total: finalTotals.total, // Use the final calculated total
             items: itemsForPayload,
             customerName: data.name,
             customerEmail: data.email,
@@ -257,7 +275,7 @@ export default function CheckoutClientPage() {
         });
         
         // Award loyalty points
-        const pointsToAdd = Math.floor(totalWithDiscount / 1000); // 1 point per 10 euros
+        const pointsToAdd = Math.floor(finalTotals.total / 1000); // 1 point per 10 euros
         if (pointsToAdd > 0) {
             const result = await updateUser('update-points', { pointsToAdd });
             if (result.success && result.user) {
@@ -304,8 +322,8 @@ export default function CheckoutClientPage() {
           { value: 'cod_bizum', label: 'Pagar con Bizum contra-entrega', icon: Smartphone }
       ],
       prepaid: [
-          { value: 'prepaid_bizum', label: 'Pago anticipado con Bizum (+Regalo)', icon: Smartphone },
-          { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia (+Regalo)', icon: Banknote }
+          { value: 'prepaid_bizum', label: 'Pago anticipado con Bizum', icon: Smartphone },
+          { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia', icon: Banknote }
       ]
   };
 
@@ -347,17 +365,7 @@ export default function CheckoutClientPage() {
                          <div className="space-y-2">
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
-                                <span className={volumeDiscount > 0 ? "line-through text-muted-foreground" : ""}>{formatPrice(cartTotal)}</span>
-                            </div>
-                            {volumeDiscount > 0 && (
-                                <div className="flex justify-between text-destructive">
-                                    <span>Descuento por volumen</span>
-                                    <span>-{formatPrice(volumeDiscount)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between font-bold text-lg">
-                                <span>Total</span>
-                                <span>{formatPrice(totalWithDiscount)}</span>
+                                <span>{formatPrice(cartTotal)}</span>
                             </div>
                         </div>
                     </CardContent>
@@ -386,7 +394,7 @@ export default function CheckoutClientPage() {
                         ) : (
                            <>
                                 {addresses.length > 0 && (
-                                    <RadioGroup value={selectedAddressId} onValueChange={handleAddressSelection} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <RadioGroup value={selectedAddressId} onValueChange={(id) => handleAddressSelection(id, addresses)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {addresses.map((addr: Address) => (
                                             <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                                 <div className="flex items-center justify-between">
@@ -465,7 +473,6 @@ export default function CheckoutClientPage() {
                                         value={paymentCategory ?? ''}
                                         onValueChange={(value: 'cod' | 'prepaid') => {
                                             setPaymentCategory(value);
-                                            // Set a default sub-option when category changes
                                             const defaultSubOption = paymentMethods[value][0].value;
                                             field.onChange(defaultSubOption);
                                         }}
@@ -475,17 +482,27 @@ export default function CheckoutClientPage() {
                                             <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
                                             <CreditCard className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Contrareembolso</span>
+                                            <span className="text-xs text-muted-foreground">(+3€ y sin descuento)</span>
                                         </Label>
                                         <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
                                             <Banknote className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Pago por adelantado</span>
-                                            <span className="text-xs text-primary">(+Regalo)</span>
+                                            <span className="text-xs text-primary">(¡Con Descuento, Envío Gratis y Regalo!)</span>
                                         </Label>
                                     </RadioGroup>
 
                                     {paymentCategory && (
                                         <div className="pt-4 mt-4 border-t">
+                                            {paymentCategory === 'prepaid' && (
+                                                <Alert variant="default" className="mb-4 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+                                                    <Gift className="h-4 w-4 !text-green-600" />
+                                                    <AlertTitle className="text-green-800 dark:text-green-300">¡Beneficios Exclusivos!</AlertTitle>
+                                                    <AlertDescription className="text-green-700 dark:text-green-400">
+                                                        Al pagar por adelantado, disfrutas de <span className="font-bold">descuento por volumen, envío gratuito y un regalo sorpresa</span> en tu pedido.
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
                                             <RadioGroup
                                                 onValueChange={field.onChange}
                                                 value={field.value}
@@ -538,17 +555,28 @@ export default function CheckoutClientPage() {
                         <div className="space-y-2">
                              <div className="flex justify-between">
                                 <span>Subtotal</span>
-                                <span className={volumeDiscount > 0 ? "line-through text-muted-foreground" : ""}>{formatPrice(cartTotal)}</span>
+                                <span>{formatPrice(finalTotals.subtotal)}</span>
                             </div>
-                            {volumeDiscount > 0 && (
+                            {finalTotals.discount > 0 && (
                                 <div className="flex justify-between text-destructive">
                                     <span>Descuento por volumen</span>
-                                    <span>-{formatPrice(volumeDiscount)}</span>
+                                    <span>-{formatPrice(finalTotals.discount)}</span>
                                 </div>
                             )}
+                            {finalTotals.surcharge > 0 && (
+                                 <div className="flex justify-between">
+                                    <span>Recargo contrareembolso</span>
+                                    <span>+{formatPrice(finalTotals.surcharge)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between">
+                                <span>Envío</span>
+                                <span>{finalTotals.shipping > 0 ? formatPrice(finalTotals.shipping) : 'Gratis'}</span>
+                            </div>
+                            <Separator/>
                             <div className="flex justify-between font-bold text-xl">
                                 <span>Total a Pagar</span>
-                                <span className="text-primary">{formatPrice(totalWithDiscount)}</span>
+                                <span className="text-primary">{formatPrice(finalTotals.total)}</span>
                             </div>
                         </div>
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
