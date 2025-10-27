@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '@/components/quantity-selector';
+import { QuantitySelector } from '../quantity-selector';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
@@ -150,12 +150,14 @@ export default function CheckoutClientPage() {
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
-    // Discount is only applied if payment is prepaid
     const discount = isPrepaid ? volumeDiscount : 0;
     const subtotalWithDiscount = subtotal - discount;
-    // Shipping is free for prepaid, otherwise calculated
-    const shipping = isPrepaid ? 0 : (subtotalWithDiscount > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST);
-    // Surcharge is only for COD
+
+    let shipping = 0;
+    if (!isPrepaid) { // COD shipping logic
+        shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+    } // Prepaid shipping is always free
+
     const surcharge = isPrepaid ? 0 : COD_SURCHARGE;
     const total = subtotalWithDiscount + shipping + surcharge;
 
