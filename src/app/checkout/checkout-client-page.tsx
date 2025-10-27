@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '../quantity-selector';
+import { QuantitySelector } from '@/components/quantity-selector';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
@@ -150,15 +150,16 @@ export default function CheckoutClientPage() {
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
-    const discount = isPrepaid ? volumeDiscount : 0;
+    const discount = isPrepaid ? (volumeDiscount || 0) : 0;
     const subtotalWithDiscount = subtotal - discount;
 
     let shipping = 0;
-    if (!isPrepaid) { // COD shipping logic
-        shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-    } // Prepaid shipping is always free
-
+    if (!isPrepaid && subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
+        shipping = SHIPPING_COST;
+    }
+    
     const surcharge = isPrepaid ? 0 : COD_SURCHARGE;
+    
     const total = subtotalWithDiscount + shipping + surcharge;
 
     return { subtotal, discount, shipping, surcharge, total };
@@ -494,13 +495,13 @@ export default function CheckoutClientPage() {
                                         }}
                                         className="grid grid-cols-1 md:grid-cols-2 gap-4"
                                     >
-                                        <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
+                                        <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
                                             <CreditCard className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Contrareembolso</span>
                                             <span className="text-xs text-muted-foreground">(+3€ y sin descuento)</span>
                                         </Label>
-                                        <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
+                                        <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
                                             <Banknote className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Pago por adelantado</span>
