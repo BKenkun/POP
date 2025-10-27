@@ -1,18 +1,19 @@
 
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
-// Chave para guardar o estado de visualização do admin no localStorage.
 const ADMIN_VIEW_AS_CUSTOMER_KEY = 'admin_view_as_customer';
 
 interface AuthContextType {
   user: User | null;
+  userDoc: any | null; // Full user document from Firestore
+  setUserDoc: (doc: any) => void;
   loading: boolean;
   logout: () => void;
   isSubscribed: boolean;
@@ -26,14 +27,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userDoc, setUserDoc] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [isViewingAsCustomer, setViewingAsCustomer] = useState(false);
 
   const router = useRouter();
 
-  // Carrega o estado de visualização do localStorage quando o componente é montado no cliente.
   useEffect(() => {
     const storedState = localStorage.getItem(ADMIN_VIEW_AS_CUSTOMER_KEY);
     setViewingAsCustomer(storedState === 'true');
@@ -44,37 +43,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(user);
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          setIsSubscribed(userData.isSubscribed || false);
-          setLoyaltyPoints(userData.loyaltyPoints || 0);
-        }
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setUserDoc(docSnap.data());
+            } else {
+                setUserDoc(null);
+            }
+            setLoading(false);
+        });
+        return () => unsubscribeSnapshot();
       } else {
-        setIsSubscribed(false);
-        setLoyaltyPoints(0);
+        setUserDoc(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // O usuário é um administrador real se o email corresponder.
   const isActualAdmin = useMemo(() => {
     return !!user && user.email === 'maryandpopper@gmail.com';
   }, [user]);
 
-  // A aplicação "pensa" que o usuário é um admin apenas se for um admin real E não estiver no modo "Ver como Cliente".
   const isAdmin = useMemo(() => {
     return isActualAdmin && !isViewingAsCustomer;
   }, [isActualAdmin, isViewingAsCustomer]);
+  
+  const isSubscribed = useMemo(() => userDoc?.isSubscribed || false, [userDoc]);
+  const loyaltyPoints = useMemo(() => userDoc?.loyaltyPoints || 0, [userDoc]);
 
   const logout = async () => {
     try {
         await firebaseSignOut(auth);
         await fetch('/api/logout', { method: 'POST' });
-        // Limpa também o modo de visualização ao sair.
         localStorage.removeItem(ADMIN_VIEW_AS_CUSTOMER_KEY);
         setViewingAsCustomer(false);
         router.push('/');
@@ -93,11 +94,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { 
       user, 
+      userDoc,
+      setUserDoc,
       loading, 
       logout,
       isSubscribed,
       loyaltyPoints,
-      isAdmin, // Este é o valor que o resto da aplicação usará.
+      isAdmin,
       isViewingAsCustomer,
       setIsViewingAsCustomer: handleSetIsViewingAsCustomer,
     };

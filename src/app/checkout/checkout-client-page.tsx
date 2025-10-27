@@ -12,7 +12,7 @@ import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock,
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,12 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
-import { doc, serverTimestamp, setDoc, onSnapshot, collection, addDoc } from 'firebase/firestore';
-import { Order, ShippingAddress } from '@/lib/types';
+import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ToastAction } from '@/components/ui/toast';
+import { updateUser } from '@/app/actions/user-data';
 
 
 interface Address {
@@ -114,14 +115,12 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 
 export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
-  const { user, loading: isUserLoading } = useAuth();
+  const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const { setCheckoutData } = useCheckout();
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
   const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | null>('cod');
 
@@ -139,32 +138,24 @@ export default function CheckoutClientPage() {
     }, [cartCount, router, loading, isUserLoading]);
     
     useEffect(() => {
-        if (user) {
+        if (user && userDoc) {
             form.setValue('email', user.email || '');
             form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
             
-            const userDocRef = doc(db, "users", user.uid);
-            const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const userData = docSnap.data();
-                    const userAddresses: Address[] = userData.addresses || [];
-                    setAddresses(userAddresses);
-                    
-                    const defaultAddress = userAddresses.find(addr => addr.isDefault);
-                    if (defaultAddress && selectedAddressId !== 'new') {
-                        handleAddressSelection(defaultAddress.id, userAddresses);
-                    } else if (userAddresses.length > 0 && selectedAddressId === 'new') {
-                        // If there are addresses but 'new' is selected, don't auto-select one.
-                    } else if (defaultAddress) {
-                        handleAddressSelection(defaultAddress.id, userAddresses);
-                    }
-                }
-            });
-            return () => unsubscribe();
+            const userAddresses: Address[] = userDoc.addresses || [];
+            
+            const defaultAddress = userAddresses.find(addr => addr.isDefault);
+            if (defaultAddress && selectedAddressId !== 'new') {
+                handleAddressSelection(defaultAddress.id, userAddresses);
+            } else if (userAddresses.length > 0 && selectedAddressId === 'new') {
+                // If there are addresses but 'new' is selected, don't auto-select one.
+            } else if (defaultAddress) {
+                handleAddressSelection(defaultAddress.id, userAddresses);
+            }
         }
-    }, [user, form]);
+    }, [user, userDoc, form]);
     
-    const handleAddressSelection = (addressId: string, currentAddresses: Address[] = addresses) => {
+    const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
         setSelectedAddressId(addressId);
         if (addressId === 'new') {
             form.reset({ 
@@ -264,9 +255,23 @@ export default function CheckoutClientPage() {
                 }
             })
         });
+        
+        // Award loyalty points
+        const pointsToAdd = Math.floor(totalWithDiscount / 1000); // 1 point per 10 euros
+        if (pointsToAdd > 0) {
+            const result = await updateUser('update-points', { pointsToAdd });
+            if (result.success && result.user) {
+                setUserDoc(result.user);
+                 toast({
+                    title: "¡Puntos Ganados!",
+                    description: `Has ganado ${pointsToAdd} puntos de fidelidad con esta compra.`,
+                });
+            }
+        }
+
 
         toast({
-            duration: 10000, // Keep toast visible for 10 seconds
+            duration: 10000,
             title: "¡Reserva Confirmada!",
             description: `Tu pedido #${newOrderRef.id.substring(newOrderRef.id.length - 7)} ha sido recibido.`,
             action: (
@@ -311,6 +316,8 @@ export default function CheckoutClientPage() {
         </div>
     );
   }
+
+  const addresses = userDoc?.addresses || [];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -380,7 +387,7 @@ export default function CheckoutClientPage() {
                            <>
                                 {addresses.length > 0 && (
                                     <RadioGroup value={selectedAddressId} onValueChange={handleAddressSelection} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {addresses.map(addr => (
+                                        {addresses.map((addr: Address) => (
                                             <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-semibold">{addr.alias}</span>

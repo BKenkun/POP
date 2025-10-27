@@ -3,7 +3,7 @@
 import { auth, db } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 
 interface Address {
     id: string;
@@ -17,6 +17,12 @@ interface Address {
     country: string;
     isDefault: boolean;
 }
+
+interface UserUpdateData {
+    addresses?: Address[];
+    loyaltyPoints?: number;
+}
+
 
 /**
  * Decodes the session cookie to get the authenticated user's ID.
@@ -62,10 +68,10 @@ export async function getCurrentUser() {
 
 
 /**
- * Securely manages user addresses. Can add, update, or delete an address.
+ * Securely manages user data, including addresses and loyalty points.
  * All logic runs on the server.
  */
-export async function manageUserAddress(action: 'add' | 'update' | 'delete', addressData: Partial<Address>) {
+export async function updateUser(action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number }>) {
     const userId = await getUserIdFromSession();
     const userDocRef = doc(db, 'users', userId);
 
@@ -76,48 +82,70 @@ export async function manageUserAddress(action: 'add' | 'update' | 'delete', add
         }
         
         let currentAddresses: Address[] = userDoc.data().addresses || [];
+        let updatePayload: { [key: string]: any } = {};
 
         switch (action) {
-            case 'add':
-                if (!addressData.alias || !addressData.name || !addressData.street) throw new Error("Missing required address fields.");
+            case 'add-address':
+                if (!data.alias || !data.name || !data.street) throw new Error("Missing required address fields.");
                 const newId = `addr_${Date.now()}`;
-                let newAddress: Address = { ...addressData, id: newId, isDefault: addressData.isDefault || false } as Address;
+                let newAddress: Address = { ...data, id: newId, isDefault: data.isDefault || false } as Address;
                 
                 if (newAddress.isDefault) {
                     currentAddresses = currentAddresses.map(addr => ({ ...addr, isDefault: false }));
                 }
                 currentAddresses.push(newAddress);
+                updatePayload.addresses = currentAddresses;
                 break;
 
-            case 'update':
-                if (!addressData.id || !addressData.alias || !addressData.name) throw new Error("Missing ID or required fields for update.");
-                if (addressData.isDefault) {
+            case 'update-address':
+                if (!data.id || !data.alias || !data.name) throw new Error("Missing ID or required fields for update.");
+                if (data.isDefault) {
                     currentAddresses = currentAddresses.map(addr => ({ ...addr, isDefault: false }));
                 }
-                currentAddresses = currentAddresses.map(addr => addr.id === addressData.id ? { ...addr, ...addressData } as Address : addr);
+                currentAddresses = currentAddresses.map(addr => addr.id === data.id ? { ...addr, ...data } as Address : addr);
+                 updatePayload.addresses = currentAddresses;
                 break;
 
-            case 'delete':
-                if (!addressData.id) throw new Error("Missing ID for delete action.");
-                currentAddresses = currentAddresses.filter(addr => addr.id !== addressData.id);
+            case 'delete-address':
+                if (!data.id) throw new Error("Missing ID for delete action.");
+                currentAddresses = currentAddresses.filter(addr => addr.id !== data.id);
+                updatePayload.addresses = currentAddresses;
                 break;
             
+            case 'update-points':
+                 if (typeof data.pointsToAdd !== 'number' || data.pointsToAdd < 0) throw new Error("Invalid points value.");
+                 // Use Firestore's atomic increment operation for safety
+                 updatePayload.loyaltyPoints = increment(data.pointsToAdd);
+                 break;
+
             default:
                 throw new Error("Invalid action specified.");
         }
 
-        // Ensure there's always a default address if addresses exist
-        if (currentAddresses.length > 0 && !currentAddresses.some(addr => addr.isDefault)) {
-            currentAddresses[0].isDefault = true;
+        // Address-specific logic
+        if (action.includes('address')) {
+            // Ensure there's always a default address if addresses exist
+            if (currentAddresses.length > 0 && !currentAddresses.some(addr => addr.isDefault)) {
+                currentAddresses[0].isDefault = true;
+            }
+             updatePayload.addresses = currentAddresses;
+             revalidatePath('/account/addresses');
+        }
+        
+        if (action === 'update-points') {
+            revalidatePath('/account');
         }
 
-        await updateDoc(userDocRef, { addresses: currentAddresses });
 
-        revalidatePath('/account/addresses');
-        return { success: true, message: `Address successfully ${action}ed.` };
+        await updateDoc(userDocRef, updatePayload);
+        
+        // Fetch and return the updated user document
+        const updatedDoc = await getDoc(userDocRef);
+        
+        return { success: true, message: `User data updated successfully.`, user: updatedDoc.data() };
 
     } catch (error: any) {
-        console.error(`Error during address action '${action}':`, error);
+        console.error(`Error during user update action '${action}':`, error);
         return { success: false, message: 'An unexpected error occurred.' };
     }
 }

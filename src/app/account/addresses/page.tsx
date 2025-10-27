@@ -40,7 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { manageUserAddress, getCurrentUser } from "@/app/actions/user-data";
+import { updateUser } from "@/app/actions/user-data";
 
 interface Address {
     id: string;
@@ -69,7 +69,7 @@ const addressSchema = z.object({
 
 type AddressFormData = z.infer<typeof addressSchema>;
 
-const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Partial<Address>, action: 'add' | 'update') => void }) => {
+const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Partial<Address>, action: 'add-address' | 'update-address') => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const form = useForm<AddressFormData>({
         resolver: zodResolver(addressSchema),
@@ -87,7 +87,7 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Pa
     });
 
     const onSubmit = (data: AddressFormData) => {
-        const action = address ? 'update' : 'add';
+        const action = address ? 'update-address' : 'add-address';
         const payload = address ? { ...data, id: address.id } : data;
         onSave(payload, action);
         setIsOpen(false);
@@ -151,35 +151,25 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Pa
 };
 
 export default function AddressesPage() {
-    const { user } = useAuth();
+    const { user, userDoc, setUserDoc } = useAuth();
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
-    const [addresses, setAddresses] = useState<Address[]>([]);
     
     useEffect(() => {
-        if (!user) return;
-        
-        const fetchAddresses = async () => {
-            setLoading(true);
-            const userData = await getCurrentUser();
-            if (userData && userData.addresses) {
-                setAddresses(userData.addresses);
-            }
+        if (userDoc !== undefined) {
             setLoading(false);
-        };
-        fetchAddresses();
-    }, [user]);
+        }
+    }, [userDoc]);
 
-    const handleSaveAddress = async (data: Partial<Address>, action: 'add' | 'update') => {
+    const addresses: Address[] = userDoc?.addresses || [];
+
+    const handleSaveAddress = async (data: Partial<Address>, action: 'add-address' | 'update-address') => {
         if (!user) return;
         
-        const result = await manageUserAddress(action, data);
-        if (result.success) {
+        const result = await updateUser(action, data);
+        if (result.success && result.user) {
             toast({ title: "Dirección guardada", description: "Tu lista de direcciones ha sido actualizada." });
-            const updatedUser = await getCurrentUser();
-            if (updatedUser && updatedUser.addresses) {
-                setAddresses(updatedUser.addresses);
-            }
+            setUserDoc(result.user);
         } else {
             toast({ title: "Error", description: result.message || "No se pudo guardar la dirección.", variant: "destructive" });
         }
@@ -188,13 +178,10 @@ export default function AddressesPage() {
     const handleDeleteAddress = async (addressId: string) => {
         if (!user) return;
 
-        const result = await manageUserAddress('delete', { id: addressId });
-        if (result.success) {
+        const result = await updateUser('delete-address', { id: addressId });
+        if (result.success && result.user) {
             toast({ title: "Dirección eliminada", description: "La dirección ha sido eliminada.", variant: "destructive" });
-            const updatedUser = await getCurrentUser();
-            if (updatedUser && updatedUser.addresses) {
-                setAddresses(updatedUser.addresses);
-            }
+            setUserDoc(result.user);
         } else {
              toast({ title: "Error", description: result.message || "No se pudo eliminar la dirección.", variant: "destructive" });
         }
