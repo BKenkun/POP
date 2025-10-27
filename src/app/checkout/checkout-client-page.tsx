@@ -113,7 +113,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 };
 
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { user, loading: isUserLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -246,7 +246,7 @@ export default function CheckoutClientPage() {
         const newOrderRef = await addDoc(orderCollectionRef, {
             userId: user.uid,
             status: 'Reserva Recibida',
-            total: cartTotal,
+            total: totalWithDiscount,
             items: itemsForPayload,
             customerName: data.name,
             customerEmail: data.email,
@@ -337,7 +337,22 @@ export default function CheckoutClientPage() {
                             </div>
                         ))}
                          <Separator />
-                        <div className="flex justify-between font-bold text-lg"><span>Total</span><span>{formatPrice(cartTotal)}</span></div>
+                         <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span>Subtotal</span>
+                                <span className={volumeDiscount > 0 ? "line-through text-muted-foreground" : ""}>{formatPrice(cartTotal)}</span>
+                            </div>
+                            {volumeDiscount > 0 && (
+                                <div className="flex justify-between text-destructive">
+                                    <span>Descuento por volumen</span>
+                                    <span>-{formatPrice(volumeDiscount)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between font-bold text-lg">
+                                <span>Total</span>
+                                <span>{formatPrice(totalWithDiscount)}</span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             )}
@@ -513,7 +528,22 @@ export default function CheckoutClientPage() {
                         </div>
                          <div><h3 className="font-semibold mb-2">Método de Pago:</h3><div className="text-sm text-muted-foreground"><p>{formValues.paymentMethod?.replace(/_/g, ' ')}</p></div></div>
                         <Separator />
-                        <div className="flex justify-between font-bold text-xl"><span>Total a Pagar</span><span className="text-primary">{formatPrice(cartTotal)}</span></div>
+                        <div className="space-y-2">
+                             <div className="flex justify-between">
+                                <span>Subtotal</span>
+                                <span className={volumeDiscount > 0 ? "line-through text-muted-foreground" : ""}>{formatPrice(cartTotal)}</span>
+                            </div>
+                            {volumeDiscount > 0 && (
+                                <div className="flex justify-between text-destructive">
+                                    <span>Descuento por volumen</span>
+                                    <span>-{formatPrice(volumeDiscount)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between font-bold text-xl">
+                                <span>Total a Pagar</span>
+                                <span className="text-primary">{formatPrice(totalWithDiscount)}</span>
+                            </div>
+                        </div>
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
                     </CardContent>
                 </Card>
