@@ -126,11 +126,22 @@ export default function CheckoutClientPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
-  const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | null>('cod');
+  const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | null>('prepaid');
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { name: '', email: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'España', paymentMethod: 'cod_cash', useDifferentBilling: false },
+    defaultValues: { 
+        name: '', 
+        email: '', 
+        phone: '', 
+        street: '', 
+        city: '', 
+        state: '', 
+        postalCode: '', 
+        country: 'España', 
+        paymentMethod: 'prepaid_bizum', // Default to a prepaid method
+        useDifferentBilling: false 
+    },
   });
   
   const formValues = form.watch();
@@ -139,9 +150,12 @@ export default function CheckoutClientPage() {
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
+    // Discount is only applied if payment is prepaid
     const discount = isPrepaid ? volumeDiscount : 0;
     const subtotalWithDiscount = subtotal - discount;
+    // Shipping is free for prepaid, otherwise calculated
     const shipping = isPrepaid ? 0 : (subtotalWithDiscount > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST);
+    // Surcharge is only for COD
     const surcharge = isPrepaid ? 0 : COD_SURCHARGE;
     const total = subtotalWithDiscount + shipping + surcharge;
 

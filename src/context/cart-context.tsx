@@ -93,7 +93,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const cartCount = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const cartTotal = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
-
+  
   const volumeDiscount = useMemo(() => {
     let discountPercent = 0;
     if (cartCount >= 200) {
