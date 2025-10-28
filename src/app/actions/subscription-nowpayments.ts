@@ -35,7 +35,7 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
         }
         const userEmail = userDocSnap.data()?.email;
 
-        const response = await fetch(`${NOWPAYMENTS_API_URL}/subscription`, {
+        const response = await fetch(`${NOWPAYMENTS_API_URL}/subscription-payments`, {
             method: 'POST',
             headers: {
                 'x-api-key': NOWPAYMENTS_API_KEY,
@@ -43,29 +43,28 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
             },
             body: JSON.stringify({
                 plan_id: SUBSCRIPTION_PLAN_ID,
-                order_id: `sub_${userId}_${Date.now()}`,
-                order_description: 'Suscripción a Mi Dosis Mensual',
                 // We pass the user's email to associate the subscription with them in NOWPayments
                 email: userEmail, 
-                // Redirect URLs
-                success_url: `${BASE_URL}/subscription/success`,
-                cancel_url: `${BASE_URL}/subscription/failed`,
-                // Webhook for server-to-server notifications
-                ipn_callback_url: `${BASE_URL}/api/nowpayments/subscription-webhook`,
             }),
         });
         
         const data = await response.json();
 
         if (!response.ok) {
+            // Log the detailed error from NOWPayments for debugging
+            console.error('NOWPayments API Error:', data);
             throw new Error(data.message || 'Error creating the subscription.');
         }
         
-        if (!data.invoice_url) {
+        // NOWPayments returns the invoice URL in the `invoice_url` field of the result array
+        const invoiceUrl = data.result?.[0]?.invoice_url;
+
+        if (!invoiceUrl) {
+            console.error('NOWPayments did not return a valid invoice URL. Response:', data);
             throw new Error('NOWPayments did not return a valid invoice URL.');
         }
 
-        return { success: true, invoice_url: data.invoice_url };
+        return { success: true, invoice_url: invoiceUrl };
 
     } catch (error: any) {
         console.error('Error creating NOWPayments subscription:', error);
