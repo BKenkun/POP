@@ -1,3 +1,4 @@
+
 'use server';
 
 import { auth, firestore as db } from '@/lib/firebase-admin';
@@ -27,8 +28,9 @@ interface UserUpdateData {
 /**
  * Decodes the session cookie to get the authenticated user's ID.
  * Throws an error if the user is not authenticated.
+ * This function is now EXPORTED to be used by other server actions.
  */
-async function getUserIdFromSession(): Promise<string> {
+export async function getUserIdFromSession(): Promise<string> {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
         throw new Error('Authentication required: No session cookie found.');

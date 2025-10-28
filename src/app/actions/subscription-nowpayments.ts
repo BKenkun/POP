@@ -2,9 +2,9 @@
 'use server';
 
 import { z } from 'zod';
-import { auth, firestore as db } from '@/lib/firebase-admin';
-import { doc, getDoc } from 'firebase/firestore';
-import { cookies } from 'next/headers';
+import { firestore as db } from '@/lib/firebase-admin';
+import { getDoc, doc } from 'firebase/firestore';
+import { getUserIdFromSession } from './user-data'; // Import the centralized function
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
@@ -12,21 +12,6 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 // This is the unique ID for your subscription plan in your system.
 const SUBSCRIPTION_PLAN_ID = "1237708102";
-
-async function getUserIdFromSession(): Promise<string> {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) {
-        throw new Error('Authentication required: No session cookie found.');
-    }
-    try {
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        return decodedClaims.uid;
-    } catch (error) {
-        console.error('Error verifying session cookie in server action:', error);
-        throw new Error('Authentication failed: Invalid session.');
-    }
-}
-
 
 /**
  * Creates a new subscription for a user and returns the invoice URL to start the payment process.
@@ -87,4 +72,3 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
         return { success: false, error: error.message };
     }
 }
-
