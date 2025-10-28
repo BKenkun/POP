@@ -18,8 +18,18 @@ interface CartSheetProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
+const getImageUrl = (url: string) => {
+    if (url.includes('firebasestorage.googleapis.com')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+};
+
+const FREE_SHIPPING_THRESHOLD = 4000; // 40€
+const SHIPPING_COST = 695; // 6,95€
+
 export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
-  const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
+  const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount } = useCart();
   const { toast } = useToast();
 
   const handleCheckout = () => {
@@ -33,6 +43,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     }
     onOpenChange(false);
   };
+  
+  const showShippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -49,12 +61,11 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                   <div key={item.id} className="flex items-start gap-4">
                     <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
                       <Image
-                        src={item.imageUrl}
+                        src={getImageUrl(item.imageUrl)}
                         alt={item.name}
                         fill
                         className="object-cover"
                         data-ai-hint={item.imageHint}
-                        unoptimized={true}
                       />
                     </div>
                     <div className="flex-1">
@@ -93,27 +104,40 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                  {volumeDiscount > 0 && (
                     <>
                          <div className="flex justify-between text-destructive font-semibold">
-                            <span>Descuento por volumen:</span>
+                            <span>Descuento por volumen (aprox.):</span>
                             <span>-{formatPrice(volumeDiscount)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg">
-                            <span>Total con descuento</span>
-                            <span>{formatPrice(totalWithDiscount)}</span>
+                            <span>Total con descuento (aprox.)</span>
+                            <span>{formatPrice(cartTotal - volumeDiscount)}</span>
                         </div>
                     </>
                 )}
+                 {showShippingCost && (
+                     <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Envío (estimado):</span>
+                        <span>{formatPrice(SHIPPING_COST)}</span>
+                    </div>
+                 )}
                  <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <Box className="h-4 w-4 text-primary" />
                         <span>Embalaje 100% discreto.</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-primary" />
-                        <span>Envío 24/48h.</span>
-                    </div>
+                     {!showShippingCost && cartTotal > 0 ? (
+                        <div className="flex items-center gap-2">
+                            <Truck className="h-4 w-4 text-green-600" />
+                            <span className="font-bold text-green-600">¡Envío GRATIS!</span>
+                        </div>
+                     ) : (
+                        <div className="flex items-center gap-2">
+                           <Truck className="h-4 w-4 text-primary" />
+                           <span>Envío gratis a partir de {formatPrice(FREE_SHIPPING_THRESHOLD)}.</span>
+                       </div>
+                     )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Los productos no se reservan. Los gastos de envío se calculan al finalizar la reserva.
+                  Los descuentos y gastos de envío finales se calculan en la pantalla de pago.
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">Finalizar Reserva</Link>

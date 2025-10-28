@@ -62,6 +62,7 @@ const checkoutSchema = z.object({
     state: z.string().min(2, "El estado/provincia es requerido."),
     postalCode: z.string().min(3, "El código postal es requerido."),
     country: z.string().min(2, "El país es requerido."),
+    saveAddress: z.boolean().default(false), // New field to save the address
     paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto'], {
         required_error: "Debes seleccionar un método de pago."
     }),
@@ -95,7 +96,6 @@ const getImageUrl = (url: string) => {
 };
 
 const SHIPPING_COST = 695; // 6,95€ en céntimos
-const COD_SURCHARGE = 300; // 3€ en céntimos
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€ en céntimos
 
 // --- Components ---
@@ -139,7 +139,8 @@ export default function CheckoutClientPage() {
         city: '', 
         state: '', 
         postalCode: '', 
-        country: 'España', 
+        country: 'España',
+        saveAddress: false,
         paymentMethod: 'prepaid_bizum', // Default to a prepaid method
         useDifferentBilling: false 
     },
@@ -164,11 +165,9 @@ export default function CheckoutClientPage() {
         }
     } // For prepaid, shipping is always free.
     
-    const surcharge = isPrepaid ? 0 : COD_SURCHARGE;
-    
-    const total = subtotalWithDiscount + shipping + surcharge;
+    const total = subtotalWithDiscount + shipping;
 
-    return { subtotal, discount, shipping, surcharge, total };
+    return { subtotal, discount, shipping, total };
   }, [cartTotal, volumeDiscount, isPrepaid]);
 
 
@@ -186,7 +185,6 @@ export default function CheckoutClientPage() {
             const userAddresses: Address[] = userDoc.addresses || [];
             const defaultAddress = userAddresses.find(addr => addr.isDefault);
             
-            // Auto-select default address if it exists and no address is selected yet
             if (defaultAddress && selectedAddressId === 'new') {
                 handleAddressSelection(defaultAddress.id, userAddresses);
             }
@@ -195,19 +193,20 @@ export default function CheckoutClientPage() {
     
     const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
         setSelectedAddressId(addressId);
-        form.setValue('email', user?.email || ''); // ALWAYS ensure email is set
+        form.setValue('email', user?.email || ''); 
         
         if (addressId === 'new') {
             form.reset({ 
                 ...form.getValues(),
-                email: user?.email || '', // Keep email on reset
+                email: user?.email || '',
                 name: user?.displayName || user?.email?.split('@')[0] || '',
                 phone: '',
                 street: '', 
                 city: '', 
                 state: '', 
                 postalCode: '', 
-                country: 'España' 
+                country: 'España',
+                saveAddress: false,
             });
         } else {
             const selectedAddr = currentAddresses.find(a => a.id === addressId);
@@ -261,6 +260,27 @@ export default function CheckoutClientPage() {
       return;
     }
     setLoading(true);
+
+    if (data.saveAddress && selectedAddressId === 'new') {
+        const addressToSave = {
+            alias: `Dirección ${userDoc?.addresses?.length + 1 || 1}`,
+            name: data.name,
+            phone: data.phone,
+            street: data.street,
+            city: data.city,
+            state: data.state,
+            postalCode: data.postalCode,
+            country: data.country,
+        };
+        const result = await updateUser('add-address', addressToSave);
+        if (result.success && result.user) {
+            setUserDoc(result.user);
+            toast({ title: "Dirección Guardada", description: "Tu nueva dirección se ha guardado en tu perfil." });
+        } else {
+             toast({ title: "Error", description: "No se pudo guardar la dirección, pero puedes continuar con el pedido.", variant: "destructive" });
+        }
+    }
+
 
     // Crypto payment logic
     if (data.paymentMethod === 'crypto') {
@@ -421,7 +441,7 @@ export default function CheckoutClientPage() {
                                 </div>
                             )}
                              <div className="flex justify-between font-bold text-lg">
-                                <span>Total (antes de envío y recargos)</span>
+                                <span>Total (antes de envío)</span>
                                 <span>{formatPrice(cartTotal - (volumeDiscount || 0))}</span>
                             </div>
                         </div>
@@ -482,6 +502,14 @@ export default function CheckoutClientPage() {
                                         <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
+                                    {selectedAddressId === 'new' && (
+                                        <FormField control={form.control} name="saveAddress" render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-4">
+                                                <FormLabel className="mb-0">Guardar esta dirección para futuras compras</FormLabel>
+                                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                            </FormItem>
+                                        )} />
+                                    )}
                                 </div>
                            </>
                         )}
@@ -539,7 +567,7 @@ export default function CheckoutClientPage() {
                                             <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
                                             <CreditCard className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Contrareembolso</span>
-                                            <span className="text-xs text-muted-foreground">(+3€ y sin descuento)</span>
+                                            <span className="text-xs text-muted-foreground">(Paga al recibir)</span>
                                         </Label>
                                         <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
@@ -616,14 +644,8 @@ export default function CheckoutClientPage() {
                             </div>
                             {finalTotals.discount > 0 && (
                                 <div className="flex justify-between text-destructive">
-                                    <span>Descuento por volumen</span>
+                                    <span>Descuento por pago adelantado</span>
                                     <span>-{formatPrice(finalTotals.discount)}</span>
-                                </div>
-                            )}
-                            {finalTotals.surcharge > 0 && (
-                                 <div className="flex justify-between">
-                                    <span>Recargo contrareembolso</span>
-                                    <span>+{formatPrice(finalTotals.surcharge)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between">
