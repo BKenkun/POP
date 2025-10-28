@@ -1,70 +1,17 @@
+
 'use server';
 
 import { z } from 'zod';
 import { getUserIdFromSession } from './user-data';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 // This is the unique ID for your subscription plan in your system.
-// We will use this to find or create the corresponding plan on NOWPayments.
-const INTERNAL_PLAN_ID = "mi_dosis_mensual_p_44_eur";
-
-/**
- * Creates a subscription plan on NOWPayments if it doesn't exist.
- * Returns the plan ID from NOWPayments.
- */
-async function getOrCreateSubscriptionPlan(): Promise<string> {
-    if (!NOWPAYMENTS_API_KEY) {
-        throw new Error('NOWPayments API key is not configured.');
-    }
-
-    try {
-        // First, try to find an existing plan (NOWPayments API doesn't have a "get plan by title" endpoint, so we manage it internally)
-        // For this implementation, we will assume we need to create it if we don't have a stored ID.
-        // In a real-world, scalable app, you'd store the returned plan_id in a database.
-        // For now, we will create it every time for simplicity, as NOWPayments handles duplicates gracefully by returning the existing one.
-        
-        const response = await fetch(`${NOWPAYMENTS_API_URL}/subscription/plan`, {
-            method: 'POST',
-            headers: {
-                'x-api-key': NOWPAYMENTS_API_KEY,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                title: 'Mi Dosis Mensual - P', // Title for the plan
-                amount: 44, // Cost per period
-                currency: 'EUR', // Currency
-                interval_type: 'month', // Period duration
-                interval_count: 1 // Number of intervals (e.g., 1 for every month)
-            }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            // Check if the plan already exists, which NOWPayments might return as an error
-            if (data.message && data.message.includes('already exist')) {
-                 // This part is tricky as the API does not return the existing ID.
-                 // A robust solution would require fetching all plans and filtering by title.
-                 // For this case, we rely on the creation being idempotent or we manage IDs outside.
-                 // We will proceed assuming creation is the main path.
-                 throw new Error(`The subscription plan seems to exist but we cannot retrieve it. Details: ${data.message}`);
-            }
-            throw new Error(data.message || 'Error creating subscription plan on NOWPayments.');
-        }
-        
-        if (!data.plan_id) {
-            throw new Error('Failed to get plan_id from NOWPayments response.');
-        }
-
-        return data.plan_id;
-    } catch (error: any) {
-        console.error('Error in getOrCreateSubscriptionPlan:', error);
-        throw error;
-    }
-}
+const SUBSCRIPTION_PLAN_ID = "1237708102";
 
 
 /**
@@ -81,13 +28,13 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
 
     try {
         const userId = await getUserIdFromSession();
-        const planId = await getOrCreateSubscriptionPlan();
         
-        const userEmailResponse = await getDoc(doc(db, 'users', userId));
-        if (!userEmailResponse.exists()) {
+        const userDocRef = doc(db, 'users', userId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (!userDocSnap.exists()) {
              throw new Error('User not found.');
         }
-        const userEmail = userEmailResponse.data()?.email;
+        const userEmail = userDocSnap.data()?.email;
 
         const response = await fetch(`${NOWPAYMENTS_API_URL}/subscription`, {
             method: 'POST',
@@ -96,7 +43,7 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                plan_id: planId,
+                plan_id: SUBSCRIPTION_PLAN_ID,
                 order_id: `sub_${userId}_${Date.now()}`,
                 order_description: 'Suscripción a Mi Dosis Mensual',
                 // We pass the user's email to associate the subscription with them in NOWPayments
