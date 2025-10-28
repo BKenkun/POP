@@ -1,74 +1,11 @@
+// This file is no longer needed as the subscription logic has been moved
+// to a Server Action in `src/app/actions/subscription-nowpayments.ts`.
+// This centralizes the server-side logic and resolves authentication issues.
+import { NextResponse } from 'next/server';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { auth as adminAuth } from '@/lib/firebase-admin';
-
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
-const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
-
-// This is the unique ID for your subscription plan in your system.
-const SUBSCRIPTION_PLAN_ID = "1237708102";
-
-async function getUserIdFromSession(): Promise<{ uid: string; email: string | undefined }> {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) {
-        throw new Error('Authentication required: No session cookie found.');
-    }
-    try {
-        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
-        return { uid: decodedClaims.uid, email: decodedClaims.email };
-    } catch (error) {
-        console.error('Error verifying session cookie in API route:', error);
-        throw new Error('Authentication failed: Invalid session.');
-    }
-}
-
-export async function POST(req: NextRequest) {
-    if (!NOWPAYMENTS_API_KEY) {
-        console.error('NOWPayments API key is not set.');
-        return NextResponse.json({
-            success: false,
-            error: 'El servicio de suscripciones no está configurado correctamente.',
-        }, { status: 500 });
-    }
-
-    try {
-        const { email: userEmail } = await getUserIdFromSession();
-
-        if (!userEmail) {
-            throw new Error('User email not found in session.');
-        }
-
-        const response = await fetch(`${NOWPAYMENTS_API_URL}/subscription-payments`, {
-            method: 'POST',
-            headers: {
-                'x-api-key': NOWPAYMENTS_API_KEY,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                plan_id: SUBSCRIPTION_PLAN_ID,
-                email: userEmail,
-            }),
-        });
-        
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error('NOWPayments API Error:', data);
-            throw new Error(data.message || 'Error creating the subscription.');
-        }
-        
-        const invoiceUrl = data.result?.[0]?.invoice_url;
-
-        if (!invoiceUrl) {
-            console.error('NOWPayments did not return a valid invoice URL. Response:', data);
-            throw new Error('NOWPayments did not return a valid invoice URL.');
-        }
-
-        return NextResponse.json({ success: true, invoice_url: invoiceUrl });
-
-    } catch (error: any) {
-        console.error('Error creating NOWPayments subscription:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
+export async function POST() {
+    return NextResponse.json(
+        { success: false, error: 'This endpoint is deprecated. Please use the Server Action.' },
+        { status: 410 } // 410 Gone
+    );
 }

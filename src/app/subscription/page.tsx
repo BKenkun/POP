@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
+import { createNowPaymentsSubscription } from '@/app/actions/subscription-nowpayments';
 
 const benefits = [
     { icon: Package, text: "5 poppers de tu elección cada mes" },
@@ -41,15 +42,7 @@ export default function SubscriptionPage() {
         });
 
         try {
-            const response = await fetch('/api/nowpayments/create-subscription', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                // No body is needed, the API route gets user info from the session cookie
-            });
-
-            const result = await response.json();
+            const result = await createNowPaymentsSubscription();
             
             if (result.success && result.invoice_url) {
                 // Redirect user to NOWPayments to complete the subscription
