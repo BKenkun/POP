@@ -1,8 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { auth as adminAuth, firestore as db } from '@/lib/firebase-admin';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth as adminAuth } from '@/lib/firebase-admin';
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
@@ -10,24 +9,23 @@ const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 // This is the unique ID for your subscription plan in your system.
 const SUBSCRIPTION_PLAN_ID = "1237708102";
 
-async function getUserIdFromSession(): Promise<string> {
+async function getUserIdFromSession(): Promise<{ uid: string; email: string | undefined }> {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
         throw new Error('Authentication required: No session cookie found.');
     }
     try {
         const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
-        return decodedClaims.uid;
+        return { uid: decodedClaims.uid, email: decodedClaims.email };
     } catch (error) {
         console.error('Error verifying session cookie in API route:', error);
         throw new Error('Authentication failed: Invalid session.');
     }
 }
 
-
 export async function POST(req: NextRequest) {
     if (!NOWPAYMENTS_API_KEY) {
-        console.error('NOWPayments API key or Base URL is not set.');
+        console.error('NOWPayments API key is not set.');
         return NextResponse.json({
             success: false,
             error: 'El servicio de suscripciones no está configurado correctamente.',
@@ -35,16 +33,10 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const userId = await getUserIdFromSession();
-        
-        // Firestore Admin SDK cannot be used here, we need to use the client SDK with the user's credentials
-        // But since this is a server route, we can't easily get the client auth object.
-        // Let's get the user email from the admin SDK using the UID.
-        const userRecord = await adminAuth.getUser(userId);
-        const userEmail = userRecord.email;
+        const { email: userEmail } = await getUserIdFromSession();
 
         if (!userEmail) {
-            throw new Error('User email not found.');
+            throw new Error('User email not found in session.');
         }
 
         const response = await fetch(`${NOWPAYMENTS_API_URL}/subscription-payments`, {

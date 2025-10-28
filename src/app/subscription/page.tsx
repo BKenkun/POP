@@ -46,7 +46,7 @@ export default function SubscriptionPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                // We no longer need to send user data, as the API route will get it from the session.
+                // No body is needed, the API route gets user info from the session cookie
             });
 
             const result = await response.json();
