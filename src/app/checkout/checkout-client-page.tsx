@@ -200,6 +200,7 @@ export default function CheckoutClientPage() {
         if (addressId === 'new') {
             form.reset({ 
                 ...form.getValues(),
+                email: user?.email || '', // Keep email on reset
                 name: user?.displayName || user?.email?.split('@')[0] || '',
                 phone: '',
                 street: '', 
@@ -218,6 +219,7 @@ export default function CheckoutClientPage() {
                 form.setValue('state', selectedAddr.state || selectedAddr.city);
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
+                form.setValue('email', user?.email || ''); // Ensure email is set
             }
         }
     };
@@ -656,3 +658,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
