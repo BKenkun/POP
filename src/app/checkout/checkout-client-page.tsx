@@ -97,7 +97,6 @@ const getImageUrl = (url: string) => {
 
 const SHIPPING_COST = 695; // 6,95€ en céntimos
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€ en céntimos
-const COD_SURCHARGE = 300; // 3€ en céntimos
 
 // --- Components ---
 const Stepper = ({ currentStep }: { currentStep: number }) => {
@@ -158,7 +157,6 @@ export default function CheckoutClientPage() {
     const subtotal = cartTotal;
     const discount = isCod ? 0 : (volumeDiscount || 0); // No discount for COD
     const subtotalWithDiscount = subtotal - discount;
-    const surcharge = isCod ? COD_SURCHARGE : 0;
     
     let shipping = 0;
     if (isCod) {
@@ -167,9 +165,9 @@ export default function CheckoutClientPage() {
         }
     }
     
-    const total = subtotalWithDiscount + shipping + surcharge;
+    const total = subtotalWithDiscount + shipping;
 
-    return { subtotal, discount, shipping, total, surcharge };
+    return { subtotal, discount, shipping, total };
   }, [cartTotal, volumeDiscount, isCod]);
 
 
@@ -181,8 +179,6 @@ export default function CheckoutClientPage() {
     
     useEffect(() => {
         if (user && userDoc) {
-            form.setValue('email', user.email || '');
-            
             const userAddresses: Address[] = userDoc.addresses || [];
             const defaultAddress = userAddresses.find(addr => addr.isDefault);
             
@@ -190,17 +186,20 @@ export default function CheckoutClientPage() {
                 handleAddressSelection(defaultAddress.id, userAddresses);
             } else if (userAddresses.length > 0) {
                  handleAddressSelection(userAddresses[0].id, userAddresses);
+            } else {
+                 form.setValue('email', user.email || '');
             }
         }
     }, [user, userDoc, form.setValue]);
     
     const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
         setSelectedAddressId(addressId);
+        const email = user?.email || '';
         
         if (addressId === 'new') {
             form.reset({ 
                 ...form.getValues(),
-                email: user?.email || '',
+                email: email,
                 name: user?.displayName || user?.email?.split('@')[0] || '',
                 phone: '',
                 street: '', 
@@ -220,7 +219,7 @@ export default function CheckoutClientPage() {
                 form.setValue('state', selectedAddr.state || selectedAddr.city);
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
-                form.setValue('email', user?.email || ''); 
+                form.setValue('email', email); 
             }
         }
     };
@@ -405,7 +404,7 @@ export default function CheckoutClientPage() {
     );
   }
 
-  const addresses = userDoc?.addresses || [];
+  const addresses: Address[] = userDoc?.addresses || [];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -475,7 +474,7 @@ export default function CheckoutClientPage() {
                            <>
                                 {addresses.length > 0 && (
                                     <RadioGroup value={selectedAddressId} onValueChange={(id) => handleAddressSelection(id, addresses)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {addresses.map((addr: Address, index: number) => (
+                                        {addresses.map((addr, index) => (
                                             <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-semibold">{addr.alias || `Dirección ${index + 1}`}</span>
@@ -651,12 +650,6 @@ export default function CheckoutClientPage() {
                                     <span>-{formatPrice(finalTotals.discount)}</span>
                                 </div>
                             )}
-                             {finalTotals.surcharge > 0 && (
-                                <div className="flex justify-between text-destructive">
-                                    <span>Recargo contrareembolso</span>
-                                    <span>{formatPrice(finalTotals.surcharge)}</span>
-                                </div>
-                            )}
                             <div className="flex justify-between">
                                 <span>Envío</span>
                                 <span>{finalTotals.shipping > 0 ? formatPrice(finalTotals.shipping) : 'Gratis'}</span>
@@ -688,3 +681,5 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+    
