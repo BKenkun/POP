@@ -99,16 +99,16 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
               <div className="w-full space-y-4">
                 <div className="flex justify-between font-semibold">
                   <span>Subtotal</span>
-                  <span className={volumeDiscount > 0 ? 'line-through text-muted-foreground' : ''}>{formatPrice(cartTotal)}</span>
+                  <span>{formatPrice(cartTotal)}</span>
                 </div>
                  {volumeDiscount > 0 && (
                     <>
-                         <div className="flex justify-between text-destructive font-semibold">
-                            <span>Descuento por volumen (aprox.):</span>
+                         <div className="flex justify-between text-destructive">
+                            <span>Ahorro por pago anticipado:</span>
                             <span>-{formatPrice(volumeDiscount)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg">
-                            <span>Total con descuento (aprox.)</span>
+                            <span>Total (sin envío)</span>
                             <span>{formatPrice(cartTotal - volumeDiscount)}</span>
                         </div>
                     </>
@@ -137,7 +137,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Los descuentos y gastos de envío finales se calculan en la pantalla de pago.
+                  El descuento por pago anticipado y los gastos de envío se calculan en la pantalla de pago.
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">Finalizar Reserva</Link>

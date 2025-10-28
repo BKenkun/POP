@@ -436,7 +436,7 @@ export default function CheckoutClientPage() {
                             </div>
                              {volumeDiscount > 0 && (
                                 <div className="flex justify-between text-destructive">
-                                    <span>Descuento por volumen</span>
+                                    <span>Ahorro por pago anticipado:</span>
                                     <span>-{formatPrice(volumeDiscount)}</span>
                                 </div>
                             )}
@@ -679,5 +679,3 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
-
-    
