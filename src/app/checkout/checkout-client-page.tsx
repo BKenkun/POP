@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle, UserCheck, Gift } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle, UserCheck, Gift, Bitcoin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,7 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ToastAction } from '@/components/ui/toast';
 import { updateUser } from '@/app/actions/user-data';
+import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 
 
 interface Address {
@@ -61,7 +62,7 @@ const checkoutSchema = z.object({
     state: z.string().min(2, "El estado/provincia es requerido."),
     postalCode: z.string().min(3, "El código postal es requerido."),
     country: z.string().min(2, "El país es requerido."),
-    paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'], {
+    paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto'], {
         required_error: "Debes seleccionar un método de pago."
     }),
     useDifferentBilling: z.boolean().default(false),
@@ -118,7 +119,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 };
 
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount } = useCart();
+  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -146,7 +147,10 @@ export default function CheckoutClientPage() {
   
   const formValues = form.watch();
 
-  const isPrepaid = formValues.paymentMethod?.startsWith('prepaid');
+  const isPrepaid = useMemo(() => {
+      const method = form.getValues('paymentMethod');
+      return method.startsWith('prepaid') || method === 'crypto';
+  }, [form.watch('paymentMethod')]);
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
@@ -154,6 +158,7 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscount = subtotal - discount;
 
     let shipping = 0;
+    // Apply shipping only for CoD and if subtotal (without discount) is below threshold
     if (!isPrepaid && subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
         shipping = SHIPPING_COST;
     }
@@ -255,6 +260,31 @@ export default function CheckoutClientPage() {
       return;
     }
     setLoading(true);
+
+    // Crypto payment logic
+    if (data.paymentMethod === 'crypto') {
+        try {
+            const result = await createNowPaymentsInvoice({
+                price_amount: finalTotals.total / 100, // Convert cents to euros/dollars
+                price_currency: 'eur',
+                order_id: `order_${user.uid}_${Date.now()}`,
+                order_description: `Pedido de ${cartCount} productos en PuroRush`
+            });
+
+            if (result.success && result.invoice_url) {
+                window.location.href = result.invoice_url; // Redirect user to NOWPayments
+            } else {
+                throw new Error(result.error || 'No se pudo crear el enlace de pago con criptomonedas.');
+            }
+        } catch (error: any) {
+            toast({ title: 'Error con Pago Cripto', description: error.message, variant: 'destructive' });
+            setLoading(false);
+        }
+        return; // Stop execution for crypto payments
+    }
+
+
+    // Logic for other payment methods
     try {
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
 
@@ -272,7 +302,7 @@ export default function CheckoutClientPage() {
         const newOrderRef = await addDoc(orderCollectionRef, {
             userId: user.uid,
             status: 'Reserva Recibida',
-            total: finalTotals.total, // Use the final calculated total
+            total: finalTotals.total,
             items: itemsForPayload,
             customerName: data.name,
             customerEmail: data.email,
@@ -291,8 +321,7 @@ export default function CheckoutClientPage() {
             })
         });
         
-        // Award loyalty points
-        const pointsToAdd = Math.floor(finalTotals.total / 1000); // 1 point per 10 euros
+        const pointsToAdd = Math.floor(finalTotals.total / 1000);
         if (pointsToAdd > 0) {
             const result = await updateUser('update-points', { pointsToAdd });
             if (result.success && result.user) {
@@ -303,7 +332,6 @@ export default function CheckoutClientPage() {
                 });
             }
         }
-
 
         toast({
             duration: 10000,
@@ -340,7 +368,8 @@ export default function CheckoutClientPage() {
       ],
       prepaid: [
           { value: 'prepaid_bizum', label: 'Pago anticipado con Bizum', icon: Smartphone },
-          { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia', icon: Banknote }
+          { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia', icon: Banknote },
+          { value: 'crypto', label: 'Pagar con Criptomonedas', icon: Bitcoin },
       ]
   };
 
@@ -383,6 +412,16 @@ export default function CheckoutClientPage() {
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
                                 <span>{formatPrice(cartTotal)}</span>
+                            </div>
+                             {volumeDiscount > 0 && (
+                                <div className="flex justify-between text-destructive">
+                                    <span>Descuento por volumen</span>
+                                    <span>-{formatPrice(volumeDiscount)}</span>
+                                </div>
+                            )}
+                             <div className="flex justify-between font-bold text-lg">
+                                <span>Total (antes de envío y recargos)</span>
+                                <span>{formatPrice(totalWithDiscount)}</span>
                             </div>
                         </div>
                     </CardContent>
@@ -567,7 +606,7 @@ export default function CheckoutClientPage() {
                                 ) : (<p className="text-sm text-muted-foreground">La misma que la de envío.</p>)}
                             </div>
                         </div>
-                         <div><h3 className="font-semibold mb-2">Método de Pago:</h3><div className="text-sm text-muted-foreground"><p>{formValues.paymentMethod?.replace(/_/g, ' ')}</p></div></div>
+                         <div><h3 className="font-semibold mb-2">Método de Pago:</h3><div className="text-sm text-muted-foreground"><p>{paymentMethods[form.getValues('paymentMethod').startsWith('cod') ? 'cod' : 'prepaid'].find(m => m.value === formValues.paymentMethod)?.label}</p></div></div>
                         <Separator />
                         <div className="space-y-2">
                              <div className="flex justify-between">
