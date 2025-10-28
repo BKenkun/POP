@@ -14,6 +14,7 @@ interface CartContextType {
   cartCount: number;
   cartTotal: number;
   volumeDiscount: number;
+  totalWithDiscount: number; // Added this back
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -115,8 +116,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else if (cartCount >= 3) {
         discountPercent = 0.02; // 2%
     }
-    return cartTotal * discountPercent;
+    return Math.round(cartTotal * discountPercent);
   }, [cartCount, cartTotal]);
+
+  const totalWithDiscount = useMemo(() => cartTotal - volumeDiscount, [cartTotal, volumeDiscount]);
 
 
   const value = {
@@ -128,6 +131,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     cartCount,
     cartTotal,
     volumeDiscount,
+    totalWithDiscount,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
