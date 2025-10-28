@@ -159,7 +159,10 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscount = subtotal - discount;
     
     let shipping = 0;
-    if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
+    // For this launch promotion, shipping is free with advance payment
+    if (!isCod) {
+        shipping = 0;
+    } else if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
         shipping = SHIPPING_COST;
     }
     
@@ -436,7 +439,7 @@ export default function CheckoutClientPage() {
                             </div>
                              {volumeDiscount > 0 && (
                                 <div className="flex justify-between text-destructive">
-                                    <span>Ahorro por pago anticipado:</span>
+                                    <span>Descuento por volumen con pago anticipado:</span>
                                     <span>-{formatPrice(volumeDiscount)}</span>
                                 </div>
                             )}
@@ -573,7 +576,7 @@ export default function CheckoutClientPage() {
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
                                             <Banknote className="mb-2 h-8 w-8" />
                                             <span className="font-bold">Pago por adelantado</span>
-                                            <span className="text-xs text-primary">(¡Con Descuento, Envío Gratis y Regalo!)</span>
+                                            <span className="text-xs text-primary">(¡Descuento + Regalo + Envío Gratis!)</span>
                                         </Label>
                                     </RadioGroup>
 
@@ -582,9 +585,9 @@ export default function CheckoutClientPage() {
                                             {paymentCategory === 'prepaid' && (
                                                 <Alert variant="default" className="mb-4 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
                                                     <Gift className="h-4 w-4 !text-green-600" />
-                                                    <AlertTitle className="text-green-800 dark:text-green-300">¡Beneficios Exclusivos!</AlertTitle>
+                                                    <AlertTitle className="text-green-800 dark:text-green-300">¡Promoción de Lanzamiento!</AlertTitle>
                                                     <AlertDescription className="text-green-700 dark:text-green-400">
-                                                        Al pagar por adelantado, disfrutas de <span className="font-bold">descuento por volumen, envío gratuito y un regalo sorpresa</span> en tu pedido.
+                                                       Al elegir pago por adelantado, disfrutas de <span className="font-bold">descuento por volumen, envío gratuito y un regalo sorpresa</span> en tu pedido.
                                                     </AlertDescription>
                                                 </Alert>
                                             )}
@@ -644,7 +647,7 @@ export default function CheckoutClientPage() {
                             </div>
                             {finalTotals.discount > 0 && (
                                 <div className="flex justify-between text-destructive">
-                                    <span>Descuento por pago adelantado</span>
+                                    <span>Descuento por volumen con pago anticipado</span>
                                     <span>-{formatPrice(finalTotals.discount)}</span>
                                 </div>
                             )}
