@@ -139,7 +139,7 @@ export default function CheckoutClientPage() {
         city: '', 
         state: '', 
         postalCode: '', 
-        country: 'España',
+        country: '',
         saveAddress: false,
         paymentMethod: 'crypto', // Default to crypto
         useDifferentBilling: false 
@@ -159,10 +159,8 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscount = subtotal - discount;
     
     let shipping = 0;
-    if (isCod) {
-        if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
-            shipping = SHIPPING_COST;
-        }
+    if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
+        shipping = SHIPPING_COST;
     }
     
     const total = subtotalWithDiscount + shipping;
@@ -206,7 +204,7 @@ export default function CheckoutClientPage() {
                 city: '', 
                 state: '', 
                 postalCode: '', 
-                country: 'España',
+                country: '',
                 saveAddress: false,
             });
         } else {
