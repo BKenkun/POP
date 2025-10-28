@@ -97,6 +97,7 @@ const getImageUrl = (url: string) => {
 
 const SHIPPING_COST = 695; // 6,95€ en céntimos
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€ en céntimos
+const COD_SURCHARGE = 300; // 3€ en céntimos
 
 // --- Components ---
 const Stepper = ({ currentStep }: { currentStep: number }) => {
@@ -141,34 +142,35 @@ export default function CheckoutClientPage() {
         postalCode: '', 
         country: 'España',
         saveAddress: false,
-        paymentMethod: 'prepaid_bizum', // Default to a prepaid method
+        paymentMethod: 'crypto', // Default to crypto
         useDifferentBilling: false 
     },
   });
   
   const formValues = form.watch();
 
-  const isPrepaid = useMemo(() => {
+  const isCod = useMemo(() => {
       const method = form.getValues('paymentMethod');
-      return method.startsWith('prepaid') || method === 'crypto';
+      return method.startsWith('cod');
   }, [form.watch('paymentMethod')]);
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
-    const discount = isPrepaid ? (volumeDiscount || 0) : 0;
+    const discount = isCod ? 0 : (volumeDiscount || 0); // No discount for COD
     const subtotalWithDiscount = subtotal - discount;
+    const surcharge = isCod ? COD_SURCHARGE : 0;
     
     let shipping = 0;
-    if (!isPrepaid) {
+    if (isCod) {
         if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
             shipping = SHIPPING_COST;
         }
     }
     
-    const total = subtotalWithDiscount + shipping;
+    const total = subtotalWithDiscount + shipping + surcharge;
 
-    return { subtotal, discount, shipping, total };
-  }, [cartTotal, volumeDiscount, isPrepaid]);
+    return { subtotal, discount, shipping, total, surcharge };
+  }, [cartTotal, volumeDiscount, isCod]);
 
 
     useEffect(() => {
@@ -180,20 +182,20 @@ export default function CheckoutClientPage() {
     useEffect(() => {
         if (user && userDoc) {
             form.setValue('email', user.email || '');
-            form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
             
             const userAddresses: Address[] = userDoc.addresses || [];
             const defaultAddress = userAddresses.find(addr => addr.isDefault);
             
             if (defaultAddress) {
                 handleAddressSelection(defaultAddress.id, userAddresses);
+            } else if (userAddresses.length > 0) {
+                 handleAddressSelection(userAddresses[0].id, userAddresses);
             }
         }
     }, [user, userDoc, form.setValue]);
     
     const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
         setSelectedAddressId(addressId);
-        form.setValue('email', user?.email || ''); 
         
         if (addressId === 'new') {
             form.reset({ 
@@ -218,6 +220,7 @@ export default function CheckoutClientPage() {
                 form.setValue('state', selectedAddr.state || selectedAddr.city);
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
+                form.setValue('email', user?.email || ''); 
             }
         }
     };
@@ -388,9 +391,9 @@ export default function CheckoutClientPage() {
           { value: 'cod_bizum', label: 'Pagar con Bizum contra-entrega', icon: Smartphone }
       ],
       prepaid: [
+          { value: 'crypto', label: 'Pagar con Criptomonedas', icon: Bitcoin },
           { value: 'prepaid_bizum', label: 'Pago anticipado con Bizum', icon: Smartphone },
           { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia', icon: Banknote },
-          { value: 'crypto', label: 'Pagar con Criptomonedas', icon: Bitcoin },
       ]
   };
 
@@ -646,6 +649,12 @@ export default function CheckoutClientPage() {
                                 <div className="flex justify-between text-destructive">
                                     <span>Descuento por pago adelantado</span>
                                     <span>-{formatPrice(finalTotals.discount)}</span>
+                                </div>
+                            )}
+                             {finalTotals.surcharge > 0 && (
+                                <div className="flex justify-between text-destructive">
+                                    <span>Recargo contrareembolso</span>
+                                    <span>{formatPrice(finalTotals.surcharge)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between">
