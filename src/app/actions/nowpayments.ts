@@ -21,9 +21,10 @@ export async function createNowPaymentsInvoice(
   }
 
   const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-  if (!NOWPAYMENTS_API_KEY) {
-    console.error('NOWPayments API key is not set in environment variables.');
+  if (!NOWPAYMENTS_API_KEY || !BASE_URL) {
+    console.error('NOWPayments API key or Base URL is not set in environment variables.');
     return {
       success: false,
       error: 'El servicio de pago con criptomonedas no está configurado. Por favor, contacta al soporte.',
@@ -42,8 +43,8 @@ export async function createNowPaymentsInvoice(
         price_currency: validation.data.price_currency,
         order_id: validation.data.order_id,
         order_description: validation.data.order_description,
-        success_url: process.env.NEXT_PUBLIC_BASE_URL,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
+        success_url: `${BASE_URL}/account/orders`,
+        cancel_url: `${BASE_URL}/checkout`,
       }),
     });
 
