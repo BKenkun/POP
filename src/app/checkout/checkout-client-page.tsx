@@ -156,12 +156,13 @@ export default function CheckoutClientPage() {
     const subtotal = cartTotal;
     const discount = isPrepaid ? (volumeDiscount || 0) : 0;
     const subtotalWithDiscount = subtotal - discount;
-
+    
     let shipping = 0;
-    // Apply shipping only for CoD and if subtotal (without discount) is below threshold
-    if (!isPrepaid && subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
-        shipping = SHIPPING_COST;
-    }
+    if (!isPrepaid) { // CoD shipping logic
+        if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
+            shipping = SHIPPING_COST;
+        }
+    } // For prepaid, shipping is always free.
     
     const surcharge = isPrepaid ? 0 : COD_SURCHARGE;
     
@@ -183,20 +184,19 @@ export default function CheckoutClientPage() {
             form.setValue('name', user.displayName || user.email?.split('@')[0] || '');
             
             const userAddresses: Address[] = userDoc.addresses || [];
-            
             const defaultAddress = userAddresses.find(addr => addr.isDefault);
-            if (defaultAddress && selectedAddressId !== 'new') {
-                handleAddressSelection(defaultAddress.id, userAddresses);
-            } else if (userAddresses.length > 0 && selectedAddressId === 'new') {
-                // If there are addresses but 'new' is selected, don't auto-select one.
-            } else if (defaultAddress) {
+            
+            // Auto-select default address if it exists and no address is selected yet
+            if (defaultAddress && selectedAddressId === 'new') {
                 handleAddressSelection(defaultAddress.id, userAddresses);
             }
         }
-    }, [user, userDoc, form]);
+    }, [user, userDoc, form.setValue]);
     
     const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
         setSelectedAddressId(addressId);
+        form.setValue('email', user?.email || ''); // ALWAYS ensure email is set
+        
         if (addressId === 'new') {
             form.reset({ 
                 ...form.getValues(),
@@ -219,7 +219,6 @@ export default function CheckoutClientPage() {
                 form.setValue('state', selectedAddr.state || selectedAddr.city);
                 form.setValue('postalCode', selectedAddr.postalCode);
                 form.setValue('country', selectedAddr.country);
-                form.setValue('email', user?.email || ''); // Ensure email is set
             }
         }
     };
@@ -658,5 +657,3 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
-
-    
