@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
+import { createNowPaymentsSubscription } from '../actions/subscription-nowpayments';
 
 const benefits = [
     { icon: Package, text: "5 poppers de tu elección cada mes" },
@@ -36,11 +37,26 @@ export default function SubscriptionPage() {
 
         setLoading(true);
         toast({
-            title: 'Función no disponible',
-            description: 'La creación de nuevas suscripciones está temporalmente desactivada.',
-            variant: 'destructive'
+            title: 'Creando suscripción...',
+            description: 'Espera mientras te redirigimos a la pasarela de pago segura.'
         });
-        setLoading(false);
+
+        try {
+            const result = await createNowPaymentsSubscription();
+            if (result.success && result.invoice_url) {
+                // Redirect user to NOWPayments to complete the subscription
+                window.location.href = result.invoice_url;
+            } else {
+                throw new Error(result.error || 'No se pudo iniciar el proceso de suscripción.');
+            }
+        } catch (error: any) {
+            toast({
+                title: 'Error al crear la suscripción',
+                description: error.message,
+                variant: 'destructive'
+            });
+            setLoading(false);
+        }
     }
     
     return (
@@ -105,7 +121,7 @@ export default function SubscriptionPage() {
                            <User className="h-8 w-8 text-primary" />
                         </div>
                         <h3 className="text-xl font-bold">1. Suscríbete</h3>
-                        <p className="text-muted-foreground">Únete al club con un pago seguro a través de Stripe. Es rápido y 100% fiable.</p>
+                        <p className="text-muted-foreground">Únete al club con un pago seguro con tarjeta o criptomonedas. Es rápido y 100% fiable.</p>
                     </div>
                      <div className="flex flex-col items-center space-y-4">
                         <div className="flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 border-2 border-primary/20">
