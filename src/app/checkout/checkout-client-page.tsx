@@ -119,7 +119,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 };
 
 export default function CheckoutClientPage() {
-  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
+  const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -421,7 +421,7 @@ export default function CheckoutClientPage() {
                             )}
                              <div className="flex justify-between font-bold text-lg">
                                 <span>Total (antes de envío y recargos)</span>
-                                <span>{formatPrice(totalWithDiscount)}</span>
+                                <span>{formatPrice(cartTotal - (volumeDiscount || 0))}</span>
                             </div>
                         </div>
                     </CardContent>
