@@ -159,11 +159,11 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscount = subtotal - discount;
     
     let shipping = 0;
-    if (!isPrepaid) { // CoD shipping logic
+    if (!isPrepaid) {
         if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
             shipping = SHIPPING_COST;
         }
-    } // For prepaid, shipping is always free.
+    }
     
     const total = subtotalWithDiscount + shipping;
 
@@ -185,7 +185,7 @@ export default function CheckoutClientPage() {
             const userAddresses: Address[] = userDoc.addresses || [];
             const defaultAddress = userAddresses.find(addr => addr.isDefault);
             
-            if (defaultAddress && selectedAddressId === 'new') {
+            if (defaultAddress) {
                 handleAddressSelection(defaultAddress.id, userAddresses);
             }
         }
@@ -472,10 +472,10 @@ export default function CheckoutClientPage() {
                            <>
                                 {addresses.length > 0 && (
                                     <RadioGroup value={selectedAddressId} onValueChange={(id) => handleAddressSelection(id, addresses)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {addresses.map((addr: Address) => (
+                                        {addresses.map((addr: Address, index: number) => (
                                             <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="font-semibold">{addr.alias}</span>
+                                                    <span className="font-semibold">{addr.alias || `Dirección ${index + 1}`}</span>
                                                     <RadioGroupItem value={addr.id} id={addr.id} />
                                                 </div>
                                                 <div className="text-sm text-muted-foreground mt-2">
