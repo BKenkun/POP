@@ -75,14 +75,14 @@ import { Home, ShoppingCart } from 'lucide-react';
     title: 'Lógica de Negocio y Marketing',
     icon: Wand2,
     features: [
-      {
+       {
         name: 'Verificación de Edad (Popup Modal)',
         id: 'logic-age-gate',
         path: '#',
         description: 'Un popup modal que bloquea el acceso a la web hasta que el usuario verifica que es mayor de 18 años.',
         details: [
-            "**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto. La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de 'Entrar' permanece deshabilitado. Si hace clic en 'Salir', es redirigido a google.com.",
-            `
+          '**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto. La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de \'Entrar\' permanece deshabilitado. Si hace clic en \'Salir\', es redirigido a google.com.',
+          `
 <pre><code class="language-javascript">
 // En src/components/age-verification-popup.tsx
 useEffect(() => {
@@ -96,8 +96,8 @@ useEffect(() => {
 }, []);
 </code></pre>
             `,
-            "**Estético:** Es un `Dialog` modal no descartable (el usuario no puede cerrarlo haciendo clic fuera o pulsando Escape). Presenta el logo y campos de entrada claros para la fecha de nacimiento."
-        ]
+          '**Estético:** Es un `Dialog` modal no descartable (el usuario no puede cerrarlo haciendo clic fuera o pulsando Escape). Presenta el logo y campos de entrada claros para la fecha de nacimiento.',
+        ],
       },
       {
         name: 'Notificaciones de Ventas Híbridas (Reales y Simuladas)',
@@ -290,7 +290,7 @@ const calculatePackPriceFlow = ai.defineFlow(
           '**Estético:** Utiliza un componente `Sheet` de ShadCN para deslizarse desde la derecha. Muestra el ahorro potencial del pago por adelantado y si el pedido califica para envío gratuito, incentivando al usuario a continuar con la compra.'
         ]
       },
-      {
+       {
         name: 'Proceso de Pago (Checkout)',
         id: 'feature-checkout',
         path: '/checkout',
@@ -300,7 +300,7 @@ const calculatePackPriceFlow = ai.defineFlow(
           '**Fase 2: Tus Datos.** Se solicita la información de envío. Si el usuario está autenticado (`useAuth`), puede seleccionar una de sus direcciones guardadas (obtenidas del `userDoc`) o rellenar el formulario. Un `RadioGroup` permite cambiar entre direcciones. La validación se hace con `react-hook-form` y `zod`. Una `Server Action` (`updateUser`) se encarga de guardar una nueva dirección si el usuario lo solicita.',
           '**Fase 3: Método de Pago.** El usuario elige entre dos categorías: "Contrareembolso" y "Pago por adelantado". **Aquí reside la lógica de precios clave:** un `useMemo` (`finalTotals`) recalcula el total del pedido en tiempo real basándose en el método seleccionado. Si es "Pago por adelantado", se aplica el `volumeDiscount` del `CartContext` y el envío es gratuito. Si es "Contrareembolso", el descuento se elimina y se suma el `SHIPPING_COST`. Esta interacción proporciona un feedback instantáneo sobre los beneficios de cada opción.',
           '**Fase 4: Revisión y Confirmación Final.** Se presenta un resumen completo y final. Al hacer clic en "Confirmar Pedido", se ejecuta la lógica final: si el método es "crypto", se llama a la `Server Action` `createNowPaymentsInvoice` que devuelve una URL de pago a la que se redirige al usuario. Para los demás métodos, se crea un nuevo documento en la colección `orders` de Firestore con todos los detalles del pedido usando `addDoc`.',
-        ]
+        ],
       },
     ]
   },
@@ -350,7 +350,7 @@ if (result.success && result.invoice_url) {
         description: 'Formulario para que los usuarios existentes accedan a su cuenta, con lógica de redirección basada en rol.',
         details: [
             "**Técnico:** Utiliza `signInWithEmailAndPassword` de Firebase. Una vez autenticado, se obtiene el `idToken` del usuario y se envía a la API Route `/api/login`, que crea una **session cookie** segura (`httpOnly`). Esta cookie es crucial para autenticar al usuario en las `Server Actions` y en el lado del servidor.",
-            "La lógica de redirección post-login es clave: si el email del usuario es `maryandpopper@gmail.com`, el sistema lo identifica como administrador y lo redirige a `/admin`. Si es un usuario normal, lo redirige a la página que intentaba visitar (`redirectUrl`) o a `/account` por defecto. La interfaz se adapta a este rol, mostrando opciones de administrador solo cuando corresponde, como el enlace al 'Panel de Admin' en el menú de usuario.",
+            "**Diferenciación de Roles y Redirección:** La lógica de redirección post-login es clave. El sistema comprueba el email del usuario: si es `maryandpopper@gmail.com`, lo identifica como administrador y lo redirige a `/admin`. Los usuarios normales son dirigidos a `/account` o a la página que intentaban visitar. Esta diferenciación de rol (`isAdmin` en `AuthContext`) permite a la interfaz adaptarse, mostrando u ocultando elementos como el enlace al 'Panel de Admin' en los menús.",
             `
 <pre><code class="language-javascript">
 // En src/app/login/login-form.tsx
@@ -366,7 +366,7 @@ if (loggedInIsAdmin) {
 }
 </code></pre>
             `,
-            "**Estético:** Es un formulario simple dentro de una `Card`. La interfaz de la cuenta (menús, botones) se adapta dinámicamente gracias al estado `isAdmin` del `AuthContext`, mostrando opciones como 'Panel de Admin' solo a los administradores."
+            "**Estético:** El formulario de login es simple y se presenta en una `Card`. La interfaz de la cuenta (`AccountSidebar`, `FloatingAccountButton`) es dinámica, mostrando opciones de administrador solo a los usuarios con ese rol, creando una experiencia coherente y segura.",
         ]
       },
       { name: 'Registro de Nuevo Usuario', id: 'auth-register', path: '/register', description: 'Formulario para que nuevos usuarios creen una cuenta.', details: ["**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
@@ -392,11 +392,14 @@ if (loggedInIsAdmin) {
             '**Archivar/Activar:** En la tabla de productos, cada fila tiene un interruptor (`Switch`). Al cambiarlo, se llama a la función `handleToggleActive`, que actualiza el campo booleano `active` del producto en Firestore. Esto no borra el producto, simplemente controla su visibilidad en la tienda pública.',
             '**Eliminar:** Cada producto tiene una opción para eliminar en su menú desplegable. Esta acción abre un diálogo de confirmación (`AlertDialog`) para prevenir borrados accidentales. Si se confirma, se llama a la función `handleDelete` que ejecuta una operación `deleteDoc` en Firestore para eliminar el producto permanentemente.',
             '**Guía de Campos del Producto:**',
-            '- **Información Principal:** `Nombre` (título del producto), `SKU` (código de referencia único), `Descripción Corta` (texto breve bajo el nombre).',
+            '- **Información Principal:** `Nombre` (título del producto), `Descripción Corta` (texto breve bajo el nombre).',
             `- **Descripción Larga:** Un editor de texto enriquecido (Rich Text Editor) basado en **Tiptap**. Permite dar formato al texto (negrita, cursiva, encabezados, listas) y cambiar colores. El contenido se guarda como una **cadena de texto HTML** en la base de datos, lo que permite renderizarlo con su formato en la página de detalle del producto.`,
+            '- **Inventario y Precios:** Este grupo de campos gestiona la parte comercial y logística del producto.',
+            '  - **SKU (Stock Keeping Unit):** Un código de referencia único para el producto (ej. "P-RUSH01"). Es crucial para el control de inventario.',
+            '  - **Precio Estándar y Precio de Oferta:** La lógica de precios es dual. El campo principal es `price` (precio en céntimos). Cuando se introduce un valor en el campo `Precio de Oferta`, el valor del `Precio Estándar` se mueve al campo `originalPrice`, y el campo `price` se actualiza con el nuevo valor de oferta. Esto crea el efecto de precio tachado. Si se borra el precio de oferta, el sistema revierte `originalPrice` al campo `price`.',
+            '  - **Stock Disponible:** Controla la cantidad de unidades disponibles. Si es `0`, el producto se muestra como "Agotado" y no se puede añadir al carrito. El `QuantitySelector` también usa este valor como límite máximo.',
             '- **Imágenes:** `URL de la Imagen Principal`, `Pista de la Imagen` (para IA), `URLs de la Galería` (imágenes adicionales separadas por comas).',
-            '- **Precios y Ofertas:** `Precio Estándar` (en céntimos), `Precio de Oferta` (si se establece, el estándar pasa a ser el precio tachado), `Duración de la Oferta` (opcional, para ofertas temporales).',
-            '- **Inventario y Contabilidad:** `Stock Disponible` (0 significa "Agotado"), `Coste` (coste de adquisición), `Porcentaje de IVA` y si está incluido.',
+            '- **Datos Económicos:** `Coste` (coste de adquisición), `Porcentaje de IVA` y si está incluido en el precio.',
             '- **Organización y Filtros:** `Marca`, `Tamaño`, `Composición` (usados para los filtros del catálogo).',
             '- **Etiquetas:** `Etiquetas Visibles` (se muestran como badges en la tarjeta del producto, ej: "Nuevo"), `Categorías Internas` (para control lógico, ej: "novedad", "mas-vendido", "pack").'
           ]
@@ -511,3 +514,4 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
