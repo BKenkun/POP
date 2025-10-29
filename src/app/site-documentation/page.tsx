@@ -81,7 +81,8 @@ import { Home, ShoppingCart } from 'lucide-react';
         path: '#',
         description: 'Un popup modal que bloquea el acceso a la web hasta que el usuario verifica que es mayor de 18 años.',
         details: [
-          '**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto. La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de \'Entrar\' permanece deshabilitado. Si hace clic en \'Salir\', es redirigido a google.com.',
+          '**Funcionalidad:** Un popup modal que bloquea el acceso al sitio hasta que el usuario confirma ser mayor de 18 años, utilizando su fecha de nacimiento.',
+          '**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado, evitando que el popup aparezca en cada visita. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto. La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de "Entrar" permanece deshabilitado. Si hace clic en "Salir", es redirigido a google.com.',
           `
 <pre><code class="language-javascript">
 // En src/components/age-verification-popup.tsx
@@ -286,7 +287,7 @@ const calculatePackPriceFlow = ai.defineFlow(
         details: [
           '**Funcionalidad:** Muestra los productos añadidos, permite ajustar cantidades o eliminarlos. Recalcula el subtotal y el descuento por volumen en tiempo real.',
           '**Técnico:** Implementado como un `Contexto de React` (`CartContext`) que vive en `src/context/cart-context.tsx`. Este contexto maneja un estado (`cartItems`) que es un array de productos con su cantidad. Las funciones `addToCart`, `updateQuantity` y `removeFromCart` manipulan este estado. El contexto no es persistente; se reinicia si el usuario recarga la página.',
-          '**Lógica de Precios:** En el carrito se muestra de forma estimada el descuento por volumen y los costes de envío. La lógica de precios final, que diferencia entre pago anticipado y contra-reembolso, se aplica en la página de checkout para proporcionar un feedback interactivo y claro al usuario, incentivando el pago por adelantado.',
+          '**Lógica de Precios:** En el carrito se muestra de forma estimada el descuento por volumen (si aplica por pago anticipado) y los costes de envío. Esta estimación incentiva al usuario a completar la compra. La lógica de precios final y definitiva, que diferencia entre pago anticipado y contra-reembolso, se aplica en la página de checkout para proporcionar un feedback interactivo y claro al usuario.',
           '**Estético:** Utiliza un componente `Sheet` de ShadCN para deslizarse desde la derecha. Muestra el ahorro potencial del pago por adelantado y si el pedido califica para envío gratuito, incentivando al usuario a continuar con la compra.'
         ]
       },
@@ -395,8 +396,8 @@ if (loggedInIsAdmin) {
             '- **Información Principal:** `Nombre` (título del producto), `Descripción Corta` (texto breve bajo el nombre).',
             `- **Descripción Larga:** Un editor de texto enriquecido (Rich Text Editor) basado en **Tiptap**. Permite dar formato al texto (negrita, cursiva, encabezados, listas) y cambiar colores. El contenido se guarda como una **cadena de texto HTML** en la base de datos, lo que permite renderizarlo con su formato en la página de detalle del producto.`,
             '- **Inventario y Precios:** Este grupo de campos gestiona la parte comercial y logística del producto.',
-            '  - **SKU (Stock Keeping Unit):** Un código de referencia único para el producto (ej. "P-RUSH01"). Es crucial para el control de inventario.',
-            '  - **Precio Estándar y Precio de Oferta:** La lógica de precios es dual. El campo principal es `price` (precio en céntimos). Cuando se introduce un valor en el campo `Precio de Oferta`, el valor del `Precio Estándar` se mueve al campo `originalPrice`, y el campo `price` se actualiza con el nuevo valor de oferta. Esto crea el efecto de precio tachado. Si se borra el precio de oferta, el sistema revierte `originalPrice` al campo `price`.',
+            '  - **SKU (Stock Keeping Unit):** Un código de referencia único para el producto. **Generación Automática:** Al crear un nuevo producto, el sistema genera automáticamente un SKU aleatorio (ej. "P-RUSH01") para agilizar el proceso, aunque el sistema debería validar que no haya duplicados. **Edición Manual:** Este campo es totalmente editable, permitiéndote asignar códigos personalizados si lo necesitas.',
+            '  - **Precio Estándar y Precio de Oferta:** La lógica de precios es dual. El campo principal es `price` (precio en céntimos). Cuando se introduce un valor en el campo `Precio de Oferta`, el valor del `Precio Estándar` se mueve al campo `originalPrice`, y el campo `price` se actualiza con el nuevo valor de oferta. Si se borra el precio de oferta, el sistema revierte `originalPrice` al campo `price`. <pre><code class="language-javascript">// Lógica en product-form.tsx\\nif (salePrice > 0 && !currentOriginalPrice) {\\n  form.setValue(\'originalPrice\', currentPrice);\\n}\\nform.setValue(\'price\', salePrice);</code></pre>',
             '  - **Stock Disponible:** Controla la cantidad de unidades disponibles. Si es `0`, el producto se muestra como "Agotado" y no se puede añadir al carrito. El `QuantitySelector` también usa este valor como límite máximo.',
             '- **Imágenes:** `URL de la Imagen Principal`, `Pista de la Imagen` (para IA), `URLs de la Galería` (imágenes adicionales separadas por comas).',
             '- **Datos Económicos:** `Coste` (coste de adquisición), `Porcentaje de IVA` y si está incluido en el precio.',
@@ -514,4 +515,5 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
 
