@@ -8,7 +8,7 @@ const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 
 // This is the unique ID for your subscription plan in your system.
-const SUBSCRIPTION_PLAN_ID = "1237708102";
+const SUBSCRIPTION_PLAN_ID = "1441433881";
 
 async function getUserIdFromSession(): Promise<{ uid: string; email: string | undefined }> {
     const sessionCookie = cookies().get('session')?.value;
