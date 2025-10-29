@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,8 +81,7 @@ import { Home, ShoppingCart } from 'lucide-react';
         path: '#',
         description: 'Un popup modal que bloquea el acceso a la web hasta que el usuario verifica que es mayor de 18 años.',
         details: [
-            "**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto.",
-            "La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de 'Entrar' permanece deshabilitado. Si hace clic en 'Salir', es redirigido a google.com.",
+            "**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto. La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de 'Entrar' permanece deshabilitado. Si hace clic en 'Salir', es redirigido a google.com.",
             `
 <pre><code class="language-javascript">
 // En src/components/age-verification-popup.tsx
@@ -341,7 +341,32 @@ if (result.success && result.invoice_url) {
     title: 'Cuenta de Usuario y Autenticación',
     icon: User,
     features: [
-      { name: 'Inicio de Sesión', id: 'auth-login', path: '/login', description: 'Formulario para que los usuarios existentes accedan a su cuenta.', details: ["**Técnico:** Utiliza Firebase Auth (`signInWithEmailAndPassword`). Tras un inicio de sesión exitoso, llama a la API Route `/api/login` para crear una `session-cookie` segura (`httpOnly`), permitiendo la autenticación en Server Actions.", "**Estético:** Un formulario simple y centrado dentro de una `Card`, con opción para mostrar/ocultar la contraseña."] },
+      {
+        name: 'Inicio de Sesión',
+        id: 'auth-login',
+        path: '/login',
+        description: 'Formulario para que los usuarios existentes accedan a su cuenta, con lógica de redirección basada en rol.',
+        details: [
+            "**Técnico:** Utiliza `signInWithEmailAndPassword` de Firebase. Una vez autenticado, se obtiene el `idToken` del usuario y se envía a la API Route `/api/login`, que crea una **session cookie** segura (`httpOnly`). Esta cookie es crucial para autenticar al usuario en las `Server Actions` y en el lado del servidor.",
+            "La lógica de redirección post-login es clave: si el email del usuario es `maryandpopper@gmail.com`, el sistema lo identifica como administrador y lo redirige a `/admin`. Si es un usuario normal, lo redirige a la página que intentaba visitar (`redirectUrl`) o a `/account` por defecto.",
+            `
+<pre><code class="language-javascript">
+// En src/app/login/login-form.tsx
+const userCredential = await signInWithEmailAndPassword(...);
+const idToken = await userCredential.user.getIdToken();
+await fetch('/api/login', { body: JSON.stringify({ idToken }) });
+
+const loggedInIsAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
+if (loggedInIsAdmin) {
+  router.push('/admin');
+} else {
+  router.push(redirectUrl || '/account');
+}
+</code></pre>
+            `,
+            "**Estético:** Es un formulario simple dentro de una `Card`. La interfaz de la cuenta (menús, botones) se adapta dinámicamente gracias al estado `isAdmin` del `AuthContext`, mostrando opciones como 'Panel de Admin' solo a los administradores, tal como se ve en la imagen que proporcionaste."
+        ]
+      },
       { name: 'Registro de Nuevo Usuario', id: 'auth-register', path: '/register', description: 'Formulario para que nuevos usuarios creen una cuenta.', details: ["**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
       { name: 'Panel de Cuenta', id: 'auth-account-dashboard', path: '/account', description: 'Dashboard principal del usuario con resumen de su actividad. Requiere iniciar sesión.', details: ["**Técnico:** Protegido por el `AccountLayout`, que redirige a los usuarios no autenticados. Muestra datos del `AuthContext`, como `loyaltyPoints` e `isSubscribed`.", "**Estético:** Usa `Cards` para segmentar la información: perfil, puntos y gestión de la suscripción/admin."] },
       { name: 'Mis Pedidos', id: 'auth-orders', path: '/account/orders', description: 'Historial de todos los pedidos realizados por el usuario.', details: ["**Técnico:** Realiza una consulta a Firestore (`collection(db, 'users', user.uid, 'orders')`) para obtener y mostrar los pedidos del usuario en tiempo real con `onSnapshot`.", "**Estético:** Muestra los pedidos en una `Table` con `Badges` de colores para indicar el estado de cada pedido."] },
