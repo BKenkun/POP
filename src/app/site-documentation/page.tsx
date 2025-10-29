@@ -237,9 +237,14 @@ export default function SiteDocumentationPage() {
     <div className="max-w-6xl mx-auto space-y-12">
       <header className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Documentación del Sitio Web</h1>
-        <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
-          Esta página sirve como una guía central para revisar y probar todas las funcionalidades implementadas en la aplicación. Marca las casillas para llevar un control de tu revisión.
-        </p>
+        <div className="prose prose-lg dark:prose-invert max-w-3xl mx-auto text-foreground/80">
+            <p>
+                Esta página es un <strong>manual de identidad y arquitectura</strong> del sitio, diseñada para ser la fuente de verdad para desarrolladores, diseñadores y gestores de contenido. Su propósito es garantizar la coherencia, facilitar el mantenimiento y guiar la implementación de nuevas funcionalidades.
+            </p>
+            <p>
+                Para los <strong>diseñadores</strong>, define el sistema de diseño visual: la paleta de colores, la tipografía y los componentes de interfaz. Para los <strong>desarrolladores</strong>, actúa como un mapa de la arquitectura técnica, detallando el stack tecnológico (Next.js, Firebase, Genkit), los patrones de código clave y ejemplos de implementación para las funcionalidades más importantes.
+            </p>
+        </div>
       </header>
 
       {sections.map((section) => (
