@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 const sections = [
   {
@@ -16,6 +17,7 @@ const sections = [
     features: [
       {
         name: 'Paleta de Colores',
+        id: 'style-colors',
         path: '#',
         description: 'La paleta de colores principal definida en `globals.css` usando variables HSL de CSS.',
         details: [
@@ -34,6 +36,7 @@ const sections = [
       },
       {
         name: 'Tipografía',
+        id: 'style-typography',
         path: '#',
         description: 'La fuente principal de la web es Inter, configurada en `src/app/layout.tsx`.',
         details: [
@@ -49,6 +52,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
       },
       {
         name: 'Iconografía y Gráficos',
+        id: 'style-icons',
         path: '#',
         description: 'Se utiliza la librería `lucide-react` para iconos y un SVG personalizado para el logo.',
         details: [
@@ -70,9 +74,10 @@ import { Home, ShoppingCart } from 'lucide-react';
     title: 'Lógica de Negocio y Marketing',
     icon: Wand2,
     features: [
-      { 
-        name: 'Notificaciones de Ventas Híbridas (Reales y Simuladas)', 
-        path: '#', 
+      {
+        name: 'Notificaciones de Ventas Híbridas (Reales y Simuladas)',
+        id: 'logic-sales-notifications',
+        path: '#',
         description: 'Popups que muestran compras para generar confianza. Prioriza las compras reales y rellena los huecos con notificaciones simuladas.',
         details: [
             "**Técnico:** El componente `SalesNotification` (`src/components/sales-notification.tsx`) ahora tiene una lógica híbrida. Utiliza `onSnapshot` de Firebase para escuchar la `collectionGroup` 'orders' en tiempo real. Cuando se detecta un nuevo pedido, se interrumpe el ciclo de notificaciones falsas y se muestra una notificación con los datos reales. Tras mostrar la notificación real, se reanuda el ciclo de notificaciones simuladas (que usan `setTimeout` con un delay aleatorio) para asegurar que la tienda siempre parezca activa.",
@@ -99,32 +104,36 @@ const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
             "**Estético:** Las notificaciones aparecen en la esquina inferior izquierda. Usan el estilo por defecto de `Toast` con un icono de `ShoppingCart` para dar contexto visual."
         ]
       },
-      { 
-        name: 'Popup de Bienvenida con Descuento', 
-        path: '#', 
-        description: 'Un popup que ofrece un 10% de descuento a cambio de la suscripción al boletín. Aparece solo a nuevos visitantes.',
+       {
+        name: 'Popup de Bienvenida con Descuento',
+        id: 'logic-welcome-popup',
+        path: '#',
+        description: 'Un popup que ofrece un 10% de descuento a cambio de la suscripción al boletín. Aparece solo a nuevos visitantes o después de 24h.',
         details: [
-            "**Técnico:** El componente `WelcomePopup` (`src/components/welcome-popup.tsx`) usa `localStorage` para registrar si un usuario ya ha visto el popup. Solo se muestra si no hay registro previo o si ha pasado más de 24 horas desde la última visita. El formulario de suscripción llama al endpoint `/api/subscribe` que se integra con Klaviyo.",
+            "**Técnico:** El componente `WelcomePopup` (`src/components/welcome-popup.tsx`) usa `localStorage` para registrar si un usuario ya ha visto el popup. Solo se muestra si no hay registro previo o si ha pasado más de 24 horas. El formulario se integra con Klaviyo a través de la API Route `/api/subscribe`.",
             `
 <pre><code class="language-javascript">
 // En src/components/welcome-popup.tsx
 useEffect(() => {
   const lastVisit = localStorage.getItem('lastPopperStoreVisit');
-  if (!lastVisit || (new Date().getTime() - lastVisit > ONE_DAY_IN_MS)) {
+  const now = new Date().getTime();
+  if (!lastVisit || (now - parseInt(lastVisit, 10)) > (24 * 60 * 60 * 1000)) {
     setTimeout(() => setIsOpen(true), 2000);
+    localStorage.setItem('lastPopperStoreVisit', now.toString());
   }
 }, []);
 </code></pre>
             `,
-            "**Estético:** Es un `Dialog` modal que se muestra 2 segundos después de cargar la página para no ser demasiado intrusivo. Incluye un icono de porcentaje (`Percent`) y un diseño limpio para centrar la atención en la oferta."
+            "**Estético:** Es un `Dialog` modal que se muestra 2 segundos después de cargar la página. Usa un icono de `Percent` para captar la atención."
         ]
       },
-       { 
-        name: 'Política de Descuentos por Volumen', 
-        path: '/cart', 
+       {
+        name: 'Política de Descuentos por Volumen',
+        id: 'logic-volume-discounts',
+        path: '/cart',
         description: 'Sistema de descuentos automáticos en el carrito basado en la cantidad de productos. No se aplica a pagos contra-reembolso.',
         details: [
-            "**Técnico:** La lógica de cálculo se encuentra en `CartContext` (`src/context/cart-context.tsx`). Un `useMemo` recalcula el descuento (`volumeDiscount`) cada vez que cambia el número de artículos en el carrito (`cartCount`).",
+            "**Técnico:** La lógica de cálculo se encuentra en `CartContext` (`src/context/cart-context.tsx`). Un `useMemo` recalcula el descuento (`volumeDiscount`) cada vez que cambia el número de artículos en el carrito (`cartCount`). En el `checkout-client-page.tsx`, este descuento solo se aplica al total si el método de pago no es contrareembolso.",
             `
 <pre><code class="language-javascript">
 // En src/context/cart-context.tsx
@@ -136,15 +145,16 @@ const volumeDiscount = useMemo(() => {
 }, [cartCount, cartTotal]);
 </code></pre>
             `,
-            "**Estético:** En el carrito (`CartSheet`) y en la página de checkout, el descuento se muestra claramente en rojo, tachando el subtotal original para que el ahorro sea evidente."
+            "**Estético:** En el carrito (`CartSheet`) y en el checkout, el descuento se muestra claramente en rojo, tachando el subtotal original. En el checkout, la interfaz reacciona al método de pago seleccionado para mostrar u ocultar el descuento y el coste de envío."
         ]
       },
-       { 
-        name: 'Sistema de Puntos de Fidelidad', 
-        path: '/account', 
+       {
+        name: 'Sistema de Puntos de Fidelidad',
+        id: 'logic-loyalty-points',
+        path: '/account',
         description: 'Los usuarios ganan puntos por cada compra, que pueden ser canjeados por descuentos futuros.',
         details: [
-            "**Técnico:** Al confirmar un pedido en la página de checkout, se llama a la `Server Action` `updateUser` con la acción `update-points`. La acción calcula los puntos a añadir (1 punto por cada 10€ de compra) y utiliza `increment` de Firestore para una actualización atómica y segura.",
+            "**Técnico:** Al confirmar un pedido en `checkout-client-page.tsx`, se llama a la `Server Action` `updateUser` con la acción `update-points`. La acción calcula los puntos a añadir (1 punto por cada 10€ de compra) y utiliza `increment` de Firestore para una actualización atómica y segura.",
             `
 <pre><code class="language-javascript">
 // En src/app/checkout/checkout-client-page.tsx
@@ -163,9 +173,10 @@ if (pointsToAdd > 0) {
     title: 'Páginas Principales',
     icon: Home,
     features: [
-      { 
-        name: 'Página de Inicio', 
-        path: '/', 
+      {
+        name: 'Página de Inicio',
+        id: 'page-home',
+        path: '/',
         description: 'La página de bienvenida con productos destacados y acceso a las principales secciones.',
         details: [
             "**Técnico:** Utiliza `onSnapshot` de Firebase para cargar y escuchar cambios en los productos en tiempo real. `useMemo` se encarga de filtrar eficientemente los productos por categorías ('Novedades', 'Ofertas', etc.) sin recalcular en cada render.",
@@ -184,9 +195,10 @@ useEffect(() => {
             "**Estético:** El diseño se basa en un `grid` responsivo. Las `ProductCard` muestran un efecto de `hover` sutil y usan `next/image` con un proxy (`/api/image-proxy`) para optimizar y cachear las imágenes de Firebase Storage."
         ]
       },
-      { 
-        name: 'Catálogo de Productos', 
-        path: '/products', 
+      {
+        name: 'Catálogo de Productos',
+        id: 'page-products',
+        path: '/products',
         description: 'Muestra todos los productos con filtros por marca, tamaño, composición y búsqueda.',
         details: [
             "**Técnico:** El componente `ProductFilters` gestiona el estado de los filtros (`useState`) y la lógica de filtrado y ordenación (`useMemo`). La URL se actualiza con los parámetros de filtro (`useRouter`, `useSearchParams`) para que los enlaces se puedan compartir.",
@@ -202,9 +214,10 @@ router.replace(\`\${pathname}?\${params.toString()}\`);
             "**Estético:** Se usa un `Accordion` de ShadCN para organizar los filtros. La parrilla de productos (`ProductGrid`) muestra un mensaje claro cuando no hay resultados. El componente `Suspense` muestra un esqueleto de carga (`Skeleton`) mientras se obtienen los datos."
         ]
       },
-      { 
-        name: 'Detalle de Producto', 
-        path: '/product/rush-original-10ml', 
+      {
+        name: 'Detalle de Producto',
+        id: 'page-product-detail',
+        path: '/product/rush-original-10ml',
         description: 'Vista detallada de un producto con galería, información y productos relacionados (ejemplo con "Rush Original").',
         details: [
             "**Técnico:** Carga los datos de un único producto desde Firestore usando `onSnapshot`. El estado del cliente (cantidad) se maneja con `useState`. La lógica para añadir al carrito (`ProductInfo`) se comunica con el `CartContext`.",
@@ -217,9 +230,10 @@ router.replace(\`\${pathname}?\${params.toString()}\`);
     title: 'Funcionalidades E-commerce',
     icon: ShoppingCart,
     features: [
-       { 
-        name: 'Creador de Packs', 
-        path: '/create-pack', 
+       {
+        name: 'Creador de Packs',
+        id: 'feature-pack-builder',
+        path: '/create-pack',
         description: 'Herramienta para que los clientes creen su propio pack de productos con descuentos por volumen.',
         details: [
             "**Técnico:** La lógica de precios es manejada por un flujo de Genkit (`calculatePackPriceFlow`) que calcula el descuento dinámicamente. El estado del pack se gestiona en el cliente (`useState`), y un `useEffect` con `setTimeout` (debounce) llama al flujo de IA para evitar peticiones excesivas.",
@@ -239,24 +253,26 @@ const calculatePackPriceFlow = ai.defineFlow(
             "**Estético:** La interfaz está dividida en tres columnas: filtros, selección de productos y resumen del pack. El resumen se actualiza en tiempo real mostrando el ahorro y el precio final."
         ]
       },
-      { 
-        name: 'Carrito de la Compra', 
-        path: '#', 
+      {
+        name: 'Carrito de la Compra',
+        id: 'feature-cart',
+        path: '#',
         description: 'El carrito es un panel lateral. Haz clic en el icono del carrito flotante para abrirlo después de añadir un producto.',
         details: [
             "**Técnico:** Implementado como un Contexto de React (`CartContext`) que gestiona el estado global del carrito. Esto permite que cualquier componente pueda añadir productos o consultar su estado. Los datos no son persistentes entre sesiones.",
-            "**Estético:** Se presenta como un panel `Sheet` de ShadCN que se desliza desde la derecha, proporcionando una experiencia fluida sin abandonar la página actual."
+            "**Estético:** Se presenta como un panel `Sheet` de ShadCN que se desliza desde la derecha, proporcionando una experiencia fluida sin abandonar la página actual. Muestra claramente el subtotal, los descuentos aplicables y el coste de envío estimado para dar feedback inmediato al usuario."
         ]
       },
-      { 
-        name: 'Proceso de Pago (Checkout)', 
-        path: '/checkout', 
+      {
+        name: 'Proceso de Pago (Checkout)',
+        id: 'feature-checkout',
+        path: '/checkout',
         description: 'Flujo de pago en 4 pasos. Requiere tener productos en el carrito para funcionar.',
         details: [
             "**Fases del Checkout:** El proceso está dividido en 4 pasos claros: 1. Confirmar Carrito, 2. Tus Datos, 3. Método de Pago, 4. Revisión Final. Un componente `Stepper` visual guía al usuario a través de estas fases.",
+            "**Lógica de Precios Dinámica:** En el paso 3, la interfaz reacciona a la selección de pago. Si el usuario elige un método de pago por adelantado, se muestra el descuento por volumen y el envío gratuito. Si elige contrareembolso, el descuento se elimina y se añade el coste de envío. Esto se logra con un `useMemo` que recalcula los totales (`finalTotals`) basándose en el método de pago seleccionado.",
             "**Incentivo de Registro:** En el paso 2, si el usuario no ha iniciado sesión, se muestra un `Alert` que le invita a iniciar sesión o registrarse para una experiencia más rápida (usando direcciones guardadas), guiándole a `/login?redirect=/checkout` para que vuelva al pago tras autenticarse.",
             "**Técnico:** Utiliza un formulario multi-paso controlado por `useState`. La validación de datos se realiza con `react-hook-form` y `zod`. La creación del pedido en Firestore y la llamada a NOWPayments se gestionan a través de `Server Actions` para mayor seguridad.",
-            "**Estético:** Cada paso se presenta en una `Card` separada para mantener el foco. El uso de `RadioGroup` e iconos para los métodos de pago hace que la selección sea visual e intuitiva."
         ]
       },
     ]
@@ -265,9 +281,10 @@ const calculatePackPriceFlow = ai.defineFlow(
     title: 'Suscripción "Dosis Mensual"',
     icon: PackagePlus,
     features: [
-        { 
-            name: 'Página de Aterrizaje del Club', 
-            path: '/subscription', 
+        {
+            name: 'Página de Aterrizaje del Club',
+            id: 'feature-subscription-landing',
+            path: '/subscription',
             description: 'Página informativa para que los usuarios se unan al club de suscripción. El botón "Unirme al Club" inicia el proceso de pago.',
              details: [
                 "**Técnico:** El botón 'Unirme' llama a la `Server Action` `createNowPaymentsSubscription`, que se comunica con la API de NOWPayments para generar una URL de pago de suscripción única para el usuario.",
@@ -283,9 +300,10 @@ if (result.success && result.invoice_url) {
                 "**Estético:** Diseño atractivo con `Cards` para resaltar los beneficios, iconos de `lucide-react` y una imagen destacada para atraer al usuario."
             ]
         },
-        { 
-            name: 'Gestión de la Suscripción', 
-            path: '/account/subscription', 
+        {
+            name: 'Gestión de la Suscripción',
+            id: 'feature-subscription-management',
+            path: '/account/subscription',
             description: 'Panel para suscriptores donde personalizan su caja mensual y gestionan su membresía.',
             details: [
                 "**Técnico:** La página obtiene los productos de Firestore en tiempo real. La selección del usuario se guarda en `localStorage` (simulado). El botón de cancelar llama a la `Server Action` `cancelNowPaymentsSubscription`, que incluye la autenticación JWT requerida por NOWPayments.",
@@ -298,36 +316,62 @@ if (result.success && result.invoice_url) {
     title: 'Cuenta de Usuario y Autenticación',
     icon: User,
     features: [
-      { name: 'Inicio de Sesión', path: '/login', description: 'Formulario para que los usuarios existentes accedan a su cuenta.', details: ["**Técnico:** Utiliza Firebase Auth (`signInWithEmailAndPassword`). Tras un inicio de sesión exitoso, llama a la API Route `/api/login` para crear una `session-cookie` segura (`httpOnly`), permitiendo la autenticación en Server Actions.", "**Estético:** Un formulario simple y centrado dentro de una `Card`, con opción para mostrar/ocultar la contraseña."] },
-      { name: 'Registro de Nuevo Usuario', path: '/register', description: 'Formulario para que nuevos usuarios creen una cuenta.', details: ["**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
-      { name: 'Panel de Cuenta', path: '/account', description: 'Dashboard principal del usuario con resumen de su actividad. Requiere iniciar sesión.', details: ["**Técnico:** Protegido por el `AccountLayout`, que redirige a los usuarios no autenticados. Muestra datos del `AuthContext`, como `loyaltyPoints` e `isSubscribed`.", "**Estético:** Usa `Cards` para segmentar la información: perfil, puntos y gestión de la suscripción/admin."] },
-      { name: 'Mis Pedidos', path: '/account/orders', description: 'Historial de todos los pedidos realizados por el usuario.', details: ["**Técnico:** Realiza una consulta a Firestore (`collection(db, 'users', user.uid, 'orders')`) para obtener y mostrar los pedidos del usuario en tiempo real con `onSnapshot`.", "**Estético:** Muestra los pedidos en una `Table` con `Badges` de colores para indicar el estado de cada pedido."] },
-      { name: 'Mis Direcciones', path: '/account/addresses', description: 'Gestión de direcciones de envío y facturación guardadas.', details: ["**Técnico:** Permite al usuario realizar operaciones CRUD en sus direcciones. Las actualizaciones se envían a la `Server Action` `updateUser`.", "**Estético:** Utiliza un `Dialog` con `react-hook-form` para añadir/editar direcciones y un `AlertDialog` para confirmar la eliminación."] },
+      { name: 'Inicio de Sesión', id: 'auth-login', path: '/login', description: 'Formulario para que los usuarios existentes accedan a su cuenta.', details: ["**Técnico:** Utiliza Firebase Auth (`signInWithEmailAndPassword`). Tras un inicio de sesión exitoso, llama a la API Route `/api/login` para crear una `session-cookie` segura (`httpOnly`), permitiendo la autenticación en Server Actions.", "**Estético:** Un formulario simple y centrado dentro de una `Card`, con opción para mostrar/ocultar la contraseña."] },
+      { name: 'Registro de Nuevo Usuario', id: 'auth-register', path: '/register', description: 'Formulario para que nuevos usuarios creen una cuenta.', details: ["**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
+      { name: 'Panel de Cuenta', id: 'auth-account-dashboard', path: '/account', description: 'Dashboard principal del usuario con resumen de su actividad. Requiere iniciar sesión.', details: ["**Técnico:** Protegido por el `AccountLayout`, que redirige a los usuarios no autenticados. Muestra datos del `AuthContext`, como `loyaltyPoints` e `isSubscribed`.", "**Estético:** Usa `Cards` para segmentar la información: perfil, puntos y gestión de la suscripción/admin."] },
+      { name: 'Mis Pedidos', id: 'auth-orders', path: '/account/orders', description: 'Historial de todos los pedidos realizados por el usuario.', details: ["**Técnico:** Realiza una consulta a Firestore (`collection(db, 'users', user.uid, 'orders')`) para obtener y mostrar los pedidos del usuario en tiempo real con `onSnapshot`.", "**Estético:** Muestra los pedidos en una `Table` con `Badges` de colores para indicar el estado de cada pedido."] },
+      { name: 'Mis Direcciones', id: 'auth-addresses', path: '/account/addresses', description: 'Gestión de direcciones de envío y facturación guardadas.', details: ["**Técnico:** Permite al usuario realizar operaciones CRUD en sus direcciones. Las actualizaciones se envían a la `Server Action` `updateUser`.", "**Estético:** Utiliza un `Dialog` con `react-hook-form` para añadir/editar direcciones y un `AlertDialog` para confirmar la eliminación."] },
     ]
   },
   {
     title: 'Panel de Administración',
     icon: KeyRound,
     features: [
-        { name: 'Dashboard de Admin', path: '/admin', description: 'Panel principal con estadísticas. Requiere iniciar sesión como admin (maryandpopper@gmail.com).', details: ["**Técnico:** Protegido por `AdminLayout`, que comprueba el email del usuario. Obtiene todos los pedidos y usuarios con `collectionGroup` y `onSnapshot` para calcular métricas. `OverviewChart` usa `recharts` para visualizar los datos.", "**Estético:** Interfaz densa en información con `Cards` de estadísticas, un gráfico de líneas y listas de pedidos/clientes recientes."] },
-        { name: 'Gestión de Pedidos', path: '/admin/orders', description: 'Visualiza y gestiona todos los pedidos de la tienda.', details: ["**Técnico:** Usa `Tabs` para filtrar pedidos por estado. Los datos se obtienen una vez (`getDocs`) y se filtran en el cliente para mejorar el rendimiento. Cada fila enlaza a la página de detalle del pedido pasando la ruta del documento como parámetro URL.", "**Estético:** Diseño de `Tabs` claro y funcional. La tabla incluye acciones rápidas para ver o gestionar el envío."] },
-        { name: 'Gestión de Productos', path: '/admin/products', description: 'Añade, edita y gestiona el catálogo de productos.', details: ["**Técnico:** Realiza operaciones CRUD completas en la colección `products` de Firestore. `updateDoc` se usa para archivar/activar y `deleteDoc` para eliminar. El formulario (`ProductForm`) es un componente reutilizable para crear y editar.", "**Estético:** La tabla de productos incluye `Switch` para cambiar el estado de `active` y un `DropdownMenu` para las acciones."] },
-        { name: 'Personalización Web', path: '/admin/web', description: 'Activa o desactiva funcionalidades clave, como la suscripción.', details: ["**Técnico:** Lee y escribe en un archivo JSON en el servidor (`src/lib/site-settings.json`) usando `Server Actions`. Este archivo actúa como una bandera de características simple.", "**Estético:** Interfaz simple con `Switch` para activar o desactivar la funcionalidad de suscripción en toda la web."] },
+        { name: 'Dashboard de Admin', id: 'admin-dashboard', path: '/admin', description: 'Panel principal con estadísticas. Requiere iniciar sesión como admin (maryandpopper@gmail.com).', details: ["**Técnico:** Protegido por `AdminLayout`, que comprueba el email del usuario. Obtiene todos los pedidos y usuarios con `collectionGroup` y `onSnapshot` para calcular métricas. `OverviewChart` usa `recharts` para visualizar los datos.", "**Estético:** Interfaz densa en información con `Cards` de estadísticas, un gráfico de líneas y listas de pedidos/clientes recientes."] },
+        { name: 'Gestión de Pedidos', id: 'admin-orders', path: '/admin/orders', description: 'Visualiza y gestiona todos los pedidos de la tienda.', details: ["**Técnico:** Usa `Tabs` para filtrar pedidos por estado. Los datos se obtienen una vez (`getDocs`) y se filtran en el cliente para mejorar el rendimiento. Cada fila enlaza a la página de detalle del pedido pasando la ruta del documento como parámetro URL.", "**Estético:** Diseño de `Tabs` claro y funcional. La tabla incluye acciones rápidas para ver o gestionar el envío."] },
+        { name: 'Gestión de Productos', id: 'admin-products', path: '/admin/products', description: 'Añade, edita y gestiona el catálogo de productos.', details: ["**Técnico:** Realiza operaciones CRUD completas en la colección `products` de Firestore. `updateDoc` se usa para archivar/activar y `deleteDoc` para eliminar. El formulario (`ProductForm`) es un componente reutilizable para crear y editar.", "**Estético:** La tabla de productos incluye `Switch` para cambiar el estado de `active` y un `DropdownMenu` para las acciones."] },
+        { name: 'Personalización Web', id: 'admin-web', path: '/admin/web', description: 'Activa o desactiva funcionalidades clave, como la suscripción.', details: ["**Técnico:** Lee y escribe en un archivo JSON en el servidor (`src/lib/site-settings.json`) usando `Server Actions`. Este archivo actúa como una bandera de características simple.", "**Estético:** Interfaz simple con `Switch` para activar o desactivar la funcionalidad de suscripción en toda la web."] },
     ]
   },
   {
     title: 'Páginas Informativas y Legales',
     icon: FileText,
     features: [
-      { name: 'Blog', path: '/blog', description: 'Listado de artículos y noticias.', details: ["**Técnico:** Contenido estático hardcodeado en `src/lib/posts.ts`. Es una página renderizada en el servidor (Server Component) para un SEO óptimo.", "**Estético:** Diseño clásico de blog con tarjetas de previsualización que incluyen imagen, título, extracto y fecha."] },
-      { name: 'Contacto', path: '/contacto', description: 'Formulario de contacto e información legal de la empresa.', details: ["**Técnico:** Un formulario controlado por el cliente que simula el envío de un email. No realiza una acción real de servidor.", "**Estético:** Diseño a dos columnas que presenta la información de contacto junto al formulario."] },
-      { name: 'Envíos y Tarifas', path: '/envio-tarifas', description: 'Detalles sobre las políticas y costes de envío.', details: ["**Técnico:** Página de contenido estático.", "**Estético:** Utiliza `Tables` para presentar las tarifas de forma clara y `Alerts` para destacar información importante."] },
-      { name: 'Términos y Condiciones', path: '/terminos-y-condiciones', description: 'Condiciones generales de contratación y venta.', details: ["**Técnico:** Página de contenido estático.", "**Estético:** Texto largo formateado dentro de una `Card` con estilos `prose` para mejorar la legibilidad."] },
+      { name: 'Blog', id: 'info-blog', path: '/blog', description: 'Listado de artículos y noticias.', details: ["**Técnico:** Contenido estático hardcodeado en `src/lib/posts.ts`. Es una página renderizada en el servidor (Server Component) para un SEO óptimo.", "**Estético:** Diseño clásico de blog con tarjetas de previsualización que incluyen imagen, título, extracto y fecha."] },
+      { name: 'Contacto', id: 'info-contact', path: '/contacto', description: 'Formulario de contacto e información legal de la empresa.', details: ["**Técnico:** Un formulario controlado por el cliente que simula el envío de un email. No realiza una acción real de servidor.", "**Estético:** Diseño a dos columnas que presenta la información de contacto junto al formulario."] },
+      { name: 'Envíos y Tarifas', id: 'info-shipping', path: '/envio-tarifas', description: 'Detalles sobre las políticas y costes de envío.', details: ["**Técnico:** Página de contenido estático.", "**Estético:** Utiliza `Tables` para presentar las tarifas de forma clara y `Alerts` para destacar información importante."] },
+      { name: 'Términos y Condiciones', id: 'info-terms', path: '/terminos-y-condiciones', description: 'Condiciones generales de contratación y venta.', details: ["**Técnico:** Página de contenido estático.", "**Estético:** Texto largo formateado dentro de una `Card` con estilos `prose` para mejorar la legibilidad."] },
     ]
   },
 ];
 
+const CHECKLIST_STORAGE_KEY = 'site_documentation_checklist';
+
 export default function SiteDocumentationPage() {
+  const [checkedState, setCheckedState] = useState<{[key: string]: boolean}>({});
+
+  useEffect(() => {
+    try {
+        const storedState = localStorage.getItem(CHECKLIST_STORAGE_KEY);
+        if (storedState) {
+            setCheckedState(JSON.parse(storedState));
+        }
+    } catch (e) {
+        console.error("Could not load checklist state from localStorage", e);
+    }
+  }, []);
+
+  const handleCheckedChange = (id: string, isChecked: boolean) => {
+    const newState = { ...checkedState, [id]: isChecked };
+    setCheckedState(newState);
+    try {
+        localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(newState));
+    } catch (e) {
+        console.error("Could not save checklist state to localStorage", e);
+    }
+  };
+
+
   return (
     <div className="max-w-6xl mx-auto space-y-12">
       <header className="text-center space-y-4">
@@ -352,12 +396,17 @@ export default function SiteDocumentationPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {section.features.map((feature, index) => (
-                <div key={feature.name} className="p-4 border rounded-lg hover:bg-secondary/50">
+              {section.features.map((feature) => (
+                <div key={feature.id} className="p-4 border rounded-lg hover:bg-secondary/50">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                     <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                       <Checkbox id={`check-${section.title}-${index}`} className="h-5 w-5"/>
-                       <Label htmlFor={`check-${section.title}-${index}`} className="text-base font-semibold">{feature.name}</Label>
+                       <Checkbox 
+                            id={feature.id} 
+                            className="h-5 w-5"
+                            checked={!!checkedState[feature.id]}
+                            onCheckedChange={(isChecked) => handleCheckedChange(feature.id, !!isChecked)}
+                        />
+                       <Label htmlFor={feature.id} className="text-base font-semibold">{feature.name}</Label>
                     </div>
                     {feature.path !== '#' && (
                          <Button asChild variant="outline" size="sm" className="shrink-0">

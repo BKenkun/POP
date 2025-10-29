@@ -26,7 +26,6 @@ const getImageUrl = (url: string) => {
 };
 
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€
-const SHIPPING_COST = 695; // 6,95€
 
 export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount } = useCart();
@@ -44,7 +43,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     onOpenChange(false);
   };
   
-  const showShippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD;
+  const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
+  const isFreeShipping = shippingCost === 0 && cartTotal > 0;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -102,42 +102,41 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
                  {volumeDiscount > 0 && (
-                    <>
-                         <div className="flex justify-between text-destructive">
-                            <span>Descuento por volumen con pago anticipado:</span>
-                            <span>-{formatPrice(volumeDiscount)}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-lg">
-                            <span>Total (sin envío)</span>
-                            <span>{formatPrice(cartTotal - volumeDiscount)}</span>
-                        </div>
-                    </>
+                    <div className="flex justify-between text-sm text-destructive">
+                        <span>Descuento por volumen (con pago anticipado)</span>
+                        <span>-{formatPrice(volumeDiscount)}</span>
+                    </div>
                 )}
-                 {showShippingCost && (
+                 {shippingCost > 0 && (
                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Envío (estimado):</span>
-                        <span>{formatPrice(SHIPPING_COST)}</span>
+                        <span>Envío (estimado)</span>
+                        <span>{formatPrice(shippingCost)}</span>
                     </div>
                  )}
+                 <Separator />
+                 <div className="flex justify-between font-bold text-lg">
+                    <span>Total Estimado:</span>
+                    <span>{formatPrice(cartTotal + shippingCost)}</span>
+                 </div>
                  <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <Box className="h-4 w-4 text-primary" />
                         <span>Embalaje 100% discreto.</span>
                     </div>
-                     {!showShippingCost && cartTotal > 0 ? (
+                     {isFreeShipping ? (
                         <div className="flex items-center gap-2">
                             <Truck className="h-4 w-4 text-green-600" />
-                            <span className="font-bold text-green-600">¡Envío GRATIS!</span>
+                            <span className="font-bold text-green-600">¡Disfrutas de Envío GRATIS!</span>
                         </div>
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>Envío gratis a partir de {formatPrice(FREE_SHIPPING_THRESHOLD)}.</span>
+                           <span>Envío gratis en pedidos superiores a {formatPrice(FREE_SHIPPING_THRESHOLD)}.</span>
                        </div>
                      )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  El descuento por volumen y los gastos de envío se aplican en la pantalla de pago.
+                  El descuento por volumen y los gastos de envío finales se aplicarán en la pantalla de pago según el método elegido.
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">Finalizar Reserva</Link>
