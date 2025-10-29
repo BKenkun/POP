@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon } from 'lucide-react';
+import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -74,6 +74,31 @@ import { Home, ShoppingCart } from 'lucide-react';
     title: 'Lógica de Negocio y Marketing',
     icon: Wand2,
     features: [
+      {
+        name: 'Verificación de Edad (Popup Modal)',
+        id: 'logic-age-gate',
+        path: '#',
+        description: 'Un popup modal que bloquea el acceso a la web hasta que el usuario verifica que es mayor de 18 años.',
+        details: [
+            "**Técnico:** El componente `AgeVerificationPopup` (`src/components/age-verification-popup.tsx`) se renderiza en el `AppLayout`. Usa `localStorage` para recordar si un usuario ya ha sido verificado. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto.",
+            "La validación de la fecha se realiza en tiempo real con `useMemo`. Si el usuario es menor de edad, se le muestra un error y el botón de 'Entrar' permanece deshabilitado. Si hace clic en 'Salir', es redirigido a google.com.",
+            `
+<pre><code class="language-javascript">
+// En src/components/age-verification-popup.tsx
+useEffect(() => {
+  const isVerified = localStorage.getItem('age_verified');
+  if (isVerified !== 'true') {
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }
+}, []);
+</code></pre>
+            `,
+            "**Estético:** Es un `Dialog` modal no descartable (el usuario no puede cerrarlo haciendo clic fuera o pulsando Escape). Presenta el logo y campos de entrada claros para la fecha de nacimiento."
+        ]
+      },
       {
         name: 'Notificaciones de Ventas Híbridas (Reales y Simuladas)',
         id: 'logic-sales-notifications',
@@ -260,7 +285,7 @@ const calculatePackPriceFlow = ai.defineFlow(
         description: 'El carrito es un panel lateral. Haz clic en el icono del carrito flotante para abrirlo después de añadir un producto.',
         details: [
             "**Técnico:** Implementado como un Contexto de React (`CartContext`) que gestiona el estado global del carrito. Esto permite que cualquier componente pueda añadir productos o consultar su estado. Los datos no son persistentes entre sesiones.",
-            "**Estético:** Se presenta como un panel `Sheet` de ShadCN que se desliza desde la derecha, proporcionando una experiencia fluida sin abandonar la página actual. Muestra claramente el subtotal, los descuentos aplicables y el coste de envío estimado para dar feedback inmediato al usuario."
+            "**Estético:** Se presenta como un panel `Sheet` de ShadCN que se desliza desde la derecha, proporcionando una experiencia fluida sin abandonar la página actual. Muestra claramente el subtotal, los descuentos aplicables (con explicación) y el coste de envío estimado para dar feedback inmediato al usuario."
         ]
       },
       {
