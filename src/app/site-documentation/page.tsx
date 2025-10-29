@@ -286,7 +286,7 @@ const calculatePackPriceFlow = ai.defineFlow(
         details: [
           '**Funcionalidad:** Muestra los productos añadidos, permite ajustar cantidades o eliminarlos. Recalcula el subtotal y el descuento por volumen en tiempo real.',
           '**Técnico:** Implementado como un `Contexto de React` (`CartContext`) que vive en `src/context/cart-context.tsx`. Este contexto maneja un estado (`cartItems`) que es un array de productos con su cantidad. Las funciones `addToCart`, `updateQuantity` y `removeFromCart` manipulan este estado. El contexto no es persistente; se reinicia si el usuario recarga la página.',
-          '**Lógica de Descuentos:** El carrito calcula dos valores clave: `cartTotal` (el subtotal sin descuentos) y `volumeDiscount` (el descuento aplicable según el número de artículos). Esta lógica se encuentra dentro de `useMemo` para optimizar el rendimiento, recalculando solo cuando el carrito cambia.',
+          '**Lógica de Precios:** En el carrito se muestra de forma estimada el descuento por volumen y los costes de envío. La lógica de precios final, que diferencia entre pago anticipado y contra-reembolso, se aplica en la página de checkout para proporcionar un feedback interactivo y claro al usuario, incentivando el pago por adelantado.',
           '**Estético:** Utiliza un componente `Sheet` de ShadCN para deslizarse desde la derecha. Muestra el ahorro potencial del pago por adelantado y si el pedido califica para envío gratuito, incentivando al usuario a continuar con la compra.'
         ]
       },
@@ -299,7 +299,7 @@ const calculatePackPriceFlow = ai.defineFlow(
           '**Fase 1: Confirmar Carrito.** El usuario revisa los productos, puede ajustar cantidades usando el `QuantitySelector` o eliminar artículos. La lógica del `CartContext` (`updateQuantity`, `removeFromCart`) actualiza el estado. El subtotal y el posible descuento por volumen se muestran para dar una primera estimación.',
           '**Fase 2: Tus Datos.** Se solicita la información de envío. Si el usuario está autenticado (`useAuth`), puede seleccionar una de sus direcciones guardadas (obtenidas del `userDoc`) o rellenar el formulario. Un `RadioGroup` permite cambiar entre direcciones. La validación se hace con `react-hook-form` y `zod`. Una `Server Action` (`updateUser`) se encarga de guardar una nueva dirección si el usuario lo solicita.',
           '**Fase 3: Método de Pago.** El usuario elige entre dos categorías: "Contrareembolso" y "Pago por adelantado". **Aquí reside la lógica de precios clave:** un `useMemo` (`finalTotals`) recalcula el total del pedido en tiempo real basándose en el método seleccionado. Si es "Pago por adelantado", se aplica el `volumeDiscount` del `CartContext` y el envío es gratuito. Si es "Contrareembolso", el descuento se elimina y se suma el `SHIPPING_COST`. Esta interacción proporciona un feedback instantáneo sobre los beneficios de cada opción.',
-          '**Fase 4: Revisión y Confirmación.** Se presenta un resumen completo y final. Al hacer clic en "Confirmar Pedido", se ejecuta la lógica final: si el método es "crypto", se llama a la `Server Action` `createNowPaymentsInvoice` que devuelve una URL de pago a la que se redirige al usuario. Para los demás métodos, se crea un nuevo documento en la colección `orders` de Firestore con todos los detalles del pedido usando `addDoc`.',
+          '**Fase 4: Revisión y Confirmación Final.** Se presenta un resumen completo y final. Al hacer clic en "Confirmar Pedido", se ejecuta la lógica final: si el método es "crypto", se llama a la `Server Action` `createNowPaymentsInvoice` que devuelve una URL de pago a la que se redirige al usuario. Para los demás métodos, se crea un nuevo documento en la colección `orders` de Firestore con todos los detalles del pedido usando `addDoc`.',
         ]
       },
     ]
@@ -350,7 +350,7 @@ if (result.success && result.invoice_url) {
         description: 'Formulario para que los usuarios existentes accedan a su cuenta, con lógica de redirección basada en rol.',
         details: [
             "**Técnico:** Utiliza `signInWithEmailAndPassword` de Firebase. Una vez autenticado, se obtiene el `idToken` del usuario y se envía a la API Route `/api/login`, que crea una **session cookie** segura (`httpOnly`). Esta cookie es crucial para autenticar al usuario en las `Server Actions` y en el lado del servidor.",
-            "La lógica de redirección post-login es clave: si el email del usuario es `maryandpopper@gmail.com`, el sistema lo identifica como administrador y lo redirige a `/admin`. Si es un usuario normal, lo redirige a la página que intentaba visitar (`redirectUrl`) o a `/account` por defecto.",
+            "La lógica de redirección post-login es clave: si el email del usuario es `maryandpopper@gmail.com`, el sistema lo identifica como administrador y lo redirige a `/admin`. Si es un usuario normal, lo redirige a la página que intentaba visitar (`redirectUrl`) o a `/account` por defecto. La interfaz se adapta a este rol, mostrando opciones de administrador solo cuando corresponde, como el enlace al 'Panel de Admin' en el menú de usuario.",
             `
 <pre><code class="language-javascript">
 // En src/app/login/login-form.tsx
@@ -366,7 +366,7 @@ if (loggedInIsAdmin) {
 }
 </code></pre>
             `,
-            "**Estético:** Es un formulario simple dentro de una `Card`. La interfaz de la cuenta (menús, botones) se adapta dinámicamente gracias al estado `isAdmin` del `AuthContext`, mostrando opciones como 'Panel de Admin' solo a los administradores, tal como se ve en la imagen que proporcionaste."
+            "**Estético:** Es un formulario simple dentro de una `Card`. La interfaz de la cuenta (menús, botones) se adapta dinámicamente gracias al estado `isAdmin` del `AuthContext`, mostrando opciones como 'Panel de Admin' solo a los administradores."
         ]
       },
       { name: 'Registro de Nuevo Usuario', id: 'auth-register', path: '/register', description: 'Formulario para que nuevos usuarios creen una cuenta.', details: ["**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
@@ -392,7 +392,8 @@ if (loggedInIsAdmin) {
             '**Archivar/Activar:** En la tabla de productos, cada fila tiene un interruptor (`Switch`). Al cambiarlo, se llama a la función `handleToggleActive`, que actualiza el campo booleano `active` del producto en Firestore. Esto no borra el producto, simplemente controla su visibilidad en la tienda pública.',
             '**Eliminar:** Cada producto tiene una opción para eliminar en su menú desplegable. Esta acción abre un diálogo de confirmación (`AlertDialog`) para prevenir borrados accidentales. Si se confirma, se llama a la función `handleDelete` que ejecuta una operación `deleteDoc` en Firestore para eliminar el producto permanentemente.',
             '**Guía de Campos del Producto:**',
-            '- **Información Principal:** `Nombre` (título del producto), `SKU` (código de referencia único), `Descripción Corta` (texto breve bajo el nombre), `Descripción Larga` (contenido para la pestaña de detalles, admite formato de texto enriquecido), `Detalles del Producto` (lista de características clave:valor).',
+            '- **Información Principal:** `Nombre` (título del producto), `SKU` (código de referencia único), `Descripción Corta` (texto breve bajo el nombre).',
+            `- **Descripción Larga:** Un editor de texto enriquecido (Rich Text Editor) basado en **Tiptap**. Permite dar formato al texto (negrita, cursiva, encabezados, listas) y cambiar colores. El contenido se guarda como una **cadena de texto HTML** en la base de datos, lo que permite renderizarlo con su formato en la página de detalle del producto.`,
             '- **Imágenes:** `URL de la Imagen Principal`, `Pista de la Imagen` (para IA), `URLs de la Galería` (imágenes adicionales separadas por comas).',
             '- **Precios y Ofertas:** `Precio Estándar` (en céntimos), `Precio de Oferta` (si se establece, el estándar pasa a ser el precio tachado), `Duración de la Oferta` (opcional, para ofertas temporales).',
             '- **Inventario y Contabilidad:** `Stock Disponible` (0 significa "Agotado"), `Coste` (coste de adquisición), `Porcentaje de IVA` y si está incluido.',
