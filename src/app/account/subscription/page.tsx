@@ -11,10 +11,13 @@ import { Button } from "@/components/ui/button";
 import SubscriptionTimeline from "./_components/subscription-timeline";
 import MonthlyBoxSelector from "./_components/monthly-box-selector";
 import { Product } from "@/lib/types";
-import { cbdProducts } from "@/lib/cbd-products";
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { cancelNowPaymentsSubscription } from "@/app/actions/manage-subscription";
 
 export default function SubscriptionManagementPage() {
-    const { user, isSubscribed, loading: authLoading } = useAuth();
+    const { user, isSubscribed, loading: authLoading, setUserDoc, userDoc } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [portalLoading, setPortalLoading] = useState(false);
@@ -28,25 +31,30 @@ export default function SubscriptionManagementPage() {
         if (!authLoading && !user) {
             router.push('/login?redirect=/account/subscription');
         } else if (!authLoading && user && !isSubscribed) {
-            router.push('/subscription');
+            // Check the userDoc directly in case the context is not updated yet
+            if(userDoc && !userDoc.isSubscribed) {
+                router.push('/subscription');
+            }
         }
-    }, [user, isSubscribed, authLoading, router]);
+    }, [user, isSubscribed, userDoc, authLoading, router]);
 
     useEffect(() => {
         const fetchProducts = async () => {
-            try {
-                // Fetch products from local mock data
-                setProducts(cbdProducts);
-            } catch (error) {
+            const productsQuery = query(collection(db, 'products'), where('active', '==', true));
+            const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+                const fetchedProducts: Product[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+                setProducts(fetchedProducts);
+                setLoadingProducts(false);
+            }, (error) => {
                 console.error("Failed to fetch products for subscription page", error);
                 toast({
                     title: "Error",
                     description: "No se pudieron cargar los productos para la selección.",
                     variant: "destructive"
                 });
-            } finally {
                 setLoadingProducts(false);
-            }
+            });
+            return () => unsubscribe();
         };
         fetchProducts();
     }, [toast]);
@@ -54,10 +62,24 @@ export default function SubscriptionManagementPage() {
     const poppers = products.filter(p => !p.internalTags?.includes('accesorio') && !p.internalTags?.includes('pack'));
     const accessories = products.filter(p => p.internalTags?.includes('accesorio'));
 
-    const handleManageSubscription = async () => {
-        if (!user) return;
+    const handleCancelSubscription = async () => {
         setPortalLoading(true);
-        toast({ title: 'Esta función no está disponible actualmente.', variant: 'destructive' });
+        const result = await cancelNowPaymentsSubscription();
+        if (result.success) {
+            toast({
+                title: "Suscripción Cancelada",
+                description: result.message,
+            });
+            // Optimistically update the user document in the context
+            setUserDoc({ ...userDoc, isSubscribed: false, subscription: { ...userDoc.subscription, status: 'cancelled' } });
+            router.push('/account'); // Redirect to account page
+        } else {
+            toast({
+                title: "Error al Cancelar",
+                description: result.message,
+                variant: "destructive"
+            });
+        }
         setPortalLoading(false);
     };
     
@@ -110,14 +132,32 @@ export default function SubscriptionManagementPage() {
             )}
 
             <div className="text-center pt-4">
-                 <Button onClick={handleManageSubscription} disabled={portalLoading} variant="outline">
-                    {portalLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Settings className="mr-2 h-4 w-4" />
-                    )}
-                    {portalLoading ? 'Abriendo portal...' : 'Gestionar mi Suscripción (Cancelar / Cambiar Pago)'}
-                </Button>
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button disabled={portalLoading} variant="destructive">
+                            {portalLoading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Settings className="mr-2 h-4 w-4" />
+                            )}
+                            {portalLoading ? 'Cancelando...' : 'Gestionar mi Suscripción'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Gestionar Suscripción</AlertDialogTitle>
+                            <AlertDialogDescription>
+                               Actualmente, la gestión de la suscripción (como cambiar el método de pago) debe hacerse contactando a soporte. Sin embargo, puedes cancelar tu suscripción inmediatamente si lo deseas. ¿Estás seguro de que quieres cancelar tu suscripción?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cerrar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleCancelSubscription} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                Sí, cancelar suscripción
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     )

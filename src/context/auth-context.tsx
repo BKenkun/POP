@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { UserSubscription } from '@/lib/types';
 
 const ADMIN_VIEW_AS_CUSTOMER_KEY = 'admin_view_as_customer';
 
@@ -21,6 +22,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isViewingAsCustomer: boolean;
   setIsViewingAsCustomer: (isViewing: boolean) => void;
+  subscription: UserSubscription | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const isSubscribed = useMemo(() => userDoc?.isSubscribed || false, [userDoc]);
   const loyaltyPoints = useMemo(() => userDoc?.loyaltyPoints || 0, [userDoc]);
+  const subscription = useMemo(() => userDoc?.subscription || null, [userDoc]);
 
   const logout = async () => {
     try {
@@ -103,6 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdmin,
       isViewingAsCustomer,
       setIsViewingAsCustomer: handleSetIsViewingAsCustomer,
+      subscription,
     };
 
     if (loading) {
