@@ -41,10 +41,19 @@ export default function SubscriptionPage() {
             return;
         }
 
+        if (!user.email) {
+            toast({
+                title: "Email no encontrado",
+                description: "Tu cuenta de usuario debe tener un email para poder suscribirte.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const result = await createNowPaymentsSubscription(user.email!);
+            const result = await createNowPaymentsSubscription(user.email);
             
             if (result.success && result.invoice_url) {
                 toast({
