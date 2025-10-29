@@ -25,6 +25,8 @@ const getImageUrl = (url: string) => {
     return url;
 };
 
+const FREE_SHIPPING_THRESHOLD = 4000; // 40€
+
 export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
@@ -40,6 +42,9 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     }
     onOpenChange(false);
   };
+  
+  const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
+  const isFreeShipping = shippingCost === 0 && cartTotal > 0;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -99,11 +104,11 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                  {volumeDiscount > 0 && (
                     <>
                          <div className="flex justify-between text-destructive font-semibold">
-                            <span>Descuento por volumen:</span>
+                            <span>Descuento (pago anticipado):</span>
                             <span>-{formatPrice(volumeDiscount)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg">
-                            <span>Total con descuento</span>
+                            <span>Total con Descuento</span>
                             <span>{formatPrice(totalWithDiscount)}</span>
                         </div>
                     </>
@@ -113,13 +118,20 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                         <Box className="h-4 w-4 text-primary" />
                         <span>Embalaje 100% discreto.</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-primary" />
-                        <span>Envío 24/48h.</span>
-                    </div>
+                     {isFreeShipping ? (
+                        <div className="flex items-center gap-2">
+                            <Truck className="h-4 w-4 text-green-600" />
+                            <span className="font-bold text-green-600">¡Disfrutas de Envío GRATIS!</span>
+                        </div>
+                     ) : (
+                        <div className="flex items-center gap-2">
+                           <Truck className="h-4 w-4 text-primary" />
+                           <span>Envío gratis en pedidos superiores a {formatPrice(FREE_SHIPPING_THRESHOLD)}.</span>
+                       </div>
+                     )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Los productos no se reservan. Los gastos de envío se calculan al finalizar la reserva.
+                  El descuento por volumen y los gastos de envío finales se aplicarán en la pantalla de pago según el método elegido.
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">Finalizar Reserva</Link>
