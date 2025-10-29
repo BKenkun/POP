@@ -284,8 +284,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         path: '#',
         description: 'El carrito es un panel lateral. Haz clic en el icono del carrito flotante para abrirlo después de añadir un producto.',
         details: [
-            "**Técnico:** Implementado como un Contexto de React (`CartContext`) que gestiona el estado global del carrito. Esto permite que cualquier componente pueda añadir productos o consultar su estado. Los datos no son persistentes entre sesiones.",
-            "**Estético:** Se presenta como un panel `Sheet` de ShadCN que se desliza desde la derecha, proporcionando una experiencia fluida sin abandonar la página actual. Muestra claramente el subtotal, los descuentos aplicables (con explicación) y el coste de envío estimado para dar feedback inmediato al usuario."
+          '**Funcionalidad:** Muestra los productos añadidos, permite ajustar cantidades o eliminarlos. Recalcula el subtotal y el descuento por volumen en tiempo real.',
+          '**Técnico:** Implementado como un `Contexto de React` (`CartContext`) que vive en `src/context/cart-context.tsx`. Este contexto maneja un estado (`cartItems`) que es un array de productos con su cantidad. Las funciones `addToCart`, `updateQuantity` y `removeFromCart` manipulan este estado. El contexto no es persistente; se reinicia si el usuario recarga la página.',
+          '**Lógica de Descuentos:** El carrito calcula dos valores clave: `cartTotal` (el subtotal sin descuentos) y `volumeDiscount` (el descuento aplicable según el número de artículos). Esta lógica se encuentra dentro de `useMemo` para optimizar el rendimiento, recalculando solo cuando el carrito cambia.',
+          '**Estético:** Utiliza un componente `Sheet` de ShadCN para deslizarse desde la derecha. Muestra el ahorro potencial del pago por adelantado y si el pedido califica para envío gratuito, incentivando al usuario a continuar con la compra.'
         ]
       },
       {
@@ -379,7 +381,25 @@ if (loggedInIsAdmin) {
     features: [
         { name: 'Dashboard de Admin', id: 'admin-dashboard', path: '/admin', description: 'Panel principal con estadísticas. Requiere iniciar sesión como admin (maryandpopper@gmail.com).', details: ["**Técnico:** Protegido por `AdminLayout`, que comprueba el email del usuario. Obtiene todos los pedidos y usuarios con `collectionGroup` y `onSnapshot` para calcular métricas. `OverviewChart` usa `recharts` para visualizar los datos.", "**Estético:** Interfaz densa en información con `Cards` de estadísticas, un gráfico de líneas y listas de pedidos/clientes recientes."] },
         { name: 'Gestión de Pedidos', id: 'admin-orders', path: '/admin/orders', description: 'Visualiza y gestiona todos los pedidos de la tienda.', details: ["**Técnico:** Usa `Tabs` para filtrar pedidos por estado. Los datos se obtienen una vez (`getDocs`) y se filtran en el cliente para mejorar el rendimiento. Cada fila enlaza a la página de detalle del pedido pasando la ruta del documento como parámetro URL.", "**Estético:** Diseño de `Tabs` claro y funcional. La tabla incluye acciones rápidas para ver o gestionar el envío."] },
-        { name: 'Gestión de Productos', id: 'admin-products', path: '/admin/products', description: 'Añade, edita y gestiona el catálogo de productos.', details: ["**Técnico:** Realiza operaciones CRUD completas en la colección `products` de Firestore. `updateDoc` se usa para archivar/activar y `deleteDoc` para eliminar. El formulario (`ProductForm`) es un componente reutilizable para crear y editar.", "**Estético:** La tabla de productos incluye `Switch` para cambiar el estado de `active` y un `DropdownMenu` para las acciones."] },
+        {
+          name: 'Gestión de Productos (CRUD)',
+          id: 'admin-products',
+          path: '/admin/products',
+          description: 'Añade, edita, archiva y elimina productos del catálogo.',
+          details: [
+            '**Vista General:** La página principal de gestión de productos (`/admin/products`) obtiene todos los productos de Firestore en tiempo real (`onSnapshot`) y los separa en dos tablas: "Activos" y "Archivados".',
+            '**Añadir y Editar:** Ambas acciones utilizan el mismo componente de formulario: `src/app/admin/products/_components/product-form.tsx`. Este formulario usa `react-hook-form` y `zod` para una validación robusta de todos los campos del producto. Al guardar, se llama a una función `onSave` que ejecuta una operación de `setDoc` (para nuevos productos) o `updateDoc` (para existentes) en Firestore.',
+            '**Archivar/Activar:** En la tabla de productos, cada fila tiene un interruptor (`Switch`). Al cambiarlo, se llama a la función `handleToggleActive`, que actualiza el campo booleano `active` del producto en Firestore. Esto no borra el producto, simplemente controla su visibilidad en la tienda pública.',
+            '**Eliminar:** Cada producto tiene una opción para eliminar en su menú desplegable. Esta acción abre un diálogo de confirmación (`AlertDialog`) para prevenir borrados accidentales. Si se confirma, se llama a la función `handleDelete` que ejecuta una operación `deleteDoc` en Firestore para eliminar el producto permanentemente.',
+            '**Guía de Campos del Producto:**',
+            '- **Información Principal:** `Nombre` (título del producto), `SKU` (código de referencia único), `Descripción Corta` (texto breve bajo el nombre), `Descripción Larga` (contenido para la pestaña de detalles, admite formato de texto enriquecido), `Detalles del Producto` (lista de características clave:valor).',
+            '- **Imágenes:** `URL de la Imagen Principal`, `Pista de la Imagen` (para IA), `URLs de la Galería` (imágenes adicionales separadas por comas).',
+            '- **Precios y Ofertas:** `Precio Estándar` (en céntimos), `Precio de Oferta` (si se establece, el estándar pasa a ser el precio tachado), `Duración de la Oferta` (opcional, para ofertas temporales).',
+            '- **Inventario y Contabilidad:** `Stock Disponible` (0 significa "Agotado"), `Coste` (coste de adquisición), `Porcentaje de IVA` y si está incluido.',
+            '- **Organización y Filtros:** `Marca`, `Tamaño`, `Composición` (usados para los filtros del catálogo).',
+            '- **Etiquetas:** `Etiquetas Visibles` (se muestran como badges en la tarjeta del producto, ej: "Nuevo"), `Categorías Internas` (para control lógico, ej: "novedad", "mas-vendido", "pack").'
+          ]
+        },
         { name: 'Personalización Web', id: 'admin-web', path: '/admin/web', description: 'Activa o desactiva funcionalidades clave, como la suscripción.', details: ["**Técnico:** Lee y escribe en un archivo JSON en el servidor (`src/lib/site-settings.json`) usando `Server Actions`. Este archivo actúa como una bandera de características simple.", "**Estético:** Interfaz simple con `Switch` para activar o desactivar la funcionalidad de suscripción en toda la web."] },
     ]
   },
