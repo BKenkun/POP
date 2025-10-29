@@ -1,28 +1,32 @@
 /**
- * @fileoverview Firestore Security Rules for PuroRush.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for personal data while allowing public read access to product information.
+ * @file Firestore Security Rules for PuroRush App
+ * @description This ruleset enforces a user-ownership model for user-specific data and allows public read access to product information.
  *
  * Data Structure:
- * - Products are stored in a top-level `/products` collection, readable by anyone.
- * - User data (profiles, shopping carts, orders) is nested under `/users/{userId}` and only accessible by the authenticated user.
+ * - /products/{productId}: Publicly readable product information.
+ * - /users/{userId}: User profile information, accessible only by the user.
+ * - /users/{userId}/shoppingCarts/{cartId}: Shopping carts, accessible only by the user.
+ * - /users/{userId}/orders/{orderId}: Order history, accessible only by the user.
  *
  * Key Security Decisions:
- * - Public product listings.
- * - Strict user-ownership for shopping carts and orders.
- * - Users can only create their own user documents.
+ * - Products are publicly readable, but write access is not defined (and therefore denied).
+ * - Users can only access their own profile data, shopping carts, and orders.
+ * - Listing of users is disallowed.
+ * - No role-based access control is implemented. All users are treated equally.
+ *
+ * Denormalization for Authorization:
+ * - User-specific data (shopping carts, orders) is stored under the /users/{userId} path, denormalizing the userId into the path itself. This avoids the need to duplicate the userId in the document and allows for simple, path-based authorization.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read product information, but restricts creation, updates, and deletion.
+     * @description Allows public read access to product information. Write access is denied.
      * @path /products/{productId}
-     * @allow (get, list) - Any user can read product information.
-     * @deny (create, update, delete) - No one can create, update, or delete products through the client; this is assumed to be handled by backend processes.
-     * @principle Public read access with restricted writes.
+     * @allow (get, list) - Any user can read product details.
+     * @deny (create, update, delete) - No user can create, update, or delete products through the client.
+     * @principle Allows public read access for product information.
      */
     match /products/{productId} {
       allow get, list: if true;
@@ -30,43 +34,48 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces that only the authenticated user can access their own shopping cart.
+     * @description Enforces user-ownership for shopping cart data. Only the user with the matching userId can access their own shopping carts.
      * @path /users/{userId}/shoppingCarts/{cartId}
-     * @allow (create, get, list, update, delete) - The user with ID `userId` can manage their shopping cart.
-     * @deny (create, get, list, update, delete) - Any other user attempting to access this shopping cart.
-     * @principle Enforces document ownership for all operations.
+     * @allow (get, list, create, update, delete) - User with matching userId can perform all operations on their own shopping carts.
+     * @deny (get, list, create, update, delete) - User with a non-matching userId cannot access another user's shopping carts.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/shoppingCarts/{cartId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      allow write: if isSignedIn() && isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces that only the authenticated user can access their own order history.
+     * @description Enforces user-ownership for order data. Only the user with the matching userId can access their own orders.
      * @path /users/{userId}/orders/{orderId}
-     * @allow (create, get, list, update, delete) - The user with ID `userId` can manage their orders.
-     * @deny (create, get, list, update, delete) - Any other user attempting to access this order.
-     * @principle Enforces document ownership for all operations.
+     * @allow (get, list, create, update, delete) - User with matching userId can perform all operations on their own orders.
+     * @deny (get, list, create, update, delete) - User with a non-matching userId cannot access another user's orders.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/orders/{orderId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      allow write: if isSignedIn() && isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces that only the authenticated user can access their own profile.  Allows self-creation.
+     * @description Enforces user-ownership for user profile data. Only the user with the matching userId can access their own profile.
      * @path /users/{userId}
-     * @allow (create) - A user can create their own profile if the userId matches their auth.uid.
-     * @allow (get, list, update, delete) - The user with ID `userId` can manage their profile.
-     * @deny (create, get, list, update, delete) - Any other user attempting to access this profile.
-     * @principle Enforces document ownership for all operations.
+     * @allow (get, create, update, delete) - User with matching userId can perform all operations on their own profile.
+     * @deny (get, create, update, delete) - User with a non-matching userId cannot access another user's profile.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
-      allow read: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId) && resource.data.id == request.resource.data.id;
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     function isSignedIn() {
@@ -77,8 +86,8 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-        function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-        }
+    function isExistingOwner(userId) {
+        return isSignedIn() && isOwner(userId) && resource != null;
+    }
   }
 }
