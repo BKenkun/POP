@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather } from 'lucide-react';
+import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon } from 'lucide-react';
 import Link from 'next/link';
 
 const sections = [
@@ -64,6 +64,90 @@ import { Home, ShoppingCart } from 'lucide-react';
             `
         ]
       }
+    ]
+  },
+    {
+    title: 'Lógica de Negocio y Marketing',
+    icon: Wand2,
+    features: [
+      { 
+        name: 'Notificaciones de Venta Ficticias', 
+        path: '#', 
+        description: 'Pequeños popups que aparecen en la esquina para simular actividad y generar confianza.',
+        details: [
+            "**Técnico:** El componente `SalesNotification` (`src/components/sales-notification.tsx`) utiliza `useToast` para mostrar notificaciones. Un `useEffect` con temporizadores (`setTimeout`) aleatorios (entre 12 y 27 segundos) se encarga de mostrarlas periódicamente. Los nombres, ciudades y productos se eligen al azar de una lista predefinida.",
+            `
+<pre><code class="language-javascript">
+// En src/components/sales-notification.tsx
+const showRandomToast = useCallback(() => {
+  const country = getRandomCountry();
+  const product = getRandomItem(products);
+  const name = getRandomItem(names);
+  toast({ title: '¡Compra Reciente!', description: \`\${name} de \${location} acaba de comprar...\` });
+}, [toast, products]);
+</code></pre>
+            `,
+            "**Estético:** Las notificaciones aparecen en la esquina inferior izquierda. Usan el estilo por defecto de `Toast` con un icono de `ShoppingCart` para dar contexto visual."
+        ]
+      },
+      { 
+        name: 'Popup de Bienvenida con Descuento', 
+        path: '#', 
+        description: 'Un popup que ofrece un 10% de descuento a cambio de la suscripción al boletín. Aparece solo a nuevos visitantes.',
+        details: [
+            "**Técnico:** El componente `WelcomePopup` (`src/components/welcome-popup.tsx`) usa `localStorage` para registrar si un usuario ya ha visto el popup. Solo se muestra si no hay registro previo o si ha pasado más de 24 horas desde la última visita. El formulario de suscripción llama al endpoint `/api/subscribe` que se integra con Klaviyo.",
+            `
+<pre><code class="language-javascript">
+// En src/components/welcome-popup.tsx
+useEffect(() => {
+  const lastVisit = localStorage.getItem('lastPopperStoreVisit');
+  if (!lastVisit || (new Date().getTime() - lastVisit > ONE_DAY_IN_MS)) {
+    setTimeout(() => setIsOpen(true), 2000);
+  }
+}, []);
+</code></pre>
+            `,
+            "**Estético:** Es un `Dialog` modal que se muestra 2 segundos después de cargar la página para no ser demasiado intrusivo. Incluye un icono de porcentaje (`Percent`) y un diseño limpio para centrar la atención en la oferta."
+        ]
+      },
+       { 
+        name: 'Política de Descuentos por Volumen', 
+        path: '/cart', 
+        description: 'Sistema de descuentos automáticos en el carrito basado en la cantidad de productos. No se aplica a pagos contra-reembolso.',
+        details: [
+            "**Técnico:** La lógica de cálculo se encuentra en `CartContext` (`src/context/cart-context.tsx`). Un `useMemo` recalcula el descuento (`volumeDiscount`) cada vez que cambia el número de artículos en el carrito (`cartCount`).",
+            `
+<pre><code class="language-javascript">
+// En src/context/cart-context.tsx
+const volumeDiscount = useMemo(() => {
+  let discountPercent = 0;
+  if (cartCount >= 200) { discountPercent = 0.29; }
+  // ... más rangos
+  return Math.round(cartTotal * discountPercent);
+}, [cartCount, cartTotal]);
+</code></pre>
+            `,
+            "**Estético:** En el carrito (`CartSheet`) y en la página de checkout, el descuento se muestra claramente en rojo, tachando el subtotal original para que el ahorro sea evidente."
+        ]
+      },
+       { 
+        name: 'Sistema de Puntos de Fidelidad', 
+        path: '/account', 
+        description: 'Los usuarios ganan puntos por cada compra, que pueden ser canjeados por descuentos futuros.',
+        details: [
+            "**Técnico:** Al confirmar un pedido en la página de checkout, se llama a la `Server Action` `updateUser` con la acción `update-points`. La acción calcula los puntos a añadir (1 punto por cada 10€ de compra) y utiliza `increment` de Firestore para una actualización atómica y segura.",
+            `
+<pre><code class="language-javascript">
+// En src/app/checkout/checkout-client-page.tsx
+const pointsToAdd = Math.floor(finalTotals.total / 1000);
+if (pointsToAdd > 0) {
+  await updateUser('update-points', { pointsToAdd });
+}
+</code></pre>
+            `,
+            "**Estético:** El saldo de puntos se muestra de forma prominente en el panel de cuenta del usuario (`/account`) dentro de una `Card` dedicada, junto con su equivalencia en euros."
+        ]
+      },
     ]
   },
   {
@@ -160,8 +244,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         path: '/checkout', 
         description: 'Flujo de pago en 4 pasos. Requiere tener productos en el carrito para funcionar.',
         details: [
+            "**Fases del Checkout:** El proceso está dividido en 4 pasos claros: 1. Confirmar Carrito, 2. Tus Datos, 3. Método de Pago, 4. Revisión Final. Un componente `Stepper` visual guía al usuario a través de estas fases.",
+            "**Incentivo de Registro:** En el paso 2, si el usuario no ha iniciado sesión, se muestra un `Alert` que le invita a iniciar sesión o registrarse para una experiencia más rápida (usando direcciones guardadas), guiándole a `/login?redirect=/checkout` para que vuelva al pago tras autenticarse.",
             "**Técnico:** Utiliza un formulario multi-paso controlado por `useState`. La validación de datos se realiza con `react-hook-form` y `zod`. La creación del pedido en Firestore y la llamada a NOWPayments se gestionan a través de `Server Actions` para mayor seguridad.",
-            "**Estético:** Un componente `Stepper` visual indica el progreso del usuario. Los métodos de pago se presentan de forma clara usando `RadioGroup`, y los campos de dirección se rellenan automáticamente si el usuario ha guardado direcciones."
+            "**Estético:** Cada paso se presenta en una `Card` separada para mantener el foco. El uso de `RadioGroup` e iconos para los métodos de pago hace que la selección sea visual e intuitiva."
         ]
       },
     ]
@@ -296,3 +382,5 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
+    
