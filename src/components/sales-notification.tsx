@@ -6,9 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import type { Product } from '@/lib/types';
+import type { Order, Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, collectionGroup, orderBy, Timestamp } from 'firebase/firestore';
 
 const internationalData = {
   "España": {
@@ -40,46 +40,72 @@ export function SalesNotification() {
   const { toast } = useToast();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setProducts(fetchedProducts);
+      setAllProducts(fetchedProducts);
     });
     return () => unsubscribe();
   }, [])
 
   const isAdminPath = pathname.startsWith('/admin');
 
+  const showToast = useCallback((title: string, description: string, total: number) => {
+      toast({
+          title: (
+              <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  <span className="font-bold">{title}</span>
+              </div>
+          ),
+          description: (
+              <div>
+                  <p>{description}</p>
+                  <p className="mt-1 font-medium">Total: {formatPrice(total)}</p>
+              </div>
+          )
+      });
+  }, [toast]);
+
+  // Function for FAKE toasts
   const showRandomToast = useCallback(() => {
-    if (products.length === 0) return;
+    if (allProducts.length === 0) return;
     
     const country = getRandomCountry();
     const { names, cities } = internationalData[country as keyof typeof internationalData];
 
-    const product = getRandomItem(products);
+    const product = getRandomItem(allProducts);
     const quantity = Math.floor(Math.random() * 2) + 1;
     const name = getRandomItem(names);
     const location = getRandomItem(cities);
     const total = product.price * quantity;
 
-    toast({
-      title: (
-        <div className="flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5 text-primary" />
-          <span className="font-bold">¡Compra Reciente!</span>
-        </div>
-      ),
-      description: (
-        <div>
-          <p><span className="font-semibold">{name}</span> de {location} acaba de comprar {quantity} x {product.name}.</p>
-          <p className="mt-1 font-medium">Total: {formatPrice(total)}</p>
-        </div>
-      )
-    });
-  }, [toast, products]);
+    showToast(
+      '¡Compra Reciente!',
+      `${name} de ${location} acaba de comprar ${quantity} x ${product.name}.`,
+      total
+    );
+  }, [showToast, allProducts]);
+  
+  // Function for REAL toasts from Firestore
+  const showRealOrderToast = useCallback((order: Order) => {
+      const firstItem = order.items[0];
+      if (!firstItem) return;
+
+      const customerName = order.customerName.split(' ')[0]; // Show only first name
+      const city = order.shippingAddress?.city || 'una ciudad';
+      
+      showToast(
+          '¡Pedido Real Confirmado!',
+          `${customerName} de ${city} acaba de comprar ${firstItem.quantity} x ${firstItem.name}.`,
+          order.total
+      );
+
+  }, [showToast]);
 
   const scheduleNextToast = useCallback(() => {
     if (timeoutRef.current) {
@@ -94,25 +120,50 @@ export function SalesNotification() {
 
 
   useEffect(() => {
-    if (isAdminPath || products.length === 0) {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+    if (isAdminPath || allProducts.length === 0) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
 
+    // Listener for REAL orders
+    const ordersQuery = query(
+      collectionGroup(db, 'orders'),
+      orderBy('createdAt', 'desc'),
+      where('createdAt', '>', Timestamp.now()) // Only listen for new orders from now on
+    );
+
+    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+        if (isInitialLoad) {
+            setIsInitialLoad(false);
+            return;
+        }
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+                const newOrder = change.doc.data() as Order;
+                // Interrupt the fake toast timer
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                // Show the real order toast
+                showRealOrderToast(newOrder);
+                // Schedule the next fake toast
+                scheduleNextToast();
+            }
+        });
+    });
+
+    // Start the FAKE toast loop
     const initialDelay = setTimeout(() => {
         showRandomToast();
         scheduleNextToast();
     }, 10000);
 
     return () => {
+        unsubscribeOrders();
         clearTimeout(initialDelay);
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [isAdminPath, products, toast, showRandomToast, scheduleNextToast]);
+  }, [isAdminPath, allProducts, toast, showRandomToast, showRealOrderToast, scheduleNextToast, isInitialLoad]);
 
   return null;
 }
