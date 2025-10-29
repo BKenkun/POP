@@ -71,20 +71,29 @@ import { Home, ShoppingCart } from 'lucide-react';
     icon: Wand2,
     features: [
       { 
-        name: 'Notificaciones de Venta Ficticias', 
+        name: 'Notificaciones de Ventas Híbridas (Reales y Simuladas)', 
         path: '#', 
-        description: 'Pequeños popups que aparecen en la esquina para simular actividad y generar confianza.',
+        description: 'Popups que muestran compras para generar confianza. Prioriza las compras reales y rellena los huecos con notificaciones simuladas.',
         details: [
-            "**Técnico:** El componente `SalesNotification` (`src/components/sales-notification.tsx`) utiliza `useToast` para mostrar notificaciones. Un `useEffect` con temporizadores (`setTimeout`) aleatorios (entre 12 y 27 segundos) se encarga de mostrarlas periódicamente. Los nombres, ciudades y productos se eligen al azar de una lista predefinida.",
+            "**Técnico:** El componente `SalesNotification` (`src/components/sales-notification.tsx`) ahora tiene una lógica híbrida. Utiliza `onSnapshot` de Firebase para escuchar la `collectionGroup` 'orders' en tiempo real. Cuando se detecta un nuevo pedido, se interrumpe el ciclo de notificaciones falsas y se muestra una notificación con los datos reales. Tras mostrar la notificación real, se reanuda el ciclo de notificaciones simuladas (que usan `setTimeout` con un delay aleatorio) para asegurar que la tienda siempre parezca activa.",
             `
 <pre><code class="language-javascript">
 // En src/components/sales-notification.tsx
-const showRandomToast = useCallback(() => {
-  const country = getRandomCountry();
-  const product = getRandomItem(products);
-  const name = getRandomItem(names);
-  toast({ title: '¡Compra Reciente!', description: \`\${name} de \${location} acaba de comprar...\` });
-}, [toast, products]);
+const ordersQuery = query(
+  collectionGroup(db, 'orders'),
+  orderBy('createdAt', 'desc'),
+  where('createdAt', '>', Timestamp.now())
+);
+
+const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+  snapshot.docChanges().forEach((change) => {
+    if (change.type === 'added') {
+      // Interrumpe el timer de notificaciones falsas
+      // Muestra la notificación REAL
+      // Vuelve a programar la siguiente notificación falsa
+    }
+  });
+});
 </code></pre>
             `,
             "**Estético:** Las notificaciones aparecen en la esquina inferior izquierda. Usan el estilo por defecto de `Toast` con un icono de `ShoppingCart` para dar contexto visual."
@@ -382,5 +391,3 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
-
-    
