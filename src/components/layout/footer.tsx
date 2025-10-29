@@ -16,6 +16,7 @@ export function Footer() {
     { href: '/envio-tarifas', text: 'Envío y tarifas' },
     { href: '/contacto', text: 'Contacte con nosotros' },
     { href: '/blog', text: 'Blog' },
+    { href: '/site-documentation', text: 'Docs del Sitio' }, // New link
   ];
 
   const LinkColumn = ({ title, links }: { title: string; links: { href: string; text: string }[] }) => (
@@ -40,10 +41,11 @@ export function Footer() {
           <p className="text-sm text-center md:text-left text-muted-foreground mb-6">
             <span className="font-bold text-foreground">Popper Online:</span> Tu tienda de confianza para aromas de calidad superior.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <LinkColumn title="Información" links={footerLinks.slice(0, 5)} />
-            <LinkColumn title="Legal" links={footerLinks.slice(5, 10)} />
-            <LinkColumn title="Ayuda" links={footerLinks.slice(10)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <LinkColumn title="Información" links={footerLinks.slice(0, 4)} />
+            <LinkColumn title="Guías" links={footerLinks.slice(4, 7)} />
+            <LinkColumn title="Legal" links={footerLinks.slice(7, 11)} />
+            <LinkColumn title="Ayuda" links={footerLinks.slice(11)} />
           </div>
         </div>
 
