@@ -3,7 +3,6 @@
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getUserIdFromSession } from './user-data';
-import { useToast } from '@/hooks/use-toast';
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
@@ -48,12 +47,13 @@ export async function cancelNowPaymentsSubscription(): Promise<{ success: boolea
         const userDocRef = doc(db, 'users', userId);
         const userDocSnap = await getDoc(userDocRef);
 
-        if (!userDocSnap.exists() || !userDocSnap.data()?.subscription?.sub_id) {
+        // Safely access nested property
+        const subscriptionId = userDocSnap.data()?.subscription?.sub_id;
+
+        if (!userDocSnap.exists() || !subscriptionId) {
             return { success: false, message: 'No se encontró una suscripción activa para este usuario.' };
         }
         
-        const subscriptionId = userDocSnap.data()?.subscription.sub_id;
-
         // 2. Obtener el token JWT para autorizar la cancelación
         const jwtToken = await getNowPaymentsJwt();
 
@@ -68,6 +68,8 @@ export async function cancelNowPaymentsSubscription(): Promise<{ success: boolea
         const responseData = await response.json();
 
         if (!response.ok || responseData.result !== 'ok') {
+            // Log the actual error from NOWPayments for better debugging
+            console.error('NOWPayments cancellation error:', responseData);
             throw new Error(responseData.message || 'Error al cancelar la suscripción en NOWPayments.');
         }
 

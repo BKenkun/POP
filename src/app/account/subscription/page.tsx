@@ -61,8 +61,20 @@ export default function SubscriptionManagementPage() {
     
     const poppers = products.filter(p => !p.internalTags?.includes('accesorio') && !p.internalTags?.includes('pack'));
     const accessories = products.filter(p => p.internalTags?.includes('accesorio'));
+    
+    // Safely check if a subscription exists and is active before allowing cancellation.
+    const canManageSubscription = !!userDoc?.subscription?.sub_id && userDoc.isSubscribed;
 
     const handleCancelSubscription = async () => {
+        if (!canManageSubscription) {
+             toast({
+                title: "Error",
+                description: "No se encontró una suscripción activa para gestionar.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         setPortalLoading(true);
         const result = await cancelNowPaymentsSubscription();
         if (result.success) {
@@ -71,7 +83,9 @@ export default function SubscriptionManagementPage() {
                 description: result.message,
             });
             // Optimistically update the user document in the context
-            setUserDoc({ ...userDoc, isSubscribed: false, subscription: { ...userDoc.subscription, status: 'cancelled' } });
+            if (userDoc) {
+                setUserDoc({ ...userDoc, isSubscribed: false, subscription: { ...userDoc.subscription, status: 'cancelled' } });
+            }
             router.push('/account'); // Redirect to account page
         } else {
             toast({
@@ -134,7 +148,7 @@ export default function SubscriptionManagementPage() {
             <div className="text-center pt-4">
                  <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button disabled={portalLoading} variant="destructive">
+                         <Button disabled={portalLoading || !canManageSubscription} variant="destructive">
                             {portalLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
@@ -158,6 +172,7 @@ export default function SubscriptionManagementPage() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+                 {!canManageSubscription && <p className="text-xs text-muted-foreground mt-2">No se encontró una suscripción activa para gestionar.</p>}
             </div>
         </div>
     )
