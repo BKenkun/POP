@@ -3,10 +3,6 @@
 
 import { auth as adminAuth } from '@/lib/firebase-admin';
 import { cookies } from 'next/headers';
-import { getUserIdFromSession } from './user-data';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
@@ -14,13 +10,18 @@ const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 // This is the unique ID for your subscription plan in your system.
 const SUBSCRIPTION_PLAN_ID = "1441433881";
 
-async function getUserEmailFromId(uid: string): Promise<string | undefined> {
-    const userDocRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(userDocRef);
-    if(docSnap.exists()) {
-        return docSnap.data().email;
+async function getAuthenticatedUserFromSession(): Promise<{ uid: string; email: string | undefined }> {
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) {
+        throw new Error('Authentication required: No session cookie found.');
     }
-    return undefined;
+    try {
+        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+        return { uid: decodedClaims.uid, email: decodedClaims.email };
+    } catch (error) {
+        console.error('Error verifying session cookie in server action:', error);
+        throw new Error('Authentication failed: Invalid session.');
+    }
 }
 
 
@@ -34,8 +35,7 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
     }
 
     try {
-        const userId = await getUserIdFromSession();
-        const userEmail = await getUserEmailFromId(userId);
+        const { email: userEmail } = await getAuthenticatedUserFromSession();
 
         if (!userEmail) {
             throw new Error('User email not found in session.');
@@ -60,6 +60,7 @@ export async function createNowPaymentsSubscription(): Promise<{ success: boolea
             throw new Error(data.message || 'Error creating the subscription.');
         }
         
+        // According to NOWPayments docs for subscriptions, the response is an array.
         const invoiceUrl = data.result?.[0]?.invoice_url;
 
         if (!invoiceUrl) {
