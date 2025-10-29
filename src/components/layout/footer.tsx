@@ -16,7 +16,7 @@ export function Footer() {
     { href: '/envio-tarifas', text: 'Envío y tarifas' },
     { href: '/contacto', text: 'Contacte con nosotros' },
     { href: '/blog', text: 'Blog' },
-    { href: '/site-documentation', text: 'Docs del Sitio' }, // New link
+    { href: '/site-documentation', text: 'Docs del Sitio' },
   ];
 
   const LinkColumn = ({ title, links }: { title: string; links: { href: string; text: string }[] }) => (
