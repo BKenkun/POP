@@ -32,7 +32,8 @@ service cloud.firestore {
      * @principle Allows public read access but restrict write access to authenticated users.
      */
     match /products/{productId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn();
       allow delete: if isSignedIn();
@@ -45,12 +46,11 @@ service cloud.firestore {
      * @allow create: if isOwner(userId) && request.resource.data.userId == userId;
      * @allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
      * @allow delete: if isExistingOwner(userId);
-     * @deny create: if request.resource.data.userId != userId; // Prevent creating cart for another user
-     * @deny update: if request.resource.data.userId != resource.data.userId; // Ensure userId is immutable
      * @principle Enforces document ownership and relational integrity for shopping carts.
      */
     match /users/{userId}/shoppingCarts/{cartId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
@@ -63,12 +63,11 @@ service cloud.firestore {
      * @allow create: if isOwner(userId) && request.resource.data.userId == userId;
      * @allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
      * @allow delete: if isExistingOwner(userId);
-     * @deny create: if request.resource.data.userId != userId; // Prevent creating order for another user
-     * @deny update: if request.resource.data.userId != resource.data.userId; // Ensure userId is immutable
      * @principle Enforces document ownership and relational integrity for orders.
      */
     match /users/{userId}/orders/{orderId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
@@ -85,10 +84,10 @@ service cloud.firestore {
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
+      allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
-      allow list: if false; // Listing users is not allowed.
     }
 
     // --- Helper functions ---
