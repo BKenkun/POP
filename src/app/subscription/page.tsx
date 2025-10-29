@@ -7,9 +7,9 @@ import { useAuth } from '@/context/auth-context';
 import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck, Settings, UserPlus, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { createNowPaymentsSubscription } from '@/app/actions/subscription-nowpayments';
+import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 import Link from 'next/link';
 
 const benefits = [
@@ -29,6 +29,25 @@ export default function SubscriptionPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    
+    if (authLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
+    if (isSubscribed) {
+        router.replace('/account/subscription');
+        return (
+             <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="ml-4">Ya eres miembro. Redirigiendo a tu panel...</p>
+            </div>
+        );
+    }
+
 
     const handleSubscribe = async () => {
         if (!user) {
@@ -41,19 +60,15 @@ export default function SubscriptionPage() {
             return;
         }
 
-        if (!user.email) {
-            toast({
-                title: "Email no encontrado",
-                description: "Tu cuenta de usuario debe tener un email para poder suscribirte.",
-                variant: "destructive"
-            });
-            return;
-        }
-
         setLoading(true);
 
         try {
-            const result = await createNowPaymentsSubscription(user.email);
+            const result = await createNowPaymentsInvoice({
+                price_amount: 44,
+                price_currency: 'eur',
+                order_id: `sub_${user.uid}_${Date.now()}`,
+                order_description: 'Suscripción Club Dosis Mensual'
+            });
             
             if (result.success && result.invoice_url) {
                 toast({
@@ -76,25 +91,6 @@ export default function SubscriptionPage() {
             setLoading(false);
         }
     };
-    
-    if (authLoading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    if (isSubscribed) {
-        router.replace('/account/subscription');
-        return (
-             <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="ml-4">Ya eres miembro. Redirigiendo a tu panel...</p>
-            </div>
-        );
-    }
-
 
     return (
         <div className="max-w-5xl mx-auto space-y-16">
