@@ -1,45 +1,84 @@
-
+/**
+ * @fileoverview Firestore Security Rules for PuroRush.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for personal data while allowing public read access to product information.
+ *
+ * Data Structure:
+ * - Products are stored in a top-level `/products` collection, readable by anyone.
+ * - User data (profiles, shopping carts, orders) is nested under `/users/{userId}` and only accessible by the authenticated user.
+ *
+ * Key Security Decisions:
+ * - Public product listings.
+ * - Strict user-ownership for shopping carts and orders.
+ * - Users can only create their own user documents.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
-    // Products: Publicly readable, admin writable
+    /**
+     * @description Allows anyone to read product information, but restricts creation, updates, and deletion.
+     * @path /products/{productId}
+     * @allow (get, list) - Any user can read product information.
+     * @deny (create, update, delete) - No one can create, update, or delete products through the client; this is assumed to be handled by backend processes.
+     * @principle Public read access with restricted writes.
+     */
     match /products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-    // Users: Users can read/write their own data. Admins can read/write any user data.
+    /**
+     * @description Enforces that only the authenticated user can access their own shopping cart.
+     * @path /users/{userId}/shoppingCarts/{cartId}
+     * @allow (create, get, list, update, delete) - The user with ID `userId` can manage their shopping cart.
+     * @deny (create, get, list, update, delete) - Any other user attempting to access this shopping cart.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/shoppingCarts/{cartId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Enforces that only the authenticated user can access their own order history.
+     * @path /users/{userId}/orders/{orderId}
+     * @allow (create, get, list, update, delete) - The user with ID `userId` can manage their orders.
+     * @deny (create, get, list, update, delete) - Any other user attempting to access this order.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/orders/{orderId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Enforces that only the authenticated user can access their own profile.  Allows self-creation.
+     * @path /users/{userId}
+     * @allow (create) - A user can create their own profile if the userId matches their auth.uid.
+     * @allow (get, list, update, delete) - The user with ID `userId` can manage their profile.
+     * @deny (create, get, list, update, delete) - Any other user attempting to access this profile.
+     * @principle Enforces document ownership for all operations.
+     */
     match /users/{userId} {
-      allow read, update, delete: if request.auth.uid == userId || isAdmin();
-      allow create: if request.auth.uid == userId;
-    }
-    
-    // User Sub-collections (Orders, Addresses, etc.): Only accessible by the owner or an admin.
-    match /users/{userId}/{collection}/{docId} {
-        allow read, write, delete: if request.auth.uid == userId || isAdmin();
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow read: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.id == request.resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow list: if false;
     }
 
-    // Orders collection (for registered users)
-    // A user can create an order for themselves. Admins can manage all orders.
-    match /orders/{orderId} {
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow read, update, delete: if request.auth.uid == resource.data.userId || isAdmin();
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Reservations collection (for guests)
-    // Allow anyone to create a reservation (unauthenticated write)
-    // Only admins can read/update/delete them afterwards.
-    match /reservations/{reservationId} {
-        allow create: if request.auth == null;
-        allow read, update, delete: if isAdmin();
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
-    
+
+        function isExistingOwner(userId) {
+          return isOwner(userId) && resource != null;
+        }
   }
 }
