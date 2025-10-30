@@ -324,38 +324,44 @@ const calculatePackPriceFlow = ai.defineFlow(
     ]
   },
   {
-    title: 'Suscripción "Dosis Mensual"',
+    title: 'Suscripción "Dosis Mensual" (con NOWPayments)',
     icon: PackagePlus,
     features: [
-        {
-            name: 'Página de Aterrizaje del Club',
-            id: 'feature-subscription-landing',
-            path: '/subscription',
-            description: 'Página informativa para que los usuarios se unan al club de suscripción. El botón "Unirme al Club" inicia el proceso de pago.',
-             details: [
-                "**Técnico:** El botón 'Unirme' llama a la `Server Action` `createNowPaymentsSubscription`, que se comunica con la API de NOWPayments para generar una URL de pago de suscripción única para el usuario.",
-                `
-<pre><code class="language-javascript">
-// En src/app/subscription/page.tsx
-const result = await createNowPaymentsSubscription(user.email);
-if (result.success && result.invoice_url) {
-  window.location.href = result.invoice_url;
-}
-</code></pre>
-                `,
-                "**Estético:** Diseño atractivo con `Cards` para resaltar los beneficios, iconos de `lucide-react` y una imagen destacada para atraer al usuario."
-            ]
-        },
-        {
-            name: 'Gestión de la Suscripción',
-            id: 'feature-subscription-management',
-            path: '/account/subscription',
-            description: 'Panel para suscriptores donde personalizan su caja mensual y gestionan su membresía.',
-            details: [
-                "**Técnico:** La página obtiene los productos de Firestore en tiempo real. La selección del usuario se guarda en `localStorage` (simulado). El botón de cancelar llama a la `Server Action` `cancelNowPaymentsSubscription`, que incluye la autenticación JWT requerida por NOWPayments.",
-                "**Estético:** `SubscriptionTimeline` es un componente visual que muestra el estado del ciclo mensual. `MonthlyBoxSelector` utiliza `Dialogs` para la selección de productos."
-            ]
-        },
+      {
+        name: 'Flujo de Inicio de Suscripción',
+        id: 'subscription-start',
+        path: '/subscription',
+        description: 'Página de aterrizaje y proceso de pago inicial para unirse al club de suscripción.',
+        details: [
+          "**1. Página de Aterrizaje (`/subscription`):**<br/>- **Archivo:** `src/app/subscription/page.tsx`<br/>- **Función:** Muestra los beneficios del club y el precio. El botón principal 'Unirme al Club' es el punto de entrada al flujo de pago.<br/>- **Lógica Clave:** Al hacer clic en el botón, se llama a la función `handleSubscribe`. Esta función primero verifica si el usuario está autenticado. Si lo está, invoca a la `Server Action` `createNowPaymentsInvoice`.",
+          "**2. Server Action (`createNowPaymentsInvoice`):**<br/>- **Archivo:** `src/app/actions/nowpayments.ts`<br/>- **Función:** Es el intermediario seguro entre nuestra aplicación y la API de NOWPayments. Recibe los detalles del pago (precio, moneda, etc.) desde la página de suscripción.<br/>- **Seguridad:** Utiliza la `NOWPAYMENTS_API_KEY` guardada en las variables de entorno del servidor, por lo que la clave nunca se expone en el navegador.<br/>- **Acción:** Realiza una petición `POST` a la API de NOWPayments (`https://api.nowpayments.io/v1/invoice`) para crear una factura de pago único.<br/><pre><code class='language-javascript'>// En src/app/subscription/page.tsx<br/>const result = await createNowPaymentsInvoice({<br/>  price_amount: 44, // Precio de la suscripción<br/>  price_currency: 'eur',<br/>  order_id: \`sub_\${user.uid}_\${Date.now()}\`, // ID único para la transacción<br/>  order_description: 'Suscripción Club Dosis Mensual'<br/>});</code></pre>",
+          "**3. Redirección al Pago:**<br/>- La `Server Action` devuelve un objeto con una URL de pago (`invoice_url`).<br/>- El código en la página de suscripción recibe esta URL y redirige automáticamente al usuario a la pasarela de pago de NOWPayments.<br/><pre><code class='language-javascript'>// En src/app/subscription/page.tsx<br/>if (result.success && result.invoice_url) {<br/>  window.location.href = result.invoice_url;<br/>}</code></pre>",
+          "**4. Páginas de Retorno (`/account/subscription/...`):**<br/>- **Archivos:** `success/page.tsx`, `failed/page.tsx`, `partial/page.tsx`<br/>- **Función:** NOWPayments redirige al usuario a una de estas páginas según el resultado del pago (`success_url`, `cancel_url` que se configuran en la petición a la API, aunque actualmente se usa un `success_url` genérico). Estas páginas simplemente muestran un mensaje informativo al usuario. La lógica de negocio real (como activar la suscripción en la base de datos) se manejaría a través de webhooks.",
+        ]
+      },
+      {
+        name: 'Gestión y Cancelación de la Suscripción',
+        id: 'subscription-management',
+        path: '/account/subscription',
+        description: 'Panel para suscriptores donde personalizan su caja y gestionan su membresía.',
+        details: [
+          "**1. Panel de Suscriptor (`/account/subscription`):**<br/>- **Archivo:** `src/app/account/subscription/page.tsx`<br/>- **Función:** Esta página es accesible solo para usuarios con una suscripción activa (`isSubscribed` en `AuthContext`). Les permite seleccionar los productos para su caja mensual (lógica simulada en `src/lib/subscription.ts`).<br/>- **Lógica de Cancelación:** Contiene el botón 'Gestionar mi Suscripción', que abre un diálogo para confirmar la cancelación.",
+          "**2. Server Action de Cancelación (`cancelNowPaymentsSubscription`):**<br/>- **Archivo:** `src/app/actions/manage-subscription.ts`<br/>- **Función:** Contiene la lógica segura para cancelar una suscripción en NOWPayments.<br/>- **Autenticación con NOWPayments:** A diferencia de la creación de facturas, la cancelación requiere un **token JWT**. La `Server Action` primero obtiene este token enviando el email y la contraseña de la cuenta de NOWPayments (guardados en variables de entorno) al endpoint de autenticación de NOWPayments.<br/><pre><code class='language-javascript'>// En src/app/actions/manage-subscription.ts<br/>async function getNowPaymentsJwt(): Promise<string> {<br/>  const response = await fetch(\`\${NOWPAYMENTS_API_URL}/auth\`, { ... });<br/>  // ...<br/>  return data.token;<br/>}</code></pre>",
+          "**3. Ejecución de la Cancelación:**<br/>- Una vez obtenido el JWT, la `Server Action` realiza una petición `DELETE` al endpoint de suscripciones de NOWPayments, incluyendo el ID de la suscripción del usuario (que se obtiene de su documento en Firestore) y el token JWT para la autorización.<br/>- Si la cancelación es exitosa, la `Server Action` actualiza el estado del usuario en Firestore (`isSubscribed: false`) y devuelve un mensaje de éxito.",
+        ]
+      },
+      {
+        name: 'Webhook de Notificaciones (IPN)',
+        id: 'subscription-webhook',
+        path: '/api/nowpayments/subscription-webhook',
+        description: 'Endpoint que NOWPayments usa para notificar al servidor sobre eventos de la suscripción.',
+        details: [
+          "**Archivo:** `src/app/api/nowpayments/subscription-webhook/route.ts`",
+          "**Función:** Este es un endpoint de API que **recibe** peticiones `POST` desde los servidores de NOWPayments. Es fundamental para la gestión a largo plazo de las suscripciones (pagos recurrentes, fallos, etc.).",
+          "**Seguridad:** En un entorno de producción, este endpoint **debe verificar la firma** (`x-nowpayments-sig`) que envía NOWPayments en las cabeceras para asegurarse de que la petición es legítima. Actualmente, esta verificación es un placeholder.",
+          "**Lógica Actual:** El webhook simplemente registra en la consola el cuerpo de la notificación que recibe. No ejecuta ninguna lógica de negocio, pero es el punto de partida para construir la automatización de pagos recurrentes en el futuro.",
+        ]
+      },
     ]
   },
   {
@@ -541,6 +547,7 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
 
 
 
