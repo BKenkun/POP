@@ -1,6 +1,6 @@
 {
-  "underConstruction": false,
+  "underConstruction": true,
   "showSubscriptionFeature": true,
-  "showCountdown": false,
-  "launchDate": null
+  "showCountdown": true,
+  "launchDate": "2025-11-08T23:00:00.000Z"
 }
