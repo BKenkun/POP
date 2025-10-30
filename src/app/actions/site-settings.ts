@@ -5,6 +5,7 @@ import path from 'path';
 
 export interface SiteSettings {
     underConstruction: boolean;
+    showSubscriptionFeature: boolean;
 }
 
 const settingsFilePath = path.join(process.cwd(), 'src', 'lib', 'site-settings.json');
@@ -19,6 +20,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         // Devuelve los valores por defecto si el archivo no existe o hay un error.
         return {
             underConstruction: false,
+            showSubscriptionFeature: true, // Default to true
         };
     }
 }

@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Construction } from 'lucide-react';
+import { Loader2, Save, Construction, PackagePlus } from 'lucide-react';
 import { updateSiteSettings, getSiteSettings } from '@/app/actions/site-settings';
 import type { SiteSettings } from '@/app/actions/site-settings';
 
@@ -77,6 +77,32 @@ export default function AdminWebPage() {
             {isSaving ? 'Guardando...' : 'Guardar Cambios'}
         </Button>
       </div>
+
+       <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2"><PackagePlus />Dosis Mensual</CardTitle>
+            <CardDescription>
+                Activa o desactiva la funcionalidad de suscripción mensual en toda la tienda.
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
+                <div className="space-y-0.5">
+                    <Label htmlFor="subscription-toggle" className="text-base font-medium">
+                        Mostrar funcionalidad de "Dosis Mensual"
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                       Si está inactivo, los enlaces y páginas de suscripción no serán visibles para los clientes.
+                    </p>
+                </div>
+                 <Switch
+                    id="subscription-toggle"
+                    checked={settings.showSubscriptionFeature}
+                    onCheckedChange={(checked) => handleToggleChange('showSubscriptionFeature', checked)}
+                />
+            </div>
+        </CardContent>
+      </Card>
       
       <Card>
         <CardHeader>
