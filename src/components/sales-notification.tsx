@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import type { Order, Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, collectionGroup, orderBy, Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context';
 
 const internationalData = {
   "España": {
@@ -38,6 +39,7 @@ const getRandomCountry = () => getRandomItem(Object.keys(internationalData));
 
 export function SalesNotification() {
   const { toast } = useToast();
+  const { isAdmin } = useAuth(); // Use the auth context to check for admin status
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -124,33 +126,34 @@ export function SalesNotification() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
+    
+    let unsubscribeOrders = () => {};
 
-    // Listener for REAL orders
-    const ordersQuery = query(
-      collectionGroup(db, 'orders'),
-      orderBy('createdAt', 'desc'),
-      where('createdAt', '>', Timestamp.now()) // Only listen for new orders from now on
-    );
+    // Only set up the real-time listener if the user is an admin
+    if (isAdmin) {
+        const ordersQuery = query(
+          collectionGroup(db, 'orders'),
+          orderBy('createdAt', 'desc'),
+          where('createdAt', '>', Timestamp.now())
+        );
 
-    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
-        if (isInitialLoad) {
-            setIsInitialLoad(false);
-            return;
-        }
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-                const newOrder = change.doc.data() as Order;
-                // Interrupt the fake toast timer
-                if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                // Show the real order toast
-                showRealOrderToast(newOrder);
-                // Schedule the next fake toast
-                scheduleNextToast();
+        unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+                return;
             }
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const newOrder = change.doc.data() as Order;
+                    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                    showRealOrderToast(newOrder);
+                    scheduleNextToast();
+                }
+            });
         });
-    });
+    }
 
-    // Start the FAKE toast loop
+    // Always start the FAKE toast loop for all users
     const initialDelay = setTimeout(() => {
         showRandomToast();
         scheduleNextToast();
@@ -163,7 +166,7 @@ export function SalesNotification() {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [isAdminPath, allProducts, toast, showRandomToast, showRealOrderToast, scheduleNextToast, isInitialLoad]);
+  }, [isAdminPath, allProducts, toast, showRandomToast, showRealOrderToast, scheduleNextToast, isInitialLoad, isAdmin]);
 
   return null;
 }
