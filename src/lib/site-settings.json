@@ -1,4 +1,6 @@
 {
   "underConstruction": false,
-  "showSubscriptionFeature": true
+  "showSubscriptionFeature": true,
+  "showCountdown": false,
+  "launchDate": null
 }
