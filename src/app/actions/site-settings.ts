@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export interface SiteSettings {
-    showSubscriptionFeature: boolean;
+    underConstruction: boolean;
 }
 
 const settingsFilePath = path.join(process.cwd(), 'src', 'lib', 'site-settings.json');
@@ -18,7 +18,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         console.error("Error reading site settings, returning defaults:", error);
         // Devuelve los valores por defecto si el archivo no existe o hay un error.
         return {
-            showSubscriptionFeature: true,
+            underConstruction: false,
         };
     }
 }

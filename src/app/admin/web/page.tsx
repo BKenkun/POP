@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Construction } from 'lucide-react';
 import { updateSiteSettings, getSiteSettings } from '@/app/actions/site-settings';
 import type { SiteSettings } from '@/app/actions/site-settings';
 
@@ -70,7 +70,7 @@ export default function AdminWebPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Personalización de la Web</h1>
-          <p className="text-muted-foreground">Modifica la apariencia y el contenido de tu tienda online.</p>
+          <p className="text-muted-foreground">Activa y desactiva funcionalidades globales de tu tienda.</p>
         </div>
          <Button onClick={handleSaveChanges} disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
@@ -80,25 +80,25 @@ export default function AdminWebPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle>Visibilidad de Funcionalidades</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Construction />Modo "En Construcción"</CardTitle>
             <CardDescription>
-                Activa o desactiva secciones enteras de la web. Los cambios se aplicarán a todos los usuarios.
+                Activa una página de aterrizaje para ocultar la web al público mientras realizas cambios.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
                 <div className="space-y-0.5">
-                    <Label htmlFor="subscription-toggle" className="text-base font-medium">
-                        Función de Suscripción ("Dosis Mensual")
+                    <Label htmlFor="construction-toggle" className="text-base font-medium">
+                        Activar modo "En construcción"
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                        Si se desactiva, se ocultarán todos los enlaces y páginas relacionados con la suscripción del "Club Dosis Mensual".
+                       Los visitantes verán la página de mantenimiento. Los administradores podrán seguir navegando la web.
                     </p>
                 </div>
                  <Switch
-                    id="subscription-toggle"
-                    checked={settings.showSubscriptionFeature}
-                    onCheckedChange={(checked) => handleToggleChange('showSubscriptionFeature', checked)}
+                    id="construction-toggle"
+                    checked={settings.underConstruction}
+                    onCheckedChange={(checked) => handleToggleChange('underConstruction', checked)}
                 />
             </div>
         </CardContent>
