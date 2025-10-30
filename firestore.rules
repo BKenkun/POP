@@ -1,95 +1,49 @@
-/**
- * @fileoverview Firestore Security Rules for PuroRush.
- *
- * Core Philosophy:
- * This ruleset enforces a combination of public read access for product information and strict user-ownership for personal data (shopping carts, orders, and user profiles).
- *
- * Data Structure:
- * - /products/{productId}: Publicly readable product catalog.
- * - /users/{userId}/shoppingCarts/{cartId}: User-specific shopping carts. Only accessible by the owning user.
- * - /users/{userId}/orders/{orderId}: User-specific order history. Only accessible by the owning user.
- * - /users/{userId}: User profile information. Only accessible by the user.
- *
- * Key Security Decisions:
- * - Products are publicly readable to facilitate browsing the catalog.
- * - Users can only access their own shopping carts, orders, and profile data.
- * - Data consistency is enforced by matching the `userId` in the path with the `userId` in the document for user-owned resources.
- * - No user listing is allowed.
- *
- * Denormalization for Authorization:
- * - The `userId` is embedded in the paths for shopping carts and orders. This enables simple `isOwner()` checks and avoids costly `get()` calls.
- */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Allows public read access to product information.
-     * @path /products/{productId}
-     * @allow (get, list) Any user (authenticated or not) can read product information.
-     * @deny (create, update, delete) No user can create, update, or delete products via client-side code.
-     * @principle Public read access for product catalog. Owner-only writes (backend only).
-     */
-    match /products/{productId} {
-      allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Allows a user to manage their own shopping carts.
-     * @path /users/{userId}/shoppingCarts/{cartId}
-     * @allow (create, get, list, update, delete) User 'abc' can create, read, update, or delete their own shopping cart. (auth.uid == 'abc' and userId == 'abc')
-     * @deny (create, get, list, update, delete) User 'def' cannot access user 'abc's shopping cart. (auth.uid == 'def' and userId == 'abc')
-     * @principle Enforces document ownership for shopping carts.
-     */
-    match /users/{userId}/shoppingCarts/{cartId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Allows a user to manage their own orders.
-     * @path /users/{userId}/orders/{orderId}
-     * @allow (create, get, list, update, delete) User 'abc' can create, read, update, or delete their own order. (auth.uid == 'abc' and userId == 'abc')
-     * @deny (create, get, list, update, delete) User 'def' cannot access user 'abc's order. (auth.uid == 'def' and userId == 'abc')
-     * @principle Enforces document ownership for orders.
-     */
-    match /users/{userId}/orders/{orderId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Allows a user to manage their own user profile.
-     * @path /users/{userId}
-     * @allow (create, get, list, update, delete) User 'abc' can create, read, update, or delete their own user profile. (auth.uid == 'abc' and userId == 'abc')
-     * @deny (create, get, list, update, delete) User 'def' cannot access user 'abc's profile. (auth.uid == 'def' and userId == 'abc')
-     * @principle Enforces document ownership for user profiles.
-     */
-    match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // No listing of users.
-      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-    }
 
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'maryandpopper@gmail.com';
+    }
+
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
+      // Allow user to update their own data, but not their roles
+      allow update: if isOwner(userId) && !('roles' in request.resource.data);
+      // Allow admin to update any user, including roles
+      allow update: if isAdmin();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    match /users/{userId}/shoppingCarts/{cartId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/orders/{orderId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId) || isAdmin();
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
