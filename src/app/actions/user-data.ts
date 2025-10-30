@@ -151,28 +151,3 @@ export async function updateUser(action: 'add-address' | 'update-address' | 'del
         return { success: false, message: 'An unexpected error occurred.' };
     }
 }
-
-/**
- * Securely updates a user's roles. Only callable by an admin.
- */
-export async function updateUserRoles(targetUserId: string, roles: string[]): Promise<{ success: boolean; message: string }> {
-    try {
-        // First, verify the calling user is an admin
-        const adminId = await getUserIdFromSession();
-        const adminDoc = await getDoc(doc(db, 'users', adminId));
-        if (!adminDoc.exists() || adminDoc.data()?.email !== 'maryandpopper@gmail.com') {
-            throw new Error("Permission denied. Only administrators can update roles.");
-        }
-
-        // Proceed to update the target user's roles
-        const userDocRef = doc(db, 'users', targetUserId);
-        await updateDoc(userDocRef, { roles: roles });
-
-        revalidatePath('/admin/customers');
-        return { success: true, message: "Roles updated successfully." };
-
-    } catch (error: any) {
-        console.error("Error updating user roles:", error);
-        return { success: false, message: error.message || 'Failed to update roles.' };
-    }
-}

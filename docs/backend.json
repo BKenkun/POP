@@ -120,14 +120,6 @@
           "type": "string",
           "description": "User's email address.",
           "format": "email"
-        },
-        "roles": {
-            "type": "array",
-            "description": "Defines the user's permissions within the application.",
-            "items": {
-                "type": "string",
-                "enum": ["editor", "repartidor", "contable"]
-            }
         }
       },
       "required": [

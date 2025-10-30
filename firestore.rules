@@ -28,10 +28,7 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
-      // Consolidated update rule:
-      // - Owners can update their own data, but cannot touch the 'roles' field.
-      // - Admins can update any field, including 'roles'.
-      allow update: if (isOwner(userId) && !('roles' in request.resource.data)) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isExistingOwner(userId);
     }
 
