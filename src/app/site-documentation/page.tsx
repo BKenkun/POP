@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon, Shield } from 'lucide-react';
+import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon, Shield, Database } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -70,6 +70,24 @@ import { Home, ShoppingCart } from 'lucide-react';
         ]
       }
     ]
+  },
+  {
+      title: 'Arquitectura de Datos y Comunicación',
+      icon: Database,
+      features: [
+           {
+                name: 'Comunicación Cliente-Servidor para Productos (Lectura/Escritura)',
+                id: 'arch-data-flow',
+                path: '#',
+                description: 'Explicación técnica de cómo el panel de administración lee y guarda los datos de los productos sin una API REST tradicional.',
+                details: [
+                    "**1. El Modelo: Cliente Directo a Base de Datos**<br/>A diferencia de una arquitectura tradicional que usa una API REST como intermediaria, esta aplicación adopta un enfoque más moderno y directo. El panel de administración (que se ejecuta en el navegador del administrador) utiliza el **SDK de cliente de Firebase** para comunicarse directamente con la base de datos de Firestore. Esto elimina la necesidad de escribir y mantener un backend completo para las operaciones CRUD (Crear, Leer, Actualizar, Borrar).",
+                    "**2. ¿Cómo es seguro este modelo? El rol de las Reglas de Seguridad**<br/>La seguridad no recae en un endpoint de servidor oculto, sino en las **Reglas de Seguridad de Firestore** (`firestore.rules`), que actúan como un vigilante inteligente en la nube. Antes de permitir cualquier operación de lectura o escritura, Firestore evalúa estas reglas. Para la gestión de productos, la regla clave es:<br/><pre><code class='language-javascript'>match /products/{productId} {<br/>  allow read: if true;<br/>  allow write: if isAdmin();<br/>}<br/><br/>function isAdmin() {<br/>  return request.auth != null && request.auth.token.email == 'maryandpopper@gmail.com';<br/>}</code></pre><br/>- **`allow read: if true;`**: Permite que cualquier persona (clientes, visitantes) lea la información de los productos, algo necesario para una tienda online.<br/>- **`allow write: if isAdmin();`**: **Esta es la clave de la seguridad**. Solo permite operaciones de escritura (crear, editar, borrar) si la petición proviene de un usuario autenticado cuyo token de autenticación (`request.auth.token`) contiene el email `maryandpopper@gmail.com`. Cualquier otro intento de escritura es rechazado automáticamente por la base de datos.",
+                    "**3. Flujo de Escritura (Crear o Modificar un Producto)**<br/>Cuando el administrador guarda un producto desde el panel:<br/>a. **Componente de UI**: Se utiliza el formulario `ProductForm` (`src/app/admin/products/_components/product-form.tsx`).<br/>b. **Validación**: Los datos se validan en el navegador usando `react-hook-form` y `zod` para asegurar que todo es correcto antes de enviar.<br/>c. **Llamada a Firestore**: La función `handleSave` en las páginas `new` o `edit` llama directamente a las funciones del SDK de Firebase:<br/>- **Para crear un producto nuevo:**<br/><pre><code class='language-javascript'>// En: src/app/admin/products/new/page.tsx<br/>import { doc, setDoc } from 'firebase/firestore';<br/><br/>const productRef = doc(db, 'products', data.id);<br/>await setDoc(productRef, productData); // Crea el documento.</code></pre><br/>- **Para modificar un producto existente:**<br/><pre><code class='language-javascript'>// En: src/app/admin/products/edit/[id]/page.tsx<br/>import { doc, updateDoc } from 'firebase/firestore';<br/><br/>const productRef = doc(db, 'products', product.id);<br/>await updateDoc(productRef, productData); // Actualiza el documento.</code></pre>",
+                    "**4. Flujo de Lectura (Leer los Productos)**<br/>Para mostrar los productos en el panel de administración, se sigue un patrón similar de comunicación directa:<br/>a. **Suscripción en Tiempo Real**: La aplicación utiliza la función `onSnapshot` de Firebase en el componente `AdminProductsPage` (`src/app/admin/products/page.tsx`).<br/>b. **Funcionamiento**: `onSnapshot` abre una conexión persistente con Firestore. En lugar de solo 'pedir' los datos una vez, 'escucha' cualquier cambio en la colección de productos. Si se añade, modifica o elimina un producto (incluso desde otro dispositivo), Firestore envía automáticamente los datos actualizados al cliente, y la interfaz se actualiza en tiempo real gracias a la reactividad de React.",
+                ]
+           }
+      ]
   },
     {
     title: 'Lógica de Negocio y Marketing',
@@ -523,6 +541,7 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
 
 
 
