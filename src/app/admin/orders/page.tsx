@@ -19,8 +19,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
+import { useAuth } from '@/context/auth-context';
 
 // Using a more specific type for the orders state to handle serializable dates
 type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string, path: string };
@@ -118,15 +119,19 @@ export default function AdminOrdersPage() {
   const [allOrders, setAllOrders] = useState<AdminDisplayOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, isAdmin } = useAuth(); // Get user and admin status from context
   
   useEffect(() => {
-    const handleFetchAllOrders = async () => {
-      setLoading(true);
+    // Only fetch data if the user is an authenticated admin
+    if (!user || !isAdmin) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(ordersQuery);
-        
+    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    
+    // Use onSnapshot for real-time updates and more resilient auth checking
+    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
         const fetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
           const data = doc.data() as Order;
           
@@ -148,22 +153,21 @@ export default function AdminOrdersPage() {
         });
 
         setAllOrders(fetchedOrders);
-      } catch (error: any) {
-        console.error("Error fetching all orders from client:", error);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching orders with onSnapshot:", error);
         toast({ 
-          title: 'Error al cargar los pedidos', 
-          description: error.message.includes('permission-denied') 
-            ? 'Permiso denegado. Asegúrate de que las reglas de seguridad de Firestore son correctas.' 
-            : 'No se pudieron obtener los pedidos.',
+          title: 'Error de permisos', 
+          description: 'No se pudieron cargar los pedidos. Asegúrate de tener los permisos de administrador correctos.',
           variant: 'destructive' 
         });
-      } finally {
         setLoading(false);
-      }
-    };
+    });
+    
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
 
-    handleFetchAllOrders();
-  }, [toast]);
+  }, [toast, user, isAdmin]);
 
   const { newOrders, pendingPaymentOrders, inProgressOrders, archivedOrders } = useMemo(() => {
     return {
