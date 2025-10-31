@@ -19,24 +19,31 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'maryandpopper@gmail.com';
     }
 
+    // Products are publicly readable by anyone.
+    // Writing is restricted to admins.
     match /products/{productId} {
-      allow get, list: if true;
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
+    // User-specific data.
     match /users/{userId} {
+      // An admin can see any user profile. A user can only see their own.
       allow get: if isOwner(userId) || isAdmin();
+      // Only an admin can list all users.
       allow list: if isAdmin();
-      // Ensure a user can only create a document with their own UID.
-      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
       
-      // A user can ONLY update their own addresses, loyalty points, or subscription status.
-      // An admin can update any field (and their access is not governed by these rules when using Admin SDK).
-      // This rule is critical for client-side security.
+      // A user can only create their own user document.
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      
+      // A user can ONLY update specific, safe fields on their own document.
+      // An admin can update any field (when using Admin SDK).
       allow update: if (isOwner(userId) && request.resource.data.keys().hasOnly(['addresses', 'loyaltyPoints', 'isSubscribed', 'subscription'])) || isAdmin();
 
+      // A user can delete their own document, an admin can delete any.
       allow delete: if isExistingOwner(userId) || isAdmin();
 
+      // Shopping carts and orders are private to the user.
       match /shoppingCarts/{cartId} {
         allow read, write: if isOwner(userId);
       }
@@ -44,16 +51,14 @@ service cloud.firestore {
       match /orders/{orderId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId) || isAdmin();
-        allow delete: if isExistingOwner(userId) || isAdmin();
+        allow update, delete: if isExistingOwner(userId) || isAdmin();
       }
     }
     
-    // This rule allows the admin (via server-side Admin SDK which bypasses these rules)
-    // to query across all 'orders' subcollections. It's good practice to have it,
-    // but the primary security for the admin panel now lies in the Server Actions.
+    // This allows an admin to perform a collectionGroup query on all 'orders'.
+    // It's essential for the admin panel dashboard and order list.
     match /{path=**}/orders/{orderId} {
-       allow read, list: if isAdmin();
+       allow get, list: if isAdmin();
     }
   }
 }
