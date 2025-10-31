@@ -1,8 +1,13 @@
 
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
 
 export function Footer() {
-  const footerLinks = [
+  const { isAdmin } = useAuth();
+
+  const allLinks = [
     { href: '/informacion-legal', text: 'Información legal' },
     { href: '/terminos-y-condiciones', text: 'Termos y Condiciones Generales' },
     { href: '/venta-popper', text: 'Venta de Popper' },
@@ -16,8 +21,11 @@ export function Footer() {
     { href: '/envio-tarifas', text: 'Envío y tarifas' },
     { href: '/contacto', text: 'Contacte con nosotros' },
     { href: '/blog', text: 'Blog' },
-    { href: '/site-documentation', text: 'Docs del Sitio' },
   ];
+
+  if (isAdmin) {
+    allLinks.push({ href: '/site-documentation', text: 'Docs del Sitio' });
+  }
 
   const LinkColumn = ({ title, links }: { title: string; links: { href: string; text: string }[] }) => (
     <div>
@@ -42,10 +50,10 @@ export function Footer() {
             <span className="font-bold text-foreground">Popper Online:</span> Tu tienda de confianza para aromas de calidad superior.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            <LinkColumn title="Información" links={footerLinks.slice(0, 4)} />
-            <LinkColumn title="Guías" links={footerLinks.slice(4, 7)} />
-            <LinkColumn title="Legal" links={footerLinks.slice(7, 11)} />
-            <LinkColumn title="Ayuda" links={footerLinks.slice(11)} />
+            <LinkColumn title="Información" links={allLinks.slice(0, 4)} />
+            <LinkColumn title="Guías" links={allLinks.slice(4, 7)} />
+            <LinkColumn title="Legal" links={allLinks.slice(7, 11)} />
+            <LinkColumn title="Ayuda" links={allLinks.slice(11)} />
           </div>
         </div>
 
