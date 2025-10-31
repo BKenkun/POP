@@ -136,10 +136,11 @@ export interface UserSubscription {
 }
 
 // For the Admin flow
-export type OrderWithUserName = {
-    id: string;
-    createdAt: string;
-    status: string;
-    total: number;
-    userName: string;
+export type Customer = {
+    uid: string;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
+    disabled: boolean;
+    creationTime: string; // Serialized as ISO string
 };

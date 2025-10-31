@@ -19,16 +19,10 @@ interface Address {
     isDefault: boolean;
 }
 
-interface UserUpdateData {
-    addresses?: Address[];
-    loyaltyPoints?: number;
-}
-
-
 /**
  * Decodes the session cookie to get the authenticated user's ID.
  * Throws an error if the user is not authenticated.
- * This function is now EXPORTED to be used by other server actions.
+ * This is the single source of truth for server-side user authentication.
  */
 export async function getUserIdFromSession(): Promise<string> {
     const sessionCookie = cookies().get('session')?.value;

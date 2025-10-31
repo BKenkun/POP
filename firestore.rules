@@ -27,25 +27,33 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Ensure a user can only create a document with their own UID.
+      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
       
-      // A user can ONLY update their own addresses.
-      // An admin can update any field.
-      // This prevents users from modifying fields like loyaltyPoints or isSubscribed.
+      // A user can ONLY update their own addresses, loyalty points, or subscription status.
+      // An admin can update any field (and their access is not governed by these rules when using Admin SDK).
+      // This rule is critical for client-side security.
       allow update: if (isOwner(userId) && request.resource.data.keys().hasOnly(['addresses', 'loyaltyPoints', 'isSubscribed', 'subscription'])) || isAdmin();
 
       allow delete: if isExistingOwner(userId) || isAdmin();
-    }
 
-    match /users/{userId}/shoppingCarts/{cartId} {
-      allow read, write: if isOwner(userId);
-    }
+      match /shoppingCarts/{cartId} {
+        allow read, write: if isOwner(userId);
+      }
 
-    match /users/{userId}/orders/{orderId} {
-      allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId) || isAdmin();
-      allow delete: if isExistingOwner(userId);
+      match /orders/{orderId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId) || isAdmin();
+        allow delete: if isExistingOwner(userId) || isAdmin();
+      }
+    }
+    
+    // This rule allows the admin (via server-side Admin SDK which bypasses these rules)
+    // to query across all 'orders' subcollections. It's good practice to have it,
+    // but the primary security for the admin panel now lies in the Server Actions.
+    match /{path=**}/orders/{orderId} {
+       allow read, list: if isAdmin();
     }
   }
 }
