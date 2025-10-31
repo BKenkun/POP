@@ -47,7 +47,7 @@ export default function Home() {
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
-    const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
+    const productsQuery = query(collection(db, 'products'));
     const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
       const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setAllProducts(products);
@@ -57,7 +57,7 @@ export default function Home() {
   }, []);
 
   const { newArrivals, bestSellers, offers } = useMemo(() => {
-    const products = allProducts || [];
+    const products = allProducts.filter(p => p.active !== false);
     return {
       newArrivals: products.filter(p => p.internalTags?.includes('novedad')),
       bestSellers: products.filter(p => p.internalTags?.includes('mas-vendido')),
