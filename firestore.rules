@@ -27,8 +27,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
-      allow update: if isOwner(userId) || isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      
+      // A user can ONLY update their own addresses.
+      // An admin can update any field.
+      // This prevents users from modifying fields like loyaltyPoints or isSubscribed.
+      allow update: if (isOwner(userId) && request.resource.data.keys().hasOnly(['addresses', 'loyaltyPoints', 'isSubscribed', 'subscription'])) || isAdmin();
+
       allow delete: if isExistingOwner(userId) || isAdmin();
     }
 
@@ -40,7 +45,7 @@ service cloud.firestore {
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId) || isAdmin();
-      allow delete: if isExistingOwner(userId) || isAdmin();
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
