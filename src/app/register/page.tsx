@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -12,9 +12,38 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { trackKlaviyoEvent } from '@/app/actions/klaviyo';
+import { cn } from '@/lib/utils';
+
+// Password strength indicator component
+const PasswordStrengthIndicator = ({ password }: { password: string }) => {
+    const requirements = useMemo(() => {
+        return [
+            { text: 'Al menos 8 caracteres', regex: /.{8,}/ },
+            { text: 'Una letra mayúscula', regex: /[A-Z]/ },
+            { text: 'Una letra minúscula', regex: /[a-z]/ },
+            { text: 'Un número', regex: /[0-9]/ },
+            { text: 'Un carácter especial (!@#$...)', regex: /[^A-Za-z0-9]/ },
+        ];
+    }, []);
+
+    return (
+        <div className="space-y-1 pt-2">
+            {requirements.map((req, index) => {
+                const isValid = req.regex.test(password);
+                return (
+                    <div key={index} className={cn("flex items-center text-xs", isValid ? 'text-green-600' : 'text-muted-foreground')}>
+                        {isValid ? <CheckCircle className="h-3.5 w-3.5 mr-2" /> : <XCircle className="h-3.5 w-3.5 mr-2 text-destructive" />}
+                        {req.text}
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -87,7 +116,7 @@ export default function RegisterPage() {
       if (err.code === 'auth/email-already-in-use') {
         friendlyError = 'Este email ya está registrado. Intenta iniciar sesión.';
       } else if (err.code === 'auth/weak-password') {
-        friendlyError = 'La contraseña debe tener al menos 6 caracteres.';
+        friendlyError = 'La contraseña es demasiado débil. Asegúrate de cumplir todos los requisitos.';
       }
       setError(friendlyError);
       toast({
@@ -144,6 +173,7 @@ export default function RegisterPage() {
                             {showPassword ? <EyeOff /> : <Eye />}
                         </Button>
                     </div>
+                    <PasswordStrengthIndicator password={password} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
