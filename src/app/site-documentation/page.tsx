@@ -82,7 +82,7 @@ import { Home, ShoppingCart } from 'lucide-react';
               description: 'El logo principal de "Popper Online" en formato vectorial SVG, optimizado para la web y diseño gráfico.',
               details: [
                   `**Previsualización:** El logo utiliza un diseño multicapa para crear un efecto de "sticker" con extrusión. Está diseñado para adaptarse a los modos claro y oscuro del sitio.`,
-                  `<div class="my-4 p-4 border rounded-lg flex justify-center items-center bg-muted"><Logo className="h-16" /></div>`,
+                  `<div class="my-4 p-4 border rounded-lg flex justify-center items-center bg-muted"><Logo class="h-16" /></div>`,
                   `**Descarga:** Puedes descargar el archivo SVG optimizado. Este archivo contiene las fuentes y los colores incrustados para que funcione correctamente en cualquier software de diseño (Illustrator, Figma, etc.).`
               ]
           }
@@ -583,9 +583,12 @@ export default function SiteDocumentationPage() {
                       <AccordionTrigger className="text-sm py-2 hover:no-underline text-muted-foreground">Ver detalles de implementación</AccordionTrigger>
                       <AccordionContent>
                         <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80 space-y-2 pl-4 border-l-2 ml-2 border-primary/50">
-                           {feature.details.map((detail, i) => (
-                               <div key={i} dangerouslySetInnerHTML={{ __html: detail.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                           ))}
+                           {feature.details.map((detail, i) => {
+                                if (detail.startsWith('<div')) {
+                                    return <div key={i} dangerouslySetInnerHTML={{ __html: detail }} />;
+                                }
+                                return <div key={i} dangerouslySetInnerHTML={{ __html: detail.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                           })}
                            {feature.id === 'brand-logo' && (
                                 <Button onClick={handleDownloadLogo}>
                                     <Download className="mr-2 h-4 w-4" />
@@ -605,3 +608,5 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
+    
