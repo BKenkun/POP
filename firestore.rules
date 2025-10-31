@@ -29,7 +29,7 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
       allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId) || isAdmin();
     }
 
     match /users/{userId}/shoppingCarts/{cartId} {
@@ -40,7 +40,7 @@ service cloud.firestore {
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId) || isAdmin();
-      allow delete: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId) || isAdmin();
     }
   }
 }
