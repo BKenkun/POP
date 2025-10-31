@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +10,8 @@ import React, { useEffect, useState } from 'react';
 interface SubscriptionFormProps {
     onSubscribed?: () => void;
 }
+
+const SUBSCRIBED_KEY = 'popper_newsletter_subscribed';
 
 const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
     const { toast } = useToast();
@@ -54,6 +57,14 @@ const SubscriptionForm = ({ onSubscribed }: SubscriptionFormProps) => {
                 title: "¡Gracias por suscribirte!",
                 description: "Pronto recibirás nuestras mejores ofertas.",
             });
+            
+            // Set flag in local storage
+            try {
+              localStorage.setItem(SUBSCRIBED_KEY, 'true');
+            } catch (error) {
+              console.error('Could not save subscription status to localStorage', error);
+            }
+
             setEmail(''); // Reset the input field
             if (onSubscribed) {
                 onSubscribed();
