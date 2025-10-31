@@ -1,112 +1,32 @@
 
 'use server';
 
+// This file is being refactored to remove server-side data fetching
+// that conflicts with the client-side authentication model.
+// Data fetching for the admin panel will be handled directly in the client components
+// using onSnapshot, secured by Firestore rules.
+
 import { auth, firestore } from '@/lib/firebase-admin';
 import type { Order, Customer } from '@/lib/types';
 import { Timestamp } from 'firebase-admin/firestore';
 import { cookies } from 'next/headers';
 
 /**
- * Decodes the session cookie to get the authenticated user's ID.
- * This is the single source of truth for server-side user authentication for admin actions.
+ * This file's functions are being deprecated in favor of client-side data fetching
+ * for the admin panel to resolve authentication conflicts.
  */
-async function getAdminIdFromSession(): Promise<string> {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) {
-        throw new Error('Authentication required: No session cookie found.');
-    }
-    try {
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        return decodedClaims.uid;
-    } catch (error) {
-        console.error('Error verifying session cookie in server action:', error);
-        throw new Error('Authentication failed: Invalid session.');
-    }
-}
-
-
-/**
- * Checks if the current user is an admin. Throws an error if not.
- * This is the primary security gate for all admin server actions.
- */
-async function verifyAdmin() {
-    const userId = await getAdminIdFromSession();
-    const user = await auth.getUser(userId);
-    if (user.email !== 'maryandpopper@gmail.com') {
-        throw new Error('Permission denied: User is not an admin.');
-    }
-    return user;
-}
-
 
 export async function getAllOrders(): Promise<Order[]> {
-    await verifyAdmin();
-    try {
-        const ordersSnapshot = await firestore.collectionGroup('orders').orderBy('createdAt', 'desc').get();
-        const orders: Order[] = ordersSnapshot.docs.map(doc => {
-            const data = doc.data();
-            const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt || Date.now());
-            
-            return {
-                id: doc.id,
-                path: doc.ref.path,
-                ...data,
-                 createdAt, // Ensure it's a serializable Date object
-            } as Order;
-        });
-        return orders;
-    } catch (error) {
-        console.error("Error fetching all orders:", error);
-        return [];
-    }
+    console.warn("DEPRECATED: getAllOrders is no longer used. Data is fetched on the client.");
+    return [];
 }
 
 export async function getAllCustomers(): Promise<Customer[]> {
-     await verifyAdmin();
-    try {
-        const listUsersResult = await auth.listUsers();
-        const customers: Customer[] = listUsersResult.users.map(userRecord => {
-             const creationTime = userRecord.metadata.creationTime;
-            return {
-                uid: userRecord.uid,
-                email: userRecord.email,
-                displayName: userRecord.displayName,
-                photoURL: userRecord.photoURL,
-                disabled: userRecord.disabled,
-                 creationTime: new Date(creationTime).toISOString(), // Make serializable
-            };
-        });
-        return customers;
-    } catch (error) {
-        console.error("Error fetching all customers:", error);
-        return [];
-    }
+     console.warn("DEPRECATED: getAllCustomers is no longer used. Data is fetched on the client.");
+    return [];
 }
 
 export async function getOrderById(orderId: string, orderPath: string): Promise<Order | null> {
-    await verifyAdmin();
-     if (!orderPath || !orderId) return null;
-
-    try {
-        const orderDocRef = firestore.doc(decodeURIComponent(orderPath));
-        const docSnap = await orderDocRef.get();
-
-        if (!docSnap.exists) {
-            return null;
-        }
-
-        const orderData = docSnap.data()!;
-        const createdAt = orderData.createdAt instanceof Timestamp ? orderData.createdAt.toDate() : new Date();
-
-        return {
-            id: docSnap.id,
-            path: docSnap.ref.path,
-            ...orderData,
-            createdAt,
-        } as Order;
-
-    } catch (error) {
-        console.error("Error fetching order by ID:", error);
-        return null;
-    }
+    console.warn("DEPRECATED: getOrderById is no longer used. Data is fetched on the client.");
+    return null;
 }

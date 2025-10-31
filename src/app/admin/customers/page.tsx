@@ -1,11 +1,9 @@
 
-import { getAllCustomers } from '@/app/actions/admin-data';
+'use client';
 import AdminCustomersClientPage from './customers-client-page';
 
-// --- Componente Contenedor (Servidor) ---
-// Responsabilidad: Obtener y sanear los datos de los clientes.
-export default async function AdminCustomersPage() {
-  const customers = await getAllCustomers();
-  
-  return <AdminCustomersClientPage initialCustomers={customers} />;
+// This is now a simple client component wrapper.
+// Data fetching is handled client-side in AdminCustomersClientPage.
+export default function AdminCustomersPage() {
+  return <AdminCustomersClientPage />;
 }

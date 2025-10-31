@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableHeader,
@@ -11,11 +12,13 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Package, Eye } from "lucide-react";
+import { Package, Eye, Loader2 } from "lucide-react";
 import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
+import { db } from '@/lib/firebase';
+import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 
 const getStatusVariant = (status: string) => {
@@ -39,9 +42,30 @@ const getStatusVariant = (status: string) => {
     }
 }
 
-export default function OrdersClientPage({ initialOrders }: { initialOrders: Order[] }) {
+export default function OrdersClientPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const hasOrders = initialOrders && initialOrders.length > 0;
+  useEffect(() => {
+      const q = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          const fetchedOrders: Order[] = [];
+          querySnapshot.forEach((doc) => {
+               const data = doc.data();
+               // Ensure createdAt is a serializable Date object
+               const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+               fetchedOrders.push({ id: doc.id, ...data, path: doc.ref.path, createdAt } as Order);
+          });
+          setOrders(fetchedOrders);
+          setLoading(false);
+      }, (error) => {
+          console.error("Error fetching orders: ", error);
+          setLoading(false);
+      });
+      return () => unsubscribe();
+  }, []);
+
+  const hasOrders = orders && orders.length > 0;
 
   return (
     <div className="space-y-6">
@@ -55,7 +79,11 @@ export default function OrdersClientPage({ initialOrders }: { initialOrders: Ord
             <CardDescription>Aquí se listan todos los pedidos de la tienda, tanto de usuarios como de invitados.</CardDescription>
         </CardHeader>
         <CardContent>
-            {!hasOrders ? (
+            {loading ? (
+                 <div className="flex justify-center items-center h-60">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            ) : !hasOrders ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
@@ -74,7 +102,7 @@ export default function OrdersClientPage({ initialOrders }: { initialOrders: Ord
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {initialOrders.map((order) => (
+                    {orders.map((order) => (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
                         <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'N/A'}</TableCell>

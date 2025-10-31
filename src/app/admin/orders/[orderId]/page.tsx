@@ -1,22 +1,60 @@
 
-import { getOrderById } from '@/app/actions/admin-data';
+'use client';
+
+import { useParams, notFound, useSearchParams } from 'next/navigation';
 import OrderDetailsClient from './order-details-client';
-import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Order } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 
-// --- Componente Contenedor (Servidor) ---
-// Responsabilidad: Obtener los datos de un pedido específico.
-export default async function OrderDetailPage({ params, searchParams }: { params: { orderId: string }, searchParams: { path: string } }) {
-  const { orderId } = params;
-  const { path } = searchParams;
-  
-  // Fetch order data on the server
-  const order = await getOrderById(orderId, path);
+// This component is now a client component to fetch its own data.
+export default function OrderDetailPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const orderId = params.orderId as string;
+  const path = searchParams.get('path');
 
-  // If no order is found, render the 404 page.
+  const [order, setOrder] = useState<Order | null | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!path) {
+        setOrder(null);
+        setLoading(false);
+        return;
+    }
+    const orderDocRef = doc(db, decodeURIComponent(path));
+    const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+            setOrder({ id: docSnap.id, path: docSnap.ref.path, ...data, createdAt } as Order);
+        } else {
+            setOrder(null);
+        }
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching order details:", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [path]);
+
+
+  if (loading) {
+     return (
+        <div className="flex items-center justify-center h-60">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+     )
+  }
+
   if (!order) {
      return (
         <div className="text-center space-y-4 py-10">
@@ -32,6 +70,5 @@ export default async function OrderDetailPage({ params, searchParams }: { params
     );
   }
   
-  // Pass the fetched order to the client component for rendering.
   return <OrderDetailsClient initialOrder={order} />;
 }

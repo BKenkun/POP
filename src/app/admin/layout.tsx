@@ -19,23 +19,18 @@ import {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient && !loading) {
+    if (!loading) {
       if (!user) {
         router.push('/login?redirect=/admin');
       } else if (!isAdmin) {
         router.push('/account');
       }
     }
-  }, [user, isAdmin, loading, router, isClient]);
+  }, [user, isAdmin, loading, router]);
 
-  if (!isClient || loading || !user || !isAdmin) {
+  if (loading || !user || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
