@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { trackKlaviyoEvent } from '@/app/actions/klaviyo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -51,16 +52,26 @@ export default function RegisterPage() {
       const newUser = userCredential.user;
 
       const userDocRef = doc(db, "users", newUser.uid);
+      const displayName = newUser.email?.split('@')[0] || 'Nuevo Usuario';
+      
       await setDoc(userDocRef, {
           email: newUser.email,
           uid: newUser.uid,
           creationTime: serverTimestamp(),
-          displayName: newUser.email?.split('@')[0] || 'Nuevo Usuario',
+          displayName: displayName,
           loyaltyPoints: 0,
           isSubscribed: false,
           addresses: [], // Initialize with an empty array of addresses
       });
       
+      // --- Klaviyo Event Tracking for Admin ---
+      await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', {
+          'NewUserEmail': newUser.email,
+          'NewUserName': displayName,
+          'RegistrationDate': new Date().toISOString()
+      });
+      // ------------------------------------
+
       toast({
           title: "¡Cuenta Creada!",
           description: "Hemos creado tu cuenta. Ahora serás redirigido.",

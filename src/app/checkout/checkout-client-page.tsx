@@ -37,6 +37,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ToastAction } from '@/components/ui/toast';
 import { updateUser } from '@/app/actions/user-data';
 import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
+import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 
 
 interface Address {
@@ -322,10 +323,9 @@ export default function CheckoutClientPage() {
                 : item.imageUrl,
         }));
         
-        const orderCollectionRef = collection(db, 'users', user.uid, 'orders');
-        const newOrderRef = await addDoc(orderCollectionRef, {
+        const orderData = {
             userId: user.uid,
-            status: 'Reserva Recibida',
+            status: 'Reserva Recibida' as const,
             total: finalTotals.total,
             items: itemsForPayload,
             customerName: data.name,
@@ -343,7 +343,10 @@ export default function CheckoutClientPage() {
                     country: data.billing_country
                 }
             })
-        });
+        };
+
+        const orderCollectionRef = collection(db, 'users', user.uid, 'orders');
+        const newOrderRef = await addDoc(orderCollectionRef, orderData);
         
         const pointsToAdd = Math.floor(finalTotals.total / 1000);
         if (pointsToAdd > 0) {
@@ -356,6 +359,22 @@ export default function CheckoutClientPage() {
                 });
             }
         }
+
+        // --- Klaviyo Event Tracking ---
+        const klaviyoOrderData = formatOrderForKlaviyo({ ...orderData, id: newOrderRef.id, createdAt: new Date() }, newOrderRef.id);
+        
+        // 1. Track event for customer confirmation email
+        await trackKlaviyoEvent('Placed Order', data.email, klaviyoOrderData);
+
+        // 2. Track event for admin notification email
+        await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', {
+            'OrderId': newOrderRef.id,
+            'CustomerName': data.name,
+            'Total': finalTotals.total / 100,
+            'ItemCount': itemsForPayload.length
+        });
+        // -----------------------------
+
 
         toast({
             duration: 10000,
