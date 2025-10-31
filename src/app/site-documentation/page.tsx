@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -501,7 +500,7 @@ export default function SiteDocumentationPage() {
       <svg viewBox="0 -15 1100 170" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&amp;display=swap');
                 .logo-text {
                     font-family: 'Inter', sans-serif;
                     font-size: 120px;
@@ -606,4 +605,3 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
-
