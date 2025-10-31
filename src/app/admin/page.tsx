@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { addDays, startOfMonth, format as formatDate } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
 import Image from "next/image";
+import { useAuth } from "@/context/auth-context";
 
 // Define a type for the user data we expect
 export interface Customer {
@@ -61,6 +62,7 @@ const StatCard = ({ title, icon: Icon, loading, children }: { title: string, ico
 };
 
 export default function AdminDashboardPage() {
+  const { user, isAdmin } = useAuth();
   const today = new Date();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(today),
@@ -78,11 +80,22 @@ export default function AdminDashboardPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
 
   useEffect(() => {
+    // Only fetch data if the user is a logged-in admin
+    if (!user || !isAdmin) {
+      setLoadingOrders(false);
+      setLoadingUsers(false);
+      setLoadingProducts(false);
+      return;
+    }
+    
     const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
       setAllOrders(orders);
       setLoadingOrders(false);
+    }, (error) => {
+        console.error("Error fetching orders:", error);
+        setLoadingOrders(false);
     });
 
     const usersQuery = query(collection(db, 'users'));
@@ -90,16 +103,28 @@ export default function AdminDashboardPage() {
       const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as Customer));
       setAllUsers(users);
       setLoadingUsers(false);
+    }, (error) => {
+        console.error("Error fetching users:", error);
+        setLoadingUsers(false);
+    });
+    
+    const productsQuery = query(collection(db, 'products'));
+    const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
+      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setProducts(products);
+      setLoadingProducts(false);
+    }, (error) => {
+        console.error("Error fetching products:", error);
+        setLoadingProducts(false);
     });
 
-    setProducts(cbdProducts);
-    setLoadingProducts(false);
 
     return () => {
       unsubscribeOrders();
       unsubscribeUsers();
+      unsubscribeProducts();
     };
-  }, []);
+  }, [user, isAdmin]);
 
   const { 
       filteredOrders, 
