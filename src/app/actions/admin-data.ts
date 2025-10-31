@@ -2,16 +2,35 @@
 'use server';
 
 import { auth, firestore } from '@/lib/firebase-admin';
-import { getUserIdFromSession } from './user-data';
 import type { Order, Customer } from '@/lib/types';
 import { Timestamp } from 'firebase-admin/firestore';
+import { cookies } from 'next/headers';
+
+/**
+ * Decodes the session cookie to get the authenticated user's ID.
+ * This is the single source of truth for server-side user authentication for admin actions.
+ */
+async function getAdminIdFromSession(): Promise<string> {
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) {
+        throw new Error('Authentication required: No session cookie found.');
+    }
+    try {
+        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        return decodedClaims.uid;
+    } catch (error) {
+        console.error('Error verifying session cookie in server action:', error);
+        throw new Error('Authentication failed: Invalid session.');
+    }
+}
+
 
 /**
  * Checks if the current user is an admin. Throws an error if not.
  * This is the primary security gate for all admin server actions.
  */
 async function verifyAdmin() {
-    const userId = await getUserIdFromSession();
+    const userId = await getAdminIdFromSession();
     const user = await auth.getUser(userId);
     if (user.email !== 'maryandpopper@gmail.com') {
         throw new Error('Permission denied: User is not an admin.');
