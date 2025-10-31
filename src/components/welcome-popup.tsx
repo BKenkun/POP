@@ -109,8 +109,8 @@ const WelcomePopup = () => {
       
       {isMinimized && (
          <div className={cn(
-            "fixed bottom-6 z-50 transition-all duration-300",
-            isToastVisible ? 'left-[404px]' : 'left-6' // 380px (toast width) + 24px (gap)
+            "fixed bottom-6 left-6 z-50 transition-opacity duration-300",
+            isToastVisible ? 'opacity-0 invisible' : 'opacity-100 visible'
           )}>
             <Button
                 variant="default"
