@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -28,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '../quantity-selector';
+import { QuantitySelector } from '@/components/quantity-selector';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
@@ -711,4 +710,6 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
+
 
