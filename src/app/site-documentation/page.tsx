@@ -494,9 +494,10 @@ export default function SiteDocumentationPage() {
         console.error("Could not save checklist state to localStorage", e);
     }
   };
-
-  const handleDownloadLogo = () => {
-    const svgString = `
+  
+  const getLogoSvgString = () => {
+    // Correctly escape ampersands for XML/SVG
+    return `
       <svg viewBox="0 -15 1100 170" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <style>
@@ -519,6 +520,10 @@ export default function SiteDocumentationPage() {
         </g>
       </svg>
     `;
+  }
+
+  const handleDownloadLogo = () => {
+    const svgString = getLogoSvgString();
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -528,6 +533,42 @@ export default function SiteDocumentationPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+  
+  const handleDownloadPng = () => {
+    const svgString = getLogoSvgString();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+        // Set canvas dimensions based on SVG viewbox for high quality
+        canvas.width = 1100;
+        canvas.height = 170;
+
+        // Draw the image onto the canvas
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+
+        // Trigger PNG download
+        const pngUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = pngUrl;
+        link.download = 'popper-online-logo.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    img.onerror = (e) => {
+        console.error("Error loading SVG into image for PNG conversion:", e);
+        URL.revokeObjectURL(url);
+    };
+
+    img.src = url;
   };
 
 
@@ -590,10 +631,16 @@ export default function SiteDocumentationPage() {
                                 return <div key={i} dangerouslySetInnerHTML={{ __html: detail.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                            })}
                            {feature.id === 'brand-logo' && (
-                                <Button onClick={handleDownloadLogo}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Descargar Logo (SVG)
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <Button onClick={handleDownloadLogo}>
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Descargar Logo (SVG)
+                                    </Button>
+                                    <Button onClick={handleDownloadPng} variant="outline">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Descargar Logo (PNG)
+                                    </Button>
+                                </div>
                            )}
                         </div>
                       </AccordionContent>
@@ -608,5 +655,3 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
-
-    
