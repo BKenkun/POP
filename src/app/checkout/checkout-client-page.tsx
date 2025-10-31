@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '@/components/quantity-selector';
+import { QuantitySelector } from '../quantity-selector';
 import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
@@ -191,8 +191,10 @@ export default function CheckoutClientPage() {
             } else {
                  form.setValue('email', user.email || '');
             }
+        } else if (user) {
+            form.setValue('email', user.email || '');
         }
-    }, [user, userDoc, form.setValue]);
+    }, [user, userDoc]);
     
     const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
         setSelectedAddressId(addressId);
@@ -229,7 +231,9 @@ export default function CheckoutClientPage() {
 
   const handleNextStep = async () => {
     let isValid = false;
-    if (step === 2) {
+    if (step === 1) {
+        isValid = true;
+    } else if (step === 2) {
       if (!user) {
          toast({
             title: "Requiere inicio de sesión",
@@ -239,11 +243,16 @@ export default function CheckoutClientPage() {
          router.push('/login?redirect=/checkout');
          return;
       }
-      const fieldsToValidate: (keyof CheckoutFormValues)[] = ['name', 'email', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
-      if (form.getValues('useDifferentBilling')) {
-        fieldsToValidate.push('billing_name', 'billing_street', 'billing_city', 'billing_state', 'billing_postalCode', 'billing_country');
+      // If user has selected a saved address, no need to validate the form fields
+      if (selectedAddressId !== 'new') {
+          isValid = true;
+      } else {
+        const fieldsToValidate: (keyof CheckoutFormValues)[] = ['name', 'email', 'phone', 'street', 'city', 'state', 'postalCode', 'country'];
+        if (form.getValues('useDifferentBilling')) {
+          fieldsToValidate.push('billing_name', 'billing_street', 'billing_city', 'billing_state', 'billing_postalCode', 'billing_country');
+        }
+        isValid = await form.trigger(fieldsToValidate);
       }
-      isValid = await form.trigger(fieldsToValidate);
     } else if (step === 3) {
       isValid = await form.trigger(['paymentMethod']);
     } else {
@@ -517,6 +526,7 @@ export default function CheckoutClientPage() {
                                     <h3 className="font-bold text-lg mb-4">Dirección de Envío</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline-block mr-2"/>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -701,3 +711,4 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
