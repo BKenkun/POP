@@ -21,10 +21,10 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, Timestamp } from "firebase/firestore";
+import { useAuth } from '@/context/auth-context';
 
 // Define a type for the user data we expect from the server action
 export interface Customer {
@@ -42,8 +42,15 @@ export interface Customer {
 export default function AdminCustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { user, isAdmin } = useAuth(); // Get user and admin status
 
-    const fetchCustomers = () => {
+    useEffect(() => {
+        // Only fetch data if the user is an authenticated admin
+        if (!user || !isAdmin) {
+            setIsLoading(false);
+            return;
+        }
+
         const usersQuery = collection(db, 'users');
         const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
             const fetchedCustomers: Customer[] = snapshot.docs.map(doc => {
@@ -59,15 +66,13 @@ export default function AdminCustomersPage() {
             });
             setCustomers(fetchedCustomers);
             setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching customers:", error);
+            setIsLoading(false);
         });
 
-        return unsubscribe;
-    }
-
-    useEffect(() => {
-        const unsubscribe = fetchCustomers();
         return () => unsubscribe();
-    }, []);
+    }, [user, isAdmin]);
 
   return (
     <div className="space-y-6">
