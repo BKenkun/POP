@@ -79,11 +79,17 @@ import { Home, ShoppingCart } from 'lucide-react';
               name: 'Logo Principal',
               id: 'brand-logo',
               path: '#',
-              description: 'El logo principal de "Popper Online" en formato vectorial SVG, optimizado para la web y diseño gráfico.',
+              description: 'El logo oficial de "Popper Online" en formato SVG y PNG, optimizado para la web y diseño gráfico.',
               details: [
                   `**Previsualización:** El logo utiliza un diseño multicapa para crear un efecto de "sticker" con extrusión. Está diseñado para adaptarse a los modos claro y oscuro del sitio.`,
                   `<div class="my-4 p-4 border rounded-lg flex justify-center items-center bg-muted"><Logo class="h-16" /></div>`,
-                  `**Descarga:** Puedes descargar el archivo SVG optimizado. Este archivo contiene las fuentes y los colores incrustados para que funcione correctamente en cualquier software de diseño (Illustrator, Figma, etc.).`
+                  `**Descarga SVG (Vectorial):** El botón "Descargar Logo (SVG)" genera un archivo \`.svg\` directamente en tu navegador. La función \`handleDownloadLogo\` crea una cadena de texto con el código SVG, incluyendo los estilos CSS y la URL de la fuente de Google (con el carácter '&' correctamente escapado como '&amp;'). Luego, crea un "Blob" (un objeto de archivo en memoria) de tipo \`image/svg+xml\` y genera una URL temporal para iniciar la descarga. Este método es ideal para obtener el archivo vectorial original para usar en software de diseño.`,
+                  `**Descarga PNG (Imagen):** El botón "Descargar Logo (PNG)" utiliza una técnica de renderizado en el navegador para convertir el SVG en una imagen PNG. La función \`handleDownloadPng\` sigue estos pasos:<br>
+                   1. **Crea un Canvas:** Genera un elemento \`<canvas>\` de HTML en memoria. Este elemento actúa como un lienzo digital invisible.<br>
+                   2. **Carga el SVG en una Imagen:** El código SVG del logo se convierte en un Blob y se carga en un objeto \`Image()\`.<br>
+                   3. **Dibuja en el Canvas:** Una vez que la imagen SVG se ha cargado, se "dibuja" sobre el canvas con unas dimensiones de alta resolución (1100x170px) para asegurar la calidad.<br>
+                   4. **Exporta a PNG:** Se llama al método \`canvas.toDataURL('image/png')\`, que convierte el contenido del canvas en una cadena de texto Base64 que representa el archivo PNG.<br>
+                   5. **Inicia la Descarga:** Finalmente, se crea un enlace temporal con esta URL de datos y se simula un clic en él para que el navegador inicie la descarga del archivo \`popper-online-logo.png\`.`
               ]
           }
       ]
@@ -655,3 +661,5 @@ export default function SiteDocumentationPage() {
     </div>
   );
 }
+
+    
