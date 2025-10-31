@@ -10,7 +10,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 3
-const TOAST_REMOVE_DELAY = 5000 // Reverted to 5 seconds as requested
+const TOAST_REMOVE_DELAY = 1000 // The duration of the toast close animation.
 
 type ToasterToast = ToastProps & {
   id: string
@@ -170,7 +170,7 @@ function toast({ ...props }: Toast) {
   // The REMOVE action (which removes the toast from the DOM) happens after the animation.
   setTimeout(() => {
     dismiss()
-  }, TOAST_REMOVE_DELAY);
+  }, 5000); // The toast will be visible for 5 seconds before starting to dismiss
 
 
   return {
