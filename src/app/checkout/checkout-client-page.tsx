@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -284,7 +285,7 @@ export default function CheckoutClientPage() {
             postalCode: data.postalCode,
             country: data.country,
         };
-        const result = await updateUser('add-address', addressToSave);
+        const result = await updateUser(user.uid, 'add-address', addressToSave);
         if (result.success && result.user) {
             setUserDoc(result.user);
             toast({ title: "Dirección Guardada", description: "Tu nueva dirección se ha guardado en tu perfil." });
@@ -358,7 +359,7 @@ export default function CheckoutClientPage() {
         
         const pointsToAdd = Math.floor(finalTotals.total / 1000);
         if (pointsToAdd > 0) {
-            const result = await updateUser('update-points', { pointsToAdd });
+            const result = await updateUser(user.uid, 'update-points', { pointsToAdd });
             if (result.success && result.user) {
                 setUserDoc(result.user);
                  toast({
@@ -710,6 +711,7 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
 
 
 

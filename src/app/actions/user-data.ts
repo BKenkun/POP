@@ -24,13 +24,16 @@ interface Address {
  * Throws an error if the user is not authenticated.
  * This is the single source of truth for server-side user authentication.
  */
-export async function getUserIdFromSession(): Promise<string> {
+async function verifyUser(userId: string) {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
         throw new Error('Authentication required: No session cookie found.');
     }
     try {
         const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        if (decodedClaims.uid !== userId) {
+            throw new Error('Authorization error: User ID mismatch.');
+        }
         return decodedClaims.uid;
     } catch (error) {
         console.error('Error verifying session cookie in server action:', error);
@@ -38,12 +41,18 @@ export async function getUserIdFromSession(): Promise<string> {
     }
 }
 
+
 /**
  * Fetches the current user's document from Firestore.
  */
 export async function getCurrentUser() {
     try {
-        const userId = await getUserIdFromSession();
+        const sessionCookie = cookies().get('session')?.value;
+        if (!sessionCookie) return null;
+        
+        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        const userId = decodedClaims.uid;
+
         const userDocRef = doc(db, 'users', userId);
         const docSnap = await getDoc(userDocRef);
 
@@ -53,11 +62,7 @@ export async function getCurrentUser() {
             return null;
         }
     } catch (error: any) {
-        console.error("Error fetching current user:", error);
-        // Don't expose internal errors to the client
-        if (error.message.includes('Authentication')) {
-            throw error;
-        }
+        // Don't throw error if cookie is invalid/expired, just return null
         return null;
     }
 }
@@ -67,8 +72,10 @@ export async function getCurrentUser() {
  * Securely manages user data, including addresses and loyalty points.
  * All logic runs on the server.
  */
-export async function updateUser(action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number }>) {
-    const userId = await getUserIdFromSession();
+export async function updateUser(userId: string, action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number }>) {
+    // Although we get the userId, we still verify the session to ensure the call is authenticated.
+    await verifyUser(userId);
+    
     const userDocRef = doc(db, 'users', userId);
 
     try {
