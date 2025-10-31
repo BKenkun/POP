@@ -82,7 +82,7 @@ export async function trackKlaviyoEvent(eventName: EventName, customerEmail: str
 
 // --- Helper Functions to format data for Klaviyo ---
 
-export function formatOrderForKlaviyo(order: Order, orderId: string) {
+export async function formatOrderForKlaviyo(order: Order, orderId: string) {
     return {
         // Event-specific properties
         '$event_id': orderId,

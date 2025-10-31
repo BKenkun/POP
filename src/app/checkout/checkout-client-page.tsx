@@ -361,7 +361,7 @@ export default function CheckoutClientPage() {
         }
 
         // --- Klaviyo Event Tracking ---
-        const klaviyoOrderData = formatOrderForKlaviyo({ ...orderData, id: newOrderRef.id, createdAt: new Date() }, newOrderRef.id);
+        const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: newOrderRef.id, createdAt: new Date() }, newOrderRef.id);
         
         // 1. Track event for customer confirmation email
         await trackKlaviyoEvent('Placed Order', data.email, klaviyoOrderData);
