@@ -10,10 +10,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import SubscriptionForm from './subscription-form';
-import { Gift, Percent, X } from 'lucide-react';
+import { Gift, Percent } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const POPUP_DISMISSED_KEY = 'popper_popup_dismissed';
 const SUBSCRIBED_KEY = 'popper_newsletter_subscribed';
@@ -23,10 +24,10 @@ const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const { toasts } = useToast();
 
   useEffect(() => {
     setIsClient(true);
-    // Don't show if user is logged in
     if (user) {
       setIsOpen(false);
       setIsMinimized(false);
@@ -45,7 +46,7 @@ const WelcomePopup = () => {
       } else {
         const timer = setTimeout(() => {
             setIsOpen(true);
-        }, 2000); // Show popup after 2 seconds
+        }, 2000); 
         return () => clearTimeout(timer);
       }
     } catch (e) {
@@ -55,7 +56,6 @@ const WelcomePopup = () => {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      // When closing the dialog, minimize it instead of just closing
       setIsOpen(false);
       setIsMinimized(true);
        try {
@@ -78,6 +78,8 @@ const WelcomePopup = () => {
       localStorage.removeItem(POPUP_DISMISSED_KEY);
     } catch (e) { console.error(e) }
   };
+
+  const isToastVisible = toasts.length > 0;
 
   if (!isClient || user) {
     return null;
@@ -107,7 +109,8 @@ const WelcomePopup = () => {
       
       {isMinimized && (
          <div className={cn(
-            "fixed bottom-6 left-6 z-50 transition-all duration-300",
+            "fixed bottom-6 z-50 transition-all duration-300",
+            isToastVisible ? 'left-[404px]' : 'left-6' // 380px (toast width) + 24px (gap)
           )}>
             <Button
                 variant="default"

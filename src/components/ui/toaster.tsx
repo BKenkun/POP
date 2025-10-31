@@ -44,7 +44,10 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className={cn((isBannerVisible && !isAdminRoute) && "bottom-16 sm:bottom-12 transition-all duration-300")} />
+      <ToastViewport className={cn(
+          "w-[380px]",
+          (isBannerVisible && !isAdminRoute) && "bottom-16 sm:bottom-12 transition-all duration-300"
+      )} />
     </ToastProvider>
   )
 }
