@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -51,6 +51,9 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
 
+      // Send verification email
+      await sendEmailVerification(newUser);
+
       const userDocRef = doc(db, "users", newUser.uid);
       const displayName = newUser.email?.split('@')[0] || 'Nuevo Usuario';
       
@@ -73,8 +76,8 @@ export default function RegisterPage() {
       // ------------------------------------
 
       toast({
-          title: "¡Cuenta Creada!",
-          description: "Hemos creado tu cuenta. Ahora serás redirigido.",
+          title: "¡Revisa tu correo!",
+          description: "Hemos creado tu cuenta. Por favor, verifica tu email para activarla.",
       });
 
       router.push('/register/success');
