@@ -1,14 +1,13 @@
-
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle, UserCheck, Gift, Bitcoin } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, MapPin, ArrowLeft, Lock, Eye, EyeOff, UserPlus, Banknote, CreditCard, Smartphone, FileText, PlusCircle, AlertCircle, UserCheck, Gift, Bitcoin, Ticket } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -29,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
-import { serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { serverTimestamp, collection, addDoc, doc, getDoc, writeBatch, Timestamp } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 import { Switch } from '@/components/ui/switch';
@@ -38,6 +37,7 @@ import { ToastAction } from '@/components/ui/toast';
 import { updateUser } from '@/app/actions/user-data';
 import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
+import { Coupon } from '@/app/admin/coupons/page';
 
 
 interface Address {
@@ -63,7 +63,7 @@ const checkoutSchema = z.object({
     state: z.string().min(2, "El estado/provincia es requerido."),
     postalCode: z.string().min(3, "El código postal es requerido."),
     country: z.string().min(2, "El país es requerido."),
-    saveAddress: z.boolean().default(false), // New field to save the address
+    saveAddress: z.boolean().default(false),
     paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto'], {
         required_error: "Debes seleccionar un método de pago."
     }),
@@ -130,6 +130,11 @@ export default function CheckoutClientPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
   const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | null>('prepaid');
 
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { 
@@ -154,23 +159,69 @@ export default function CheckoutClientPage() {
       return method.startsWith('cod');
   }, [form.watch('paymentMethod')]);
 
+  const subtotalAfterVolumeDiscount = useMemo(() => {
+    const discount = isCod ? 0 : (volumeDiscount || 0);
+    return cartTotal - discount;
+  }, [cartTotal, volumeDiscount, isCod]);
+
+  const handleApplyCoupon = useCallback(async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+
+    try {
+        const couponRef = doc(db, 'coupons', couponCode.toUpperCase());
+        const couponSnap = await getDoc(couponRef);
+
+        if (!couponSnap.exists()) {
+            throw new Error('El código del cupón no es válido.');
+        }
+
+        const couponData = { id: couponSnap.id, ...couponSnap.data() } as Coupon;
+        const now = new Date();
+
+        if (!couponData.isActive) throw new Error('Este cupón no está activo.');
+        if (couponData.startDate && now < new Date(couponData.startDate)) throw new Error('Este cupón aún no es válido.');
+        if (couponData.endDate && now > new Date(couponData.endDate)) throw new Error('Este cupón ha expirado.');
+        if (couponData.usageLimit > 0 && couponData.usageCount >= couponData.usageLimit) throw new Error('Este cupón ha alcanzado su límite de usos.');
+        if (couponData.minPurchase && subtotalAfterVolumeDiscount < couponData.minPurchase) throw new Error(`Se requiere una compra mínima de ${formatPrice(couponData.minPurchase)} para usar este cupón.`);
+        
+        let discount = 0;
+        if (couponData.discountType === 'fixed') {
+            discount = couponData.discountValue;
+        } else { // percentage
+            discount = Math.round(subtotalAfterVolumeDiscount * (couponData.discountValue / 100));
+        }
+
+        setAppliedCoupon(couponData);
+        setCouponDiscount(discount);
+        toast({ title: 'Cupón Aplicado', description: `Se ha aplicado un descuento de ${formatPrice(discount)}.` });
+
+    } catch (error: any) {
+        toast({ title: 'Error al aplicar el cupón', description: error.message, variant: 'destructive' });
+    } finally {
+        setCouponLoading(false);
+    }
+  }, [couponCode, subtotalAfterVolumeDiscount, toast]);
+
+
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
-    const discount = isCod ? 0 : (volumeDiscount || 0); // No discount for COD
-    const subtotalWithDiscount = subtotal - discount;
+    const discount = isCod ? 0 : (volumeDiscount || 0);
+    const subtotalWithDiscounts = subtotal - discount - couponDiscount;
     
     let shipping = 0;
-    // For this launch promotion, shipping is free with advance payment
     if (!isCod) {
         shipping = 0;
-    } else if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
+    } else if (subtotalWithDiscounts > 0 && subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD) {
         shipping = SHIPPING_COST;
     }
     
-    const total = subtotalWithDiscount + shipping;
+    const total = subtotalWithDiscounts + shipping;
 
     return { subtotal, discount, shipping, total };
-  }, [cartTotal, volumeDiscount, isCod]);
+  }, [cartTotal, volumeDiscount, isCod, couponDiscount]);
 
 
     useEffect(() => {
@@ -243,7 +294,6 @@ export default function CheckoutClientPage() {
          router.push('/login?redirect=/checkout');
          return;
       }
-      // If user has selected a saved address, no need to validate the form fields
       if (selectedAddressId !== 'new') {
           isValid = true;
       } else {
@@ -295,7 +345,6 @@ export default function CheckoutClientPage() {
     }
 
 
-    // Crypto payment logic
     if (data.paymentMethod === 'crypto') {
         try {
             const result = await createNowPaymentsInvoice({
@@ -306,7 +355,7 @@ export default function CheckoutClientPage() {
             });
 
             if (result.success && result.invoice_url) {
-                window.location.href = result.invoice_url; // Redirect user to NOWPayments
+                window.location.href = result.invoice_url;
             } else {
                 throw new Error(result.error || 'No se pudo crear el enlace de pago con criptomonedas.');
             }
@@ -314,11 +363,10 @@ export default function CheckoutClientPage() {
             toast({ title: 'Error con Pago Cripto', description: error.message, variant: 'destructive' });
             setLoading(false);
         }
-        return; // Stop execution for crypto payments
+        return; 
     }
 
 
-    // Logic for other payment methods
     try {
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
 
@@ -351,11 +399,29 @@ export default function CheckoutClientPage() {
                     postalCode: data.billing_postalCode,
                     country: data.billing_country
                 }
+            }),
+            ...(appliedCoupon && {
+                coupon: {
+                    code: appliedCoupon.code,
+                    discount: couponDiscount,
+                }
             })
         };
 
+        const batch = writeBatch(db);
         const orderCollectionRef = collection(db, 'users', user.uid, 'orders');
-        const newOrderRef = await addDoc(orderCollectionRef, orderData);
+        const newOrderRef = doc(orderCollectionRef); // Create a new doc reference
+        batch.set(newOrderRef, orderData);
+
+        // Increment coupon usage count if a coupon was applied
+        if (appliedCoupon) {
+            const couponRef = doc(db, 'coupons', appliedCoupon.id);
+            batch.update(couponRef, {
+                usageCount: (appliedCoupon.usageCount || 0) + 1,
+            });
+        }
+        
+        await batch.commit();
         
         const pointsToAdd = Math.floor(finalTotals.total / 1000);
         if (pointsToAdd > 0) {
@@ -369,21 +435,15 @@ export default function CheckoutClientPage() {
             }
         }
 
-        // --- Klaviyo Event Tracking ---
         const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: newOrderRef.id, createdAt: new Date() }, newOrderRef.id);
         
-        // 1. Track event for customer confirmation email
         await trackKlaviyoEvent('Placed Order', data.email, klaviyoOrderData);
-
-        // 2. Track event for admin notification email
         await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', {
             'OrderId': newOrderRef.id,
             'CustomerName': data.name,
             'Total': finalTotals.total / 100,
             'ItemCount': itemsForPayload.length
         });
-        // -----------------------------
-
 
         toast({
             duration: 10000,
@@ -467,13 +527,13 @@ export default function CheckoutClientPage() {
                             </div>
                              {volumeDiscount > 0 && (
                                 <div className="flex justify-between text-destructive">
-                                    <span>Descuento por volumen con pago anticipado:</span>
+                                    <span>Descuento por volumen (pago anticipado)</span>
                                     <span>-{formatPrice(volumeDiscount)}</span>
                                 </div>
                             )}
                              <div className="flex justify-between font-bold text-lg">
-                                <span>Total (antes de envío)</span>
-                                <span>{formatPrice(cartTotal - (volumeDiscount || 0))}</span>
+                                <span>Total (antes de envío y cupones)</span>
+                                <span>{formatPrice(subtotalAfterVolumeDiscount)}</span>
                             </div>
                         </div>
                     </CardContent>
@@ -651,6 +711,51 @@ export default function CheckoutClientPage() {
                 <Card>
                     <CardHeader><CardTitle>4. Revisa y Confirma tu Pedido</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
+                        <div>
+                            <h3 className="font-semibold mb-2">Resumen del Pedido</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center space-x-2">
+                                    <Input
+                                        placeholder="Código de Descuento"
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value)}
+                                        className="flex-grow"
+                                        disabled={couponLoading || !!appliedCoupon}
+                                    />
+                                    <Button type="button" onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim() || !!appliedCoupon}>
+                                        {couponLoading ? <Loader2 className="animate-spin" /> : (appliedCoupon ? 'Aplicado' : 'Aplicar')}
+                                    </Button>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>Subtotal</span>
+                                        <span>{formatPrice(finalTotals.subtotal)}</span>
+                                    </div>
+                                    {finalTotals.discount > 0 && (
+                                        <div className="flex justify-between text-destructive">
+                                            <span>Descuento por volumen</span>
+                                            <span>-{formatPrice(finalTotals.discount)}</span>
+                                        </div>
+                                    )}
+                                     {couponDiscount > 0 && (
+                                        <div className="flex justify-between text-destructive">
+                                            <span>Descuento por cupón ({appliedCoupon?.code})</span>
+                                            <span>-{formatPrice(couponDiscount)}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between">
+                                        <span>Envío</span>
+                                        <span>{finalTotals.shipping > 0 ? formatPrice(finalTotals.shipping) : 'Gratis'}</span>
+                                    </div>
+                                    <Separator/>
+                                    <div className="flex justify-between font-bold text-xl">
+                                        <span>Total a Pagar</span>
+                                        <span className="text-primary">{formatPrice(finalTotals.total)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <Separator />
                         <div><h3 className="font-semibold mb-2">Productos:</h3>{cartItems.map((item) => (<div key={item.id} className="flex items-center gap-4 py-1"><div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border"><Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" /></div><div className="flex-1"><p className="font-medium">{item.name}</p><p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p></div><p className="font-medium">{formatPrice(item.price * item.quantity)}</p></div>))}</div>
                         <Separator />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -669,27 +774,6 @@ export default function CheckoutClientPage() {
                         </div>
                          <div><h3 className="font-semibold mb-2">Método de Pago:</h3><div className="text-sm text-muted-foreground"><p>{paymentMethods[form.getValues('paymentMethod').startsWith('cod') ? 'cod' : 'prepaid'].find(m => m.value === formValues.paymentMethod)?.label}</p></div></div>
                         <Separator />
-                        <div className="space-y-2">
-                             <div className="flex justify-between">
-                                <span>Subtotal</span>
-                                <span>{formatPrice(finalTotals.subtotal)}</span>
-                            </div>
-                            {finalTotals.discount > 0 && (
-                                <div className="flex justify-between text-destructive">
-                                    <span>Descuento por volumen con pago anticipado</span>
-                                    <span>-{formatPrice(finalTotals.discount)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between">
-                                <span>Envío</span>
-                                <span>{finalTotals.shipping > 0 ? formatPrice(finalTotals.shipping) : 'Gratis'}</span>
-                            </div>
-                            <Separator/>
-                            <div className="flex justify-between font-bold text-xl">
-                                <span>Total a Pagar</span>
-                                <span className="text-primary">{formatPrice(finalTotals.total)}</span>
-                            </div>
-                        </div>
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
                     </CardContent>
                 </Card>
