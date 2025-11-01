@@ -21,24 +21,33 @@ export async function GET() {
 
     const products = snapshot.docs.map(doc => {
       const product = doc.data() as Product;
+      
+      const isOnSale = !!product.originalPrice && product.originalPrice > product.price;
+
       return {
-        // Klaviyo expects specific field names. We map our Product type to their format.
-        // We use the product ID as the $custom_id.
+        // Klaviyo standard fields
         "$custom_id": doc.id,
         "title": product.name,
         "description": product.description || '',
         "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
         "image_full_url": product.imageUrl,
-        "price": product.price / 100, // Klaviyo expects price as a number, not cents.
-        // Optional but recommended fields
+        "price": product.price / 100,
+        // Optional but recommended standard fields
+        "compare_at_price": isOnSale ? product.originalPrice! / 100 : undefined,
         "categories": product.tags || [],
         "brand": product.brand || 'PuroRush',
-        "inventory_quantity": product.stock !== undefined ? product.stock : 99, // Fallback stock
+        "inventory_quantity": product.stock !== undefined ? product.stock : 99,
         "inventory_policy": product.stock !== undefined ? 1 : 2, // 1: Deny, 2: Continue
+        // Custom metadata for segmentation
+        "custom_metadata": {
+          "size": product.size || null,
+          "composition": product.composition || null,
+          "is_on_sale": isOnSale,
+          "internal_tags": product.internalTags || [],
+        }
       };
     });
     
-    // The key change: Klaviyo expects the array to be under a 'data' property.
     return NextResponse.json({ data: products });
 
   } catch (error) {
