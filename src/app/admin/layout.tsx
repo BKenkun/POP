@@ -14,6 +14,7 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -44,11 +45,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className={`grid min-h-screen w-full lg:grid-cols-[${isSidebarCollapsed ? '56px' : '280px'}_1fr] transition-all duration-300`}>
-      <div className="hidden border-r bg-background lg:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-            <AdminSidebar />
-        </div>
+    <div className={cn(
+        "grid min-h-screen w-full transition-[grid-template-columns] duration-300",
+        isSidebarCollapsed ? "lg:grid-cols-[56px_1fr]" : "lg:grid-cols-[280px_1fr]"
+    )}>
+      <div className={cn(
+          "hidden border-r bg-background lg:block",
+           isSidebarCollapsed && "overflow-hidden"
+      )}>
+        <AdminSidebar />
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 lg:h-[60px]">
@@ -64,7 +69,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <AdminSidebar />
             </SheetContent>
           </Sheet>
-          <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={toggleSidebar}>
+           <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={toggleSidebar}>
             <PanelLeft className="h-5 w-5"/>
             <span className="sr-only">Toggle sidebar</span>
           </Button>
@@ -72,7 +77,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             {/* Optional: Add a search form or other header items here */}
           </div>
         </header>
-        <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 bg-muted/40">
+        <main className="flex-1 p-4 sm:px-6 sm:py-6 md:gap-8 bg-muted/40 overflow-auto">
             {children}
         </main>
       </div>
@@ -80,3 +85,4 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+

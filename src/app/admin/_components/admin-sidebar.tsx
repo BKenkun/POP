@@ -50,10 +50,11 @@ export default function AdminSidebar() {
   }
 
   return (
-    <>
-      <div className="flex h-[60px] items-center justify-between border-b px-6">
+    <div className="flex flex-col h-full">
+      <div className="flex h-[60px] items-center border-b px-4">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
            <Logo className="h-8 w-auto" />
+           <span className="font-bold text-lg">PuroRush</span>
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">
@@ -117,6 +118,6 @@ export default function AdminSidebar() {
             Cerrar Sesión
          </Button>
       </div>
-    </>
+    </div>
   );
 }
