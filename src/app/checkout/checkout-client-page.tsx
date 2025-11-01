@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { QuantitySelector } from '@/components/quantity-selector';
-import { serverTimestamp, collection, addDoc, doc, getDoc, writeBatch, Timestamp } from 'firebase/firestore';
+import { serverTimestamp, collection, addDoc, doc, getDoc, writeBatch, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
 import { Switch } from '@/components/ui/switch';
@@ -165,7 +165,7 @@ export default function CheckoutClientPage() {
   }, [cartTotal, volumeDiscount, isCod]);
 
   const handleApplyCoupon = useCallback(async () => {
-    if (!couponCode.trim()) return;
+    if (!couponCode.trim() || !user) return;
     setCouponLoading(true);
     setAppliedCoupon(null);
     setCouponDiscount(0);
@@ -187,6 +187,17 @@ export default function CheckoutClientPage() {
         if (couponData.usageLimit > 0 && couponData.usageCount >= couponData.usageLimit) throw new Error('Este cupón ha alcanzado su límite de usos.');
         if (couponData.minPurchase && subtotalAfterVolumeDiscount < couponData.minPurchase) throw new Error(`Se requiere una compra mínima de ${formatPrice(couponData.minPurchase)} para usar este cupón.`);
         
+        if (couponData.onePerUser) {
+            const ordersQuery = query(
+                collection(db, 'users', user.uid, 'orders'),
+                where('coupon.code', '==', couponData.code)
+            );
+            const pastOrdersSnap = await getDocs(ordersQuery);
+            if (!pastOrdersSnap.empty) {
+                throw new Error('Este cupón solo puede ser usado una vez.');
+            }
+        }
+        
         let discount = 0;
         if (couponData.discountType === 'fixed') {
             discount = couponData.discountValue;
@@ -203,7 +214,7 @@ export default function CheckoutClientPage() {
     } finally {
         setCouponLoading(false);
     }
-  }, [couponCode, subtotalAfterVolumeDiscount, toast]);
+  }, [couponCode, subtotalAfterVolumeDiscount, toast, user]);
 
 
   const finalTotals = useMemo(() => {

@@ -51,7 +51,7 @@ const couponSchema = z.object({
   endDate: z.date().optional().nullable(),
   isActive: z.boolean().default(true),
   usageLimit: z.coerce.number().min(0).optional(),
-  onePerUser: z.boolean().default(false),
+  onePerUser: z.boolean().default(false), // Nuevo campo
 }).refine(data => {
     if (data.discountType === 'percentage' && data.discountValue > 100) {
         return false;
@@ -92,6 +92,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
       endDate: parseDate(coupon?.endDate),
       isActive: coupon?.isActive !== false,
       usageLimit: coupon?.usageLimit || 0,
+      onePerUser: coupon?.onePerUser || false,
     },
   });
 
@@ -179,6 +180,15 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                         <FormControl><Input type="number" {...field} /></FormControl>
                         <FormDescription>Número máximo de veces que este cupón puede ser usado. 0 para ilimitado.</FormDescription>
                         <FormMessage />
+                    </FormItem>
+                )} />
+                 <FormField control={form.control} name="onePerUser" render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                        <div className="space-y-0.5">
+                            <FormLabel>Un solo uso por cliente</FormLabel>
+                            <FormDescription>Si se activa, cada cliente solo podrá usar este cupón una vez.</FormDescription>
+                        </div>
+                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                     </FormItem>
                 )} />
 

@@ -57,6 +57,7 @@ export interface Coupon {
   isActive: boolean;
   usageLimit?: number;
   usageCount: number;
+  onePerUser?: boolean; // Nuevo campo
 }
 
 export default function AdminCouponsPage() {
