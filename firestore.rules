@@ -25,6 +25,13 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+    
+    // Coupons are readable by signed-in users to allow for validation
+    // during checkout, but only writable by admins.
+    match /coupons/{couponId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
 
     // User-specific data.
     match /users/{userId} {
