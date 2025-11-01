@@ -57,7 +57,7 @@ export default function AdminSidebar() {
   const renderCollapsibleLink = (link: any) => {
     if (isCollapsed) {
         return (
-            <Tooltip>
+            <Tooltip key={link.label}>
                 <TooltipTrigger asChild>
                     <div
                         className={cn(
