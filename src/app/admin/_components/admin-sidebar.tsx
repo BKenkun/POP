@@ -20,6 +20,8 @@ export default function AdminSidebar() {
   
   const isLogisticsActive = pathname.startsWith('/admin/orders') || pathname.startsWith('/admin/stock') || pathname.startsWith('/admin/shipping');
   const [isLogisticsOpen, setIsLogisticsOpen] = useState(isLogisticsActive);
+  
+  const isCollapsed = state === 'collapsed';
 
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: Home },
@@ -53,12 +55,15 @@ export default function AdminSidebar() {
 
   return (
     <div className="flex flex-col h-full">
-       <div className="flex h-[60px] items-center justify-between border-b px-4">
-        <Link href="/admin" className="flex items-center gap-2 font-semibold">
+       <div className={cn(
+           "flex h-[60px] items-center border-b",
+           isCollapsed ? "justify-center" : "justify-between px-4"
+       )}>
+        <Link href="/admin" className={cn("flex items-center gap-2 font-semibold", isCollapsed && "hidden")}>
            <Logo className="h-8 w-auto" />
         </Link>
          <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={toggleSidebar}>
-            <PanelLeft className={cn("h-5 w-5 transition-transform", state === 'collapsed' && 'rotate-180')} />
+            <PanelLeft className={cn("h-5 w-5 transition-transform", isCollapsed && 'rotate-180')} />
             <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
@@ -66,17 +71,22 @@ export default function AdminSidebar() {
         <nav className="grid items-start px-4 text-sm font-medium">
           {navLinks.map((link) => (
             link.isCollapsible ? (
-                <Collapsible key={link.label} open={link.isOpen} onOpenChange={link.onOpenChange}>
+                <Collapsible key={link.label} open={link.isOpen && !isCollapsed} onOpenChange={link.onOpenChange} disabled={isCollapsed}>
                     <CollapsibleTrigger asChild>
                          <div
                             className={cn(
                                 'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary cursor-pointer',
-                                link.isActive && 'bg-muted text-primary'
+                                link.isActive && 'bg-muted text-primary',
+                                isCollapsed && "justify-center"
                             )}
                             >
                             <link.icon className="h-4 w-4" />
-                            {link.label}
-                            <ChevronDown className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                            {!isCollapsed && (
+                                <>
+                                    {link.label}
+                                    <ChevronDown className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                                </>
+                            )}
                         </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pl-7 pt-1">
@@ -100,27 +110,29 @@ export default function AdminSidebar() {
                 <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${
-                    pathname === link.href ? 'bg-muted text-primary' : ''
-                }`}
+                className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                    pathname === link.href && 'bg-muted text-primary',
+                    isCollapsed && 'justify-center'
+                )}
                 >
                 <link.icon className="h-4 w-4" />
-                {link.label}
+                {!isCollapsed && link.label}
                 </Link>
             )
           ))}
         </nav>
       </div>
       <div className="mt-auto p-4 border-t">
-         <Button variant="ghost" className="w-full justify-start" asChild>
+         <Button variant="ghost" className={cn("w-full justify-start", isCollapsed && "justify-center")} asChild>
             <Link href="/" target="_blank">
-                <Store className="mr-2" />
-                Ver tienda
+                <Store className={cn("mr-2", isCollapsed && "mr-0")} />
+                {!isCollapsed && "Ver tienda"}
             </Link>
          </Button>
-         <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-            <LogOut className="mr-2" />
-            Cerrar Sesión
+         <Button variant="ghost" className={cn("w-full justify-start", isCollapsed && "justify-center")} onClick={handleLogout}>
+            <LogOut className={cn("mr-2", isCollapsed && "mr-0")} />
+            {!isCollapsed && "Cerrar Sesión"}
          </Button>
       </div>
     </div>
