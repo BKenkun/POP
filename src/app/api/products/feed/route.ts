@@ -8,51 +8,39 @@ export const revalidate = 3600; // Revalidate at most every hour
 
 /**
  * API endpoint to fetch all active products for a Klaviyo catalog feed.
+ * This format is specifically tailored for what Klaviyo's custom catalog source expects.
  * URL: /api/products/feed
  */
 export async function GET() {
   try {
     const productsRef = firestore.collection('products');
-    // We only fetch active products for the public feed.
     const snapshot = await productsRef.where('active', '!=', false).get();
 
     if (snapshot.empty) {
-      return NextResponse.json({ products: [] });
+      return NextResponse.json({ data: [] });
     }
 
-    const products: Product[] = snapshot.docs.map(doc => {
-      const data = doc.data();
+    const products = snapshot.docs.map(doc => {
+      const product = doc.data() as Product;
       return {
-        id: doc.id,
-        // Ensure all fields from the Product interface are included
-        name: data.name,
-        price: data.price,
-        imageUrl: data.imageUrl,
-        description: data.description || null,
-        longDescription: data.longDescription || null,
-        originalPrice: data.originalPrice || undefined,
-        tags: data.tags || [],
-        internalTags: data.internalTags || [],
-        galleryImages: data.galleryImages || [],
-        stock: data.stock === undefined ? undefined : data.stock,
-        sku: data.sku || '',
-        active: data.active === undefined ? true : data.active,
-        productDetails: data.productDetails || '',
-        brand: data.brand || '',
-        size: data.size || '',
-        composition: data.composition || '',
-        url: data.url || '',
-        web: data.web || '',
-        offerStartDate: data.offerStartDate || null,
-        offerEndDate: data.offerEndDate || null,
-        cost: data.cost || 0,
-        includesVat: data.includesVat === undefined ? true : data.includesVat,
-        vatPercentage: data.vatPercentage || 21,
-        imageHint: data.imageHint || '',
+        // Klaviyo expects specific field names. We map our Product type to their format.
+        // We use the product ID as the $custom_id.
+        "$custom_id": doc.id,
+        "title": product.name,
+        "description": product.description || '',
+        "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
+        "image_full_url": product.imageUrl,
+        "price": product.price / 100, // Klaviyo expects price as a number, not cents.
+        // Optional but recommended fields
+        "categories": product.tags || [],
+        "brand": product.brand || 'PuroRush',
+        "inventory_quantity": product.stock !== undefined ? product.stock : 99, // Fallback stock
+        "inventory_policy": product.stock !== undefined ? 1 : 2, // 1: Deny, 2: Continue
       };
     });
     
-    return NextResponse.json({ products });
+    // The key change: Klaviyo expects the array to be under a 'data' property.
+    return NextResponse.json({ data: products });
 
   } catch (error) {
     console.error('Error fetching product feed for Klaviyo:', error);
