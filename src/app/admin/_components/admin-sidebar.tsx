@@ -10,11 +10,13 @@ import { useAuth } from '@/context/auth-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useSidebar } from '@/components/ui/sidebar';
 
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const { toggleSidebar, state } = useSidebar();
   
   const isLogisticsActive = pathname.startsWith('/admin/orders') || pathname.startsWith('/admin/stock') || pathname.startsWith('/admin/shipping');
   const [isLogisticsOpen, setIsLogisticsOpen] = useState(isLogisticsActive);
@@ -51,11 +53,14 @@ export default function AdminSidebar() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex h-[60px] items-center border-b px-4">
+       <div className="flex h-[60px] items-center justify-between border-b px-4">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
            <Logo className="h-8 w-auto" />
-           <span className="font-bold text-lg">PuroRush</span>
         </Link>
+         <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={toggleSidebar}>
+            <PanelLeft className={cn("h-5 w-5 transition-transform", state === 'collapsed' && 'rotate-180')} />
+            <span className="sr-only">Toggle sidebar</span>
+        </Button>
       </div>
       <div className="flex-1 overflow-auto py-2">
         <nav className="grid items-start px-4 text-sm font-medium">

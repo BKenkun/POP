@@ -15,12 +15,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 
-
-export default function AdminLayout({ children }: { children: ReactNode }) {
+function AdminLayoutContent({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { state: sidebarState, toggleSidebar } = useSidebar();
 
   useEffect(() => {
     if (!loading) {
@@ -32,10 +32,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     }
   }, [user, isAdmin, loading, router]);
   
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  }
-
   if (loading || !user || !isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -43,6 +39,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  const isSidebarCollapsed = sidebarState === 'collapsed';
 
   return (
     <div className={cn(
@@ -69,10 +67,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <AdminSidebar />
             </SheetContent>
           </Sheet>
-           <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={toggleSidebar}>
-            <PanelLeft className="h-5 w-5"/>
-            <span className="sr-only">Toggle sidebar</span>
-          </Button>
           <div className="w-full flex-1">
             {/* Optional: Add a search form or other header items here */}
           </div>
@@ -86,3 +80,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   );
 }
 
+export default function AdminLayout({ children }: { children: ReactNode }) {
+    return (
+        <SidebarProvider>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+        </SidebarProvider>
+    )
+}
