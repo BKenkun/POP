@@ -24,20 +24,26 @@ export async function GET() {
       
       const isOnSale = !!product.originalPrice && product.originalPrice > product.price;
 
+      // This structure now matches Klaviyo's documented format.
       return {
         // Klaviyo standard fields
         "$custom_id": doc.id,
         "title": product.name,
         "description": product.description || '',
         "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
-        "image_full_url": product.imageUrl,
         "price": product.price / 100,
+        "featured_image": {
+          "full": { "src": product.imageUrl },
+          "thumbnail": { "src": product.imageUrl } // Use the same image for thumbnail
+        },
+
         // Optional but recommended standard fields
         "compare_at_price": isOnSale ? product.originalPrice! / 100 : undefined,
         "categories": product.tags || [],
         "brand": product.brand || 'PuroRush',
         "inventory_quantity": product.stock !== undefined ? product.stock : 99,
-        "inventory_policy": product.stock !== undefined ? 1 : 2, // 1: Deny, 2: Continue
+        "inventory_policy": product.stock !== undefined && product.stock > 0 ? 1 : 2, // 1: Deny, 2: Continue if sold out
+
         // Custom metadata for segmentation
         "custom_metadata": {
           "size": product.size || null,
@@ -48,6 +54,7 @@ export async function GET() {
       };
     });
     
+    // The final response must be wrapped in a 'data' object.
     return NextResponse.json({ data: products });
 
   } catch (error) {
