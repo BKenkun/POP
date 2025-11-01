@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import { syncKlaviyoProduct } from '@/app/actions/klaviyo';
 
 export default function NewProductPage() {
   const { toast } = useToast();
@@ -37,9 +38,13 @@ export default function NewProductPage() {
         }
 
         await setDoc(productRef, productData);
+        
+        // After saving to Firestore, sync with Klaviyo
+        await syncKlaviyoProduct(data);
+        
         toast({
             title: 'Producto Creado',
-            description: `El producto "${data.name}" ha sido guardado en la base de datos.`,
+            description: `El producto "${data.name}" ha sido guardado y sincronizado con Klaviyo.`,
         });
         router.push('/admin/products');
     } catch (err) {

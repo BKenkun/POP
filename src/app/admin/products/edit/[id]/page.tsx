@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { syncKlaviyoProduct } from '@/app/actions/klaviyo';
 
 export default function EditProductPage() {
   const { toast } = useToast();
@@ -56,9 +57,13 @@ export default function EditProductPage() {
         }
 
         await updateDoc(productRef, productData);
+        
+        // After saving to Firestore, sync with Klaviyo
+        await syncKlaviyoProduct(data);
+        
         toast({
             title: 'Producto Actualizado',
-            description: `Los cambios en "${data.name}" han sido guardados.`,
+            description: `Los cambios en "${data.name}" han sido guardados y sincronizados con Klaviyo.`,
         });
         router.push('/admin/products');
     } catch (err) {

@@ -1,26 +1,12 @@
 'use server';
 
-import { Order, OrderItem } from "@/lib/types";
+import { Order, OrderItem, Product } from "@/lib/types";
 
 const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
+const KLAVIYO_API_REVISION = '2024-02-15';
+
 if (!KLAVIYO_API_KEY) {
-    console.warn("Klaviyo API Key is not set. Transactional emails will not be sent.");
-}
-
-type EventName = 'Placed Order' | 'Admin New Order Notification' | 'Admin New User Notification';
-
-interface EventProperties {
-    [key: string]: any;
-}
-
-interface KlaviyoEvent {
-    token: string;
-    event: EventName;
-    customer_properties: {
-        $email: string;
-        [key: string]: any;
-    };
-    properties: EventProperties;
+    console.warn("Klaviyo API Key is not set. Marketing and transactional emails will be simulated.");
 }
 
 /**
@@ -30,9 +16,9 @@ interface KlaviyoEvent {
  * @param customerEmail The email address of the customer.
  * @param properties An object containing data about the event.
  */
-export async function trackKlaviyoEvent(eventName: EventName, customerEmail: string, properties: EventProperties) {
+export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New Order Notification' | 'Admin New User Notification', customerEmail: string, properties: { [key: string]: any }) {
     if (!KLAVIYO_API_KEY) {
-        console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail} with properties:`, properties);
+        console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail}.`);
         return { success: true, message: 'Simulated event tracking.' };
     }
 
@@ -40,12 +26,8 @@ export async function trackKlaviyoEvent(eventName: EventName, customerEmail: str
         data: {
             type: "event",
             attributes: {
-                profile: {
-                    email: customerEmail
-                },
-                metric: {
-                    name: eventName
-                },
+                profile: { email: customerEmail },
+                metric: { name: eventName },
                 properties: properties,
             }
         }
@@ -58,24 +40,90 @@ export async function trackKlaviyoEvent(eventName: EventName, customerEmail: str
                 'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
                 'accept': 'application/json',
                 'content-type': 'application/json',
-                'revision': '2024-02-15'
+                'revision': KLAVIYO_API_REVISION
             },
             body: JSON.stringify(payload)
         });
         
-        if (response.status === 202) {
-             console.log(`✅ Successfully tracked Klaviyo event '${eventName}' for ${customerEmail}.`);
-             return { success: true };
-        } else {
+        if (response.status !== 202) {
             const errorData = await response.json();
-            console.error(`❌ Klaviyo API Error for event '${eventName}':`, JSON.stringify(errorData, null, 2));
-            const detail = errorData.errors?.[0]?.detail || 'Could not track event.';
-            return { success: false, message: detail };
+            throw new Error(errorData.errors?.[0]?.detail || 'Could not track event.');
         }
 
-    } catch (error) {
+        console.log(`✅ Successfully tracked Klaviyo event '${eventName}' for ${customerEmail}.`);
+        return { success: true };
+
+    } catch (error: any) {
         console.error(`❌ Failed to send event '${eventName}' to Klaviyo:`, error);
-        return { success: false, message: 'An internal server error occurred.' };
+        return { success: false, message: error.message || 'An internal server error occurred.' };
+    }
+}
+
+
+/**
+ * Creates or updates a product in the Klaviyo Catalog.
+ * This function is called automatically when a product is saved in the admin panel.
+ * @param product The product data from the store.
+ */
+export async function syncKlaviyoProduct(product: Product) {
+    if (!KLAVIYO_API_KEY) {
+        console.log(`[SIMULATION] Klaviyo product sync for '${product.name}'.`);
+        return { success: true, message: 'Simulated product sync.' };
+    }
+
+    // Klaviyo uses the product ID as the foreign key.
+    const itemId = product.id;
+
+    const payload = {
+        data: {
+            type: 'catalog-item',
+            id: itemId,
+            attributes: {
+                // external_id: product.sku || product.id, // Using product.id as the primary identifier
+                title: product.name,
+                description: product.description || 'Sin descripción.',
+                url: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${product.id}`,
+                image_full_url: product.imageUrl,
+                // price must be a number, not a formatted string
+                price: product.price / 100, 
+                // You can add more attributes here as needed, like inventory_quantity
+                inventory_quantity: product.stock,
+                custom_metadata: {
+                    brand: product.brand,
+                    size: product.size,
+                    composition: product.composition,
+                    is_on_sale: !!product.originalPrice && product.originalPrice > product.price
+                }
+            }
+        }
+    };
+    
+    // We use a PUT request with the item ID to create or update (upsert) the item.
+    const url = `https://a.klaviyo.com/api/catalog-items/${itemId}/`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'revision': KLAVIYO_API_REVISION,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.errors?.[0]?.detail || 'Could not sync product with Klaviyo.');
+        }
+        
+        console.log(`✅ Successfully synced product '${product.name}' with Klaviyo.`);
+        return { success: true };
+
+    } catch (error: any) {
+        console.error(`❌ Failed to sync product '${product.name}' with Klaviyo:`, error);
+        return { success: false, message: error.message || 'An internal server error occurred.' };
     }
 }
 
