@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { Loader2, Menu } from 'lucide-react';
+import { Loader2, Menu, PanelLeft } from 'lucide-react';
 import ThemeToggleButton from './_components/theme-toggle-button';
 import AdminSidebar from './_components/admin-sidebar';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -29,6 +30,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       }
     }
   }, [user, isAdmin, loading, router]);
+  
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  }
 
   if (loading || !user || !isAdmin) {
     return (
@@ -39,7 +44,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
+    <div className={`grid min-h-screen w-full lg:grid-cols-[${isSidebarCollapsed ? '56px' : '280px'}_1fr] transition-all duration-300`}>
       <div className="hidden border-r bg-background lg:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
             <AdminSidebar />
@@ -59,6 +64,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <AdminSidebar />
             </SheetContent>
           </Sheet>
+          <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={toggleSidebar}>
+            <PanelLeft className="h-5 w-5"/>
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
           <div className="w-full flex-1">
             {/* Optional: Add a search form or other header items here */}
           </div>

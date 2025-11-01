@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings, Truck, Calculator, Landmark, ChevronDown } from 'lucide-react';
+import { Home, Newspaper, LogOut, Store, Package, ShoppingCart, Users, Briefcase, Ticket, Warehouse, Globe, Settings, Truck, Calculator, Landmark, ChevronDown, PanelLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
@@ -51,10 +51,9 @@ export default function AdminSidebar() {
 
   return (
     <>
-      <div className="flex h-[60px] items-center border-b px-6">
+      <div className="flex h-[60px] items-center justify-between border-b px-6">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
            <Logo className="h-8 w-auto" />
-           <span className="">PuroRush</span>
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">
