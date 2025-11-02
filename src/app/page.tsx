@@ -10,6 +10,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from '@/context/language-context';
 
 function ProductSection({ title, products, loading }: { title: string; products: Product[]; loading: boolean; }) {
   if (loading) {
@@ -45,6 +46,7 @@ function ProductSection({ title, products, loading }: { title: string; products:
 export default function Home() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const productsQuery = query(collection(db, 'products'));
@@ -70,44 +72,44 @@ export default function Home() {
       <WelcomePopupLoader />
       
       <div className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Calidad Premium, Sensaciones Únicas</h1>
+        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('home.hero_title')}</h1>
         <p className="mt-2 text-lg text-foreground/80 max-w-2xl mx-auto">
-          Explora nuestra cuidada selección de poppers y descubre una pureza y potencia que redefine la experiencia.
+          {t('home.hero_subtitle')}
         </p>
       </div>
 
-      <ProductSection title="Novedades" products={newArrivals} loading={loadingProducts} />
-      <ProductSection title="Ofertas Especiales" products={offers} loading={loadingProducts} />
-      <ProductSection title="Lo Más Vendido" products={bestSellers} loading={loadingProducts} />
+      <ProductSection title={t('home.section_title_new')} products={newArrivals} loading={loadingProducts} />
+      <ProductSection title={t('home.section_title_offers')} products={offers} loading={loadingProducts} />
+      <ProductSection title={t('home.section_title_bestsellers')} products={bestSellers} loading={loadingProducts} />
       
        <div className="my-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-left max-w-5xl mx-auto">
             <div className="flex items-start gap-3">
               <ShieldCheck className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
               <div>
-                <h3 className="font-semibold text-base">Sítio Web 100% Seguro</h3>
-                <p className="text-sm text-muted-foreground">Tu seguridad es nuestra prioridad.</p>
+                <h3 className="font-semibold text-base">{t('home.feature_secure_title')}</h3>
+                <p className="text-sm text-muted-foreground">{t('home.feature_secure_desc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CreditCard className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
               <div>
-                <h3 className="font-semibold text-base">Pago Discreto</h3>
-                <p className="text-sm text-muted-foreground">Sin referencias en tu extracto.</p>
+                <h3 className="font-semibold text-base">{t('home.feature_discreet_payment_title')}</h3>
+                <p className="text-sm text-muted-foreground">{t('home.feature_discreet_payment_desc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Box className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
                <div>
-                <h3 className="font-semibold text-base">Embalaje Discreto</h3>
-                <p className="text-sm text-muted-foreground">Paquetes sin marcas ni logos.</p>
+                <h3 className="font-semibold text-base">{t('home.feature_discreet_packaging_title')}</h3>
+                <p className="text-sm text-muted-foreground">{t('home.feature_discreet_packaging_desc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Truck className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
                <div>
-                <h3 className="font-semibold text-base">Entrega Rápida</h3>
-                <p className="text-sm text-muted-foreground">Recibe tu pedido en 24/48h.</p>
+                <h3 className="font-semibold text-base">{t('home.feature_fast_shipping_title')}</h3>
+                <p className="text-sm text-muted-foreground">{t('home.feature_fast_shipping_desc')}</p>
               </div>
             </div>
         </div>
