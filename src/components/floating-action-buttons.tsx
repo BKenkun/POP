@@ -32,27 +32,26 @@ export default function FloatingActionButtons() {
         )}>
             {/* 
               Contenedor relativo para posicionar los botones.
-              La clase 'group' permite que los elementos hijos reaccionen al hover del contenedor.
-              Ajustamos el tamaño del contenedor (h-28 w-32) para controlar la proximidad.
+              Las dimensiones (h-28 w-32) definen el "lienzo" sobre el que se colocan los botones.
             */}
-            <div className="group relative h-28 w-32">
+            <div className="relative h-28 w-32">
                 {/* Botón de CBD (punta izquierda del triángulo) */}
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 transition-transform duration-300 group-hover:scale-75">
+                <div className="absolute top-1/2 left-0 -translate-y-1/2">
                     <FloatingCbdButton />
                 </div>
 
                 {/* Botón de Cuenta (esquina superior derecha) */}
-                <div className="absolute top-0 right-0 transition-transform duration-300 group-hover:scale-75">
+                <div className="absolute top-0 right-0">
                     <FloatingAccountButton />
                 </div>
 
                 {/* Botón de Carrito (esquina inferior derecha) */}
-                <div className="absolute bottom-0 right-0 transition-transform duration-300 group-hover:scale-75">
+                <div className="absolute bottom-0 right-0">
                     <FloatingCartButton />
                 </div>
 
                 {/* Botón de Idioma (posición central-inferior) */}
-                <div className="absolute bottom-[-1rem] left-1/2 -translate-x-1/2 transition-transform duration-300 group-hover:scale-125">
+                <div className="absolute bottom-[-1.5rem] left-[45%] -translate-x-1/2">
                     <FloatingLanguageButton />
                 </div>
             </div>
