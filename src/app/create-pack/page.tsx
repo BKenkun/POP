@@ -8,11 +8,13 @@ import { Loader2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useTranslation } from '@/context/language-context';
 
 
 export default function CreatePackPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const productsQuery = query(collection(db, 'products'), where('active', '==', true));
@@ -45,9 +47,9 @@ export default function CreatePackPage() {
     return (
         <div>
             <div className="text-center space-y-4 mb-12">
-                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Crea tu Pack Personalizado</h1>
+                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('pack_builder.page_title')}</h1>
                 <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                    Elige tus aromas favoritos de nuestro catálogo y construye el pack perfecto para ti.
+                    {t('pack_builder.page_subtitle')}
                 </p>
             </div>
             {isLoading ? (

@@ -10,6 +10,7 @@ import type { Order, Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, collectionGroup, orderBy, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
+import { useTranslation } from '@/context/language-context';
 
 const internationalData = {
   "España": {
@@ -39,6 +40,7 @@ const getRandomCountry = () => getRandomItem(Object.keys(internationalData));
 
 export function SalesNotification() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { isAdmin } = useAuth(); // Use the auth context to check for admin status
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
@@ -87,11 +89,11 @@ export function SalesNotification() {
     const total = product.price * quantity;
 
     showToast(
-      '¡Compra Reciente!',
-      `${name} de ${location} acaba de comprar ${quantity} x ${product.name}.`,
+      t('notifications.recent_purchase_title'),
+      t('notifications.recent_purchase_desc', { name, location, quantity, product_name: product.name }),
       total
     );
-  }, [showToast, allProducts]);
+  }, [showToast, allProducts, t]);
   
   // Function for REAL toasts from Firestore
   const showRealOrderToast = useCallback((order: Order) => {
@@ -99,15 +101,15 @@ export function SalesNotification() {
       if (!firstItem) return;
 
       const customerName = order.customerName.split(' ')[0]; // Show only first name
-      const city = order.shippingAddress?.city || 'una ciudad';
+      const city = order.shippingAddress?.city || t('notifications.a_city');
       
       showToast(
-          '¡Pedido Real Confirmado!',
-          `${customerName} de ${city} acaba de comprar ${firstItem.quantity} x ${firstItem.name}.`,
+          t('notifications.real_order_title'),
+          t('notifications.recent_purchase_desc', { name: customerName, location: city, quantity: firstItem.quantity, product_name: firstItem.name }),
           order.total
       );
 
-  }, [showToast]);
+  }, [showToast, t]);
 
   const scheduleNextToast = useCallback(() => {
     if (timeoutRef.current) {

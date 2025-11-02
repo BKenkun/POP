@@ -16,6 +16,7 @@ import { ProductCard } from '@/components/product-card';
 import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
 import { useRouter } from 'next/navigation';
 import ProductFilters from '@/app/products/filters';
+import { useTranslation } from '@/context/language-context';
 
 interface PackItem {
     id: string;
@@ -45,6 +46,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
   const [packItems, setPackItems] = useState<PackItem[]>([]);
   const { toast } = useToast();
   const router = useRouter();
+  const { t } = useTranslation();
   const [priceDetails, setPriceDetails] = useState<PackCalculationOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -89,24 +91,24 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     // --- Validations first ---
     if (newQuantity > 0) {
         if (newQuantity > MAX_UNITS_PER_PRODUCT) {
-            toast({ title: 'Límite por producto', description: `No puedes añadir más de ${MAX_UNITS_PER_PRODUCT} unidades del mismo producto.`, variant: 'destructive'});
+            toast({ title: t('pack_builder.product_limit_title'), description: t('pack_builder.product_limit_desc', { max: MAX_UNITS_PER_PRODUCT }), variant: 'destructive'});
             return;
         }
 
         const isAgotado = product.stock === 0;
         if(isAgotado) {
-            toast({ title: "Producto Agotado", description: `${product.name} no está disponible actualmente.`, variant: "destructive" });
+            toast({ title: t('pack_builder.sold_out_title'), description: t('pack_builder.sold_out_desc', { name: product.name }), variant: "destructive" });
             return;
         }
 
         if (product.stock && newQuantity > product.stock) {
-            toast({ title: 'Stock insuficiente', description: `Solo quedan ${product.stock} unidades de ${product.name}.`, variant: 'destructive' });
+            toast({ title: t('pack_builder.stock_insufficient_title'), description: t('pack_builder.stock_insufficient_desc', { stock: product.stock, name: product.name }), variant: 'destructive' });
             return;
         }
 
         const quantityDifference = newQuantity - currentQuantityInPack;
         if (totalPackQuantity + quantityDifference > MAX_PACK_ITEMS) {
-            toast({ title: 'Límite del pack alcanzado', description: `No puedes añadir más de ${MAX_PACK_ITEMS} productos a tu pack.`, variant: 'destructive'});
+            toast({ title: t('pack_builder.pack_limit_title'), description: t('pack_builder.pack_limit_desc', { max: MAX_PACK_ITEMS }), variant: 'destructive'});
             return;
         }
     }
@@ -132,8 +134,8 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
   const handleCheckout = async () => {
     if (packItems.length === 0 || !priceDetails || priceDetails.discountedTotal === 0) {
       toast({
-        title: 'Pack vacío',
-        description: 'Añade al menos un producto para crear tu pack.',
+        title: t('pack_builder.empty_pack_title'),
+        description: t('pack_builder.empty_pack_desc'),
         variant: 'destructive',
       });
       return;
@@ -141,8 +143,8 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
 
     setIsRedirecting(true);
     toast({
-        title: 'Redirigiendo al pago...',
-        description: 'Por favor, espera mientras preparamos tu compra segura.',
+        title: t('pack_builder.redirect_title'),
+        description: t('pack_builder.redirect_desc'),
     });
 
     try {
@@ -160,8 +162,8 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
     } catch (error: any) {
         console.error("Checkout Error:", error);
         toast({
-            title: 'Error en el Pago',
-            description: error.message || 'Ocurrió un error. Por favor, inténtalo de nuevo.',
+            title: t('pack_builder.checkout_error_title'),
+            description: error.message || t('pack_builder.checkout_error_desc'),
             variant: 'destructive',
         });
         setIsRedirecting(false);
@@ -185,10 +187,10 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
 
       <div className="lg:col-span-2">
         <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">1. Elige tus productos</h2>
+            <h2 className="text-2xl font-bold">{t('pack_builder.step1_title')}</h2>
             <div className="text-right">
                 <p className="font-bold text-lg">{totalPackQuantity} / {MAX_PACK_ITEMS}</p>
-                <p className="text-sm text-muted-foreground">productos en tu pack</p>
+                <p className="text-sm text-muted-foreground">{t('pack_builder.products_in_pack')}</p>
             </div>
         </div>
         <ScrollArea className="h-[70vh] pr-4">
@@ -208,7 +210,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                     <div className="p-4 pt-0">
                          {isAgotado ? (
                              <Button disabled className="w-full">
-                                <X className="mr-2"/> Agotado
+                                <X className="mr-2"/> {t('product_card.sold_out')}
                              </Button>
                          ) : quantityInPack > 0 ? (
                             <div className="flex items-center justify-center gap-2">
@@ -222,7 +224,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                             </div>
                         ) : (
                             <Button className="w-full" variant="outline" onClick={() => handleUpdateQuantity(product, 1)}>
-                                <Plus className="mr-2"/>Añadir
+                                <Plus className="mr-2"/>{t('pack_builder.add_button')}
                             </Button>
                         )}
                     </div>
@@ -234,18 +236,18 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
       </div>
 
       <div className="lg:col-span-1">
-         <h2 className="text-2xl font-bold mb-4">2. Revisa tu pack</h2>
+         <h2 className="text-2xl font-bold mb-4">{t('pack_builder.step2_title')}</h2>
         <Card className="sticky top-24">
             <CardHeader>
                  <CardTitle className="flex items-center gap-2">
                     <Package className="h-6 w-6 text-primary" />
-                    <span>Resumen del Pack</span>
+                    <span>{t('pack_builder.summary_title')}</span>
                  </CardTitle>
             </CardHeader>
             <CardContent>
                  {packItems.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">
-                        Selecciona productos de la izquierda para empezar a crear tu pack.
+                        {t('pack_builder.empty_pack_message')}
                     </p>
                  ) : (
                     <ScrollArea className="h-64 pr-4">
@@ -280,21 +282,21 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                     <Separator />
                     <CardFooter className="flex-col items-stretch gap-4 pt-6">
                         <div className="flex justify-between font-bold">
-                            <span>Unidades Totales:</span>
+                            <span>{t('pack_builder.total_units')}:</span>
                             <span>{totalPackQuantity} / {MAX_PACK_ITEMS}</span>
                         </div>
                         
                         {(isCalculating || isRedirecting) && (
                              <div className="flex items-center justify-center gap-2 text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>{isRedirecting ? 'Procesando pago...' : 'Calculando descuento...'}</span>
+                                <span>{isRedirecting ? t('pack_builder.processing_payment') : t('pack_builder.calculating_discount')}</span>
                             </div>
                         )}
 
                         {priceDetails && !isCalculating && !isRedirecting && (
                             <>
                                 <div className="flex justify-between text-muted-foreground">
-                                    <span>Precio Original:</span>
+                                    <span>{t('pack_builder.original_price')}:</span>
                                     <span className={priceDetails.savings > 0 ? 'line-through' : ''}>
                                         {formatPrice(priceDetails.originalTotal)}
                                     </span>
@@ -302,25 +304,25 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                                 {priceDetails.savings > 0 && (
                                   <>
                                     <div className="flex justify-between text-destructive font-bold">
-                                        <span>Tu Ahorro:</span>
+                                        <span>{t('pack_builder.your_savings')}:</span>
                                         <span>-{formatPrice(priceDetails.savings)}</span>
                                     </div>
                                     <div className="flex justify-between font-bold text-lg text-primary">
-                                        <span>Total del Pack:</span>
+                                        <span>{t('pack_builder.pack_total')}:</span>
                                         <span>{formatPrice(priceDetails.discountedTotal)}</span>
                                     </div>
                                   </>  
                                 )}
                                 {priceDetails.savings <= 0 && priceDetails.originalTotal > 0 && (
                                      <div className="text-xs text-center text-muted-foreground pt-2">
-                                        Añade productos hasta superar 70€ para desbloquear descuentos.
+                                        {t('pack_builder.unlock_discount_message')}
                                     </div>
                                 )}
                             </>
                         )}
                         <Button size="lg" onClick={handleCheckout} disabled={isCalculating || !priceDetails || isRedirecting}>
                             <CreditCard className="mr-2" />
-                            {isRedirecting ? 'Redirigiendo...' : 'Comprar Pack Ahora'}
+                            {isRedirecting ? t('pack_builder.redirecting_button') : t('pack_builder.buy_now_button')}
                         </Button>
                     </CardFooter>
                 </>

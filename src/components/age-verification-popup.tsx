@@ -14,6 +14,7 @@ import {
 import { AlertTriangle, Calendar } from 'lucide-react';
 import { Logo } from './logo';
 import { Input } from './ui/input';
+import { useTranslation } from '@/context/language-context';
 
 const AGE_VERIFICATION_KEY = 'age_verified';
 const MIN_AGE = 18;
@@ -22,6 +23,7 @@ export default function AgeVerificationPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState({ day: '', month: '', year: '' });
   const [error, setError] = useState('');
+  const { t } = useTranslation();
 
   useEffect(() => {
     // This effect runs only on the client
@@ -46,7 +48,7 @@ export default function AgeVerificationPopup() {
     const yearNum = parseInt(year, 10);
 
     if (isNaN(dayNum) || isNaN(monthNum) || isNaN(yearNum) || dayNum > 31 || monthNum > 12) {
-      setError('Por favor, introduce una fecha válida.');
+      setError(t('popups.age_verification_error_invalid'));
       return false;
     }
 
@@ -59,13 +61,13 @@ export default function AgeVerificationPopup() {
     }
 
     if (age < MIN_AGE) {
-      setError('Debes ser mayor de 18 años para entrar.');
+      setError(t('popups.age_verification_error_underage', { min_age: MIN_AGE }));
       return false;
     }
     
     setError('');
     return true;
-  }, [date]);
+  }, [date, t]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -100,9 +102,9 @@ export default function AgeVerificationPopup() {
       >
         <DialogHeader className="space-y-4 items-center">
           <Logo className="h-12" />
-          <DialogTitle className="text-2xl font-bold">Verificación de Edad</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">{t('popups.age_verification_title')}</DialogTitle>
           <DialogDescription className="text-base text-muted-foreground">
-            Introduce tu fecha de nacimiento para continuar.
+            {t('popups.age_verification_subtitle')}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -117,10 +119,10 @@ export default function AgeVerificationPopup() {
         </div>
         <DialogFooter className="sm:justify-center gap-4">
            <Button type="button" variant="outline" onClick={handleDeny}>
-            Salir
+            {t('popups.age_verification_exit_button')}
           </Button>
           <Button type="button" onClick={handleConfirm} disabled={!isAgeVerified}>
-            Entrar
+            {t('popups.age_verification_enter_button')}
           </Button>
         </DialogFooter>
       </DialogContent>

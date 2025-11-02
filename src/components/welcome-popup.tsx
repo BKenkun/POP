@@ -14,6 +14,7 @@ import { Gift, Percent } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/context/language-context';
 
 const POPUP_DISMISSED_KEY = 'popper_popup_dismissed';
 const SUBSCRIBED_KEY = 'popper_newsletter_subscribed';
@@ -23,6 +24,7 @@ const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     setIsClient(true);
@@ -89,7 +91,7 @@ const WelcomePopup = () => {
             size="icon"
             onClick={() => handleOpenChange(true)}
             className="relative h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 animate-pulse-slow"
-            aria-label="Abrir oferta de suscripción"
+            aria-label={t('popups.welcome_open_offer_aria')}
         >
             <Gift className="h-7 w-7" />
         </Button>
@@ -105,11 +107,11 @@ const WelcomePopup = () => {
               <Percent className="h-10 w-10 text-primary" />
             </div>
             <DialogTitle className="text-3xl font-headline text-primary font-bold">
-              ¡Bienvenido/a!
+              {t('popups.welcome_title')}
             </DialogTitle>
             <DialogDescription className="text-lg text-foreground/80">
-              Suscríbete a nuestro boletín y obtén un{' '}
-              <span className="font-bold text-primary">10% de descuento</span> en tu primera compra.
+              {t('popups.welcome_subtitle_part1')}
+              <span className="font-bold text-primary">{t('popups.welcome_subtitle_discount')}</span> {t('popups.welcome_subtitle_part2')}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
