@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from 'next/navigation';
@@ -29,8 +30,8 @@ export default function FloatingActionButtons() {
             "fixed right-6 z-50 transition-all duration-300",
             isBannerVisible ? "bottom-[72px]" : "bottom-6"
         )}>
-            {/* Contenedor relativo para posicionar los botones. Reducido a h-40 w-40 para juntarlos. */}
-            <div className="relative h-40 w-40">
+            {/* Contenedor relativo para posicionar los botones. Reducido a h-32 w-40 para juntarlos. */}
+            <div className="relative h-32 w-40">
                 {/* Botón de Cuenta (arriba a la derecha) */}
                 <div className="absolute top-0 right-0">
                     <FloatingAccountButton />
