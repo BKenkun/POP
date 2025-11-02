@@ -1,3 +1,4 @@
+
 'use server';
 
 import { Order, OrderItem, Product } from "@/lib/types";
@@ -131,30 +132,36 @@ export async function syncKlaviyoProduct(product: Product) {
 // --- Helper Functions to format data for Klaviyo ---
 
 export async function formatOrderForKlaviyo(order: Order, orderId: string) {
+    const orderDate = order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date().toISOString();
+    
     return {
-        // Event-specific properties
-        '$event_id': orderId,
-        '$value': order.total / 100,
-        'OrderId': orderId,
-        'ItemNames': order.items.map(item => item.name),
-        'ItemCount': order.items.reduce((acc, item) => acc + item.quantity, 0),
-        'ShippingAddress': order.shippingAddress,
-        'PaymentMethod': order.paymentMethod,
-        'Status': order.status,
-        'Items': order.items.map(formatOrderItemForKlaviyo),
-        
-        // Customer properties
-        'CustomerName': order.customerName,
+      // Event-specific properties
+      '$event_id': orderId,
+      '$value': order.total / 100,
+      'OrderId': orderId,
+      'ItemNames': order.items.map(item => item.name),
+      'ItemCount': order.items.reduce((acc, item) => acc + item.quantity, 0),
+      'ShippingAddress': order.shippingAddress,
+      'PaymentMethod': order.paymentMethod,
+      'Status': order.status,
+      'Items': order.items.map(formatOrderItemForKlaviyo),
+      'OrderDate': orderDate,
+      
+      // Customer properties
+      'CustomerName': order.customerName,
     };
 }
 
 function formatOrderItemForKlaviyo(item: OrderItem) {
     return {
         'ProductID': item.productId,
+        'SKU': item.productId,
         'ProductName': item.name,
         'Quantity': item.quantity,
         'ItemPrice': item.price / 100,
         'RowTotal': (item.price * item.quantity) / 100,
         'ImageURL': item.imageUrl,
+        'Categories': [],
+        'Brand': '',
     };
 }
