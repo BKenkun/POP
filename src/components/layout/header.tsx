@@ -14,11 +14,13 @@ import { Logo } from '../logo';
 import NavigationMenuComponent from "./navigation-menu";
 import { getSiteSettings } from "@/app/actions/site-settings";
 import type { SiteSettings } from "@/app/actions/site-settings";
+import { useTranslation } from "@/context/language-context";
 
 export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
   const [settings, setSettings] = React.useState<SiteSettings | null>(null);
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     const fetchSettings = async () => {
@@ -41,7 +43,7 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="bg-primary text-primary-foreground p-0">
-           <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
+           <SheetTitle className="sr-only">{t('header.nav_menu')}</SheetTitle>
           <SidebarHeader className="p-2 border-b border-primary-foreground/20">
              <Link href="/" className="flex items-center space-x-2 group" onClick={() => setIsOpen(false)}>
                 <Logo />
@@ -76,11 +78,11 @@ export function Header() {
         <div className="flex items-center justify-end gap-x-2 sm:gap-x-3 text-xs text-primary-foreground">
            <div className="hidden sm:flex items-center gap-1.5 font-body text-[10px] font-medium text-primary-foreground">
                 <PackageCheck className="h-3 w-3 text-primary-foreground" />
-                <span>GRATIS +40€</span>
+                <span>{t('header.free_shipping')}</span>
             </div>
             <div className="hidden sm:flex items-center gap-1.5 font-body text-[10px] font-medium text-primary-foreground">
                 <Truck className="h-3 w-3 text-primary-foreground" />
-                <span>24/48h</span>
+                <span>{t('header.fast_delivery')}</span>
             </div>
             <div className="md:hidden">
                 <MobileNav />

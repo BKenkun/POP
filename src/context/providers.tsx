@@ -7,6 +7,7 @@ import { CookieProvider } from "./cookie-context";
 import { CheckoutProvider } from "./checkout-context";
 import AppLayout from "@/components/layout/app-layout";
 import { ThemeProvider } from "./theme-provider";
+import { LanguageProvider } from "./language-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const Layout = AppLayout;
@@ -19,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
     >
       <CookieProvider>
+        <LanguageProvider>
             <AuthProvider>
               <CartProvider>
                 <CheckoutProvider>
@@ -26,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 </CheckoutProvider>
               </CartProvider>
             </AuthProvider>
+        </LanguageProvider>
       </CookieProvider>
     </ThemeProvider>
   );
