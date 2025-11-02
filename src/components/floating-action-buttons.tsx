@@ -32,10 +32,10 @@ export default function FloatingActionButtons() {
         )}>
             {/* 
               Contenedor relativo para posicionar los botones.
-              Las dimensiones (h-32 w-28) definen el "lienzo" sobre el que se colocan los botones.
+              Las dimensiones (h-36 w-32) definen el "lienzo" sobre el que se colocan los botones.
               Aumentamos la altura para separar los botones de la derecha y reducimos el ancho para acercar el de la izquierda.
             */}
-            <div className="relative h-32 w-28">
+            <div className="relative h-36 w-32">
                 {/* Botón de CBD (punta izquierda del triángulo) */}
                 <div className="absolute top-1/2 left-0 -translate-y-1/2">
                     <FloatingCbdButton />
@@ -52,7 +52,7 @@ export default function FloatingActionButtons() {
                 </div>
 
                 {/* Botón de Idioma (posición central-inferior, más cerca del grupo) */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
                     <FloatingLanguageButton />
                 </div>
             </div>
