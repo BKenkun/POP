@@ -1,24 +1,29 @@
 
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
-const legalInfo = [
-    { label: 'Titular del Sitio Web:', value: 'MARY AND POPPER' },
-    { label: 'ABN:', value: 'Australian Business Number (ABN) 37 588 057 135' },
-    { label: 'Dirección:', value: 'U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA' },
-    { label: 'Contacto:', value: 'info@comprarpopperonline.com' },
-    { label: 'Logística y Distribución:', value: 'Los pedidos se gestionan y envían desde Francia. Para cumplir con los máximos estándares regulatorios de la Unión Europea, solo se envían a países cuyo uso es legal.' },
-];
+import { useTranslation } from '@/context/language-context';
 
 export default function InformacionLegalPage() {
+  const { t } = useTranslation();
+
+  const legalInfo = [
+    { label: t('legal_info.owner_label'), value: 'MARY AND POPPER' },
+    { label: t('legal_info.abn_label'), value: 'Australian Business Number (ABN) 37 588 057 135' },
+    { label: t('legal_info.address_label'), value: 'U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA' },
+    { label: t('legal_info.contact_label'), value: 'info@comprarpopperonline.com' },
+    { label: t('legal_info.logistics_label'), value: t('legal_info.logistics_value') },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
         <Card>
             <CardHeader>
-                <CardTitle>Información Legal</CardTitle>
+                <CardTitle>{t('legal_info.title')}</CardTitle>
             </CardHeader>
             <CardContent>
                 <dl className="space-y-4">
@@ -35,24 +40,24 @@ export default function InformacionLegalPage() {
         <div className="space-y-6">
             <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Advertencia sobre el Uso</AlertTitle>
+                <AlertTitle>{t('legal_info.usage_warning_title')}</AlertTitle>
                 <AlertDescription>
-                    Venta para usos técnicos, cosméticos o aromáticos. El consumo humano y el uso recreativo están estrictamente prohibidos y son desaconsejados.
+                    {t('legal_info.usage_warning_desc')}
                 </AlertDescription>
             </Alert>
 
             <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Derecho de Cancelación</AlertTitle>
+                <AlertTitle>{t('legal_info.cancellation_right_title')}</AlertTitle>
                 <AlertDescription>
-                    Nos reservamos el derecho a cancelar cualquier pedido si se realiza desde una ubicación cuya legalidad es cuestionable o si sospechamos que se omitirá un uso legal del producto.
+                    {t('legal_info.cancellation_right_desc')}
                 </AlertDescription>
             </Alert>
         </div>
          <div className="text-center pt-4">
             <Button asChild size="lg">
                 <Link href="/products">
-                    Explorar Catálogo
+                    {t('legal_info.explore_button')}
                     <ChevronRight className="ml-2 h-4 w-4" />
                 </Link>
             </Button>

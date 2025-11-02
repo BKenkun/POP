@@ -403,6 +403,20 @@ const translations: Record<Language, Translations> = {
       customs_desc: 'Para pedidos fuera de la UE, es posible que se apliquen costes aduaneros. Popper Online no se hace responsable de estas tarifas, impuestos o derechos adicionales. Como cliente, actúas como importador y asumes la responsabilidad de estos costes.',
       final_note: 'Atención: Los plazos son indicativos y dependen del transportista. Direcciones incorrectas o causas de fuerza mayor (huelgas, etc.) pueden causar retrasos. Los costes de reenvío por dirección incorrecta o no recogida del paquete correrán a cargo del cliente.',
       explore_button: 'Explorar Catálogo'
+    },
+    legal_info: {
+      title: "Información Legal",
+      owner_label: "Titular del Sitio Web:",
+      abn_label: "ABN:",
+      address_label: "Dirección:",
+      contact_label: "Contacto:",
+      logistics_label: "Logística y Distribución:",
+      logistics_value: "Los pedidos se gestionan y envían desde Francia. Para cumplir con los máximos estándares regulatorios de la Unión Europea, solo se envían a países cuyo uso es legal.",
+      usage_warning_title: "Advertencia sobre el Uso",
+      usage_warning_desc: "Venta para usos técnicos, cosméticos o aromáticos. El consumo humano y el uso recreativo están estrictamente prohibidos y son desaconsejados.",
+      cancellation_right_title: "Derecho de Cancelación",
+      cancellation_right_desc: "Nos reservamos el derecho a cancelar cualquier pedido si se realiza desde una ubicación cuya legalidad es cuestionable o si sospechamos que se omitirá un uso legal del producto.",
+      explore_button: "Explorar Catálogo"
     }
   },
   en: {
@@ -795,6 +809,20 @@ const translations: Record<Language, Translations> = {
       customs_desc: 'For orders outside the EU, customs costs may apply. Popper Online is not responsible for these additional fees, taxes, or duties. As a customer, you act as the importer and assume responsibility for these costs.',
       final_note: 'Attention: Delivery times are indicative and depend on the carrier. Incorrect addresses or force majeure (strikes, etc.) can cause delays. The costs of reshipment due to an incorrect address or failure to pick up the package will be borne by the customer.',
       explore_button: 'Explore Catalog'
+    },
+    legal_info: {
+      title: "Legal Information",
+      owner_label: "Website Owner:",
+      abn_label: "ABN:",
+      address_label: "Address:",
+      contact_label: "Contact:",
+      logistics_label: "Logistics and Distribution:",
+      logistics_value: "Orders are managed and shipped from France. To comply with the highest regulatory standards of the European Union, they are only sent to countries where their use is legal.",
+      usage_warning_title: "Usage Warning",
+      usage_warning_desc: "For sale for technical, cosmetic, or aromatic uses. Human consumption and recreational use are strictly prohibited and discouraged.",
+      cancellation_right_title: "Right of Cancellation",
+      cancellation_right_desc: "We reserve the right to cancel any order if it is placed from a location where its legality is questionable or if we suspect that a legal use of the product will be omitted.",
+      explore_button: "Explore Catalog"
     }
   },
   fr: {
@@ -1187,6 +1215,20 @@ const translations: Record<Language, Translations> = {
       customs_desc: 'Pour les commandes hors UE, des frais de douane peuvent s\'appliquer. Popper Online n\'est pas responsable de ces frais, taxes ou droits supplémentaires. En tant que client, vous agissez en tant qu\'importateur et assumez la responsabilité de ces coûts.',
       final_note: 'Attention : Les délais sont indicatifs et dépendent du transporteur. Des adresses incorrectes ou des cas de force majeure (grèves, etc.) peuvent entraîner des retards. Les frais de réexpédition pour une adresse incorrecte ou un colis non réclamé seront à la charge du client.',
       explore_button: 'Explorer le Catalogue'
+    },
+    legal_info: {
+      title: "Informations Légales",
+      owner_label: "Propriétaire du site:",
+      abn_label: "ABN:",
+      address_label: "Adresse:",
+      contact_label: "Contact:",
+      logistics_label: "Logistique et Distribution:",
+      logistics_value: "Les commandes sont gérées et expédiées depuis la France. Pour se conformer aux normes réglementaires les plus strictes de l'Union Européenne, elles ne sont envoyées que dans les pays où leur utilisation est légale.",
+      usage_warning_title: "Avertissement sur l'utilisation",
+      usage_warning_desc: "Vente pour des usages techniques, cosmétiques ou aromatiques. La consommation humaine et l'usage récréatif sont strictement interdits et déconseillés.",
+      cancellation_right_title: "Droit d'annulation",
+      cancellation_right_desc: "Nous nous réservons le droit d'annuler toute commande si elle est passée depuis un lieu où sa légalité est discutable ou si nous soupçonnons qu'une utilisation légale du produit sera omise.",
+      explore_button: "Explorer le Catalogue"
     }
   },
   de: {
@@ -1579,6 +1621,20 @@ const translations: Record<Language, Translations> = {
       customs_desc: 'Für Bestellungen außerhalb der EU können Zollkosten anfallen. Popper Online ist nicht verantwortlich für diese zusätzlichen Gebühren, Steuern oder Zölle. Als Kunde handeln Sie als Importeur und übernehmen die Verantwortung für diese Kosten.',
       final_note: 'Achtung: Die Lieferzeiten sind Richtwerte und hängen vom Spediteur ab. Falsche Adressen oder höhere Gewalt (Streiks usw.) können zu Verzögerungen führen. Die Kosten für eine erneute Zustellung aufgrund einer falschen Adresse oder Nichtabholung des Pakets trägt der Kunde.',
       explore_button: 'Katalog durchsuchen'
+    },
+    legal_info: {
+      title: "Rechtliche Informationen",
+      owner_label: "Website-Inhaber:",
+      abn_label: "ABN:",
+      address_label: "Adresse:",
+      contact_label: "Kontakt:",
+      logistics_label: "Logistik und Vertrieb:",
+      logistics_value: "Bestellungen werden von Frankreich aus verwaltet und versendet. Um den höchsten regulatorischen Standards der Europäischen Union zu entsprechen, werden sie nur in Länder versendet, in denen ihre Verwendung legal ist.",
+      usage_warning_title: "Verwendungswarnung",
+      usage_warning_desc: "Verkauf für technische, kosmetische oder aromatische Zwecke. Der menschliche Verzehr und die Freizeitnutzung sind strengstens verboten und werden nicht empfohlen.",
+      cancellation_right_title: "Widerrufsrecht",
+      cancellation_right_desc: "Wir behalten uns das Recht vor, jede Bestellung zu stornieren, wenn sie von einem Ort aus aufgegeben wird, an dem ihre Rechtmäßigkeit fraglich ist, oder wenn wir vermuten, dass eine legale Verwendung des Produkts unterlassen wird.",
+      explore_button: "Katalog erkunden"
     }
   },
   it: {
@@ -1971,6 +2027,20 @@ const translations: Record<Language, Translations> = {
       customs_desc: 'Per ordini al di fuori dell\'UE, potrebbero essere applicati costi doganali. Popper Online non è responsabile di queste tasse, imposte o dazi aggiuntivi. Come cliente, agisci in qualità di importatore e ti assumi la responsabilità di questi costi.',
       final_note: 'Attenzione: i tempi di consegna sono indicativi e dipendono dal corriere. Indirizzi errati o cause di forza maggiore (scioperi, ecc.) possono causare ritardi. I costi di rispedizione per indirizzo errato o mancato ritiro del pacco saranno a carico del cliente.',
       explore_button: 'Esplora il Catalogo'
+    },
+    legal_info: {
+      title: "Informazioni Legali",
+      owner_label: "Proprietario del sito:",
+      abn_label: "ABN:",
+      address_label: "Indirizzo:",
+      contact_label: "Contatto:",
+      logistics_label: "Logistica e Distribuzione:",
+      logistics_value: "Gli ordini sono gestiti e spediti dalla Francia. Per conformarsi ai più alti standard normativi dell'Unione Europea, vengono inviati solo nei paesi in cui il loro uso è legale.",
+      usage_warning_title: "Avviso sull'uso",
+      usage_warning_desc: "Vendita per usi tecnici, cosmetici o aromatici. Il consumo umano e l'uso ricreativo sono severamente vietati e sconsigliati.",
+      cancellation_right_title: "Diritto di recesso",
+      cancellation_right_desc: "Ci riserviamo il diritto di annullare qualsiasi ordine se effettuato da un luogo in cui la sua legalità è discutibile o se sospettiamo che un uso legale del prodotto venga omesso.",
+      explore_button: "Esplora il Catalogo"
     }
   },
   pt: {
@@ -2363,6 +2433,20 @@ const translations: Record<Language, Translations> = {
       customs_desc: 'Para encomendas fora da UE, podem ser aplicados custos alfandegários. A Popper Online não se responsabiliza por estas taxas, impostos ou direitos adicionais. Como cliente, atua como importador e assume a responsabilidade por estes custos.',
       final_note: 'Atenção: Os prazos de entrega são indicativos e dependem da transportadora. Endereços incorretos ou motivos de força maior (greves, etc.) podem causar atrasos. Os custos de reenvio por endereço incorreto ou não levantamento da encomenda serão suportados pelo cliente.',
       explore_button: 'Explorar Catálogo'
+    },
+    legal_info: {
+      title: "Informação Legal",
+      owner_label: "Proprietário do Website:",
+      abn_label: "ABN:",
+      address_label: "Endereço:",
+      contact_label: "Contacto:",
+      logistics_label: "Logística e Distribuição:",
+      logistics_value: "As encomendas são geridas e enviadas a partir de França. Para cumprir os mais altos padrões regulamentares da União Europeia, são enviadas apenas para países onde a sua utilização é legal.",
+      usage_warning_title: "Aviso de Utilização",
+      usage_warning_desc: "Venda para usos técnicos, cosméticos ou aromáticos. O consumo humano e o uso recreativo são estritamente proibidos e desaconselhados.",
+      cancellation_right_title: "Direito de Cancelamento",
+      cancellation_right_desc: "Reservamo-nos o direito de cancelar qualquer encomenda se for feita a partir de um local onde a sua legalidade seja questionável ou se suspeitarmos que uma utilização legal do produto será omitida.",
+      explore_button: "Explorar Catálogo"
     }
   }
 };
