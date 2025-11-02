@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Product } from '@/lib/types';
@@ -10,6 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/context/language-context';
 
 interface RelatedProductsProps {
   currentProduct: Product;
@@ -18,10 +20,12 @@ interface RelatedProductsProps {
 }
 
 export function RelatedProducts({ currentProduct, allProducts, loading }: RelatedProductsProps) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
        <div className="space-y-6">
-        <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Productos Relacionados</h2>
+        <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">{t('related_products.title')}</h2>
         <div className="flex space-x-6">
           <Skeleton className="h-[400px] w-full min-w-60" />
           <Skeleton className="h-[400px] w-full min-w-60 hidden sm:block" />
@@ -46,7 +50,7 @@ export function RelatedProducts({ currentProduct, allProducts, loading }: Relate
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">Productos Relacionados</h2>
+      <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">{t('related_products.title')}</h2>
       <Carousel
         opts={{
           align: 'start',

@@ -93,6 +93,31 @@ const translations: Record<Language, Translations> = {
         offer: "OFERTA",
         notify_me: "Avísame",
         add_to_cart: "Añadir"
+    },
+    product_info: {
+        secure_payment: "Compra segura y pago discreto garantizado.",
+        fast_shipping: "Envío rápido en 24/48h a toda la península.",
+        discreet_packaging: "Embalaje 100% discreto sin marcas externas."
+    },
+    product_details: {
+        description_tab: "Descripción",
+        details_tab: "Detalles del producto"
+    },
+    related_products: {
+        title: "Productos Relacionados"
+    },
+    stock_notification: {
+        dialog_title: "Notificación de Stock",
+        dialog_description: "Recibirás un único correo cuando {product_name} vuelva a estar disponible.",
+        error_title: "Error",
+        error_missing_info: "Falta información del producto o el email. Inténtalo de nuevo.",
+        error_generic: "No se pudo procesar tu solicitud.",
+        error_unexpected: "Ocurrió un error inesperado.",
+        success_title: "¡Te avisaremos!",
+        success_description: "Recibirás un correo en {email} en cuanto {product_name} vuelva a estar disponible.",
+        cancel_button: "Cancelar",
+        submit_button: "Solicitar Notificación",
+        sending_button: "Enviando..."
     }
   },
   en: {
@@ -176,6 +201,31 @@ const translations: Record<Language, Translations> = {
         offer: "OFFER",
         notify_me: "Notify Me",
         add_to_cart: "Add"
+    },
+    product_info: {
+        secure_payment: "Secure purchase and guaranteed discreet payment.",
+        fast_shipping: "Fast shipping in 24/48h to the entire peninsula.",
+        discreet_packaging: "100% discreet packaging with no external markings."
+    },
+    product_details: {
+        description_tab: "Description",
+        details_tab: "Product Details"
+    },
+    related_products: {
+        title: "Related Products"
+    },
+    stock_notification: {
+        dialog_title: "Stock Notification",
+        dialog_description: "You will receive a single email when {product_name} is back in stock.",
+        error_title: "Error",
+        error_missing_info: "Missing product information or email. Please try again.",
+        error_generic: "Could not process your request.",
+        error_unexpected: "An unexpected error occurred.",
+        success_title: "We'll notify you!",
+        success_description: "You will receive an email at {email} as soon as {product_name} is available again.",
+        cancel_button: "Cancel",
+        submit_button: "Request Notification",
+        sending_button: "Sending..."
     }
   },
   fr: {
@@ -259,6 +309,31 @@ const translations: Record<Language, Translations> = {
         offer: "OFFRE",
         notify_me: "Prévenez-moi",
         add_to_cart: "Ajouter"
+    },
+    product_info: {
+        secure_payment: "Achat sécurisé et paiement discret garanti.",
+        fast_shipping: "Livraison rapide en 24/48h dans toute la péninsule.",
+        discreet_packaging: "Emballage 100% discret sans marques extérieures."
+    },
+    product_details: {
+        description_tab: "Description",
+        details_tab: "Détails du produit"
+    },
+    related_products: {
+        title: "Produits Connexes"
+    },
+    stock_notification: {
+        dialog_title: "Notification de Stock",
+        dialog_description: "Vous recevrez un único e-mail lorsque {product_name} sera de nouveau disponible.",
+        error_title: "Erreur",
+        error_missing_info: "Informations sur le produit ou e-mail manquantes. Veuillez réessayer.",
+        error_generic: "Impossible de traiter votre demande.",
+        error_unexpected: "Une erreur inattendue s'est produite.",
+        success_title: "Nous vous préviendrons!",
+        success_description: "Vous recevrez un e-mail à {email} dès que {product_name} sera de nouveau disponible.",
+        cancel_button: "Annuler",
+        submit_button: "Demander une notification",
+        sending_button: "Envoi en cours..."
     }
   },
   de: {
@@ -342,6 +417,31 @@ const translations: Record<Language, Translations> = {
         offer: "ANGEBOT",
         notify_me: "Benachrichtigen",
         add_to_cart: "Hinzufügen"
+    },
+    product_info: {
+        secure_payment: "Sicherer Kauf und garantierte diskrete Zahlung.",
+        fast_shipping: "Schneller Versand in 24/48h auf die gesamte Halbinsel.",
+        discreet_packaging: "100% diskrete Verpackung ohne äußere Kennzeichnungen."
+    },
+    product_details: {
+        description_tab: "Beschreibung",
+        details_tab: "Produktdetails"
+    },
+    related_products: {
+        title: "Ähnliche Produkte"
+    },
+    stock_notification: {
+        dialog_title: "Bestandsbenachrichtigung",
+        dialog_description: "Sie erhalten eine einzige E-Mail, wenn {product_name} wieder auf Lager ist.",
+        error_title: "Fehler",
+        error_missing_info: "Fehlende Produktinformationen oder E-Mail. Bitte versuchen Sie es erneut.",
+        error_generic: "Ihre Anfrage konnte nicht bearbeitet werden.",
+        error_unexpected: "Ein unerwarteter Fehler ist aufgetreten.",
+        success_title: "Wir benachrichtigen Sie!",
+        success_description: "Sie erhalten eine E-Mail an {email}, sobald {product_name} wieder verfügbar ist.",
+        cancel_button: "Abbrechen",
+        submit_button: "Benachrichtigung anfordern",
+        sending_button: "Senden..."
     }
   },
   it: {
@@ -425,6 +525,31 @@ const translations: Record<Language, Translations> = {
         offer: "OFFERTA",
         notify_me: "Avvisami",
         add_to_cart: "Aggiungi"
+    },
+    product_info: {
+        secure_payment: "Acquisto sicuro e pagamento discreto garantito.",
+        fast_shipping: "Spedizione rapida in 24/48h in tutta la penisola.",
+        discreet_packaging: "Imballaggio 100% discreto senza marchi esterni."
+    },
+    product_details: {
+        description_tab: "Descrizione",
+        details_tab: "Dettagli del prodotto"
+    },
+    related_products: {
+        title: "Prodotti Correlati"
+    },
+    stock_notification: {
+        dialog_title: "Notifica di Disponibilità",
+        dialog_description: "Riceverai una sola email quando {product_name} tornerà disponibile.",
+        error_title: "Errore",
+        error_missing_info: "Mancano informazioni sul prodotto o l'email. Riprova.",
+        error_generic: "Impossibile elaborare la tua richiesta.",
+        error_unexpected: "Si è verificato un errore imprevisto.",
+        success_title: "Ti avviseremo!",
+        success_description: "Riceverai un'email a {email} non appena {product_name} sarà di nuovo disponibile.",
+        cancel_button: "Annulla",
+        submit_button: "Richiedi notifica",
+        sending_button: "Invio in corso..."
     }
   },
   pt: {
@@ -508,6 +633,31 @@ const translations: Record<Language, Translations> = {
         offer: "OFERTA",
         notify_me: "Notifique-me",
         add_to_cart: "Adicionar"
+    },
+    product_info: {
+        secure_payment: "Compra segura e pagamento discreto garantido.",
+        fast_shipping: "Envio rápido em 24/48h para toda a península.",
+        discreet_packaging: "Embalagem 100% discreta sem marcas externas."
+    },
+    product_details: {
+        description_tab: "Descrição",
+        details_tab: "Detalhes do produto"
+    },
+    related_products: {
+        title: "Produtos Relacionados"
+    },
+    stock_notification: {
+        dialog_title: "Notificação de Estoque",
+        dialog_description: "Você receberá um único e-mail quando {product_name} estiver novamente em estoque.",
+        error_title: "Erro",
+        error_missing_info: "Faltam informações do produto ou e-mail. Por favor, tente novamente.",
+        error_generic: "Não foi possível processar sua solicitação.",
+        error_unexpected: "Ocorreu um erro inesperado.",
+        success_title: "Nós o notificaremos!",
+        success_description: "Você receberá um e-mail em {email} assim que {product_name} estiver disponível novamente.",
+        cancel_button: "Cancelar",
+        submit_button: "Solicitar Notificação",
+        sending_button: "Enviando..."
     }
   }
 };
@@ -573,5 +723,3 @@ export const useLanguage = () => {
 
 // Alias for useLanguage for convenience in components
 export const useTranslation = useLanguage;
-
-    

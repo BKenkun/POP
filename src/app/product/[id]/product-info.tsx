@@ -13,6 +13,7 @@ import { StockNotificationDialog } from '@/components/stock-notification-dialog'
 import { QuantitySelector } from '@/components/quantity-selector';
 import { useToast } from '@/hooks/use-toast';
 import OfferCountdown from '@/components/offer-countdown';
+import { useTranslation } from '@/context/language-context';
 
 function isOfferActive(product: Product): boolean {
   const now = new Date();
@@ -33,6 +34,7 @@ function isOfferActive(product: Product): boolean {
 export function ProductInfo({ product }: { product: Product }) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
   const offerActive = isOfferActive(product);
@@ -45,8 +47,8 @@ export function ProductInfo({ product }: { product: Product }) {
   const handleQuantityChange = (newQuantity: number) => {
       if (product.stock !== undefined && newQuantity > product.stock) {
           toast({
-              title: "Stock insuficiente",
-              description: `Solo quedan ${product.stock} unidades de este producto.`,
+              title: t('cart.stock_limit_reached'),
+              description: `Only ${product.stock} units of this product are available.`,
               variant: "destructive"
           });
           setQuantity(product.stock);
@@ -62,9 +64,9 @@ export function ProductInfo({ product }: { product: Product }) {
       <div>
         <div className="flex flex-wrap items-center gap-2 mb-2">
             {isSoldOut && (
-                <Badge variant="secondary">Agotado</Badge>
+                <Badge variant="secondary">{t('product_card.sold_out')}</Badge>
             )}
-            {offerActive && <Badge variant="destructive">OFERTA</Badge>}
+            {offerActive && <Badge variant="destructive">{t('product_card.offer')}</Badge>}
             {!isSoldOut && product.tags?.map((tag) => (
               <Badge key={tag} variant="secondary">
                 {tag}
@@ -97,7 +99,7 @@ export function ProductInfo({ product }: { product: Product }) {
           <StockNotificationDialog product={product}>
                <Button size="lg" variant="outline">
                   <Bell className="mr-2 h-5 w-5" />
-                  Avísame cuando vuelva
+                  {t('product_card.notify_me')}
               </Button>
           </StockNotificationDialog>
       ) : (
@@ -113,7 +115,7 @@ export function ProductInfo({ product }: { product: Product }) {
                   className="flex-1"
               >
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  Añadir al carrito
+                  {t('product_card.add_to_cart')}
               </Button>
           </div>
       )}
@@ -123,15 +125,15 @@ export function ProductInfo({ product }: { product: Product }) {
       <div className="space-y-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-5 w-5 flex-shrink-0 text-primary" />
-          <p>Compra segura y pago discreto garantizado.</p>
+          <p>{t('product_info.secure_payment')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Truck className="h-5 w-5 flex-shrink-0 text-primary" />
-          <p>Envío rápido en 24/48h a toda la península.</p>
+          <p>{t('product_info.fast_shipping')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Box className="h-5 w-5 flex-shrink-0 text-primary" />
-          <p>Embalaje 100% discreto sin marcas externas.</p>
+          <p>{t('product_info.discreet_packaging')}</p>
         </div>
       </div>
     </>

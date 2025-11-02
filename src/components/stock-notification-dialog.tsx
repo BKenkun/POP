@@ -19,6 +19,7 @@ import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Mail, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/context/language-context';
 
 interface StockNotificationDialogProps {
   product: Product;
@@ -28,6 +29,7 @@ interface StockNotificationDialogProps {
 export function StockNotificationDialog({ product, children }: StockNotificationDialogProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [email, setEmail] = useState(user?.email || '');
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -39,8 +41,8 @@ export function StockNotificationDialog({ product, children }: StockNotification
         // In a real app, product.id would be used. priceId was from Stripe.
         if (!product?.id || !email) {
             toast({
-                title: 'Error',
-                description: 'Falta información del producto o el email. Inténtalo de nuevo.',
+                title: t('stock_notification.error_title'),
+                description: t('stock_notification.error_missing_info'),
                 variant: 'destructive',
             });
             setLoading(false);
@@ -59,17 +61,17 @@ export function StockNotificationDialog({ product, children }: StockNotification
 
             if (result.success) {
                 toast({
-                    title: '¡Te avisaremos!',
-                    description: `Recibirás un correo en ${email} en cuanto ${product.name} vuelva a estar disponible.`,
+                    title: t('stock_notification.success_title'),
+                    description: t('stock_notification.success_description', { email, product_name: product.name }),
                 });
                 setIsOpen(false);
             } else {
-                throw new Error(result.message || 'No se pudo procesar tu solicitud.');
+                throw new Error(result.message || t('stock_notification.error_generic'));
             }
         } catch (error: any) {
              toast({
-                title: 'Error',
-                description: error.message || 'Ocurrió un error inesperado.',
+                title: t('stock_notification.error_title'),
+                description: error.message || t('stock_notification.error_unexpected'),
                 variant: 'destructive',
             });
         } finally {
@@ -84,9 +86,9 @@ export function StockNotificationDialog({ product, children }: StockNotification
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Notificación de Stock</DialogTitle>
+                    <DialogTitle>{t('stock_notification.dialog_title')}</DialogTitle>
                     <DialogDescription>
-                        Recibirás un único correo cuando {product.name} vuelva a estar disponible.
+                        {t('stock_notification.dialog_description', { product_name: product.name })}
                     </DialogDescription>
                 </DialogHeader>
                  <form onSubmit={handleSubmit}>
@@ -108,11 +110,11 @@ export function StockNotificationDialog({ product, children }: StockNotification
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                             <Button type="button" variant="ghost">Cancelar</Button>
+                             <Button type="button" variant="ghost">{t('stock_notification.cancel_button')}</Button>
                         </DialogClose>
                         <Button type="submit" disabled={loading}>
                             {loading ? <Loader2 className="mr-2 animate-spin"/> : <Mail className="mr-2"/>}
-                            {loading ? 'Enviando...' : 'Solicitar Notificación'}
+                            {loading ? t('stock_notification.sending_button') : t('stock_notification.submit_button')}
                         </Button>
                     </DialogFooter>
                 </form>

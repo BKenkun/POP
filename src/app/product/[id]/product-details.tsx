@@ -4,12 +4,14 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/context/language-context';
 
 interface ProductDetailsProps {
   product: Product;
 }
 
 export function ProductDetails({ product }: ProductDetailsProps) {
+  const { t } = useTranslation();
   const hasLongDescription = product.longDescription && product.longDescription.length > 0;
   const hasProductDetails = product.productDetails && product.productDetails.length > 0;
 
@@ -32,8 +34,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   return (
     <Tabs defaultValue={defaultTab}>
       <TabsList className="mb-4">
-        {hasLongDescription && <TabsTrigger value="description">Descripción</TabsTrigger>}
-        {hasProductDetails && <TabsTrigger value="details">Detalles del producto</TabsTrigger>}
+        {hasLongDescription && <TabsTrigger value="description">{t('product_details.description_tab')}</TabsTrigger>}
+        {hasProductDetails && <TabsTrigger value="details">{t('product_details.details_tab')}</TabsTrigger>}
       </TabsList>
 
       {hasLongDescription && (
