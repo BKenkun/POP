@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -12,7 +13,6 @@ import SubscriptionForm from './subscription-form';
 import { Gift, Percent } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { Button } from './ui/button';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 const POPUP_DISMISSED_KEY = 'popper_popup_dismissed';
@@ -23,7 +23,6 @@ const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const { toasts } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -78,10 +77,23 @@ const WelcomePopup = () => {
     } catch (e) { console.error(e) }
   };
 
-  const isToastVisible = toasts.length > 0;
-
   if (!isClient || user) {
     return null;
+  }
+  
+  const MinimizedButton = () => {
+    if (!isMinimized) return null;
+    return (
+       <Button
+            variant="default"
+            size="icon"
+            onClick={() => handleOpenChange(true)}
+            className="relative h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 animate-pulse-slow"
+            aria-label="Abrir oferta de suscripción"
+        >
+            <Gift className="h-7 w-7" />
+        </Button>
+    )
   }
 
   return (
@@ -106,22 +118,7 @@ const WelcomePopup = () => {
         </DialogContent>
       </Dialog>
       
-      {isMinimized && (
-         <div className={cn(
-            "fixed bottom-6 left-6 z-50 transition-opacity duration-300",
-            isToastVisible ? 'opacity-0 invisible' : 'opacity-100 visible'
-          )}>
-            <Button
-                variant="default"
-                size="icon"
-                onClick={() => handleOpenChange(true)}
-                className="relative h-16 w-16 rounded-full shadow-lg transition-all duration-300 hover:scale-110 animate-pulse-slow"
-                aria-label="Abrir oferta de suscripción"
-            >
-                <Gift className="h-8 w-8" />
-            </Button>
-         </div>
-      )}
+      <MinimizedButton />
     </>
   );
 };
