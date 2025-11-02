@@ -23,20 +23,13 @@ export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New O
         return { success: true, message: 'Simulated event tracking.' };
     }
     
-    // --- TEMPORARY FIX ---
-    // If this is an admin notification, send a very simple payload
-    // to force metric creation in Klaviyo for the first time.
-    const isSpecialAdminEvent = eventName === 'Admin New Order Notification' || eventName === 'Admin New User Notification';
-    
-    const finalProperties = isSpecialAdminEvent ? { note: 'Metric creation trigger' } : properties;
-    
     const payload = {
         data: {
             type: "event",
             attributes: {
                 profile: { email: customerEmail },
                 metric: { name: eventName },
-                properties: finalProperties,
+                properties: properties,
             }
         }
     };
@@ -55,6 +48,13 @@ export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New O
         
         if (response.status !== 202) {
             const errorData = await response.json();
+            // Try to create the metric if it doesn't exist
+            if (errorData.errors?.[0]?.detail.includes("does not exist")) {
+                console.warn(`Klaviyo metric '${eventName}' does not exist. Attempting to create it with a simple event.`);
+                await trackKlaviyoEvent(eventName, customerEmail, { note: "Metric creation trigger" });
+                // Retry the original event
+                return trackKlaviyoEvent(eventName, customerEmail, properties);
+            }
             throw new Error(errorData.errors?.[0]?.detail || 'Could not track event.');
         }
 
