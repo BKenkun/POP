@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -8,12 +7,25 @@ import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Package, MapPin, LogOut, HeartPulse, Shield } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
+import { useEffect, useState } from 'react';
+import { getSiteSettings } from '@/app/actions/site-settings';
+import type { SiteSettings } from '@/app/actions/site-settings';
 import { useTranslation } from '@/context/language-context';
 
 export default function AccountSidebar() {
   const pathname = usePathname();
   const { user, logout, isSubscribed, isAdmin } = useAuth();
   const { t } = useTranslation();
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const siteSettings = await getSiteSettings();
+      setSettings(siteSettings);
+    }
+    fetchSettings();
+  }, []);
+
 
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -25,7 +37,7 @@ export default function AccountSidebar() {
     { href: '/account', label: t('account.sidebar_dashboard'), icon: LayoutDashboard },
     { href: '/account/orders', label: t('account.sidebar_orders'), icon: Package },
     { href: '/account/addresses', label: t('account.sidebar_addresses'), icon: MapPin },
-    ...(isSubscribed ? [{ href: '/account/subscription', label: t('account.sidebar_subscription'), icon: HeartPulse }] : []),
+    ...(isSubscribed && settings?.showSubscriptionFeature ? [{ href: '/account/subscription', label: t('account.sidebar_subscription'), icon: HeartPulse }] : []),
   ];
 
   return (
