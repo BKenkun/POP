@@ -28,6 +28,7 @@ import { Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
+import { useTranslation } from '@/context/language-context';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
@@ -37,6 +38,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -75,11 +77,11 @@ export default function ForgotPasswordPage() {
     <div className="flex items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold">Recuperar Contraseña</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('auth.forgot_password_title')}</CardTitle>
           <CardDescription>
             {submitted
-              ? 'Revisa tu bandeja de entrada (y la carpeta de spam).'
-              : 'Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.'}
+              ? t('auth.forgot_password_success_subtitle')
+              : t('auth.forgot_password_subtitle')}
           </CardDescription>
         </CardHeader>
         {submitted ? (
@@ -88,7 +90,7 @@ export default function ForgotPasswordPage() {
                  <Button asChild className="mt-6 w-full">
                     <Link href="/login">
                         <ArrowLeft className="mr-2" />
-                        Volver a Iniciar Sesión
+                        {t('auth.back_to_login_button')}
                     </Link>
                  </Button>
             </CardContent>
@@ -101,7 +103,7 @@ export default function ForgotPasswordPage() {
                         name="email"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('auth.email_label')}</FormLabel>
                             <FormControl>
                                 <Input type="email" placeholder="tu@email.com" {...field} disabled={loading} />
                             </FormControl>
@@ -117,12 +119,12 @@ export default function ForgotPasswordPage() {
                             ) : (
                                 <Mail className="mr-2 h-4 w-4" />
                             )}
-                            {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+                            {loading ? t('auth.sending_button') : t('auth.send_recovery_link_button')}
                         </Button>
                          <Button asChild variant="ghost" className="text-sm text-muted-foreground">
                             <Link href="/login">
                                 <ArrowLeft className="mr-1 h-3 w-3"/>
-                                Volver a Iniciar Sesión
+                                {t('auth.back_to_login_button')}
                             </Link>
                         </Button>
                     </CardFooter>
@@ -133,4 +135,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

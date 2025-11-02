@@ -7,6 +7,7 @@ import { Suspense } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslation } from '@/context/language-context';
 
 // Dynamically import the form component with SSR turned off.
 const LoginForm = dynamic(() => import('./login-form'), { 
@@ -36,12 +37,14 @@ function RedirectAlert() {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold">Iniciar Sesión</CardTitle>
-          <CardDescription>Accede a tu cuenta para ver tus pedidos.</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('auth.login_title')}</CardTitle>
+          <CardDescription>{t('auth.login_subtitle')}</CardDescription>
         </CardHeader>
         <Suspense fallback={null}>
           <RedirectAlert />

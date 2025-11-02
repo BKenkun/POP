@@ -16,18 +16,20 @@ import { UserPlus, Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-rea
 import Link from 'next/link';
 import { trackKlaviyoEvent } from '@/app/actions/klaviyo';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/context/language-context';
 
 // Password strength indicator component
 const PasswordStrengthIndicator = ({ password }: { password: string }) => {
+    const { t } = useTranslation();
     const requirements = useMemo(() => {
         return [
-            { text: 'Al menos 8 caracteres', regex: /.{8,}/ },
-            { text: 'Una letra mayúscula', regex: /[A-Z]/ },
-            { text: 'Una letra minúscula', regex: /[a-z]/ },
-            { text: 'Un número', regex: /[0-9]/ },
-            { text: 'Un carácter especial (!@#$...)', regex: /[^A-Za-z0-9]/ },
+            { text: t('auth.password_strength_8_chars'), regex: /.{8,}/ },
+            { text: t('auth.password_strength_uppercase'), regex: /[A-Z]/ },
+            { text: t('auth.password_strength_lowercase'), regex: /[a-z]/ },
+            { text: t('auth.password_strength_number'), regex: /[0-9]/ },
+            { text: t('auth.password_strength_special'), regex: /[^A-Za-z0-9]/ },
         ];
-    }, []);
+    }, [t]);
 
     return (
         <div className="space-y-1 pt-2">
@@ -49,6 +51,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: isUserLoading } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -133,13 +136,13 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold">Crear Cuenta</CardTitle>
-          <CardDescription>Regístrate para una experiencia de compra más rápida.</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('auth.register_title')}</CardTitle>
+          <CardDescription>{t('auth.register_subtitle')}</CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('auth.email_label')}</Label>
                     <Input 
                     id="email" 
                     type="email" 
@@ -151,7 +154,7 @@ export default function RegisterPage() {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="password">Contraseña</Label>
+                    <Label htmlFor="password">{t('auth.password_label')}</Label>
                     <div className="relative">
                         <Input 
                         id="password" 
@@ -176,7 +179,7 @@ export default function RegisterPage() {
                     <PasswordStrengthIndicator password={password} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                    <Label htmlFor="confirmPassword">{t('auth.confirm_password_label')}</Label>
                     <div className="relative">
                         <Input 
                         id="confirmPassword" 
@@ -208,12 +211,12 @@ export default function RegisterPage() {
                     ) : (
                         <UserPlus className="mr-2 h-4 w-4" />
                     )}
-                    {loading ? 'Creando cuenta...' : 'Registrarse'}
+                    {loading ? t('auth.registering_button') : t('auth.register_button')}
                 </Button>
                 <p className="text-center text-sm text-muted-foreground">
-                    ¿Ya tienes una cuenta?{' '}
+                    {t('auth.have_account_prompt')}{' '}
                     <Link href="/login" className="font-semibold text-primary hover:underline">
-                        Inicia Sesión
+                        {t('auth.login_link')}
                     </Link>
                 </p>
             </CardFooter>

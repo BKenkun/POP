@@ -13,12 +13,14 @@ import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
+import { useTranslation } from '@/context/language-context';
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { isAdmin } = useAuth(); // We can get isAdmin from context now
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -85,7 +87,7 @@ export default function LoginForm() {
     <form onSubmit={handleLogin}>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('auth.email_label')}</Label>
           <Input
             id="email"
             name="email"
@@ -99,10 +101,10 @@ export default function LoginForm() {
         </div>
         <div className="space-y-2">
             <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">{t('auth.password_label')}</Label>
                 <Link href="/forgot-password" passHref tabIndex={-1}>
                     <Button variant="link" className="px-0 h-auto text-xs">
-                        ¿Has olvidado tu contraseña?
+                        {t('auth.forgot_password_link')}
                     </Button>
                 </Link>
             </div>
@@ -139,12 +141,12 @@ export default function LoginForm() {
           ) : (
             <LogIn className="mr-2 h-4 w-4" />
           )}
-          {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+          {loading ? t('auth.logging_in_button') : t('auth.login_button')}
         </Button>
         <p className="text-center text-sm text-muted-foreground">
-          ¿No tienes una cuenta?{' '}
+          {t('auth.no_account_prompt')}{' '}
           <Link href="/register" className="font-semibold text-primary hover:underline">
-            Regístrate
+            {t('auth.register_link')}
           </Link>
         </p>
       </CardFooter>
