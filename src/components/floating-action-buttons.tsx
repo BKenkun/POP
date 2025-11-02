@@ -17,7 +17,7 @@ export default function FloatingActionButtons() {
     return (
         <>
             <div className="fixed right-6 bottom-6 z-50">
-                <div className="relative h-[130px] w-[130px]">
+                <div className="relative h-[90px] w-[90px]">
                     <div className="absolute top-1/2 left-0 -translate-y-1/2">
                         <FloatingCbdButton />
                     </div>
