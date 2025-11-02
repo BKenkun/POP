@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useForm } from 'react-hook-form';
@@ -14,10 +15,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Mail, Info, Building } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from '@/context/language-context';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres.'),
@@ -30,6 +32,7 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<ContactFormValues>({
@@ -49,8 +52,8 @@ export default function ContactPage() {
 
     setTimeout(() => {
         toast({
-        title: '¡Mensaje Enviado!',
-        description: 'Gracias por contactarnos. Te responderemos lo antes posible.',
+        title: t('contact_page.success_toast_title'),
+        description: t('contact_page.success_toast_description'),
         });
         form.reset();
         setLoading(false);
@@ -60,9 +63,9 @@ export default function ContactPage() {
   return (
     <div className="max-w-4xl mx-auto">
         <div className="text-center space-y-4 mb-12">
-            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Contacta con Nosotros</h1>
+            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('contact_page.title')}</h1>
             <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                ¿Tienes alguna pregunta o necesitas ayuda? Rellena el formulario y nuestro equipo se pondrá en contacto contigo.
+                {t('contact_page.subtitle')}
             </p>
         </div>
 
@@ -70,10 +73,10 @@ export default function ContactPage() {
              <div className="space-y-8">
                  <Card className="bg-secondary/50 border-border">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-primary"/>Email de Contacto</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5 text-primary"/>{t('contact_page.email_card_title')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Para consultas generales, envíanos un correo a:</p>
+                        <p className="text-muted-foreground">{t('contact_page.email_card_description')}</p>
                         <a href="mailto:info@comprarpopperonline.com" className="font-semibold text-primary hover:underline">
                             info@comprarpopperonline.com
                         </a>
@@ -81,16 +84,16 @@ export default function ContactPage() {
                 </Card>
                  <Card className="bg-secondary/50 border-border">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary"/>Información Legal</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary"/>{t('contact_page.legal_card_title')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                        <div>
-                           <h4 className="font-semibold text-foreground flex items-center gap-2"><Building className="h-4 w-4"/>Titular</h4>
+                           <h4 className="font-semibold text-foreground flex items-center gap-2"><Building className="h-4 w-4"/>{t('contact_page.legal_owner')}</h4>
                            <p className="text-muted-foreground">MARY AND POPPER</p>
                            <p className="text-muted-foreground">ABN: 37 588 057 135</p>
                        </div>
                        <div>
-                           <h4 className="font-semibold text-foreground">Dirección</h4>
+                           <h4 className="font-semibold text-foreground">{t('contact_page.legal_address')}</h4>
                            <p className="text-muted-foreground">U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA</p>
                        </div>
                     </CardContent>
@@ -99,7 +102,7 @@ export default function ContactPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Enviar un mensaje</CardTitle>
+                    <CardTitle>{t('contact_page.form_card_title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -109,9 +112,9 @@ export default function ContactPage() {
                                 name="name"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tu Nombre</FormLabel>
+                                    <FormLabel>{t('contact_page.form_name')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="John Doe" {...field} />
+                                        <Input placeholder={t('contact_page.form_name_placeholder')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -122,9 +125,9 @@ export default function ContactPage() {
                                 name="email"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tu Email</FormLabel>
+                                    <FormLabel>{t('contact_page.form_email')}</FormLabel>
                                     <FormControl>
-                                        <Input type="email" placeholder="tu@email.com" {...field} />
+                                        <Input type="email" placeholder={t('contact_page.form_email_placeholder')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -135,9 +138,9 @@ export default function ContactPage() {
                                 name="subject"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Asunto</FormLabel>
+                                    <FormLabel>{t('contact_page.form_subject')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Consulta sobre un pedido" {...field} />
+                                        <Input placeholder={t('contact_page.form_subject_placeholder')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -148,9 +151,9 @@ export default function ContactPage() {
                                 name="message"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Mensaje</FormLabel>
+                                    <FormLabel>{t('contact_page.form_message')}</FormLabel>
                                     <FormControl>
-                                        <Textarea rows={5} placeholder="Escribe tu consulta aquí..." {...field} />
+                                        <Textarea rows={5} placeholder={t('contact_page.form_message_placeholder')} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -158,7 +161,7 @@ export default function ContactPage() {
                             />
                             <Button type="submit" className="w-full" disabled={loading}>
                                 <Send className="mr-2 h-4 w-4" />
-                                {loading ? 'Enviando...' : 'Enviar Mensaje'}
+                                {loading ? t('contact_page.form_sending_button') : t('contact_page.form_submit_button')}
                             </Button>
                         </form>
                     </Form>
@@ -168,3 +171,5 @@ export default function ContactPage() {
     </div>
   );
 }
+
+    
