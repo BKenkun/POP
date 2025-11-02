@@ -20,20 +20,17 @@ interface Address {
 }
 
 /**
- * Decodes the session cookie to get the authenticated user's ID.
- * Throws an error if the user is not authenticated.
+ * Securely gets the user's ID from the session cookie.
  * This is the single source of truth for server-side user authentication.
+ * Throws an error if the user is not authenticated.
  */
-async function verifyUser(userId: string) {
+export async function getUserIdFromSession(): Promise<string> {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
         throw new Error('Authentication required: No session cookie found.');
     }
     try {
         const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        if (decodedClaims.uid !== userId) {
-            throw new Error('Authorization error: User ID mismatch.');
-        }
         return decodedClaims.uid;
     } catch (error) {
         console.error('Error verifying session cookie in server action:', error);
@@ -47,12 +44,7 @@ async function verifyUser(userId: string) {
  */
 export async function getCurrentUser() {
     try {
-        const sessionCookie = cookies().get('session')?.value;
-        if (!sessionCookie) return null;
-        
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        const userId = decodedClaims.uid;
-
+        const userId = await getUserIdFromSession();
         const userDocRef = doc(db, 'users', userId);
         const docSnap = await getDoc(userDocRef);
 
@@ -72,9 +64,8 @@ export async function getCurrentUser() {
  * Securely manages user data, including addresses and loyalty points.
  * All logic runs on the server.
  */
-export async function updateUser(userId: string, action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number }>) {
-    // Although we get the userId, we still verify the session to ensure the call is authenticated.
-    await verifyUser(userId);
+export async function updateUser(action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number; id?: string }>) {
+    const userId = await getUserIdFromSession();
     
     const userDocRef = doc(db, 'users', userId);
 
