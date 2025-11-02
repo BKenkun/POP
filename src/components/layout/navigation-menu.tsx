@@ -23,6 +23,7 @@ import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
 import { Separator } from '../ui/separator';
 import type { SiteSettings } from '@/app/actions/site-settings';
+import { useTranslation } from '@/context/language-context';
 
 const compositionLinks = [
   { title: 'POPPERS DE AMILO', composition: 'Amilo' },
@@ -49,7 +50,7 @@ interface NavigationMenuComponentProps {
 }
 
 export default function NavigationMenuComponent({ onNavigate, isMobile = false, settings }: NavigationMenuComponentProps) {
-  
+  const { t } = useTranslation();
   const subscriptionUrl = "/subscription";
 
   if (isMobile) {
@@ -81,11 +82,11 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
               <Separator className="my-2 bg-primary-foreground/20" />
 
                <Button variant="ghost" asChild className="w-full justify-start font-headline uppercase font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground">
-                  <Link href="/create-pack" onClick={onNavigate}>Crea tu Pack</Link>
+                  <Link href="/create-pack" onClick={onNavigate}>{t('header.create_pack')}</Link>
               </Button>
               {settings?.showSubscriptionFeature && (
                 <Button variant="secondary" asChild className="w-full justify-start font-headline uppercase font-bold bg-accent text-accent-foreground hover:bg-accent/90">
-                    <Link href={subscriptionUrl} onClick={onNavigate}>Dosis Mensual</Link>
+                    <Link href={subscriptionUrl} onClick={onNavigate}>{t('header.monthly_dose')}</Link>
                 </Button>
               )}
 
@@ -102,7 +103,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
         <NavigationMenuItem>
            <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
                  <Link href="/products">
-                    <span>Productos</span>
+                    <span>{t('header.products')}</span>
                  </Link>
            </NavigationMenuTrigger>
           <NavigationMenuContent>
@@ -146,7 +147,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
         <NavigationMenuItem>
             <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), "h-10 font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground")}>
                 <Link href="/create-pack">
-                    CREA TU PACK
+                    {t('header.create_pack')}
                 </Link>
             </NavigationMenuLink>
         </NavigationMenuItem>
@@ -154,7 +155,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
             <NavigationMenuItem>
                 <Button asChild variant="secondary" className="h-10 font-headline uppercase font-bold text-sm px-3 bg-accent text-accent-foreground hover:bg-accent/90">
                     <Link href={subscriptionUrl}> 
-                        Dosis Mensual
+                        {t('header.monthly_dose')}
                     </Link>
                 </Button>
             </NavigationMenuItem>

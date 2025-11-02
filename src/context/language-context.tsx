@@ -17,13 +17,19 @@ const translations: Record<Language, Translations> = {
       free_shipping: 'GRATIS +40€',
       fast_delivery: '24/48h',
       nav_menu: 'Menú de Navegación',
+      products: 'Productos',
+      create_pack: 'Crea tu Pack',
+      monthly_dose: 'Dosis Mensual'
     }
   },
   en: {
     header: {
-      free_shipping: 'FREE +40€',
+      free_shipping: 'FREE +€40',
       fast_delivery: '24/48h',
       nav_menu: 'Navigation Menu',
+      products: 'Products',
+      create_pack: 'Create your Pack',
+      monthly_dose: 'Monthly Dose'
     }
   },
   fr: {
@@ -31,6 +37,9 @@ const translations: Record<Language, Translations> = {
       free_shipping: 'GRATUIT +40€',
       fast_delivery: '24/48h',
       nav_menu: 'Menu de Navigation',
+      products: 'Produits',
+      create_pack: 'Créez votre Pack',
+      monthly_dose: 'Dose Mensuelle'
     }
   },
   de: {
@@ -38,6 +47,9 @@ const translations: Record<Language, Translations> = {
       free_shipping: 'GRATIS +40€',
       fast_delivery: '24/48h',
       nav_menu: 'Navigationsmenü',
+      products: 'Produkte',
+      create_pack: 'Ihr Paket erstellen',
+      monthly_dose: 'Monatsdosis'
     }
   },
   it: {
@@ -45,6 +57,9 @@ const translations: Record<Language, Translations> = {
       free_shipping: 'GRATIS +40€',
       fast_delivery: '24/48h',
       nav_menu: 'Menu di Navigazione',
+      products: 'Prodotti',
+      create_pack: 'Crea il tuo Pack',
+      monthly_dose: 'Dose Mensile'
     }
   },
   pt: {
@@ -52,6 +67,9 @@ const translations: Record<Language, Translations> = {
       free_shipping: 'GRÁTIS +40€',
       fast_delivery: '24/48h',
       nav_menu: 'Menu de Navegação',
+      products: 'Produtos',
+      create_pack: 'Crie seu Pacote',
+      monthly_dose: 'Dose Mensal'
     }
   }
 };
