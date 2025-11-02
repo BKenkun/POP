@@ -58,6 +58,41 @@ const translations: Record<Language, Translations> = {
         dashboard_loyalty_subtitle: "Gana puntos con cada compra.",
         dashboard_loyalty_points: "Puntos Acumulados",
         dashboard_loyalty_value: "Tu saldo equivale a un descuento de {price}.",
+    },
+    products: {
+        title: "Nuestro Catálogo",
+        subtitle: "Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección."
+    },
+    filters: {
+        title: "Filtros",
+        clear: "Limpiar",
+        search: "Búsqueda",
+        search_placeholder: "Buscar productos...",
+        sort_by: "Ordenar por",
+        sort_placeholder: "Seleccionar orden",
+        sort_options: {
+            name_asc: "Nombre (A-Z)",
+            name_desc: "Nombre (Z-A)",
+            price_asc: "Precio (Menor a Mayor)",
+            price_desc: "Precio (Mayor a Menor)"
+        },
+        categories: "Categorías",
+        category_options: {
+            novedad: "Novedades",
+            oferta: "Ofertas",
+            "mas-vendido": "Más Vendidos",
+            pack: "Packs",
+            accesorio: "Accesorios"
+        },
+        brands: "Marcas",
+        size: "Tamaño",
+        composition: "Composición"
+    },
+    product_card: {
+        sold_out: "Agotado",
+        offer: "OFERTA",
+        notify_me: "Avísame",
+        add_to_cart: "Añadir"
     }
   },
   en: {
@@ -106,6 +141,41 @@ const translations: Record<Language, Translations> = {
         dashboard_loyalty_subtitle: "Earn points with every purchase.",
         dashboard_loyalty_points: "Accumulated Points",
         dashboard_loyalty_value: "Your balance is equivalent to a discount of {price}.",
+    },
+    products: {
+        title: "Our Catalog",
+        subtitle: "Find your perfect scent. Use the filters to discover our selection."
+    },
+    filters: {
+        title: "Filters",
+        clear: "Clear",
+        search: "Search",
+        search_placeholder: "Search products...",
+        sort_by: "Sort by",
+        sort_placeholder: "Select order",
+        sort_options: {
+            name_asc: "Name (A-Z)",
+            name_desc: "Name (Z-A)",
+            price_asc: "Price (Low to High)",
+            price_desc: "Price (High to Low)"
+        },
+        categories: "Categories",
+        category_options: {
+            novedad: "New Arrivals",
+            oferta: "Offers",
+            "mas-vendido": "Best Sellers",
+            pack: "Packs",
+            accesorio: "Accessories"
+        },
+        brands: "Brands",
+        size: "Size",
+        composition: "Composition"
+    },
+    product_card: {
+        sold_out: "Sold Out",
+        offer: "OFFER",
+        notify_me: "Notify Me",
+        add_to_cart: "Add"
     }
   },
   fr: {
@@ -154,6 +224,41 @@ const translations: Record<Language, Translations> = {
         dashboard_loyalty_subtitle: "Gagnez des points à chaque achat.",
         dashboard_loyalty_points: "Points accumulés",
         dashboard_loyalty_value: "Votre solde équivaut à une remise de {price}.",
+    },
+    products: {
+        title: "Notre Catalogue",
+        subtitle: "Trouvez votre parfum parfait. Utilisez les filtres pour découvrir notre sélection."
+    },
+    filters: {
+        title: "Filtres",
+        clear: "Effacer",
+        search: "Recherche",
+        search_placeholder: "Rechercher des produits...",
+        sort_by: "Trier par",
+        sort_placeholder: "Sélectionner l'ordre",
+        sort_options: {
+            name_asc: "Nom (A-Z)",
+            name_desc: "Nom (Z-A)",
+            price_asc: "Prix (Croissant)",
+            price_desc: "Prix (Décroissant)"
+        },
+        categories: "Catégories",
+        category_options: {
+            novedad: "Nouveautés",
+            oferta: "Offres",
+            "mas-vendido": "Meilleures ventes",
+            pack: "Packs",
+            accesorio: "Accessoires"
+        },
+        brands: "Marques",
+        size: "Taille",
+        composition: "Composition"
+    },
+    product_card: {
+        sold_out: "Épuisé",
+        offer: "OFFRE",
+        notify_me: "Prévenez-moi",
+        add_to_cart: "Ajouter"
     }
   },
   de: {
@@ -202,6 +307,41 @@ const translations: Record<Language, Translations> = {
         dashboard_loyalty_subtitle: "Sammeln Sie bei jedem Einkauf Punkte.",
         dashboard_loyalty_points: "Gesammelte Punkte",
         dashboard_loyalty_value: "Ihr Guthaben entspricht einem Rabatt von {price}.",
+    },
+    products: {
+        title: "Unser Katalog",
+        subtitle: "Finden Sie Ihren perfekten Duft. Nutzen Sie die Filter, um unsere Auswahl zu entdecken."
+    },
+    filters: {
+        title: "Filter",
+        clear: "Löschen",
+        search: "Suchen",
+        search_placeholder: "Produkte suchen...",
+        sort_by: "Sortieren nach",
+        sort_placeholder: "Reihenfolge auswählen",
+        sort_options: {
+            name_asc: "Name (A-Z)",
+            name_desc: "Name (Z-A)",
+            price_asc: "Preis (Aufsteigend)",
+            price_desc: "Preis (Absteigend)"
+        },
+        categories: "Kategorien",
+        category_options: {
+            novedad: "Neuheiten",
+            oferta: "Angebote",
+            "mas-vendido": "Bestseller",
+            pack: "Pakete",
+            accesorio: "Zubehör"
+        },
+        brands: "Marken",
+        size: "Größe",
+        composition: "Zusammensetzung"
+    },
+    product_card: {
+        sold_out: "Ausverkauft",
+        offer: "ANGEBOT",
+        notify_me: "Benachrichtigen",
+        add_to_cart: "Hinzufügen"
     }
   },
   it: {
@@ -250,6 +390,41 @@ const translations: Record<Language, Translations> = {
         dashboard_loyalty_subtitle: "Guadagna punti con ogni acquisto.",
         dashboard_loyalty_points: "Punti accumulati",
         dashboard_loyalty_value: "Il tuo saldo equivale a uno sconto di {price}.",
+    },
+    products: {
+        title: "Il Nostro Catalogo",
+        subtitle: "Trova il tuo profumo perfetto. Usa i filtri per scoprire la nostra selezione."
+    },
+    filters: {
+        title: "Filtri",
+        clear: "Cancella",
+        search: "Cerca",
+        search_placeholder: "Cerca prodotti...",
+        sort_by: "Ordina per",
+        sort_placeholder: "Seleziona ordine",
+        sort_options: {
+            name_asc: "Nome (A-Z)",
+            name_desc: "Nome (Z-A)",
+            price_asc: "Prezzo (Crescente)",
+            price_desc: "Prezzo (Decrescente)"
+        },
+        categories: "Categorie",
+        category_options: {
+            novedad: "Novità",
+            oferta: "Offerte",
+            "mas-vendido": "Più venduti",
+            pack: "Pack",
+            accesorio: "Accessori"
+        },
+        brands: "Marche",
+        size: "Dimensione",
+        composition: "Composizione"
+    },
+    product_card: {
+        sold_out: "Esaurito",
+        offer: "OFFERTA",
+        notify_me: "Avvisami",
+        add_to_cart: "Aggiungi"
     }
   },
   pt: {
@@ -298,6 +473,41 @@ const translations: Record<Language, Translations> = {
         dashboard_loyalty_subtitle: "Ganhe pontos a cada compra.",
         dashboard_loyalty_points: "Pontos acumulados",
         dashboard_loyalty_value: "O seu saldo equivale a um desconto de {price}.",
+    },
+    products: {
+        title: "Nosso Catálogo",
+        subtitle: "Encontre o seu aroma perfeito. Use os filtros para descobrir a nossa seleção."
+    },
+    filters: {
+        title: "Filtros",
+        clear: "Limpar",
+        search: "Procurar",
+        search_placeholder: "Procurar produtos...",
+        sort_by: "Ordenar por",
+        sort_placeholder: "Selecionar ordem",
+        sort_options: {
+            name_asc: "Nome (A-Z)",
+            name_desc: "Nome (Z-A)",
+            price_asc: "Preço (Crescente)",
+            price_desc: "Preço (Decrescente)"
+        },
+        categories: "Categorias",
+        category_options: {
+            novedad: "Novidades",
+            oferta: "Ofertas",
+            "mas-vendido": "Mais vendidos",
+            pack: "Packs",
+            accesorio: "Acessórios"
+        },
+        brands: "Marcas",
+        size: "Tamanho",
+        composition: "Composição"
+    },
+    product_card: {
+        sold_out: "Esgotado",
+        offer: "OFERTA",
+        notify_me: "Notifique-me",
+        add_to_cart: "Adicionar"
     }
   }
 };
@@ -363,3 +573,5 @@ export const useLanguage = () => {
 
 // Alias for useLanguage for convenience in components
 export const useTranslation = useLanguage;
+
+    

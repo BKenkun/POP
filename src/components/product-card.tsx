@@ -15,6 +15,7 @@ import { StockNotificationDialog } from '@/components/stock-notification-dialog'
 import { useState } from 'react';
 import { QuantitySelector } from './quantity-selector';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/context/language-context';
 
 interface ProductCardProps {
   product: Product;
@@ -44,6 +45,7 @@ function isOfferActive(product: Product): boolean {
 export function ProductCard({ product, className, children, onImageClick }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = product.stock === 0;
   const offerActive = isOfferActive(product);
@@ -51,8 +53,8 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
    const handleQuantityChange = (newQuantity: number) => {
       if (product.stock !== undefined && newQuantity > product.stock) {
           toast({
-              title: "Stock insuficiente",
-              description: `Solo quedan ${product.stock} unidades de este producto.`,
+              title: t('cart.stock_limit_reached'),
+              description: `Only ${product.stock} units of this product are available.`,
               variant: "destructive"
           });
           setQuantity(product.stock);
@@ -112,10 +114,10 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                     </Link>
                 )}
                  {isSoldOut && (
-                    <Badge variant="secondary" className="absolute bottom-4 left-4 text-sm z-20">Agotado</Badge>
+                    <Badge variant="secondary" className="absolute bottom-4 left-4 text-sm z-20">{t('product_card.sold_out')}</Badge>
                 )}
                 <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-                    {offerActive && <Badge variant="destructive">OFERTA</Badge>}
+                    {offerActive && <Badge variant="destructive">{t('product_card.offer')}</Badge>}
                     {product.tags?.map((tag) => (
                         <Badge key={tag} variant="secondary">{tag}</Badge>
                     ))}
@@ -150,7 +152,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                             className="w-full transition-all duration-300 ease-in-out group-hover/footer-buttons:w-1/2"
                             disabled
                         >
-                            Agotado
+                            {t('product_card.sold_out')}
                         </Button>
                         <StockNotificationDialog product={product}>
                             <Button
@@ -160,7 +162,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                                 <span className="flex items-center justify-center">
                                     <Bell className="h-5 w-5 text-primary-foreground transition-all duration-300 group-hover/footer-buttons:mr-2 group-hover/footer-buttons:text-accent-foreground" />
                                     <span className="w-0 overflow-hidden text-accent-foreground font-bold whitespace-nowrap transition-all duration-300 group-hover/footer-buttons:w-16">
-                                        Avísame
+                                        {t('product_card.notify_me')}
                                     </span>
                                 </span>
                             </Button>
@@ -179,7 +181,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                             onClick={handleAddToCart}
                         >
                             <ShoppingCart className="mr-2 h-5 w-5" />
-                            Añadir
+                            {t('product_card.add_to_cart')}
                         </Button>
                     </div>
                 )}
@@ -190,3 +192,5 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
 
   return children ? <div className="h-full">{cardContent}</div> : cardContent;
 }
+
+    

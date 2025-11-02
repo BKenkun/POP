@@ -8,6 +8,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useTranslation } from '@/context/language-context';
 
 function ProductPageSkeleton() {
     return (
@@ -27,6 +28,7 @@ function ProductPageSkeleton() {
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
@@ -43,9 +45,9 @@ export default function ProductsPage() {
         return (
              <div>
                 <div className="text-center space-y-4 mb-12">
-                    <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Catálogo</h1>
+                    <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('products.title')}</h1>
                     <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                        Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección.
+                        {t('products.subtitle')}
                     </p>
                 </div>
                 <ProductPageSkeleton />
@@ -61,9 +63,9 @@ export default function ProductsPage() {
     return (
         <div>
             <div className="text-center space-y-4 mb-12">
-                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Catálogo</h1>
+                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('products.title')}</h1>
                 <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                    Encuentra tu aroma perfecto. Usa los filtros para descubrir nuestra selección.
+                    {t('products.subtitle')}
                 </p>
             </div>
             <Suspense fallback={<ProductPageSkeleton />}>
@@ -77,3 +79,5 @@ export default function ProductsPage() {
         </div>
     );
 }
+
+    

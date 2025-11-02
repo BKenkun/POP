@@ -20,6 +20,7 @@ import ProductGrid from './product-grid';
 import { Input } from '@/components/ui/input';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useTranslation } from '@/context/language-context';
 
 interface ProductFiltersProps {
   products: Product[];
@@ -53,6 +54,7 @@ export default function ProductFilters({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const getInitialState = <T extends string>(paramName: string, defaultValue: T[] = []): T[] => {
     const paramValues = searchParams.getAll(paramName);
@@ -181,12 +183,12 @@ export default function ProductFilters({
   // Common filter components
   const SearchFilter = () => (
     <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Búsqueda</h3>
+        <h3 className="text-lg font-semibold">{t('filters.search')}</h3>
         <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
                 type="search"
-                placeholder="Buscar productos..."
+                placeholder={t('filters.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -209,28 +211,28 @@ export default function ProductFilters({
   const FiltersList = () => (
     <>
         <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Filtros</h3>
+            <h3 className="text-lg font-semibold">{t('filters.title')}</h3>
             {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
                     <X className="mr-1 h-3 w-3" />
-                    Limpiar
+                    {t('filters.clear')}
                 </Button>
             )}
         </div>
         <Accordion type="multiple" defaultValue={['sort', 'categories', 'brand', 'size', 'composition']} className="w-full">
             {showSort && (
                  <AccordionItem value="sort">
-                    <AccordionTrigger className="text-base font-semibold">Ordenar por</AccordionTrigger>
+                    <AccordionTrigger className="text-base font-semibold">{t('filters.sort_by')}</AccordionTrigger>
                     <AccordionContent>
                         <Select value={sortOrder} onValueChange={setSortOrder}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar orden" />
+                                <SelectValue placeholder={t('filters.sort_placeholder')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="name-asc">Nombre (A-Z)</SelectItem>
-                                <SelectItem value="name-desc">Nombre (Z-A)</SelectItem>
-                                <SelectItem value="price-asc">Precio (Menor a Mayor)</SelectItem>
-                                <SelectItem value="price-desc">Precio (Mayor a Menor)</SelectItem>
+                                <SelectItem value="name-asc">{t('filters.sort_options.name_asc')}</SelectItem>
+                                <SelectItem value="name-desc">{t('filters.sort_options.name_desc')}</SelectItem>
+                                <SelectItem value="price-asc">{t('filters.sort_options.price_asc')}</SelectItem>
+                                <SelectItem value="price-desc">{t('filters.sort_options.price_desc')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </AccordionContent>
@@ -239,7 +241,7 @@ export default function ProductFilters({
             
             {showCategories && (
                 <AccordionItem value="categories">
-                    <AccordionTrigger className="text-base font-semibold">Categorías</AccordionTrigger>
+                    <AccordionTrigger className="text-base font-semibold">{t('filters.categories')}</AccordionTrigger>
                     <AccordionContent>
                         <div className="space-y-2">
                             {Object.entries(internalTagMap).map(([tag, label]) => (
@@ -249,7 +251,7 @@ export default function ProductFilters({
                                     checked={selectedInternalTags.includes(tag)}
                                     onCheckedChange={() => handleInternalTagChange(tag)}
                                 />
-                                <Label htmlFor={`internal-${tag}`} className="font-normal cursor-pointer">{label}</Label>
+                                <Label htmlFor={`internal-${tag}`} className="font-normal cursor-pointer">{t(`filters.category_options.${tag}`)}</Label>
                                 </div>
                             ))}
                         </div>
@@ -257,9 +259,9 @@ export default function ProductFilters({
                 </AccordionItem>
             )}
 
-            <FilterCheckboxGroup title="Marcas" values={uniqueBrands} selectedValues={selectedBrands} onValueChange={handleBrandChange} paramKey="brand" />
-            <FilterCheckboxGroup title="Tamaño" values={uniqueSizes} selectedValues={selectedSizes} onValueChange={handleSizeChange} paramKey="size" />
-            <FilterCheckboxGroup title="Composición" values={uniqueCompositions} selectedValues={selectedCompositions} onValueChange={handleCompositionChange} paramKey="composition" />
+            <FilterCheckboxGroup title={t('filters.brands')} values={uniqueBrands} selectedValues={selectedBrands} onValueChange={handleBrandChange} paramKey="brand" />
+            <FilterCheckboxGroup title={t('filters.size')} values={uniqueSizes} selectedValues={selectedSizes} onValueChange={handleSizeChange} paramKey="size" />
+            <FilterCheckboxGroup title={t('filters.composition')} values={uniqueCompositions} selectedValues={selectedCompositions} onValueChange={handleCompositionChange} paramKey="composition" />
         </Accordion>
     </>
   );
@@ -302,3 +304,5 @@ export default function ProductFilters({
     </Card>
   );
 }
+
+    
