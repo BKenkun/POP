@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -31,16 +30,10 @@ export default function FloatingActionButtons() {
             "fixed right-6 z-50 transition-all duration-300",
             isBannerVisible ? "bottom-[72px]" : "bottom-6"
         )}>
-            <div className="relative h-[124px] w-[124px]">
-                <div className="absolute top-1/2 -translate-y-1/2 left-0">
-                    <FloatingCbdButton />
-                </div>
-                <div className="absolute top-0 right-0">
-                    <FloatingAccountButton />
-                </div>
-                <div className="absolute bottom-0 right-0">
-                    <FloatingCartButton />
-                </div>
+            <div className="flex flex-col items-center gap-4">
+                <FloatingAccountButton />
+                <FloatingCartButton />
+                <FloatingCbdButton />
             </div>
         </div>
     );
