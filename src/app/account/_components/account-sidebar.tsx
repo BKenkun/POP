@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Package, MapPin, LogOut, HeartPulse, Shield } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
+import { useTranslation } from '@/context/language-context';
 
 export default function AccountSidebar() {
   const pathname = usePathname();
   const { user, logout, isSubscribed, isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -19,11 +21,11 @@ export default function AccountSidebar() {
   }
 
   const navLinks = [
-    ...(isAdmin ? [{ href: '/admin', label: 'Panel de Admin', icon: Shield }] : []),
-    { href: '/account', label: 'Panel de Usuario', icon: LayoutDashboard },
-    { href: '/account/orders', label: 'Pedidos', icon: Package },
-    { href: '/account/addresses', label: 'Direcciones', icon: MapPin },
-    ...(isSubscribed ? [{ href: '/account/subscription', label: 'Dosis Mensual', icon: HeartPulse }] : []),
+    ...(isAdmin ? [{ href: '/admin', label: t('account.sidebar_admin_panel'), icon: Shield }] : []),
+    { href: '/account', label: t('account.sidebar_dashboard'), icon: LayoutDashboard },
+    { href: '/account/orders', label: t('account.sidebar_orders'), icon: Package },
+    { href: '/account/addresses', label: t('account.sidebar_addresses'), icon: MapPin },
+    ...(isSubscribed ? [{ href: '/account/subscription', label: t('account.sidebar_subscription'), icon: HeartPulse }] : []),
   ];
 
   return (
@@ -53,7 +55,7 @@ export default function AccountSidebar() {
             })}
             <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Cerrar Sesión
+                {t('account.sidebar_logout')}
             </Button>
         </nav>
     </Card>

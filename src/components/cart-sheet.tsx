@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QuantitySelector } from './quantity-selector';
+import { useTranslation } from '@/context/language-context';
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -28,14 +29,15 @@ const getImageUrl = (url: string) => {
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€
 
 export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
-  const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount } = useCart();
+  const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleCheckout = () => {
     if(cartCount === 0) {
       toast({
-        title: "Tu carrito está vacío",
-        description: "Añade productos a tu carrito antes de ir a finalizar la compra.",
+        title: t('cart.empty_title'),
+        description: t('cart.empty_subtitle'),
         variant: "destructive",
       });
       return;
@@ -50,7 +52,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
         <SheetHeader className="px-6">
-          <SheetTitle>Carrito de la Compra ({cartCount})</SheetTitle>
+          <SheetTitle>{t('cart.title')} ({cartCount})</SheetTitle>
         </SheetHeader>
         <Separator />
         {cartCount > 0 ? (
@@ -98,48 +100,43 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
             <SheetFooter className="bg-secondary/50 p-6">
               <div className="w-full space-y-4">
                 <div className="flex justify-between font-semibold">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(cartTotal)}</span>
+                  <span>{t('cart.subtotal')}</span>
+                  <span className={volumeDiscount > 0 ? 'line-through text-muted-foreground' : ''}>{formatPrice(cartTotal)}</span>
                 </div>
                  {volumeDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-destructive">
-                        <span>Descuento por volumen (con pago anticipado)</span>
-                        <span>-{formatPrice(volumeDiscount)}</span>
-                    </div>
+                    <>
+                         <div className="flex justify-between text-destructive font-semibold">
+                            <span>{t('cart.volume_discount')}:</span>
+                            <span>-{formatPrice(volumeDiscount)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg">
+                            <span>Total con Descuento</span>
+                            <span>{formatPrice(totalWithDiscount)}</span>
+                        </div>
+                    </>
                 )}
-                 {shippingCost > 0 && (
-                     <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Envío (estimado)</span>
-                        <span>{formatPrice(shippingCost)}</span>
-                    </div>
-                 )}
-                 <Separator />
-                 <div className="flex justify-between font-bold text-lg">
-                    <span>Total Estimado:</span>
-                    <span>{formatPrice(cartTotal + shippingCost)}</span>
-                 </div>
                  <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <Box className="h-4 w-4 text-primary" />
-                        <span>Embalaje 100% discreto.</span>
+                        <span>{t('cart.discreet_packaging')}</span>
                     </div>
                      {isFreeShipping ? (
                         <div className="flex items-center gap-2">
                             <Truck className="h-4 w-4 text-green-600" />
-                            <span className="font-bold text-green-600">¡Disfrutas de Envío GRATIS!</span>
+                            <span className="font-bold text-green-600">{t('cart.free_shipping_banner')}</span>
                         </div>
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>Envío gratis en pedidos superiores a {formatPrice(FREE_SHIPPING_THRESHOLD)}.</span>
+                           <span>{t('cart.free_shipping_threshold', {price: formatPrice(FREE_SHIPPING_THRESHOLD)})}</span>
                        </div>
                      )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  El descuento por volumen y los gastos de envío finales se aplicarán en la pantalla de pago según el método elegido.
+                  {t('cart.notes')}
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
-                  <Link href="/checkout">Finalizar Reserva</Link>
+                  <Link href="/checkout">{t('cart.checkout_button')}</Link>
                 </Button>
               </div>
             </SheetFooter>
@@ -147,8 +144,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
             <ShoppingBag className="h-24 w-24 text-muted-foreground/30" strokeWidth={1} />
-            <h2 className="text-xl font-semibold">Tu carrito está vacío</h2>
-            <p className="text-muted-foreground">Parece que aún no has añadido nada.</p>
+            <h2 className="text-xl font-semibold">{t('cart.empty_title')}</h2>
+            <p className="text-muted-foreground">{t('cart.empty_subtitle')}</p>
           </div>
         )}
       </SheetContent>

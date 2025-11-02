@@ -4,6 +4,7 @@
 import type { CartItem, Product } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import { useTranslation } from './language-context';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -14,7 +15,7 @@ interface CartContextType {
   cartCount: number;
   cartTotal: number;
   volumeDiscount: number;
-  totalWithDiscount: number; // Added this back
+  totalWithDiscount: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -22,10 +23,11 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const addToCart = (product: Product, quantity: number = 1) => {
     if (product.stock === 0) {
-        toast({ title: "Agotado", description: `${product.name} no está disponible.`, variant: "destructive" });
+        toast({ title: t('cart.item_unavailable'), description: `${product.name} is not available.`, variant: "destructive" });
         return;
     }
       
@@ -36,8 +38,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (product.stock !== undefined && newQuantity > product.stock) {
           toast({
-            title: "Límite de stock alcanzado",
-            description: `No se pueden añadir más unidades de ${product.name}. Solo quedan ${product.stock - (existingItem?.quantity || 0)}.`,
+            title: t('cart.stock_limit_reached'),
+            description: `Only ${product.stock - (existingItem?.quantity || 0)} more units of ${product.name} can be added.`,
             variant: "destructive"
           });
           return prevItems;
@@ -52,16 +54,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
 
     toast({
-      title: "Añadido al carrito",
-      description: `${quantity} x ${product.name} se ha añadido a tu carrito.`,
+      title: t('cart.item_added'),
+      description: `${quantity} x ${product.name}`,
     });
   };
 
   const removeFromCart = (productId: string) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
     toast({
-        title: "Producto eliminado",
-        description: "El producto ha sido eliminado de tu carrito.",
+        title: t('cart.item_removed'),
+        description: "The product has been removed from your cart.",
     });
   };
 
@@ -74,8 +76,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           if (item.id === productId) {
             if (item.stock !== undefined && quantity > item.stock) {
                 toast({
-                    title: "Límite de stock alcanzado",
-                    description: `Solo hay ${item.stock} unidades de ${item.name} disponibles.`,
+                    title: t('cart.stock_limit_reached'),
+                    description: `Only ${item.stock} units of ${item.name} are available.`,
                     variant: "destructive"
                 });
                 return { ...item, quantity: item.stock };

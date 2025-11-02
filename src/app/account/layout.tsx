@@ -7,10 +7,12 @@ import { useAuth } from '@/context/auth-context';
 import AccountSidebar from './_components/account-sidebar';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/context/language-context';
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Wait until the loading is complete before checking for the user
@@ -32,9 +34,9 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   return (
     <div>
         <div className="text-center space-y-4 mb-12">
-            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Mi Cuenta</h1>
+            <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('account.layout_title')}</h1>
             <p className="text-lg text-foreground/80 max-w-2xl mx-auto">
-                Gestiona tu información personal, pedidos y direcciones.
+                {t('account.layout_description')}
             </p>
         </div>
         <div className="grid md:grid-cols-4 gap-8">

@@ -12,10 +12,12 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from 'react';
 import { getSiteSettings } from '../actions/site-settings';
 import type { SiteSettings } from '../actions/site-settings';
+import { useTranslation } from "@/context/language-context";
 
 export default function AccountDashboardPage() {
   const { user, isSubscribed, loyaltyPoints, isAdmin, isViewingAsCustomer, setIsViewingAsCustomer } = useAuth();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -36,9 +38,9 @@ export default function AccountDashboardPage() {
   return (
     <div className="space-y-6">
         <div className="space-y-1">
-            <h2 className="text-2xl font-bold">Panel de Usuario</h2>
+            <h2 className="text-2xl font-bold">{t('account.dashboard_title')}</h2>
             <p className="text-muted-foreground">
-                Bienvenido de nuevo, {userName}. Aquí tienes un resumen de tu actividad.
+                {t('account.dashboard_welcome', { name: userName })}
             </p>
         </div>
 
@@ -108,27 +110,27 @@ export default function AccountDashboardPage() {
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
             <CardHeader>
-                <CardTitle>Información de Perfil</CardTitle>
-                <CardDescription>Tus datos personales.</CardDescription>
+                <CardTitle>{t('account.dashboard_profile_title')}</CardTitle>
+                <CardDescription>{t('account.dashboard_profile_subtitle')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-                <p><span className="font-semibold">Nombre:</span> {userName}</p>
-                <p><span className="font-semibold">Email:</span> {userEmail}</p>
+                <p><span className="font-semibold">{t('account.dashboard_profile_name')}</span> {userName}</p>
+                <p><span className="font-semibold">{t('account.dashboard_profile_email')}</span> {userEmail}</p>
             </CardContent>
             </Card>
             <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Gift className="h-5 w-5 text-primary"/>
-                    Puntos de Fidelidad
+                    {t('account.dashboard_loyalty_title')}
                 </CardTitle>
-                 <CardDescription>Gana puntos con cada compra.</CardDescription>
+                 <CardDescription>{t('account.dashboard_loyalty_subtitle')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-center">
                <p className="text-4xl font-bold text-primary">{loyaltyPoints}</p>
-               <p className="font-semibold text-muted-foreground">Puntos Acumulados</p>
+               <p className="font-semibold text-muted-foreground">{t('account.dashboard_loyalty_points')}</p>
                <p className="text-sm">
-                Tu saldo equivale a un descuento de <span className="font-bold">{formatPrice(pointsValue)}</span>.
+                {t('account.dashboard_loyalty_value', { price: formatPrice(pointsValue) })}
                </p>
             </CardContent>
             </Card>
