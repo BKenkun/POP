@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -25,24 +26,6 @@ import { Separator } from '../ui/separator';
 import type { SiteSettings } from '@/app/actions/site-settings';
 import { useTranslation } from '@/context/language-context';
 
-const compositionLinks = [
-  { title: 'POPPERS DE AMILO', composition: 'Amilo' },
-  { title: 'POPPERS DE PENTILO', composition: 'Pentilo' },
-  { title: 'POPPERS DE PROPILO', composition: 'Propilo' },
-  { title: 'POPPERS AL CBD', composition: 'CBD' },
-  { title: 'MIX DE NITRITOS', composition: 'Mix' },
-];
-
-const productLinks = [
-    { href: "/products", title: "TODOS LOS PRODUCTOS" },
-    { href: "/products?size=10ml", title: "POPPERS PEQUEÑOS (10ML)" },
-    { href: "/products?size=15ml", title: "POPPERS MEDIANOS (15ML)" },
-    { href: "/products?size=25ml", title: "POPPERS GRANDES (25ML)" },
-    { href: "/products?internal_tag=pack", title: "PACKS DE POPPERS" },
-    { href: "/products?internal_tag=accesorio", title: "ACCESORIOS PARA POPPERS" },
-    { href: "/products?internal_tag=juguete", title: "JUGUETES ERÓTICOS" },
-];
-
 interface NavigationMenuComponentProps {
   onNavigate?: () => void;
   isMobile?: boolean;
@@ -52,6 +35,24 @@ interface NavigationMenuComponentProps {
 export default function NavigationMenuComponent({ onNavigate, isMobile = false, settings }: NavigationMenuComponentProps) {
   const { t } = useTranslation();
   const subscriptionUrl = "/subscription";
+
+  const productLinks = [
+    { href: "/products", title: t('header.product_links.all') },
+    { href: "/products?size=10ml", title: t('header.product_links.small') },
+    { href: "/products?size=15ml", title: t('header.product_links.medium') },
+    { href: "/products?size=25ml", title: t('header.product_links.large') },
+    { href: "/products?internal_tag=pack", title: t('header.product_links.packs') },
+    { href: "/products?internal_tag=accesorio", title: t('header.product_links.accessories') },
+    { href: "/products?internal_tag=juguete", title: t('header.product_links.toys') },
+  ];
+
+  const compositionLinks = [
+    { title: t('header.composition_links.amyl'), composition: 'Amilo' },
+    { title: t('header.composition_links.pentyl'), composition: 'Pentilo' },
+    { title: t('header.composition_links.propyl'), composition: 'Propilo' },
+    { title: t('header.composition_links.cbd'), composition: 'CBD' },
+    { title: t('header.composition_links.mix'), composition: 'Mix' },
+  ];
 
   if (isMobile) {
       return (
@@ -64,7 +65,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
                <Collapsible>
                     <CollapsibleTrigger asChild>
                         <Button variant="ghost" className="w-full justify-between font-body font-medium uppercase text-sm text-primary-foreground hover:bg-accent hover:text-accent-foreground">
-                            <span>Composición</span>
+                            <span>{t('header.composition_links.title')}</span>
                             <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                         </Button>
                     </CollapsibleTrigger>
@@ -122,7 +123,7 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
                         )}
                       >
                        <div className="flex items-center justify-between w-full">
-                            <span>COMPOSICIÓN</span>
+                            <span>{t('header.composition_links.title')}</span>
                             <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                         </div>
                     </CollapsibleTrigger>

@@ -45,7 +45,24 @@ const translations: Record<Language, Translations> = {
       nav_menu: 'Menú de Navegación',
       products: 'Productos',
       create_pack: 'Crea tu Pack',
-      monthly_dose: 'Dosis Mensual'
+      monthly_dose: 'Dosis Mensual',
+      product_links: {
+        all: "TODOS LOS PRODUCTOS",
+        small: "POPPERS PEQUEÑOS (10ML)",
+        medium: "POPPERS MEDIANOS (15ML)",
+        large: "POPPERS GRANDES (25ML)",
+        packs: "PACKS DE POPPERS",
+        accessories: "ACCESORIOS PARA POPPERS",
+        toys: "JUGUETES ERÓTICOS",
+      },
+      composition_links: {
+        title: "COMPOSICIÓN",
+        amyl: "POPPERS DE AMILO",
+        pentyl: "POPPERS DE PENTILO",
+        propyl: "POPPERS DE PROPILO",
+        cbd: "POPPERS AL CBD",
+        mix: "MIX DE NITRITOS",
+      }
     },
     cart: {
         title: "Carrito de la Compra",
@@ -136,6 +153,15 @@ const translations: Record<Language, Translations> = {
         addresses_delete_confirm_desc: "Esta acción no se puede deshacer. Se eliminará permanentemente esta dirección.",
         addresses_delete_confirm_continue: "Continuar",
         addresses_empty_placeholder: "No tienes ninguna dirección guardada todavía.",
+        menu: {
+          admin_title: "Cuenta de Admin",
+          user_title: "Mi Cuenta",
+          admin_panel: "Panel de Admin",
+          user_dashboard: "Panel de Usuario",
+          orders: "Pedidos",
+          addresses: "Direcciones",
+          logout: "Cerrar Sesión"
+        }
     },
     products: {
         title: "Nuestro Catálogo",
@@ -276,6 +302,16 @@ const translations: Record<Language, Translations> = {
       welcome_subtitle_discount: '10% de descuento',
       welcome_subtitle_part2: 'en tu primera compra.',
       welcome_open_offer_aria: 'Abrir oferta de suscripción',
+      cookies_banner_text: 'Utilizamos cookies para mejorar tu experiencia. Puedes gestionar tus preferencias.',
+      cookies_customize: 'Personalizar',
+      cookies_reject: 'Rechazar',
+      cookies_accept: 'Aceptar Todas',
+      cookies_preferences_title: 'Preferencias de Cookies',
+      cookies_preferences_desc: 'Gestiona qué cookies permites en nuestro sitio. Las cookies necesarias no se pueden desactivar.',
+      cookies_technical: 'Técnicas (Siempre activas)',
+      cookies_analytics: 'Análisis',
+      cookies_marketing: 'Marketing',
+      cookies_save: 'Guardar Preferencias',
     },
     notifications: {
       recent_purchase_title: '¡Compra Reciente!',
@@ -401,7 +437,24 @@ const translations: Record<Language, Translations> = {
       nav_menu: 'Navigation Menu',
       products: 'Products',
       create_pack: 'Create your Pack',
-      monthly_dose: 'Monthly Dose'
+      monthly_dose: 'Monthly Dose',
+      product_links: {
+        all: "ALL PRODUCTS",
+        small: "SMALL POPPERS (10ML)",
+        medium: "MEDIUM POPPERS (15ML)",
+        large: "LARGE POPPERS (25ML)",
+        packs: "POPPER PACKS",
+        accessories: "POPPER ACCESSORIES",
+        toys: "EROTIC TOYS",
+      },
+      composition_links: {
+        title: "COMPOSITION",
+        amyl: "AMYL POPPERS",
+        pentyl: "PENTYL POPPERS",
+        propyl: "PROPYL POPPERS",
+        cbd: "CBD POPPERS",
+        mix: "NITRITE MIX",
+      }
     },
     cart: {
         title: "Shopping Cart",
@@ -492,6 +545,15 @@ const translations: Record<Language, Translations> = {
         addresses_delete_confirm_desc: "This action cannot be undone. This will permanently delete this address.",
         addresses_delete_confirm_continue: "Continue",
         addresses_empty_placeholder: "You have no saved addresses yet.",
+        menu: {
+          admin_title: "Admin Account",
+          user_title: "My Account",
+          admin_panel: "Admin Panel",
+          user_dashboard: "User Dashboard",
+          orders: "Orders",
+          addresses: "Addresses",
+          logout: "Log Out"
+        }
     },
     products: {
         title: "Our Catalog",
@@ -632,6 +694,16 @@ const translations: Record<Language, Translations> = {
       welcome_subtitle_discount: '10% discount',
       welcome_subtitle_part2: 'on your first purchase.',
       welcome_open_offer_aria: 'Open subscription offer',
+      cookies_banner_text: 'We use cookies to enhance your experience. You can manage your preferences.',
+      cookies_customize: 'Customize',
+      cookies_reject: 'Reject',
+      cookies_accept: 'Accept All',
+      cookies_preferences_title: 'Cookie Preferences',
+      cookies_preferences_desc: 'Manage which cookies you allow on our site. Necessary cookies cannot be disabled.',
+      cookies_technical: 'Technical (Always active)',
+      cookies_analytics: 'Analytics',
+      cookies_marketing: 'Marketing',
+      cookies_save: 'Save Preferences',
     },
     notifications: {
       recent_purchase_title: 'Recent Purchase!',
@@ -757,7 +829,24 @@ const translations: Record<Language, Translations> = {
       nav_menu: 'Menu de Navigation',
       products: 'Produits',
       create_pack: 'Créez votre Pack',
-      monthly_dose: 'Dose Mensuelle'
+      monthly_dose: 'Dose Mensuelle',
+      product_links: {
+        all: "TOUS LES PRODUITS",
+        small: "PETITS POPPERS (10ML)",
+        medium: "POPPERS MOYENS (15ML)",
+        large: "GRANDS POPPERS (25ML)",
+        packs: "PACKS DE POPPERS",
+        accessories: "ACCESSOIRES POUR POPPERS",
+        toys: "JOUETS ÉROTIQUES",
+      },
+      composition_links: {
+        title: "COMPOSITION",
+        amyl: "POPPERS D'AMYLE",
+        pentyl: "POPPERS DE PENTYLE",
+        propyl: "POPPERS DE PROPYLE",
+        cbd: "POPPERS AU CBD",
+        mix: "MÉLANGE DE NITRITES",
+      }
     },
     cart: {
         title: "Panier d'achat",
@@ -848,6 +937,15 @@ const translations: Record<Language, Translations> = {
         addresses_delete_confirm_desc: "Cette action est irréversible. Cela supprimera définitivement cette adresse.",
         addresses_delete_confirm_continue: "Continuer",
         addresses_empty_placeholder: "Vous n'avez pas encore d'adresses enregistrées.",
+        menu: {
+          admin_title: "Compte Admin",
+          user_title: "Mon Compte",
+          admin_panel: "Panel Admin",
+          user_dashboard: "Tableau de Bord",
+          orders: "Commandes",
+          addresses: "Adresses",
+          logout: "Se Déconnecter"
+        }
     },
     products: {
         title: "Notre Catalogue",
@@ -988,6 +1086,16 @@ const translations: Record<Language, Translations> = {
       welcome_subtitle_discount: 'remise de 10%',
       welcome_subtitle_part2: 'sur votre premier achat.',
       welcome_open_offer_aria: 'Ouvrir l\'offre d\'abonnement',
+      cookies_banner_text: 'Nous utilisons des cookies pour améliorer votre expérience. Vous pouvez gérer vos préférences.',
+      cookies_customize: 'Personnaliser',
+      cookies_reject: 'Rejeter',
+      cookies_accept: 'Accepter Tout',
+      cookies_preferences_title: 'Préférences de Cookies',
+      cookies_preferences_desc: 'Gérez les cookies que vous autorisez sur notre site. Les cookies nécessaires ne peuvent pas être désactivés.',
+      cookies_technical: 'Techniques (Toujours actifs)',
+      cookies_analytics: 'Analytiques',
+      cookies_marketing: 'Marketing',
+      cookies_save: 'Enregistrer les Préférences',
     },
     notifications: {
       recent_purchase_title: 'Achat Récent!',
@@ -1113,7 +1221,24 @@ const translations: Record<Language, Translations> = {
       nav_menu: 'Navigationsmenü',
       products: 'Produkte',
       create_pack: 'Ihr Paket erstellen',
-      monthly_dose: 'Monatsdosis'
+      monthly_dose: 'Monatsdosis',
+      product_links: {
+        all: "ALLE PRODUKTE",
+        small: "KLEINE POPPERS (10ML)",
+        medium: "MITTLERE POPPERS (15ML)",
+        large: "GROSSE POPPERS (25ML)",
+        packs: "POPPER-PACKS",
+        accessories: "POPPER-ZUBEHÖR",
+        toys: "EROTISCHES SPIELZEUG",
+      },
+      composition_links: {
+        title: "ZUSAMMENSETZUNG",
+        amyl: "AMYL-POPPERS",
+        pentyl: "PENTYL-POPPERS",
+        propyl: "PROPYL-POPPERS",
+        cbd: "CBD-POPPERS",
+        mix: "NITRIT-MISCHUNG",
+      }
     },
     cart: {
         title: "Warenkorb",
@@ -1204,6 +1329,15 @@ const translations: Record<Language, Translations> = {
         addresses_delete_confirm_desc: "Diese Aktion kann nicht rückgängig gemacht werden. Dies wird diese Adresse dauerhaft löschen.",
         addresses_delete_confirm_continue: "Fortfahren",
         addresses_empty_placeholder: "Sie haben noch keine Adressen gespeichert.",
+        menu: {
+          admin_title: "Admin-Konto",
+          user_title: "Mein Konto",
+          admin_panel: "Admin-Panel",
+          user_dashboard: "Benutzer-Dashboard",
+          orders: "Bestellungen",
+          addresses: "Adressen",
+          logout: "Abmelden"
+        }
     },
     products: {
         title: "Unser Katalog",
@@ -1344,6 +1478,16 @@ const translations: Record<Language, Translations> = {
       welcome_subtitle_discount: '10% Rabatt',
       welcome_subtitle_part2: 'auf Ihren ersten Einkauf.',
       welcome_open_offer_aria: 'Abonnementangebot öffnen',
+      cookies_banner_text: 'Wir verwenden Cookies, um Ihre Erfahrung zu verbessern. Sie können Ihre Einstellungen verwalten.',
+      cookies_customize: 'Anpassen',
+      cookies_reject: 'Ablehnen',
+      cookies_accept: 'Alle annehmen',
+      cookies_preferences_title: 'Cookie-Einstellungen',
+      cookies_preferences_desc: 'Verwalten Sie, welche Cookies Sie auf unserer Website zulassen. Notwendige Cookies können nicht deaktiviert werden.',
+      cookies_technical: 'Technisch (Immer aktiv)',
+      cookies_analytics: 'Analyse',
+      cookies_marketing: 'Marketing',
+      cookies_save: 'Einstellungen speichern',
     },
     notifications: {
       recent_purchase_title: 'Neuer Kauf!',
@@ -1469,7 +1613,24 @@ const translations: Record<Language, Translations> = {
       nav_menu: 'Menu di Navigazione',
       products: 'Prodotti',
       create_pack: 'Crea il tuo Pack',
-      monthly_dose: 'Dose Mensile'
+      monthly_dose: 'Dose Mensile',
+      product_links: {
+        all: "TUTTI I PRODOTTI",
+        small: "POPPER PICCOLI (10ML)",
+        medium: "POPPER MEDI (15ML)",
+        large: "POPPER GRANDI (25ML)",
+        packs: "PACK DI POPPER",
+        accessories: "ACCESSORI PER POPPER",
+        toys: "GIOCATTOLI EROTICI",
+      },
+      composition_links: {
+        title: "COMPOSIZIONE",
+        amyl: "POPPER ALL'AMILE",
+        pentyl: "POPPER AL PENTILE",
+        propyl: "POPPER AL PROPILE",
+        cbd: "POPPER AL CBD",
+        mix: "MIX DI NITRITI",
+      }
     },
     cart: {
         title: "Carrello",
@@ -1560,6 +1721,15 @@ const translations: Record<Language, Translations> = {
         addresses_delete_confirm_desc: "Questa azione non può essere annullata. Questo eliminerà definitivamente questo indirizzo.",
         addresses_delete_confirm_continue: "Continua",
         addresses_empty_placeholder: "Non hai ancora indirizzi salvati.",
+        menu: {
+          admin_title: "Account Admin",
+          user_title: "Il Mio Account",
+          admin_panel: "Pannello Admin",
+          user_dashboard: "Cruscotto Utente",
+          orders: "Ordini",
+          addresses: "Indirizzi",
+          logout: "Esci"
+        }
     },
     products: {
         title: "Il Nostro Catalogo",
@@ -1700,6 +1870,16 @@ const translations: Record<Language, Translations> = {
       welcome_subtitle_discount: 'sconto del 10%',
       welcome_subtitle_part2: 'sul tuo primo acquisto.',
       welcome_open_offer_aria: 'Apri l\'offerta di iscrizione',
+      cookies_banner_text: 'Utilizziamo i cookie per migliorare la tua esperienza. Puoi gestire le tue preferenze.',
+      cookies_customize: 'Personalizza',
+      cookies_reject: 'Rifiuta',
+      cookies_accept: 'Accetta Tutti',
+      cookies_preferences_title: 'Preferenze sui Cookie',
+      cookies_preferences_desc: 'Gestisci quali cookie consenti sul nostro sito. I cookie necessari non possono essere disabilitati.',
+      cookies_technical: 'Tecnici (Sempre attivi)',
+      cookies_analytics: 'Analitici',
+      cookies_marketing: 'Marketing',
+      cookies_save: 'Salva Preferenze',
     },
     notifications: {
       recent_purchase_title: 'Acquisto Recente!',
@@ -1825,7 +2005,24 @@ const translations: Record<Language, Translations> = {
       nav_menu: 'Menu de Navegação',
       products: 'Produtos',
       create_pack: 'Crie seu Pacote',
-      monthly_dose: 'Dose Mensal'
+      monthly_dose: 'Dose Mensal',
+      product_links: {
+        all: "TODOS OS PRODUTOS",
+        small: "POPPERS PEQUENOS (10ML)",
+        medium: "POPPERS MÉDIOS (15ML)",
+        large: "POPPERS GRANDES (25ML)",
+        packs: "PACOTES DE POPPERS",
+        accessories: "ACESSÓRIOS PARA POPPERS",
+        toys: "BRINQUEDOS ERÓTICOS",
+      },
+      composition_links: {
+        title: "COMPOSIÇÃO",
+        amyl: "POPPERS DE AMILO",
+        pentyl: "POPPERS DE PENTILO",
+        propyl: "POPPERS DE PROPILO",
+        cbd: "POPPERS DE CBD",
+        mix: "MISTURA DE NITRITOS",
+      }
     },
     cart: {
         title: "Carrinho de Compras",
@@ -1916,6 +2113,15 @@ const translations: Record<Language, Translations> = {
         addresses_delete_confirm_desc: "Esta ação não pode ser desfeita. Isto irá eliminar permanentemente este endereço.",
         addresses_delete_confirm_continue: "Continuar",
         addresses_empty_placeholder: "Ainda não tem nenhum endereço guardado.",
+        menu: {
+          admin_title: "Conta de Admin",
+          user_title: "Minha Conta",
+          admin_panel: "Painel de Admin",
+          user_dashboard: "Painel do Utilizador",
+          orders: "Pedidos",
+          addresses: "Endereços",
+          logout: "Sair"
+        }
     },
     products: {
         title: "Nosso Catálogo",
@@ -2056,6 +2262,16 @@ const translations: Record<Language, Translations> = {
       welcome_subtitle_discount: 'desconto de 10%',
       welcome_subtitle_part2: 'na sua primeira compra.',
       welcome_open_offer_aria: 'Abrir oferta de subscrição',
+      cookies_banner_text: 'Utilizamos cookies para melhorar a sua experiência. Pode gerir as suas preferências.',
+      cookies_customize: 'Personalizar',
+      cookies_reject: 'Rejeitar',
+      cookies_accept: 'Aceitar Tudo',
+      cookies_preferences_title: 'Preferências de Cookies',
+      cookies_preferences_desc: 'Gira quais cookies permite no nosso site. Os cookies necessários não podem ser desativados.',
+      cookies_technical: 'Técnicos (Sempre ativos)',
+      cookies_analytics: 'Análise',
+      cookies_marketing: 'Marketing',
+      cookies_save: 'Guardar Preferências',
     },
     notifications: {
       recent_purchase_title: 'Compra Recente!',

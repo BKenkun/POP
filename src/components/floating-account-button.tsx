@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -16,10 +17,12 @@ import {
 import { User, LayoutDashboard, Package, MapPin, LogOut, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
+import { useTranslation } from '@/context/language-context';
 
 export default function FloatingAccountButton() {
   const router = useRouter();
   const { user, logout, isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = (e: Event) => {
@@ -53,40 +56,40 @@ export default function FloatingAccountButton() {
         </DropdownMenuTrigger>
         {user && (
             <DropdownMenuContent className="w-56 mb-2" align="end" side="top">
-            <DropdownMenuLabel>{isAdmin ? 'Cuenta de Admin' : 'Mi Cuenta'}</DropdownMenuLabel>
+            <DropdownMenuLabel>{t(isAdmin ? 'account.menu.admin_title' : 'account.menu.user_title')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
                         <Shield className="mr-2" />
-                        <span>Panel de Admin</span>
+                        <span>{t('account.menu.admin_panel')}</span>
                     </Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
                 <Link href="/account">
                     <LayoutDashboard className="mr-2" />
-                    <span>Panel de Usuario</span>
+                    <span>{t('account.menu.user_dashboard')}</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                 <Link href="/account/orders">
                     <Package className="mr-2" />
-                    <span>Pedidos</span>
+                    <span>{t('account.menu.orders')}</span>
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                 <Link href="/account/addresses">
                     <MapPin className="mr-2" />
-                    <span>Direcciones</span>
+                    <span>{t('account.menu.addresses')}</span>
                 </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>
                 <LogOut className="mr-2" />
-                <span>Cerrar Sesión</span>
+                <span>{t('account.menu.logout')}</span>
             </DropdownMenuItem>
             </DropdownMenuContent>
         )}

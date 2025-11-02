@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,9 +10,11 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Cookie, Shield, BarChart2, Megaphone } from 'lucide-react';
 import { Separator } from './ui/separator';
+import { useTranslation } from '@/context/language-context';
 
 export default function CookieConsentBanner() {
   const { consent, setConsent } = useCookieConsent();
+  const { t } = useTranslation();
   const [isClient, setIsClient] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   
@@ -60,12 +64,12 @@ export default function CookieConsentBanner() {
         <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Cookie className="h-5 w-5 text-primary flex-shrink-0" />
-              <p>Utilizamos cookies para mejorar tu experiencia. Puedes gestionar tus preferencias.</p>
+              <p>{t('popups.cookies_banner_text')}</p>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>Personalizar</Button>
-            <Button variant="outline" size="sm" onClick={handleRejectAll}>Rechazar</Button>
-            <Button size="sm" onClick={handleAcceptAll}>Aceptar Todas</Button>
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>{t('popups.cookies_customize')}</Button>
+            <Button variant="outline" size="sm" onClick={handleRejectAll}>{t('popups.cookies_reject')}</Button>
+            <Button size="sm" onClick={handleAcceptAll}>{t('popups.cookies_accept')}</Button>
           </div>
         </div>
       </div>
@@ -73,16 +77,16 @@ export default function CookieConsentBanner() {
        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent>
               <DialogHeader>
-                  <DialogTitle>Preferencias de Cookies</DialogTitle>
+                  <DialogTitle>{t('popups.cookies_preferences_title')}</DialogTitle>
                   <DialogDescription>
-                      Gestiona qué cookies permites en nuestro sitio. Las cookies necesarias no se pueden desactivar.
+                      {t('popups.cookies_preferences_desc')}
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
                       <Label htmlFor="necessary-cookies" className="flex items-center gap-2 font-bold">
                         <Shield className="h-5 w-5 text-primary" />
-                        <span>Técnicas (Siempre activas)</span>
+                        <span>{t('popups.cookies_technical')}</span>
                       </Label>
                       <Switch id="necessary-cookies" checked disabled />
                   </div>
@@ -90,7 +94,7 @@ export default function CookieConsentBanner() {
                    <div className="flex items-center justify-between p-3 rounded-lg border">
                       <Label htmlFor="analytics-cookies" className="flex items-center gap-2 font-semibold">
                          <BarChart2 className="h-5 w-5 text-primary" />
-                        <span>Análisis</span>
+                        <span>{t('popups.cookies_analytics')}</span>
                       </Label>
                       <Switch
                           id="analytics-cookies"
@@ -101,7 +105,7 @@ export default function CookieConsentBanner() {
                    <div className="flex items-center justify-between p-3 rounded-lg border">
                       <Label htmlFor="marketing-cookies" className="flex items-center gap-2 font-semibold">
                         <Megaphone className="h-5 w-5 text-primary" />
-                        <span>Marketing</span>
+                        <span>{t('popups.cookies_marketing')}</span>
                       </Label>
                       <Switch
                           id="marketing-cookies"
@@ -111,7 +115,7 @@ export default function CookieConsentBanner() {
                   </div>
               </div>
               <DialogFooter>
-                  <Button onClick={handleSavePreferences}>Guardar Preferencias</Button>
+                  <Button onClick={handleSavePreferences}>{t('popups.cookies_save')}</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
