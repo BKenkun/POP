@@ -20,7 +20,7 @@ export function Footer() {
     { href: '/privacidad', text: t('footer.link_privacy') },
     { href: '/resolucion-litigios', text: t('footer.link_disputes') },
     { href: '/politica-cookies', text: t('footer.link_cookies') },
-    { href: '/envio-tarifas', text: t('footer.link_shipping') },
+    { href: '/shipping', text: t('footer.link_shipping') },
     { href: '/contacto', text: t('footer.link_contact') },
     { href: '/blog', text: t('footer.link_blog') },
   ];
