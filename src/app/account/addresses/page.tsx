@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -41,6 +42,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { updateUser } from "@/app/actions/user-data";
+import { useTranslation } from "@/context/language-context";
 
 interface Address {
     id: string;
@@ -71,6 +73,7 @@ type AddressFormData = z.infer<typeof addressSchema>;
 
 const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Partial<Address>, action: 'add-address' | 'update-address') => void }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const { t } = useTranslation();
     const form = useForm<AddressFormData>({
         resolver: zodResolver(addressSchema),
         defaultValues: address || {
@@ -98,50 +101,50 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Pa
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 {address ? (
-                    <Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />Editar</Button>
+                    <Button variant="outline" size="sm"><Edit className="mr-2 h-4 w-4" />{t('account.addresses_edit_button')}</Button>
                 ) : (
-                    <Button><PlusCircle className="mr-2"/>Añadir Dirección</Button>
+                    <Button><PlusCircle className="mr-2"/>{t('account.addresses_add_button')}</Button>
                 )}
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{address ? 'Editar Dirección' : 'Añadir Nueva Dirección'}</DialogTitle>
+                    <DialogTitle>{address ? t('account.addresses_dialog_edit_title') : t('account.addresses_dialog_add_title')}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField control={form.control} name="alias" render={({ field }) => (
-                            <FormItem><FormLabel>Alias de la dirección (ej. Casa, Trabajo)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_alias_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem><FormLabel>Nombre completo (Destinatario)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_name_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="phone" render={({ field }) => (
-                            <FormItem><FormLabel>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_phone_label')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="street" render={({ field }) => (
-                            <FormItem><FormLabel>Calle y número</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_street_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="city" render={({ field }) => (
-                            <FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_city_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="state" render={({ field }) => (
-                            <FormItem><FormLabel>Estado / Provincia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_state_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                          <FormField control={form.control} name="postalCode" render={({ field }) => (
-                            <FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_zip_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="country" render={({ field }) => (
-                            <FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>{t('account.addresses_dialog_country_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField control={form.control} name="isDefault" render={({ field }) => (
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                <FormLabel className="mb-0">Establecer como dirección por defecto</FormLabel>
+                                <FormLabel className="mb-0">{t('account.addresses_dialog_default_label')}</FormLabel>
                                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                             </FormItem>
                         )} />
                         <DialogFooter>
-                            <DialogClose asChild><Button type="button" variant="ghost">Cancelar</Button></DialogClose>
-                            <Button type="submit">Guardar</Button>
+                            <DialogClose asChild><Button type="button" variant="ghost">{t('account.addresses_dialog_cancel_button')}</Button></DialogClose>
+                            <Button type="submit">{t('account.addresses_dialog_save_button')}</Button>
                         </DialogFooter>
                     </form>
                 </Form>
@@ -153,6 +156,7 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Pa
 export default function AddressesPage() {
     const { user, userDoc, setUserDoc } = useAuth();
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
@@ -168,10 +172,10 @@ export default function AddressesPage() {
         
         const result = await updateUser(action, data);
         if (result.success && result.user) {
-            toast({ title: "Dirección guardada", description: "Tu lista de direcciones ha sido actualizada." });
+            toast({ title: t('account.addresses_toast_save_success_title'), description: t('account.addresses_toast_save_success_desc') });
             setUserDoc(result.user);
         } else {
-            toast({ title: "Error", description: result.message || "No se pudo guardar la dirección.", variant: "destructive" });
+            toast({ title: t('account.addresses_toast_save_error_title'), description: result.message || t('account.addresses_toast_save_error_desc'), variant: "destructive" });
         }
     };
     
@@ -180,10 +184,10 @@ export default function AddressesPage() {
 
         const result = await updateUser('delete-address', { id: addressId });
         if (result.success && result.user) {
-            toast({ title: "Dirección eliminada", description: "La dirección ha sido eliminada.", variant: "destructive" });
+            toast({ title: t('account.addresses_toast_delete_success_title'), description: t('account.addresses_toast_delete_success_desc'), variant: "destructive" });
             setUserDoc(result.user);
         } else {
-             toast({ title: "Error", description: result.message || "No se pudo eliminar la dirección.", variant: "destructive" });
+             toast({ title: t('account.addresses_toast_save_error_title'), description: result.message || t('account.addresses_toast_delete_error_desc'), variant: "destructive" });
         }
     };
 
@@ -195,9 +199,9 @@ export default function AddressesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-            <h2 className="text-2xl font-bold">Mis Direcciones</h2>
+            <h2 className="text-2xl font-bold">{t('account.addresses_title')}</h2>
             <p className="text-muted-foreground">
-                Gestiona tus direcciones de envío y facturación.
+                {t('account.addresses_subtitle')}
             </p>
         </div>
         <AddressForm onSave={handleSaveAddress} />
@@ -212,7 +216,7 @@ export default function AddressesPage() {
                                 {address.alias?.toLowerCase() === 'casa' ? <Home className="h-5 w-5"/> : (address.alias?.toLowerCase() === 'trabajo' ? <Briefcase className="h-5 w-5"/> : null) }
                                 {address.alias}
                             </span>
-                            {address.isDefault && <span className="text-xs font-normal bg-primary text-primary-foreground px-2 py-1 rounded-full">Por defecto</span>}
+                            {address.isDefault && <span className="text-xs font-normal bg-primary text-primary-foreground px-2 py-1 rounded-full">{t('account.addresses_default_badge')}</span>}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-2 pt-2"><User className="h-4 w-4"/> {address.name}</CardDescription>
                     </CardHeader>
@@ -226,19 +230,19 @@ export default function AddressesPage() {
                             
                              <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                     <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</Button>
+                                     <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/>{t('account.addresses_delete_button')}</Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                        <AlertDialogTitle>{t('account.addresses_delete_confirm_title')}</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Se eliminará permanentemente esta dirección.
+                                            {t('account.addresses_delete_confirm_desc')}
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogCancel>{t('account.addresses_dialog_cancel_button')}</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => handleDeleteAddress(address.id)}>
-                                            Continuar
+                                            {t('account.addresses_delete_confirm_continue')}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -250,7 +254,7 @@ export default function AddressesPage() {
             ))}
        </div>
        {addresses.length === 0 && (
-           <p className="text-muted-foreground text-center py-8">No tienes ninguna dirección guardada todavía.</p>
+           <p className="text-muted-foreground text-center py-8">{t('account.addresses_empty_placeholder')}</p>
        )}
     </div>
   )

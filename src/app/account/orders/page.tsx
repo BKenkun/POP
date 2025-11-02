@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from "@/context/auth-context";
@@ -19,9 +20,11 @@ import { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/context/language-context";
 
 export default function OrdersPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -75,27 +78,27 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
         <div className="space-y-1">
-            <h2 className="text-2xl font-bold">Mis Pedidos</h2>
+            <h2 className="text-2xl font-bold">{t('account.orders_title')}</h2>
             <p className="text-muted-foreground">
-                Aquí puedes ver el historial de todas tus compras.
+                {t('account.orders_subtitle')}
             </p>
         </div>
         
         {!orders || orders.length === 0 ? (
              <div className="flex flex-col items-center justify-center h-40 text-center border-dashed border-2 rounded-lg">
                 <ShoppingBag className="h-12 w-12 text-muted-foreground/30" strokeWidth={1} />
-                <h3 className="mt-4 text-lg font-semibold">Aún no tienes pedidos</h3>
-                <p className="text-muted-foreground">Tu historial de compras aparecerá aquí.</p>
+                <h3 className="mt-4 text-lg font-semibold">{t('account.orders_empty_title')}</h3>
+                <p className="text-muted-foreground">{t('account.orders_empty_subtitle')}</p>
             </div>
         ) : (
              <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Pedido Nº</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t('account.orders_table_order_no')}</TableHead>
+                    <TableHead>{t('account.orders_table_date')}</TableHead>
+                    <TableHead>{t('account.orders_table_status')}</TableHead>
+                    <TableHead className="text-right">{t('account.orders_table_total')}</TableHead>
+                    <TableHead className="text-right">{t('account.orders_table_actions')}</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -113,7 +116,7 @@ export default function OrdersPage() {
                         <Button asChild variant="outline" size="sm">
                             <Link href={`/account/orders/${order.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                Ver Detalles
+                                {t('account.orders_view_details_button')}
                             </Link>
                         </Button>
                     </TableCell>

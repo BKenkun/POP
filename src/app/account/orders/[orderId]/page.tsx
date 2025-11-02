@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -14,6 +15,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useTranslation } from '@/context/language-context';
 
 const getImageUrl = (url: string) => {
     if (url.includes('firebasestorage.googleapis.com')) {
@@ -27,6 +29,7 @@ export default function UserOrderDetailPage() {
   const orderId = params.orderId as string;
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,12 +83,12 @@ export default function UserOrderDetailPage() {
   if (!order) {
     return (
         <div className="text-center space-y-4">
-             <h2 className="text-2xl font-bold">Pedido no encontrado</h2>
-             <p className="text-muted-foreground">No hemos podido encontrar este pedido o no tienes permiso para verlo.</p>
+             <h2 className="text-2xl font-bold">{t('account.order_details_not_found_title')}</h2>
+             <p className="text-muted-foreground">{t('account.order_details_not_found_subtitle')}</p>
              <Button asChild variant="outline">
                 <Link href="/account/orders">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a Mis Pedidos
+                    {t('account.order_details_back_button')}
                 </Link>
             </Button>
         </div>
@@ -96,15 +99,15 @@ export default function UserOrderDetailPage() {
     <div className="space-y-6">
        <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Detalles del Pedido</h2>
+          <h2 className="text-2xl font-bold">{t('account.order_details_title')}</h2>
           <p className="text-muted-foreground">
-            Pedido #{order.id.substring(order.id.length - 7).toUpperCase()}
+            {t('account.order_details_subtitle', { orderId: order.id.substring(order.id.length - 7).toUpperCase() })}
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
           <Link href="/account/orders">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a Pedidos
+            {t('account.order_details_back_button')}
           </Link>
         </Button>
       </div>
@@ -114,7 +117,7 @@ export default function UserOrderDetailPage() {
           <div className="space-y-6">
               <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ShoppingBag className="h-5 w-5" />Artículos del Pedido</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><ShoppingBag className="h-5 w-5" />{t('account.order_details_items_title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
@@ -139,22 +142,22 @@ export default function UserOrderDetailPage() {
         <div className="space-y-6">
           <Card>
              <CardHeader>
-                <CardTitle>Resumen</CardTitle>
+                <CardTitle>{t('account.order_details_summary_title')}</CardTitle>
                 <CardDescription>
-                    Realizado el {order.createdAt instanceof Date ? order.createdAt.toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' }) : 'Fecha no disponible'}
+                    {t('account.order_details_summary_date', { date: order.createdAt instanceof Date ? order.createdAt.toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' }) : 'Fecha no disponible'})}
                 </CardDescription>
              </CardHeader>
              <CardContent className="space-y-2">
                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">Estado del pedido:</span>
+                    <span className="text-muted-foreground">{t('account.order_details_summary_status')}</span>
                     <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                 </div>
                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span className="text-muted-foreground">{t('account.order_details_summary_subtotal')}</span>
                     <span>{formatPrice(order.total)}</span>
                 </div>
                  <div className="flex justify-between font-bold text-lg">
-                    <span>TOTAL:</span>
+                    <span>{t('account.order_details_summary_total')}</span>
                     <span className="text-primary">{formatPrice(order.total)}</span>
                 </div>
              </CardContent>
@@ -162,7 +165,7 @@ export default function UserOrderDetailPage() {
           
           {order.shippingAddress && (
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Dirección de Envío</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />{t('account.order_details_shipping_address_title')}</CardTitle></CardHeader>
                 <CardContent className="space-y-1 text-sm">
                     <p className="font-medium">{order.customerName}</p>
                     <p>{order.shippingAddress.line1}</p>
