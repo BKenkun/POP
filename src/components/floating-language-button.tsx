@@ -26,10 +26,10 @@ export default function FloatingLanguageButton() {
         <Button
           variant="secondary"
           size="icon"
-          className="relative h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+          className="relative h-10 w-10 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
           aria-label="Select language"
         >
-          <Languages className="h-6 w-6" />
+          <Languages className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" side="top" className="mb-2">

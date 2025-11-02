@@ -29,8 +29,8 @@ export default function FloatingActionButtons() {
             "fixed right-6 z-50 transition-all duration-300",
             isBannerVisible ? "bottom-[72px]" : "bottom-6"
         )}>
-            {/* Contenedor relativo para posicionar los botones en un diseño personalizado */}
-            <div className="relative h-48 w-48">
+            {/* Contenedor relativo para posicionar los botones. Reducido a h-40 w-40 para juntarlos. */}
+            <div className="relative h-40 w-40">
                 {/* Botón de Cuenta (arriba a la derecha) */}
                 <div className="absolute top-0 right-0">
                     <FloatingAccountButton />
@@ -46,8 +46,8 @@ export default function FloatingActionButtons() {
                     <FloatingCartButton />
                 </div>
 
-                {/* Botón de Idioma (posición intermedia) */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+                {/* Botón de Idioma (posición intermedia ajustada) */}
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
                     <FloatingLanguageButton />
                 </div>
             </div>
