@@ -22,14 +22,21 @@ export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New O
         console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail}.`);
         return { success: true, message: 'Simulated event tracking.' };
     }
-
+    
+    // --- TEMPORARY FIX ---
+    // If this is an admin notification, send a very simple payload
+    // to force metric creation in Klaviyo for the first time.
+    const isSpecialAdminEvent = eventName === 'Admin New Order Notification' || eventName === 'Admin New User Notification';
+    
+    const finalProperties = isSpecialAdminEvent ? { note: 'Metric creation trigger' } : properties;
+    
     const payload = {
         data: {
             type: "event",
             attributes: {
                 profile: { email: customerEmail },
                 metric: { name: eventName },
-                properties: properties,
+                properties: finalProperties,
             }
         }
     };
@@ -132,7 +139,10 @@ export async function syncKlaviyoProduct(product: Product) {
 // --- Helper Functions to format data for Klaviyo ---
 
 export async function formatOrderForKlaviyo(order: Order, orderId: string) {
-    const orderDate = order.createdAt instanceof Date ? order.createdAt.toISOString() : new Date().toISOString();
+    const orderDate = order.createdAt instanceof Date 
+        ? order.createdAt.toISOString() 
+        // Handle Firestore serverTimestamp which might not be resolved yet on client
+        : new Date().toISOString();
     
     return {
       // Event-specific properties
