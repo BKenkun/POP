@@ -26,16 +26,24 @@ export default function FloatingActionButtons() {
     const isBannerVisible = isClient && !consent.necessary;
 
     return (
-        <div className={cn(
-            "fixed right-6 z-50 flex flex-col items-center gap-4 transition-all duration-300",
-            isBannerVisible ? "bottom-[72px]" : "bottom-6"
-        )}>
-            <FloatingAccountButton />
-            <FloatingCbdButton />
-            <FloatingCartButton />
-            <div className="pt-2">
-                <FloatingLanguageButton />
+        <>
+            <div className={cn(
+                "fixed right-6 z-50 transition-all duration-300",
+                isBannerVisible ? "bottom-[72px]" : "bottom-6"
+            )}>
+                <div className="relative h-[130px] w-[130px]">
+                    <div className="absolute top-1/2 left-0 -translate-y-1/2">
+                        <FloatingCbdButton />
+                    </div>
+                    <div className="absolute top-0 right-0">
+                        <FloatingAccountButton />
+                    </div>
+                    <div className="absolute bottom-0 right-0">
+                        <FloatingCartButton />
+                    </div>
+                </div>
             </div>
-        </div>
+             <FloatingLanguageButton />
+        </>
     );
 }
