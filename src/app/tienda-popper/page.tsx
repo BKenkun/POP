@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,9 +10,6 @@ import Link from 'next/link';
 import { Product } from '@/lib/types';
 import { cbdProducts } from '@/lib/cbd-products';
 import { useTranslation } from '@/context/language-context';
-
-// Revalidate every time to get a new random list
-export const revalidate = 0; 
 
 // Function to shuffle an array and take the first N items
 const getShuffledItems = (array: Product[], numItems: number): Product[] => {
