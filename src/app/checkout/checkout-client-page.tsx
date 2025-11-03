@@ -39,6 +39,7 @@ import { updateUser } from '@/app/actions/user-data';
 import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 import { Coupon } from '@/app/admin/coupons/page';
+import { useTranslation } from '@/context/language-context';
 
 
 interface Address {
@@ -54,19 +55,18 @@ interface Address {
     isDefault?: boolean;
 }
 
-// --- Validation Schemas ---
-const checkoutSchema = z.object({
-    name: z.string().min(3, "El nombre es requerido."),
-    email: z.string().email("Por favor, introduce un email válido."),
-    phone: z.string().min(9, "El teléfono es requerido."),
-    street: z.string().min(5, "La calle es requerida."),
-    city: z.string().min(2, "La ciudad es requerida."),
-    state: z.string().min(2, "El estado/provincia es requerido."),
-    postalCode: z.string().min(3, "El código postal es requerido."),
-    country: z.string().min(2, "El país es requerido."),
+const getCheckoutSchema = (t: (key: string) => string) => z.object({
+    name: z.string().min(3, t('checkout.form_errors.name_required')),
+    email: z.string().email(t('checkout.form_errors.email_invalid')),
+    phone: z.string().min(9, t('checkout.form_errors.phone_required')),
+    street: z.string().min(5, t('checkout.form_errors.street_required')),
+    city: z.string().min(2, t('checkout.form_errors.city_required')),
+    state: z.string().min(2, t('checkout.form_errors.state_required')),
+    postalCode: z.string().min(3, t('checkout.form_errors.zip_required')),
+    country: z.string().min(2, t('checkout.form_errors.country_required')),
     saveAddress: z.boolean().default(false),
     paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto'], {
-        required_error: "Debes seleccionar un método de pago."
+        required_error: t('checkout.form_errors.payment_method_required')
     }),
     useDifferentBilling: z.boolean().default(false),
     billing_name: z.string().optional(),
@@ -77,16 +77,16 @@ const checkoutSchema = z.object({
     billing_country: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.useDifferentBilling) {
-        if (!data.billing_name) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_name"] });
-        if (!data.billing_street) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_street"] });
-        if (!data.billing_city) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_city"] });
-        if (!data.billing_state) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_state"] });
-        if (!data.billing_postalCode) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_postalCode"] });
-        if (!data.billing_country) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Requerido.", path: ["billing_country"] });
+        if (!data.billing_name) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('checkout.form_errors.billing_field_required'), path: ["billing_name"] });
+        if (!data.billing_street) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('checkout.form_errors.billing_field_required'), path: ["billing_street"] });
+        if (!data.billing_city) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('checkout.form_errors.billing_field_required'), path: ["billing_city"] });
+        if (!data.billing_state) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('checkout.form_errors.billing_field_required'), path: ["billing_state"] });
+        if (!data.billing_postalCode) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('checkout.form_errors.billing_field_required'), path: ["billing_postalCode"] });
+        if (!data.billing_country) ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('checkout.form_errors.billing_field_required'), path: ["billing_country"] });
     }
 });
 
-type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+type CheckoutFormValues = z.infer<ReturnType<typeof getCheckoutSchema>>;
 
 // --- Helper Functions ---
 const getImageUrl = (url: string) => {
@@ -101,8 +101,13 @@ const SHIPPING_COST = 695; // 6,95€ en céntimos
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€ en céntimos
 
 // --- Components ---
-const Stepper = ({ currentStep }: { currentStep: number }) => {
-    const steps = [{ number: 1, name: 'Carrito' }, { number: 2, name: 'Tus Datos' }, { number: 3, name: 'Pago' }, { number: 4, name: 'Revisión' }];
+const Stepper = ({ currentStep, t }: { currentStep: number, t: (key: string) => string }) => {
+    const steps = [
+        { number: 1, name: t('checkout.stepper.cart') }, 
+        { number: 2, name: t('checkout.stepper.details') }, 
+        { number: 3, name: t('checkout.stepper.payment') }, 
+        { number: 4, name: t('checkout.stepper.review') }
+    ];
     return (
         <div className="flex items-center justify-center mb-12">
             {steps.map((step, index) => (
@@ -121,6 +126,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 };
 
 export default function CheckoutClientPage() {
+  const { t } = useTranslation();
   const { cartItems, cartTotal, cartCount, clearCart, updateQuantity, removeFromCart, volumeDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
@@ -135,6 +141,8 @@ export default function CheckoutClientPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
+  
+  const checkoutSchema = getCheckoutSchema(t);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -176,17 +184,17 @@ export default function CheckoutClientPage() {
         const couponSnap = await getDoc(couponRef);
 
         if (!couponSnap.exists()) {
-            throw new Error('El código del cupón no es válido.');
+            throw new Error(t('checkout.toasts.coupon_error_invalid'));
         }
 
         const couponData = { id: couponSnap.id, ...couponSnap.data() } as Coupon;
         const now = new Date();
 
-        if (!couponData.isActive) throw new Error('Este cupón no está activo.');
-        if (couponData.startDate && now < new Date(couponData.startDate)) throw new Error('Este cupón aún no es válido.');
-        if (couponData.endDate && now > new Date(couponData.endDate)) throw new Error('Este cupón ha expirado.');
-        if (couponData.usageLimit > 0 && couponData.usageCount >= couponData.usageLimit) throw new Error('Este cupón ha alcanzado su límite de usos.');
-        if (couponData.minPurchase && subtotalAfterVolumeDiscount < couponData.minPurchase) throw new Error(`Se requiere una compra mínima de ${formatPrice(couponData.minPurchase)} para usar este cupón.`);
+        if (!couponData.isActive) throw new Error(t('checkout.toasts.coupon_error_inactive'));
+        if (couponData.startDate && now < new Date(couponData.startDate)) throw new Error(t('checkout.toasts.coupon_error_not_yet_valid'));
+        if (couponData.endDate && now > new Date(couponData.endDate)) throw new Error(t('checkout.toasts.coupon_error_expired'));
+        if (couponData.usageLimit > 0 && couponData.usageCount >= couponData.usageLimit) throw new Error(t('checkout.toasts.coupon_error_limit_reached'));
+        if (couponData.minPurchase && subtotalAfterVolumeDiscount < couponData.minPurchase) throw new Error(t('checkout.toasts.coupon_error_min_purchase', {price: formatPrice(couponData.minPurchase)}));
         
         if (couponData.onePerUser) {
             const ordersQuery = query(
@@ -195,7 +203,7 @@ export default function CheckoutClientPage() {
             );
             const pastOrdersSnap = await getDocs(ordersQuery);
             if (!pastOrdersSnap.empty) {
-                throw new Error('Este cupón solo puede ser usado una vez.');
+                throw new Error(t('checkout.toasts.coupon_error_already_used'));
             }
         }
         
@@ -208,14 +216,14 @@ export default function CheckoutClientPage() {
 
         setAppliedCoupon(couponData);
         setCouponDiscount(discount);
-        toast({ title: 'Cupón Aplicado', description: `Se ha aplicado un descuento de ${formatPrice(discount)}.` });
+        toast({ title: t('checkout.toasts.coupon_applied_title'), description: t('checkout.toasts.coupon_applied_desc', { discount: formatPrice(discount) }) });
 
     } catch (error: any) {
-        toast({ title: 'Error al aplicar el cupón', description: error.message, variant: 'destructive' });
+        toast({ title: t('checkout.toasts.coupon_error_title'), description: error.message, variant: 'destructive' });
     } finally {
         setCouponLoading(false);
     }
-  }, [couponCode, subtotalAfterVolumeDiscount, toast, user]);
+  }, [couponCode, subtotalAfterVolumeDiscount, toast, user, t]);
 
 
   const finalTotals = useMemo(() => {
@@ -299,8 +307,8 @@ export default function CheckoutClientPage() {
     } else if (step === 2) {
       if (!user) {
          toast({
-            title: "Requiere inicio de sesión",
-            description: "Por favor, inicia sesión o regístrate para continuar.",
+            title: t('checkout.toasts.login_required_title'),
+            description: t('checkout.toasts.login_required_desc'),
             variant: "destructive",
          });
          router.push('/login?redirect=/checkout');
@@ -330,7 +338,7 @@ export default function CheckoutClientPage() {
   
   const onFinalSubmit = async (data: CheckoutFormValues) => {
     if (!user) {
-      toast({ title: 'Error de Autenticación', description: 'Debes iniciar sesión para completar el pedido.', variant: 'destructive' });
+      toast({ title: t('auth.login_title'), description: t('checkout.toasts.login_required_desc'), variant: 'destructive' });
       setStep(2);
       return;
     }
@@ -338,7 +346,7 @@ export default function CheckoutClientPage() {
 
     if (data.saveAddress && selectedAddressId === 'new') {
         const addressToSave = {
-            alias: `Dirección ${userDoc?.addresses?.length + 1 || 1}`,
+            alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`,
             name: data.name,
             phone: data.phone,
             street: data.street,
@@ -350,9 +358,9 @@ export default function CheckoutClientPage() {
         const result = await updateUser('add-address', addressToSave);
         if (result.success && result.user) {
             setUserDoc(result.user);
-            toast({ title: "Dirección Guardada", description: "Tu nueva dirección se ha guardado en tu perfil." });
+            toast({ title: t('checkout.toasts.address_saved_title'), description: t('checkout.toasts.address_saved_desc') });
         } else {
-             toast({ title: "Error", description: "No se pudo guardar la dirección, pero puedes continuar con el pedido.", variant: "destructive" });
+             toast({ title: t('checkout.toasts.address_save_error_title'), description: t('checkout.toasts.address_save_error_desc'), variant: "destructive" });
         }
     }
 
@@ -369,10 +377,10 @@ export default function CheckoutClientPage() {
             if (result.success && result.invoice_url) {
                 window.location.href = result.invoice_url;
             } else {
-                throw new Error(result.error || 'No se pudo crear el enlace de pago con criptomonedas.');
+                throw new Error(result.error || t('checkout.toasts.crypto_error_desc'));
             }
         } catch (error: any) {
-            toast({ title: 'Error con Pago Cripto', description: error.message, variant: 'destructive' });
+            toast({ title: t('checkout.toasts.crypto_error_title'), description: error.message, variant: 'destructive' });
             setLoading(false);
         }
         return; 
@@ -441,8 +449,8 @@ export default function CheckoutClientPage() {
             if (result.success && result.user) {
                 setUserDoc(result.user);
                  toast({
-                    title: "¡Puntos Ganados!",
-                    description: `Has ganado ${pointsToAdd} puntos de fidelidad con esta compra.`,
+                    title: t('checkout.toasts.points_earned_title'),
+                    description: t('checkout.toasts.points_earned_desc', { points: pointsToAdd }),
                 });
             }
         }
@@ -450,24 +458,24 @@ export default function CheckoutClientPage() {
         const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: newOrderRef.id, createdAt: new Date() }, newOrderRef.id);
         
         await trackKlaviyoEvent('Placed Order', data.email, klaviyoOrderData);
-        await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', {
-            'OrderId': newOrderRef.id,
-            'CustomerName': data.name,
-            'Total': finalTotals.total / 100,
-            'ItemCount': itemsForPayload.length
-        });
+        // await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', {
+        //     'OrderId': newOrderRef.id,
+        //     'CustomerName': data.name,
+        //     'Total': finalTotals.total / 100,
+        //     'ItemCount': itemsForPayload.length
+        // });
 
         toast({
             duration: 10000,
-            title: "¡Reserva Confirmada!",
-            description: `Tu pedido #${newOrderRef.id.substring(newOrderRef.id.length - 7)} ha sido recibido.`,
+            title: t('checkout.toasts.order_success_title'),
+            description: t('checkout.toasts.order_success_desc', {orderId: newOrderRef.id.substring(newOrderRef.id.length - 7)}),
             action: (
                 <div className="flex flex-col gap-2">
-                    <ToastAction asChild altText="Ver Pedido">
-                        <Link href={`/account/orders/${newOrderRef.id}`}>Ver Pedido</Link>
+                    <ToastAction asChild altText={t('checkout.toasts.view_order_button')}>
+                        <Link href={`/account/orders/${newOrderRef.id}`}>{t('checkout.toasts.view_order_button')}</Link>
                     </ToastAction>
-                    <ToastAction asChild altText="Seguir Comprando">
-                        <Link href="/">Seguir Comprando</Link>
+                    <ToastAction asChild altText={t('checkout.toasts.continue_shopping_button')}>
+                        <Link href="/">{t('checkout.toasts.continue_shopping_button')}</Link>
                     </ToastAction>
                 </div>
             ),
@@ -478,7 +486,7 @@ export default function CheckoutClientPage() {
 
     } catch (error: any) {
         console.error("Order Creation Error: ", error);
-        toast({ title: 'Error al realizar el pedido', description: error.message || 'Ocurrió un error al guardar tu pedido.', variant: 'destructive' });
+        toast({ title: t('checkout.toasts.order_error_title'), description: error.message || t('checkout.toasts.order_error_desc'), variant: 'destructive' });
     } finally {
         setLoading(false);
     }
@@ -486,14 +494,14 @@ export default function CheckoutClientPage() {
 
   const paymentMethods = {
       cod: [
-          { value: 'cod_cash', label: 'Pagar en efectivo contra-entrega', icon: Banknote },
-          { value: 'cod_card', label: 'Pagar con tarjeta contra-entrega', icon: CreditCard },
-          { value: 'cod_bizum', label: 'Pagar con Bizum contra-entrega', icon: Smartphone }
+          { value: 'cod_cash', label: t('checkout.payment_options.cod_cash'), icon: Banknote },
+          { value: 'cod_card', label: t('checkout.payment_options.cod_card'), icon: CreditCard },
+          { value: 'cod_bizum', label: t('checkout.payment_options.cod_bizum'), icon: Smartphone }
       ],
       prepaid: [
-          { value: 'crypto', label: 'Pagar con Criptomonedas', icon: Bitcoin },
-          { value: 'prepaid_bizum', label: 'Pago anticipado con Bizum', icon: Smartphone },
-          { value: 'prepaid_transfer', label: 'Pago anticipado con Transferencia', icon: Banknote },
+          { value: 'crypto', label: t('checkout.payment_options.crypto'), icon: Bitcoin },
+          { value: 'prepaid_bizum', label: t('checkout.payment_options.prepaid_bizum'), icon: Smartphone },
+          { value: 'prepaid_transfer', label: t('checkout.payment_options.prepaid_transfer'), icon: Banknote },
       ]
   };
 
@@ -509,14 +517,14 @@ export default function CheckoutClientPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">Finalizar Pedido</h1>
-      <Stepper currentStep={step} />
+      <h1 className="text-3xl md:text-4xl font-headline text-primary mb-8 text-center font-bold">{t('checkout.title')}</h1>
+      <Stepper currentStep={step} t={t} />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onFinalSubmit)}>
             {step === 1 && (
                 <Card>
-                    <CardHeader><CardTitle>1. Confirma tu Carrito</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t('checkout.confirm_cart_title')}</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         {cartItems.map((item) => (
                             <div key={item.id} className="flex items-center gap-4">
@@ -534,17 +542,17 @@ export default function CheckoutClientPage() {
                          <Separator />
                          <div className="space-y-2">
                             <div className="flex justify-between">
-                                <span>Subtotal</span>
+                                <span>{t('cart.subtotal')}</span>
                                 <span>{formatPrice(cartTotal)}</span>
                             </div>
                              {volumeDiscount > 0 && (
                                 <div className="flex justify-between text-destructive">
-                                    <span>Descuento por volumen (pago anticipado)</span>
+                                    <span>{t('cart.volume_discount')}</span>
                                     <span>-{formatPrice(volumeDiscount)}</span>
                                 </div>
                             )}
                              <div className="flex justify-between font-bold text-lg">
-                                <span>Total (antes de envío y cupones)</span>
+                                <span>{t('cart.total_estimate')}</span>
                                 <span>{formatPrice(subtotalAfterVolumeDiscount)}</span>
                             </div>
                         </div>
@@ -555,19 +563,19 @@ export default function CheckoutClientPage() {
             {step === 2 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>2. Tus Datos</CardTitle>
-                        <p className="text-muted-foreground">{user ? 'Confirma tus datos de envío.' : 'Inicia sesión para continuar.'}</p>
+                        <CardTitle>{t('checkout.user_details_title')}</CardTitle>
+                        <p className="text-muted-foreground">{user ? t('checkout.user_details_subtitle') : t('checkout.user_details_not_logged_in')}</p>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {!user ? (
                             <Alert variant="destructive">
                                 <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Inicio de Sesión Requerido</AlertTitle>
+                                <AlertTitle>{t('checkout.login_required_alert_title')}</AlertTitle>
                                 <AlertDescription>
-                                    Debes iniciar sesión o registrarte para poder continuar con tu pedido.
+                                    {t('checkout.login_required_alert_desc')}
                                     <div className="mt-4 flex gap-4">
-                                        <Button asChild><Link href="/login?redirect=/checkout">Iniciar Sesión</Link></Button>
-                                        <Button asChild variant="outline"><Link href="/register">Registrarse</Link></Button>
+                                        <Button asChild><Link href="/login?redirect=/checkout">{t('checkout.login_button')}</Link></Button>
+                                        <Button asChild variant="outline"><Link href="/register">{t('checkout.register_button')}</Link></Button>
                                     </div>
                                 </AlertDescription>
                             </Alert>
@@ -578,7 +586,7 @@ export default function CheckoutClientPage() {
                                         {addresses.map((addr, index) => (
                                             <Label key={addr.id} htmlFor={addr.id} className={cn("flex flex-col rounded-lg border p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === addr.id && "border-primary ring-2 ring-primary")}>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="font-semibold">{addr.alias || `Dirección ${index + 1}`}</span>
+                                                    <span className="font-semibold">{addr.alias || `${t('account.addresses_title')} ${index + 1}`}</span>
                                                     <RadioGroupItem value={addr.id} id={addr.id} />
                                                 </div>
                                                 <div className="text-sm text-muted-foreground mt-2">
@@ -589,27 +597,27 @@ export default function CheckoutClientPage() {
                                         ))}
                                         <Label htmlFor="new" className={cn("flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 cursor-pointer hover:bg-primary/10 transition-colors", selectedAddressId === 'new' && "border-primary ring-2 ring-primary bg-primary/10")}>
                                             <PlusCircle className="h-5 w-5" />
-                                            <span>Usar nueva dirección</span>
+                                            <span>{t('checkout.use_new_address')}</span>
                                             <RadioGroupItem value="new" id="new" className="sr-only" />
                                         </Label>
                                     </RadioGroup>
                                 )}
                                 <div className={cn(user && addresses.length > 0 && selectedAddressId !== 'new' && "hidden")}>
-                                    <h3 className="font-bold text-lg mb-4">Dirección de Envío</h3>
+                                    <h3 className="font-bold text-lg mb-4">{t('checkout.shipping_address_title')}</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline-block mr-2"/>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>Teléfono</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle y número</FormLabel><FormControl><Input placeholder="Calle Falsa 123, 4º B" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Ciudad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado / Provincia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>País</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>{t('checkout.fullname_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel><Mail className="inline-block mr-2"/>{t('checkout.email_label')}</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel><Phone className="inline-block mr-2"/>{t('checkout.phone_label')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>{t('checkout.street_label')}</FormLabel><FormControl><Input placeholder={t('checkout.street_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('checkout.city_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('checkout.state_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>{t('checkout.zip_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>{t('checkout.country_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                     {selectedAddressId === 'new' && (
                                         <FormField control={form.control} name="saveAddress" render={({ field }) => (
                                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-4">
-                                                <FormLabel className="mb-0">Guardar esta dirección para futuras compras</FormLabel>
+                                                <FormLabel className="mb-0">{t('checkout.save_address_label')}</FormLabel>
                                                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                             </FormItem>
                                         )} />
@@ -623,8 +631,8 @@ export default function CheckoutClientPage() {
                                 <FormField control={form.control} name="useDifferentBilling" render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                                         <div className="space-y-0.5">
-                                            <FormLabel className="text-base">Usar una dirección de facturación diferente</FormLabel>
-                                            <p className="text-sm text-muted-foreground">Activa esta opción si los datos de facturación no coinciden con los de envío.</p>
+                                            <FormLabel className="text-base">{t('checkout.use_different_billing_label')}</FormLabel>
+                                            <p className="text-sm text-muted-foreground">{t('checkout.use_different_billing_desc')}</p>
                                         </div>
                                         <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>
@@ -632,14 +640,14 @@ export default function CheckoutClientPage() {
         
                                 {formValues.useDifferentBilling && (
                                     <div className="space-y-4 pt-4 border-t">
-                                        <h3 className="font-bold text-lg">Dirección de Facturación</h3>
+                                        <h3 className="font-bold text-lg">{t('checkout.billing_address_title')}</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormField control={form.control} name="billing_name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>Nombre Completo (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="billing_street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>Calle (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="billing_city" render={({ field }) => (<FormItem><FormLabel>Ciudad (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="billing_state" render={({ field }) => (<FormItem><FormLabel>Provincia (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="billing_postalCode" render={({ field }) => (<FormItem><FormLabel>Código Postal (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="billing_country" render={({ field }) => (<FormItem><FormLabel>País (Factura)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_name" render={({ field }) => (<FormItem><FormLabel><User className="inline-block mr-2"/>{t('checkout.fullname_label')} ({t('checkout.billing_address_title')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel><Home className="inline-block mr-2"/>{t('checkout.street_label')} ({t('checkout.billing_address_title')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_city" render={({ field }) => (<FormItem><FormLabel>{t('checkout.city_label')} ({t('checkout.billing_address_title')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_state" render={({ field }) => (<FormItem><FormLabel>{t('checkout.state_label')} ({t('checkout.billing_address_title')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_postalCode" render={({ field }) => (<FormItem><FormLabel>{t('checkout.zip_label')} ({t('checkout.billing_address_title')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="billing_country" render={({ field }) => (<FormItem><FormLabel>{t('checkout.country_label')} ({t('checkout.billing_address_title')})</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         </div>
                                     </div>
                                 )}
@@ -651,7 +659,7 @@ export default function CheckoutClientPage() {
 
             {step === 3 && (
                 <Card>
-                    <CardHeader><CardTitle>3. Método de Pago</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t('checkout.payment_method_title')}</CardTitle></CardHeader>
                     <CardContent>
                         <FormField
                             control={form.control}
@@ -670,14 +678,14 @@ export default function CheckoutClientPage() {
                                         <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
                                             <CreditCard className="mb-2 h-8 w-8" />
-                                            <span className="font-bold">Contrareembolso</span>
-                                            <span className="text-xs text-muted-foreground">(Paga al recibir)</span>
+                                            <span className="font-bold">{t('checkout.cod_label')}</span>
+                                            <span className="text-xs text-muted-foreground">{t('checkout.cod_desc')}</span>
                                         </Label>
                                         <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
                                             <Banknote className="mb-2 h-8 w-8" />
-                                            <span className="font-bold">Pago por adelantado</span>
-                                            <span className="text-xs text-primary">(¡Descuento + Regalo + Envío Gratis!)</span>
+                                            <span className="font-bold">{t('checkout.prepaid_label')}</span>
+                                            <span className="text-xs text-primary">{t('checkout.prepaid_desc')}</span>
                                         </Label>
                                     </RadioGroup>
 
@@ -686,10 +694,8 @@ export default function CheckoutClientPage() {
                                             {paymentCategory === 'prepaid' && (
                                                 <Alert variant="default" className="mb-4 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
                                                     <Gift className="h-4 w-4 !text-green-600" />
-                                                    <AlertTitle className="text-green-800 dark:text-green-300">¡Promoción de Lanzamiento!</AlertTitle>
-                                                    <AlertDescription className="text-green-700 dark:text-green-400">
-                                                       Al elegir pago por adelantado, disfrutas de <span className="font-bold">descuento por volumen, envío gratuito y un regalo sorpresa</span> en tu pedido.
-                                                    </AlertDescription>
+                                                    <AlertTitle className="text-green-800 dark:text-green-300">{t('checkout.launch_promo_title')}</AlertTitle>
+                                                    <AlertDescription className="text-green-700 dark:text-green-400" dangerouslySetInnerHTML={{ __html: t('checkout.launch_promo_desc') }} />
                                                 </Alert>
                                             )}
                                             <RadioGroup
@@ -721,59 +727,59 @@ export default function CheckoutClientPage() {
             
             {step === 4 && (
                 <Card>
-                    <CardHeader><CardTitle>4. Revisa y Confirma tu Pedido</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t('checkout.review_title')}</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <div>
-                            <h3 className="font-semibold mb-2">Resumen del Pedido</h3>
+                            <h3 className="font-semibold mb-2">{t('checkout.order_summary_title')}</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center space-x-2">
                                     <Input
-                                        placeholder="Código de Descuento"
+                                        placeholder={t('checkout.coupon_placeholder')}
                                         value={couponCode}
                                         onChange={(e) => setCouponCode(e.target.value)}
                                         className="flex-grow"
                                         disabled={couponLoading || !!appliedCoupon}
                                     />
                                     <Button type="button" onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim() || !!appliedCoupon}>
-                                        {couponLoading ? <Loader2 className="animate-spin" /> : (appliedCoupon ? 'Aplicado' : 'Aplicar')}
+                                        {couponLoading ? <Loader2 className="animate-spin" /> : (appliedCoupon ? t('checkout.applied_button') : t('checkout.apply_button'))}
                                     </Button>
                                 </div>
                                 <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
-                                        <span>Subtotal</span>
+                                        <span>{t('checkout.subtotal')}</span>
                                         <span>{formatPrice(finalTotals.subtotal)}</span>
                                     </div>
                                     {finalTotals.discount > 0 && (
                                         <div className="flex justify-between text-destructive">
-                                            <span>Descuento por volumen</span>
+                                            <span>{t('checkout.volume_discount')}</span>
                                             <span>-{formatPrice(finalTotals.discount)}</span>
                                         </div>
                                     )}
                                      {couponDiscount > 0 && (
                                         <div className="flex justify-between text-destructive">
-                                            <span>Descuento por cupón ({appliedCoupon?.code})</span>
+                                            <span>{t('checkout.coupon_discount')} ({appliedCoupon?.code})</span>
                                             <span>-{formatPrice(couponDiscount)}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between">
-                                        <span>Envío</span>
-                                        <span>{finalTotals.shipping > 0 ? formatPrice(finalTotals.shipping) : 'Gratis'}</span>
+                                        <span>{t('checkout.shipping')}</span>
+                                        <span>{finalTotals.shipping > 0 ? formatPrice(finalTotals.shipping) : t('checkout.free_shipping')}</span>
                                     </div>
                                     <Separator/>
                                     <div className="flex justify-between font-bold text-xl">
-                                        <span>Total a Pagar</span>
+                                        <span>{t('checkout.total_payable')}</span>
                                         <span className="text-primary">{formatPrice(finalTotals.total)}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <Separator />
-                        <div><h3 className="font-semibold mb-2">Productos:</h3>{cartItems.map((item) => (<div key={item.id} className="flex items-center gap-4 py-1"><div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border"><Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" /></div><div className="flex-1"><p className="font-medium">{item.name}</p><p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p></div><p className="font-medium">{formatPrice(item.price * item.quantity)}</p></div>))}</div>
+                        <div><h3 className="font-semibold mb-2">{t('checkout.products_title')}</h3>{cartItems.map((item) => (<div key={item.id} className="flex items-center gap-4 py-1"><div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border"><Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" /></div><div className="flex-1"><p className="font-medium">{item.name}</p><p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p></div><p className="font-medium">{formatPrice(item.price * item.quantity)}</p></div>))}</div>
                         <Separator />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><h3 className="font-semibold mb-2">Dirección de Envío:</h3><div className="text-sm text-muted-foreground"><p>{formValues.name}</p><p>{formValues.phone}</p><p>{formValues.street}</p><p>{formValues.city}, {formValues.state}, {formValues.postalCode}</p><p>{formValues.country}</p></div></div>
+                            <div><h3 className="font-semibold mb-2">{t('checkout.shipping_address_title')}</h3><div className="text-sm text-muted-foreground"><p>{formValues.name}</p><p>{formValues.phone}</p><p>{formValues.street}</p><p>{formValues.city}, {formValues.state}, {formValues.postalCode}</p><p>{formValues.country}</p></div></div>
                             <div>
-                                <h3 className="font-semibold mb-2">Dirección de Facturación:</h3>
+                                <h3 className="font-semibold mb-2">{t('checkout.billing_address_title')}</h3>
                                 {formValues.useDifferentBilling ? (
                                     <div className="text-sm text-muted-foreground">
                                         <p>{formValues.billing_name}</p>
@@ -781,24 +787,24 @@ export default function CheckoutClientPage() {
                                         <p>{formValues.billing_city}, {formValues.billing_state}, {formValues.billing_postalCode}</p>
                                         <p>{formValues.billing_country}</p>
                                     </div>
-                                ) : (<p className="text-sm text-muted-foreground">La misma que la de envío.</p>)}
+                                ) : (<p className="text-sm text-muted-foreground">{t('checkout.billing_address_same')}</p>)}
                             </div>
                         </div>
-                         <div><h3 className="font-semibold mb-2">Método de Pago:</h3><div className="text-sm text-muted-foreground"><p>{paymentMethods[form.getValues('paymentMethod').startsWith('cod') ? 'cod' : 'prepaid'].find(m => m.value === formValues.paymentMethod)?.label}</p></div></div>
+                         <div><h3 className="font-semibold mb-2">{t('checkout.payment_method')}</h3><div className="text-sm text-muted-foreground"><p>{paymentMethods[form.getValues('paymentMethod').startsWith('cod') ? 'cod' : 'prepaid'].find(m => m.value === formValues.paymentMethod)?.label}</p></div></div>
                         <Separator />
-                         <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? 'Recibirás las instrucciones de pago por email.' : 'El pago se realizará contra-entrega.'} Revisa tu email para más detalles.</p>
+                         <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? t('checkout.payment_instructions_prepaid') : t('checkout.payment_instructions_cod')} {t('checkout.payment_instructions_email')}</p>
                     </CardContent>
                 </Card>
             )}
 
             <div className="mt-8 flex justify-between items-center">
-                {step > 1 ? (<Button type="button" variant="outline" onClick={handlePrevStep}><ArrowLeft className="mr-2" /> Anterior</Button>) : (<Button asChild type="button" variant="outline"><Link href="/products">&larr; Seguir Comprando</Link></Button>)}
+                {step > 1 ? (<Button type="button" variant="outline" onClick={handlePrevStep}><ArrowLeft className="mr-2" /> {t('checkout.previous_button')}</Button>) : (<Button asChild type="button" variant="outline"><Link href="/products">&larr; {t('checkout.continue_shopping')}</Link></Button>)}
                 
-                {step < 4 && (<Button type="button" onClick={handleNextStep} disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Procesando...</> : 'Siguiente'}</Button>)}
+                {step < 4 && (<Button type="button" onClick={handleNextStep} disabled={loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('checkout.processing_button')}</> : t('checkout.next_button')}</Button>)}
                 
                 {step === 4 && (
                     <Button size="lg" type="submit" disabled={loading}>
-                        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Confirmando...</> : 'Confirmar Pedido'}
+                        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>{t('checkout.confirming_button')}</> : t('checkout.confirm_order_button')}
                     </Button>
                 )}
             </div>
