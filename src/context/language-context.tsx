@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
@@ -593,10 +592,10 @@ const translations: Record<Language, Translations> = {
       explore_button: 'Explorar Catálogo'
     },
     leather_cleaners_page: {
-      title: 'Leather Cleaners: Informação Essencial',
+      title: 'Limpadores de Couro: Informação Essencial',
       subtitle: 'Um guia claro sobre a finalidade, venda e uso dos nossos produtos para garantir uma compra segura e informada.',
-      philosophy_title: 'A Nossa Filosofia: "Leather Cleaners"',
-      philosophy_p1: 'Na nossa loja, os produtos coloquialmente conhecidos como "poppers" são comercializados sob a sua finalidade técnica e legal: <strong>Limpadores de Couro (Leather Cleaners)</strong>. Compreendemos que muitos clientes conhecem estes produtos pelo seu nome popular, e o nosso marketing visa facilitar-lhes a pesquisa.',
+      philosophy_title: 'A Nossa Filosofia: "Limpadores de Couro"',
+      philosophy_p1: 'Na nossa loja, os produtos coloquialmente conhecidos como "poppers" são comercializados sob a sua finalidade técnica e legal: <strong>Limpadores de Couro</strong>. Compreendemos que muitos clientes conhecem estes produtos pelo seu nome popular, e o nosso marketing visa facilitar-lhes a pesquisa.',
       philosophy_p2: 'No entanto, o nosso objetivo é ser transparentes e rigorosos. Todos os produtos líquidos que oferecemos são especificamente concebidos e fabricados para a <strong>limpeza e condicionamento de peças eróticas, brinquedos e acessórios de couro</strong>.',
       quality_alert_title: 'Qualidade e Normativa Europeia',
       quality_alert_p: 'Os nossos produtos são produzidos de acordo com as normativas europeias, garantindo a sua pureza e segurança para os fins técnicos previstos. Não são adequados nem fabricados para consumo humano.',
@@ -645,6 +644,54 @@ const translations: Record<Language, Translations> = {
       doubts_subtitle: 'Entre em contacto com a nossa equipa de especialistas.',
       contact_email: 'info@comprarpopperonline.com',
       explore_button: 'Explorar Catálogo'
+    },
+    cookies_page: {
+      title: 'Política de Cookies',
+      subtitle: 'En Popper Online utilizamos cookies y tecnologías similares para mejorar tu experiencia, garantizar la seguridad y analizar el uso de nuestro sitio. Aquí te explicamos cómo y por qué.',
+      what_is_title: '1. ¿Qué es una cookie?',
+      what_is_p1: 'Una cookie es un pequeño archivo de texto que un sitio web almacena en tu ordenador o dispositivo móvil cuando lo visitas. Permite que el sitio recuerde tus acciones y preferencias (como inicio de sesión, idioma, tamaño de fuente y otras preferencias de visualización) durante un período de tiempo, para que no tengas que volver a introducirlas cada vez que regresas al sitio o navegas de una página a otra.',
+      what_is_p2: 'También utilizamos `localStorage` y `sessionStorage` del navegador, que son tecnologías similares que nos permiten almacenar información sin depender únicamente de las cookies.',
+      types_title: '2. ¿Qué tipos de cookies utilizamos?',
+      technical_title: 'Cookies Técnicas (Estrictamente Necesarias)',
+      technical_p: 'Estas cookies son esenciales para que el sitio web funcione correctamente. No se pueden desactivar en nuestros sistemas. Se configuran en respuesta a acciones realizadas por ti, como iniciar sesión, añadir productos al carrito o completar formularios. Sin ellas, los servicios que has solicitado no pueden proporcionarse.',
+      examples: 'Ejemplos:',
+      technical_examples: 'Cookies de sesión de usuario, cookies del carrito de compras, cookies de seguridad de Stripe.',
+      analytics_title: 'Cookies de Análisis o Rendimiento',
+      analytics_p: 'Estas cookies nos permiten contar las visitas y fuentes de tráfico para poder medir y mejorar el rendimiento de nuestro sitio. Nos ayudan a saber qué páginas son las más y las menos populares, y a ver cómo los visitantes se mueven por el sitio. Toda la información que recogen estas cookies es agregada y, por lo tanto, anónima.',
+      analytics_examples: 'Usamos Microsoft Clarity para entender cómo interactúas con la web y mejorar la experiencia.',
+      marketing_title: 'Cookies de Marketing',
+      marketing_p: 'Estas cookies pueden ser establecidas a través de nuestro sitio por nuestros socios publicitarios. Pueden ser utilizadas por esas empresas para construir un perfil de tus intereses y mostrarte anuncios relevantes en otros sitios. No almacenan directamente información personal, sino que se basan en la identificación única de tu navegador y dispositivo de Internet.',
+      marketing_examples: 'Cookies de Klaviyo para gestionar suscripciones a nuestro boletín y notificaciones.',
+      manage_title: '3. Cómo gestionar tus preferencias de cookies',
+      manage_p1: 'Tienes el control total sobre tus cookies. Cuando visitas nuestro sitio por primera vez, te mostramos un banner donde puedes aceptar todas las cookies, rechazar las no esenciales o personalizar tus preferencias.',
+      manage_p2: 'Puedes cambiar de opinión en cualquier momento. Además, la mayoría de los navegadores web te permiten gestionar las cookies a través de la configuración del navegador. Puedes configurar tu navegador para que te notifique antes de aceptar cookies o puedes configurarlo para que las rechace directamente.',
+      manage_p3: 'Ten en cuenta que si eliges bloquear las cookies técnicas, es posible que algunas partes de nuestro sitio web no funcionen correctamente.'
+    },
+    disputes_page: {
+      subtitle: 'Aquí encontrarás toda la información sobre tus derechos y los procedimientos a seguir en caso de que necesites resolver un contrato o gestionar un litigio.',
+      right_of_withdrawal_title: 'Derecho de Libre Resolución',
+      right_of_withdrawal_p1: 'De acuerdo con el Decreto-Ley no. 24/2014 del 14 de febrero, tienes <strong>14 días naturales</strong> después de recibir tu pedido para proceder con la rescisión del contrato y la devolución de la mercancía. Para ello, debes comunicarnos tu decisión mediante una declaración inequívoca (por ejemplo, una carta o un correo electrónico a <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).',
+      right_of_withdrawal_p2: 'Una vez comunicada tu decisión, dispones de otros 14 días para devolver los productos. Es importante destacar que <strong>los costes de la devolución de los bienes corren íntegramente por tu cuenta.</strong>',
+      right_of_withdrawal_p3: 'Debes conservar los bienes para poder devolverlos en condiciones de uso adecuadas. Para que una devolución sea aceptada, los productos deben retornarse <strong>perfectamente sellados, sin abrir, sin usar, con todos sus precintos de seguridad intactos y en su embalaje original.</strong> Eres responsable de cualquier depreciación del valor si la manipulación de los productos excede lo necesario para una inspección puramente visual de su naturaleza.',
+      right_of_withdrawal_p4: 'Tras recibir la mercancía devuelta y comprobar su estado, te reembolsaremos todos los pagos recibidos, a excepción de los costes adicionales si elegiste un método de envío más caro que el estándar que ofrecemos. Nos reservamos el derecho a retener el reembolso hasta recibir los productos y verificar que cumplen las condiciones de devolución.',
+      exclusion_title: 'Exclusión del Derecho de Resolución',
+      exclusion_p1: 'No se aceptarán devoluciones en las siguientes situaciones, de acuerdo con la ley:',
+      exclusion_item1: 'Suministro de productos sellados que no pueden devolverse por razones de <strong>protección de la salud o de higiene</strong> y que han sido abiertos o desprecintados después de la entrega.',
+      exclusion_item2: 'Suministro de productos como cosméticos, artículos de cuidado personal, <strong>ropa interior o cualquier producto de uso íntimo</strong> cuyo embalaje haya sido comprometido.',
+      exclusion_item3: 'Grabaciones de audio/vídeo o software a los que se les haya quitado el sello de inviolabilidad.',
+      exclusion_item4: 'El cliente, como <strong>importador final</strong>, es el único responsable de asegurar que el producto es legal en su país. Costes de aduana, aranceles o confiscaciones son responsabilidad exclusiva del cliente y esto no dará derecho a reembolso.',
+      law_title: 'Ley Aplicable, Mediación y Jurisdicción',
+      law_p1: 'Este contrato se rige por la <strong>ley francesa</strong>. Para la resolución de cualquier disputa, la jurisdicción competente es la del <strong>Distrito de Perpiñán</strong>, con renuncia a cualquier otra.',
+      adr_title: 'Resolución Alternativa de Litigios (RAL)',
+      adr_p1: 'En caso de litigio, puedes recurrir a una Entidad de Resolución Alternativa de Litigios de Consumo. La mediación es un proceso gratuito y confidencial para resolver desacuerdos de forma amistosa con la ayuda de un tercero imparcial.',
+      adr_p2: 'Para litigios de consumo en línea, puedes utilizar la plataforma ODR (Online Dispute Resolution) de la Unión Europea, que facilita la resolución de disputas transfronterizas.',
+      odr_platform_button: 'Plataforma ODR de la UE',
+      mediators_button: 'Mediadores Oficiales (Francia)',
+      mediation_steps_title: 'Pasos para la Mediación',
+      mediation_step1: 'Antes de cualquier mediación, debes enviarnos una queja por escrito (preferiblemente por correo electrónico para tener constancia).',
+      mediation_step2: 'Si no recibes una respuesta satisfactoria de nuestra parte en un plazo razonable, puedes iniciar el procedimiento de mediación a través de la web del mediador.',
+      mediation_step3: 'El mediador te informará de la recepción de tu expediente y dispondrá de 90 días para proponer una solución. Ambas partes son libres de aceptarla o rechazarla.',
+      mediation_p_final: 'Para cualquier queja o consulta inicial, puedes contactarnos en <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.'
     }
   },
   en: {
@@ -1279,6 +1326,54 @@ const translations: Record<Language, Translations> = {
       doubts_subtitle: 'Get in touch with our team of experts.',
       contact_email: 'info@comprarpopperonline.com',
       explore_button: 'Explore Catalog'
+    },
+    cookies_page: {
+      title: 'Cookie Policy',
+      subtitle: 'At Popper Online, we use cookies and similar technologies to enhance your experience, ensure security, and analyze the use of our site. Here we explain how and why.',
+      what_is_title: '1. What is a cookie?',
+      what_is_p1: 'A cookie is a small text file that a website stores on your computer or mobile device when you visit it. It allows the site to remember your actions and preferences (such as login, language, font size, and other display preferences) over a period of time, so you don’t have to keep re-entering them whenever you come back to the site or browse from one page to another.',
+      what_is_p2: 'We also use browser `localStorage` and `sessionStorage`, which are similar technologies that allow us to store information without relying solely on cookies.',
+      types_title: '2. What types of cookies do we use?',
+      technical_title: 'Technical Cookies (Strictly Necessary)',
+      technical_p: 'These cookies are essential for the website to function correctly. They cannot be disabled in our systems. They are set in response to actions made by you, such as logging in, adding products to the cart, or filling out forms. Without them, the services you have requested cannot be provided.',
+      examples: 'Examples:',
+      technical_examples: 'User session cookies, shopping cart cookies, Stripe security cookies.',
+      analytics_title: 'Analytics or Performance Cookies',
+      analytics_p: 'These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us know which pages are the most and least popular, and see how visitors move around the site. All information these cookies collect is aggregated and therefore anonymous.',
+      analytics_examples: 'We use Microsoft Clarity to understand how you interact with the web and improve the experience.',
+      marketing_title: 'Marketing Cookies',
+      marketing_p: 'These cookies may be set through our site by our advertising partners. They may be used by those companies to build a profile of your interests and show you relevant ads on other sites. They do not store directly personal information, but are based on uniquely identifying your browser and internet device.',
+      marketing_examples: 'Klaviyo cookies to manage subscriptions to our newsletter and notifications.',
+      manage_title: '3. How to manage your cookie preferences',
+      manage_p1: 'You have full control over your cookies. When you visit our site for the first time, we show you a banner where you can accept all cookies, reject non-essential ones, or customize your preferences.',
+      manage_p2: 'You can change your mind at any time. In addition, most web browsers allow you to manage cookies through the browser settings. You can set your browser to notify you before accepting cookies or you can set it to reject them directly.',
+      manage_p3: 'Please note that if you choose to block technical cookies, some parts of our website may not function correctly.'
+    },
+    disputes_page: {
+      subtitle: 'Here you will find all the information about your rights and the procedures to follow in case you need to resolve a contract or manage a dispute.',
+      right_of_withdrawal_title: 'Right of Free Withdrawal',
+      right_of_withdrawal_p1: 'In accordance with Decree-Law no. 24/2014 of February 14, you have <strong>14 calendar days</strong> after receiving your order to proceed with the termination of the contract and the return of the merchandise. To do so, you must inform us of your decision by means of an unequivocal statement (for example, a letter or an email to <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).',
+      right_of_withdrawal_p2: 'Once your decision has been communicated, you have another 14 days to return the products. It is important to note that <strong>the costs of returning the goods are entirely at your expense.</strong>',
+      right_of_withdrawal_p3: 'You must keep the goods in order to be able to return them in suitable conditions of use. For a return to be accepted, the products must be returned <strong>perfectly sealed, unopened, unused, with all their security seals intact and in their original packaging.</strong> You are responsible for any depreciation in value if the handling of the products exceeds what is necessary for a purely visual inspection of their nature.',
+      right_of_withdrawal_p4: 'After receiving the returned merchandise and checking its condition, we will refund all payments received, with the exception of additional costs if you chose a more expensive shipping method than the standard one we offer. We reserve the right to withhold the refund until we have received the products and verified that they meet the return conditions.',
+      exclusion_title: 'Exclusion of the Right of Withdrawal',
+      exclusion_p1: 'Returns will not be accepted in the following situations, in accordance with the law:',
+      exclusion_item1: 'Supply of sealed products that cannot be returned for reasons of <strong>health protection or hygiene</strong> and that have been opened or unsealed after delivery.',
+      exclusion_item2: 'Supply of products such as cosmetics, personal care items, <strong>underwear or any product for intimate use</strong> whose packaging has been compromised.',
+      exclusion_item3: 'Audio/video recordings or software from which the inviolability seal has been removed.',
+      exclusion_item4: 'The customer, as the <strong>final importer</strong>, is solely responsible for ensuring that the product is legal in their country. Customs costs, duties, or confiscations are the exclusive responsibility of the customer and this will not entitle them to a refund.',
+      law_title: 'Applicable Law, Mediation, and Jurisdiction',
+      law_p1: 'This contract is governed by <strong>French law</strong>. For the resolution of any dispute, the competent jurisdiction is that of the <strong>District of Perpignan</strong>, with waiver of any other.',
+      adr_title: 'Alternative Dispute Resolution (ADR)',
+      adr_p1: 'In the event of a dispute, you can resort to a Consumer Alternative Dispute Resolution Entity. Mediation is a free and confidential process to resolve disagreements amicably with the help of an impartial third party.',
+      adr_p2: 'For online consumer disputes, you can use the ODR (Online Dispute Resolution) platform of the European Union, which facilitates the resolution of cross-border disputes.',
+      odr_platform_button: 'EU ODR Platform',
+      mediators_button: 'Official Mediators (France)',
+      mediation_steps_title: 'Steps for Mediation',
+      mediation_step1: 'Before any mediation, you must send us a written complaint (preferably by email to have a record).',
+      mediation_step2: 'If you do not receive a satisfactory response from us within a reasonable time, you can start the mediation procedure through the mediator\'s website.',
+      mediation_step3: 'The mediator will inform you of the receipt of your file and will have 90 days to propose a solution. Both parties are free to accept or reject it.',
+      mediation_p_final: 'For any initial complaint or query, you can contact us at <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.'
     }
   },
   fr: {
@@ -1694,7 +1789,7 @@ const translations: Record<Language, Translations> = {
         section1_1: "<strong>1.1. Identification du Vendeur:</strong> La vente de produits via ce site web est réalisée par l'entité enregistrée sous la marque commerciale MARY AND POPPER (ABN 37 588 057 135), avec siège social à U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIE. Cette entité opère en tant que Vendeur auprès de consommateurs de plus de 18 ans.",
         section1_2: "<strong>1.2. Logistique et Fourniture:</strong> Ces Conditions régissent l'achat de produits, dont la gestion logistique et l'expédition (fulfillment) sont assurées par un partenaire collaborateur basé en France. Le Vendeur n'est pas responsable de la fourniture de biens ou de services par des entités autres que le Vendeur ou son partenaire logistique.",
         section1_3: "<strong>1.3.</strong> Les informations ou données personnelles fournies seront traitées conformément à notre Politique de Confidentialité. En utilisant ce site, vous consentez au traitement des informations et des données et déclarez que toutes les informations et données fournies sont vraies et exactes.",
-        section1_4: "<strong>1.4.</strong> Le Client sera identifié par les données fournies dans la Commande. Il est interdit de fournir des données fausses et/ou inventées : le Vendeur est exonéré de toute responsabilité à cet égard.",
+        section1_4: "<strong>1CRM Marketing Manager</strong> Le Client sera identifié par les données fournies dans la Commande. Il est interdit de fournir des données fausses et/ou inventées : le Vendeur est exonéré de toute responsabilité à cet égard.",
         section2_title: "2. Portée du contrat",
         section2_p1: "Les informations mentionnées dans ces Conditions Générales en ligne et les données contenues sur le Site Web ne constituent pas une offre au public, mais une invitation à passer une Commande. Après soumission de la Proposition de Commande, le Client recevra un email de confirmation de réception ('Confirmation de Commande'). Cet email ne constitue pas une acceptation de la Commande, qui ne sera considérée comme acceptée que lorsque le Client recevra un email confirmant que la Commande a été acceptée et que le Paiement a été accepté ('Paiement Accepté'). Le contrat d'achat en ligne ('Contrat') ne sera considéré comme conclu que lorsque le Client recevra la Confirmation de Commande et d'Expédition.",
         section3_title: "3. Prix",
@@ -1913,6 +2008,54 @@ const translations: Record<Language, Translations> = {
       doubts_subtitle: 'Contactez notre équipe d\'experts.',
       contact_email: 'info@comprarpopperonline.com',
       explore_button: 'Explorer le Catalogue'
+    },
+    cookies_page: {
+      title: 'Politique de Cookies',
+      subtitle: 'Chez Popper Online, nous utilisons des cookies et des technologies similaires pour améliorer votre expérience, garantir la sécurité et analyser l\'utilisation de notre site. Nous expliquons ici comment et pourquoi.',
+      what_is_title: '1. Qu\'est-ce qu\'un cookie ?',
+      what_is_p1: 'Un cookie est un petit fichier texte qu\'un site web stocke sur votre ordinateur ou appareil mobile lorsque vous le visitez. Il permet au site de se souvenir de vos actions et préférences (telles que la connexion, la langue, la taille de la police et d\'autres préférences d\'affichage) sur une période de temps, afin que vous n\'ayez pas à les saisir à nouveau chaque fois que vous revenez sur le site ou naviguez d\'une page à l\'autre.',
+      what_is_p2: 'Nous utilisons également le `localStorage` et le `sessionStorage` du navigateur, qui sont des technologies similaires nous permettant de stocker des informations sans dépendre uniquement des cookies.',
+      types_title: '2. Quels types de cookies utilisons-nous ?',
+      technical_title: 'Cookies Techniques (Strictement Nécessaires)',
+      technical_p: 'Ces cookies sont essentiels au bon fonctionnement du site web. Ils ne peuvent pas être désactivés dans nos systèmes. Ils sont configurés en réponse à des actions que vous effectuez, telles que la connexion, l\'ajout de produits au panier ou le remplissage de formulaires. Sans eux, les services que vous avez demandés ne peuvent pas être fournis.',
+      examples: 'Exemples :',
+      technical_examples: 'Cookies de session utilisateur, cookies de panier d\'achat, cookies de sécurité Stripe.',
+      analytics_title: 'Cookies d\'Analyse ou de Performance',
+      analytics_p: 'Ces cookies nous permettent de compter les visites et les sources de trafic afin de mesurer et d\'améliorer les performances de notre site. Ils nous aident à savoir quelles pages sont les plus et les moins populaires, et à voir comment les visiteurs se déplacent sur le site. Toutes les informations collectées par ces cookies sont agrégées et donc anonymes.',
+      analytics_examples: 'Nous utilisons Microsoft Clarity pour comprendre comment vous interagissez avec le web et améliorer l\'expérience.',
+      marketing_title: 'Cookies de Marketing',
+      marketing_p: 'Ces cookies peuvent être placés sur notre site par nos partenaires publicitaires. Ils peuvent être utilisés par ces entreprises pour établir un profil de vos intérêts et vous montrer des publicités pertinentes sur d\'autres sites. Ils ne stockent pas directement d\'informations personnelles, mais sont basés sur l\'identification unique de votre navigateur et de votre appareil Internet.',
+      marketing_examples: 'Cookies de Klaviyo pour gérer les abonnements à notre newsletter et les notifications.',
+      manage_title: '3. Comment gérer vos préférences en matière de cookies',
+      manage_p1: 'Vous avez le contrôle total sur vos cookies. Lors de votre première visite sur notre site, nous vous montrons une bannière où vous pouvez accepter tous les cookies, refuser les non essentiels ou personnaliser vos préférences.',
+      manage_p2: 'Vous pouvez changer d\'avis à tout moment. De plus, la plupart des navigateurs web vous permettent de gérer les cookies via les paramètres du navigateur. Vous pouvez configurer votre navigateur pour qu\'il vous avertisse avant d\'accepter des cookies ou pour qu\'il les refuse directement.',
+      manage_p3: 'Veuillez noter que si vous choisissez de bloquer les cookies techniques, certaines parties de notre site web pourraient ne pas fonctionner correctement.'
+    },
+    disputes_page: {
+      subtitle: 'Vous trouverez ici toutes les informations sur vos droits et les procédures à suivre si vous devez résilier un contrat ou gérer un litige.',
+      right_of_withdrawal_title: 'Droit de Rétractation Libre',
+      right_of_withdrawal_p1: 'Conformément au décret-loi n° 24/2014 du 14 février, vous disposez de <strong>14 jours calendaires</strong> après réception de votre commande pour procéder à la résiliation du contrat et au retour de la marchandise. Pour ce faire, vous devez nous informer de votre décision au moyen d\'une déclaration sans équivoque (par exemple, une lettre ou un e-mail à <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).',
+      right_of_withdrawal_p2: 'Une fois votre décision communiquée, vous disposez de 14 jours supplémentaires pour retourner les produits. Il est important de noter que <strong>les frais de retour de la marchandise sont entièrement à votre charge.</strong>',
+      right_of_withdrawal_p3: 'Vous devez conserver les biens afin de pouvoir les retourner dans des conditions d\'utilisation appropriées. Pour qu\'un retour soit accepté, les produits doivent être retournés <strong>parfaitement scellés, non ouverts, non utilisés, avec tous leurs sceaux de sécurité intacts et dans leur emballage d\'origine.</strong> Vous êtes responsable de toute dépréciation de la valeur si la manipulation des produits dépasse ce qui est nécessaire pour une inspection purement visuelle de leur nature.',
+      right_of_withdrawal_p4: 'Après réception de la marchandise retournée et vérification de son état, nous vous rembourserons tous les paiements reçus, à l\'exception des frais supplémentaires si vous avez choisi un mode de livraison plus cher que celui que nous proposons en standard. Nous nous réservons le droit de retenir le remboursement jusqu\'à réception des produits et vérification de leur conformité aux conditions de retour.',
+      exclusion_title: 'Exclusion du Droit de Rétractation',
+      exclusion_p1: 'Les retours ne seront pas acceptés dans les situations suivantes, conformément à la loi :',
+      exclusion_item1: 'Fourniture de produits scellés qui ne peuvent être retournés pour des raisons de <strong>protection de la santé ou d\'hygiène</strong> et qui ont été ouverts ou descellés après la livraison.',
+      exclusion_item2: 'Fourniture de produits tels que cosmétiques, articles de soins personnels, <strong>sous-vêtements ou tout produit à usage intime</strong> dont l\'emballage a été compromis.',
+      exclusion_item3: 'Enregistrements audio/vidéo ou logiciels dont le sceau d\'inviolabilité a été retiré.',
+      exclusion_item4: 'Le client, en tant qu\'<strong>importateur final</strong>, est seul responsable de s\'assurer que le produit est légal dans son pays. Les frais de douane, droits ou confiscations sont de la responsabilité exclusive du client et cela ne lui donnera pas droit à un remboursement.',
+      law_title: 'Droit Applicable, Médiation et Juridiction',
+      law_p1: 'Ce contrat est régi par le <strong>droit français</strong>. Pour la résolution de tout litige, la juridiction compétente est celle du <strong>District de Perpignan</strong>, avec renonciation à toute autre.',
+      adr_title: 'Résolution Alternative des Litiges (RAL)',
+      adr_p1: 'En cas de litige, vous pouvez recourir à une Entité de Résolution Alternative des Litiges de Consommation. La médiation est un processus gratuit et confidentiel pour résoudre les désaccords à l\'amiable avec l\'aide d\'un tiers impartial.',
+      adr_p2: 'Pour les litiges de consommation en ligne, vous pouvez utiliser la plateforme ODR (Online Dispute Resolution) de l\'Union Européenne, qui facilite la résolution des litiges transfrontaliers.',
+      odr_platform_button: 'Plateforme ODR de l\'UE',
+      mediators_button: 'Médiateurs Officiels (France)',
+      mediation_steps_title: 'Étapes de la Médiation',
+      mediation_step1: 'Avant toute médiation, vous devez nous envoyer une réclamation écrite (de préférence par e-mail pour avoir une trace).',
+      mediation_step2: 'Si vous ne recevez pas de réponse satisfaisante de notre part dans un délai raisonnable, vous pouvez lancer la procédure de médiation via le site web du médiateur.',
+      mediation_step3: 'Le médiateur vous informera de la réception de votre dossier et disposera de 90 jours pour proposer une solution. Les deux parties sont libres de l\'accepter ou de la refuser.',
+      mediation_p_final: 'Pour toute réclamation ou question initiale, vous pouvez nous contacter à <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.'
     }
   },
   de: {
@@ -2547,6 +2690,54 @@ const translations: Record<Language, Translations> = {
       doubts_subtitle: 'Nehmen Sie Kontakt mit unserem Expertenteam auf.',
       contact_email: 'info@comprarpopperonline.com',
       explore_button: 'Katalog durchsuchen'
+    },
+    cookies_page: {
+      title: 'Cookie-Richtlinie',
+      subtitle: 'Bei Popper Online verwenden wir Cookies und ähnliche Technologien, um Ihre Erfahrung zu verbessern, die Sicherheit zu gewährleisten und die Nutzung unserer Website zu analysieren. Hier erklären wir, wie und warum.',
+      what_is_title: '1. Was ist ein Cookie?',
+      what_is_p1: 'Ein Cookie ist eine kleine Textdatei, die eine Website auf Ihrem Computer oder Mobilgerät speichert, wenn Sie sie besuchen. Es ermöglicht der Website, sich Ihre Aktionen und Präferenzen (wie Login, Sprache, Schriftgröße und andere Anzeigeeinstellungen) über einen bestimmten Zeitraum zu merken, damit Sie sie nicht jedes Mal neu eingeben müssen, wenn Sie zur Website zurückkehren oder von einer Seite zur anderen navigieren.',
+      what_is_p2: 'Wir verwenden auch `localStorage` und `sessionStorage` des Browsers, bei denen es sich um ähnliche Technologien handelt, die es uns ermöglichen, Informationen zu speichern, ohne uns ausschließlich auf Cookies verlassen zu müssen.',
+      types_title: '2. Welche Arten von Cookies verwenden wir?',
+      technical_title: 'Technische Cookies (Unbedingt Erforderlich)',
+      technical_p: 'Diese Cookies sind für das ordnungsgemäße Funktionieren der Website unerlässlich. Sie können in unseren Systemen nicht deaktiviert werden. Sie werden als Reaktion auf von Ihnen durchgeführte Aktionen gesetzt, wie z. B. Einloggen, Hinzufügen von Produkten zum Warenkorb oder Ausfüllen von Formularen. Ohne sie können die von Ihnen angeforderten Dienste nicht bereitgestellt werden.',
+      examples: 'Beispiele:',
+      technical_examples: 'Benutzersitzungs-Cookies, Warenkorb-Cookies, Stripe-Sicherheits-Cookies.',
+      analytics_title: 'Analyse- oder Leistungs-Cookies',
+      analytics_p: 'Diese Cookies ermöglichen es uns, Besuche und Verkehrsquellen zu zählen, damit wir die Leistung unserer Website messen und verbessern können. Sie helfen uns zu wissen, welche Seiten am beliebtesten und am wenigsten beliebt sind, und zu sehen, wie sich Besucher auf der Website bewegen. Alle von diesen Cookies gesammelten Informationen sind aggregiert und daher anonym.',
+      analytics_examples: 'Wir verwenden Microsoft Clarity, um zu verstehen, wie Sie mit der Website interagieren und die Erfahrung zu verbessern.',
+      marketing_title: 'Marketing-Cookies',
+      marketing_p: 'Diese Cookies können über unsere Website von unseren Werbepartnern gesetzt werden. Sie können von diesen Unternehmen verwendet werden, um ein Profil Ihrer Interessen zu erstellen und Ihnen relevante Anzeigen auf anderen Websites anzuzeigen. Sie speichern keine direkten persönlichen Informationen, sondern basieren auf der eindeutigen Identifizierung Ihres Browsers und Internetgeräts.',
+      marketing_examples: 'Klaviyo-Cookies zur Verwaltung von Abonnements unseres Newsletters und Benachrichtigungen.',
+      manage_title: '3. Wie Sie Ihre Cookie-Einstellungen verwalten',
+      manage_p1: 'Sie haben die volle Kontrolle über Ihre Cookies. Wenn Sie unsere Website zum ersten Mal besuchen, zeigen wir Ihnen ein Banner, auf dem Sie alle Cookies akzeptieren, nicht wesentliche ablehnen oder Ihre Einstellungen anpassen können.',
+      manage_p2: 'Sie können Ihre Meinung jederzeit ändern. Darüber hinaus ermöglichen Ihnen die meisten Webbrowser, Cookies über die Browsereinstellungen zu verwalten. Sie können Ihren Browser so einstellen, dass er Sie benachrichtigt, bevor er Cookies akzeptiert, oder Sie können ihn so einstellen, dass er sie direkt ablehnt.',
+      manage_p3: 'Bitte beachten Sie, dass einige Teile unserer Website möglicherweise nicht ordnungsgemäß funktionieren, wenn Sie technische Cookies blockieren.'
+    },
+    disputes_page: {
+      subtitle: 'Hier finden Sie alle Informationen über Ihre Rechte und die zu befolgenden Verfahren, falls Sie einen Vertrag auflösen oder einen Rechtsstreit führen müssen.',
+      right_of_withdrawal_title: 'Recht auf freien Widerruf',
+      right_of_withdrawal_p1: 'Gemäß dem Gesetzesdekret Nr. 24/2014 vom 14. Februar haben Sie <strong>14 Kalendertage</strong> nach Erhalt Ihrer Bestellung Zeit, um den Vertrag zu kündigen und die Ware zurückzugeben. Dazu müssen Sie uns Ihre Entscheidung durch eine eindeutige Erklärung mitteilen (z. B. einen Brief oder eine E-Mail an <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).',
+      right_of_withdrawal_p2: 'Nachdem Sie Ihre Entscheidung mitgeteilt haben, haben Sie weitere 14 Tage Zeit, um die Produkte zurückzusenden. Es ist wichtig zu beachten, dass <strong>die Kosten für die Rücksendung der Ware vollständig von Ihnen getragen werden.</strong>',
+      right_of_withdrawal_p3: 'Sie müssen die Ware aufbewahren, um sie in einem geeigneten Gebrauchszustand zurückgeben zu können. Damit eine Rücksendung akzeptiert wird, müssen die Produkte <strong>perfekt versiegelt, ungeöffnet, unbenutzt, mit allen intakten Sicherheitssiegeln und in ihrer Originalverpackung</strong> zurückgesandt werden. Sie sind für jede Wertminderung verantwortlich, wenn die Handhabung der Produkte über das hinausgeht, was für eine rein visuelle Prüfung ihrer Beschaffenheit erforderlich ist.',
+      right_of_withdrawal_p4: 'Nach Erhalt der zurückgesandten Ware und Überprüfung ihres Zustands erstatten wir Ihnen alle erhaltenen Zahlungen, mit Ausnahme zusätzlicher Kosten, wenn Sie eine teurere Versandart als die von uns angebotene Standardversandart gewählt haben. Wir behalten uns das Recht vor, die Rückerstattung zurückzuhalten, bis wir die Produkte erhalten und überprüft haben, ob sie die Rückgabebedingungen erfüllen.',
+      exclusion_title: 'Ausschluss des Widerrufsrechts',
+      exclusion_p1: 'Rücksendungen werden in den folgenden Situationen gemäß dem Gesetz nicht akzeptiert:',
+      exclusion_item1: 'Lieferung von versiegelten Produkten, die aus Gründen des <strong>Gesundheitsschutzes oder der Hygiene</strong> nicht zurückgegeben werden können und nach der Lieferung geöffnet oder entsiegelt wurden.',
+      exclusion_item2: 'Lieferung von Produkten wie Kosmetika, Körperpflegeartikeln, <strong>Unterwäsche oder jedem Produkt für den intimen Gebrauch</strong>, dessen Verpackung kompromittiert wurde.',
+      exclusion_item3: 'Audio-/Videoaufzeichnungen oder Software, deren Unverletzlichkeitssiegel entfernt wurde.',
+      exclusion_item4: 'Der Kunde ist als <strong>Endimporteur</strong> allein dafür verantwortlich, sicherzustellen, dass das Produkt in seinem Land legal ist. Zollkosten, Zölle oder Beschlagnahmungen liegen in der alleinigen Verantwortung des Kunden und berechtigen ihn nicht zu einer Rückerstattung.',
+      law_title: 'Anwendbares Recht, Schlichtung und Gerichtsstand',
+      law_p1: 'Dieser Vertrag unterliegt dem <strong>französischen Recht</strong>. Für die Beilegung von Streitigkeiten ist die Gerichtsbarkeit des <strong>Bezirks Perpignan</strong> zuständig, unter Verzicht auf jede andere.',
+      adr_title: 'Alternative Streitbeilegung (AS)',
+      adr_p1: 'Im Falle eines Rechtsstreits können Sie sich an eine alternative Streitbeilegungsstelle für Verbraucher wenden. Die Schlichtung ist ein kostenloses und vertrauliches Verfahren zur gütlichen Beilegung von Meinungsverschiedenheiten mit Hilfe eines unparteiischen Dritten.',
+      adr_p2: 'Für Online-Verbraucherstreitigkeiten können Sie die ODR-Plattform (Online Dispute Resolution) der Europäischen Union nutzen, die die Beilegung von grenzüberschreitenden Streitigkeiten erleichtert.',
+      odr_platform_button: 'EU-ODR-Plattform',
+      mediators_button: 'Offizielle Mediatoren (Frankreich)',
+      mediation_steps_title: 'Schritte zur Schlichtung',
+      mediation_step1: 'Vor jeder Schlichtung müssen Sie uns eine schriftliche Beschwerde senden (vorzugsweise per E-Mail, um einen Nachweis zu haben).',
+      mediation_step2: 'Wenn Sie innerhalb einer angemessenen Frist keine zufriedenstellende Antwort von uns erhalten, können Sie das Schlichtungsverfahren über die Website des Mediators einleiten.',
+      mediation_step3: 'Der Mediator wird Sie über den Eingang Ihrer Akte informieren und hat 90 Tage Zeit, um eine Lösung vorzuschlagen. Beide Parteien können diese annehmen oder ablehnen.',
+      mediation_p_final: 'Für jede anfängliche Beschwerde oder Anfrage können Sie uns unter <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a> kontaktieren.'
     }
   },
   it: {
@@ -2961,8 +3152,8 @@ const translations: Record<Language, Translations> = {
         section1_title: "1. Parti coinvolte",
         section1_1: "<strong>1.1. Identificazione del Venditore:</strong> La vendita di prodotti tramite questo sito web è effettuata dall'entità registrata con il marchio MARY AND POPPER (ABN 37 588 057 135), con sede legale in U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA. Questa entità opera come Venditore per consumatori di età superiore ai 18 anni.",
         section1_2: "<strong>1.2. Logistica e Fornitura:</strong> Le presenti Condizioni regolano l'acquisto di prodotti, la cui gestione logistica e spedizione (fulfillment) sono effettuate tramite un partner collaboratore con sede in Francia. Il Venditore non è responsabile della fornitura di beni o servizi da parte di entità diverse dal Venditore o dal suo partner logistico.",
-        section1_3: "<strong>1.3.</strong> Le informazioni o i dati personali forniti saranno trattati in conformità con la nostra Politica sulla Privacy. Utilizzando questo sito, acconsentite al trattamento delle informazioni e dei dati e dichiarate che tutte le informazioni e i dati forniti sono veri e accurati.",
-        section1_4: "<strong>1CRM Marketing Manager</strong> Il Cliente sarà identificato tramite i dati forniti nell'Ordine. È vietato fornire dati falsi e/o inventati: il Venditore è esente da qualsiasi responsabilità in merito.",
+        section1_3: "<strong>1CRM Marketing Manager</strong> Le informazioni o i dati personali forniti saranno trattati in conformità con la nostra Politica sulla Privacy. Utilizzando questo sito, acconsentite al trattamento delle informazioni e dei dati e dichiarate che tutte le informazioni e i dati forniti sono veri e accurati.",
+        section1_4: "<strong>1.4.</strong> Il Cliente sarà identificato tramite i dati forniti nell'Ordine. È vietato fornire dati falsi e/o inventati: il Venditore è esente da qualsiasi responsabilità in merito.",
         section2_title: "2. Ambito del contratto",
         section2_p1: "Le informazioni a cui si fa riferimento in queste Condizioni Generali online e i dati contenuti nel Sito Web non costituiscono un'offerta al pubblico, ma un invito a effettuare un Ordine. Dopo l'invio della Proposta d'Ordine, il Cliente riceverà un'e-mail di conferma di ricezione ('Conferma d'Ordine'). Questa e-mail non costituisce l'accettazione dell'Ordine, che sarà considerata accettata solo quando il Cliente riceverà un'e-mail che conferma che l'Ordine è stato accettato e che il Pagamento è stato accettato ('Pagamento Accettato'). Il contratto di acquisto online ('Contratto') si considererà concluso solo quando il Cliente riceverà la Conferma d'Ordine e di Spedizione.",
         section3_title: "3. Prezzo",
@@ -3181,6 +3372,54 @@ const translations: Record<Language, Translations> = {
       doubts_subtitle: 'Contattate il nostro team di esperti.',
       contact_email: 'info@comprarpopperonline.com',
       explore_button: 'Esplora il Catalogo'
+    },
+    cookies_page: {
+      title: 'Politica sui Cookie',
+      subtitle: 'In Popper Online, utilizziamo cookie e tecnologie simili per migliorare la tua esperienza, garantire la sicurezza e analizzare l\'uso del nostro sito. Qui ti spieghiamo come e perché.',
+      what_is_title: '1. Cos\'è un cookie?',
+      what_is_p1: 'Un cookie è un piccolo file di testo che un sito web salva sul tuo computer o dispositivo mobile quando lo visiti. Permette al sito di ricordare le tue azioni e preferenze (come login, lingua, dimensione dei caratteri e altre preferenze di visualizzazione) per un periodo di tempo, così non devi reinserirle ogni volta che torni sul sito o navighi da una pagina all\'altra.',
+      what_is_p2: 'Utilizziamo anche `localStorage` e `sessionStorage` del browser, che sono tecnologie simili che ci permettono di memorizzare informazioni senza dipendere unicamente dai cookie.',
+      types_title: '2. Che tipi di cookie utilizziamo?',
+      technical_title: 'Cookie Tecnici (Strettamente Necessari)',
+      technical_p: 'Questi cookie sono essenziali per il corretto funzionamento del sito web. Non possono essere disattivati nei nostri sistemi. Vengono impostati in risposta ad azioni da te effettuate, come l\'accesso, l\'aggiunta di prodotti al carrello o la compilazione di moduli. Senza di essi, i servizi che hai richiesto non possono essere forniti.',
+      examples: 'Esempi:',
+      technical_examples: 'Cookie di sessione utente, cookie del carrello, cookie di sicurezza di Stripe.',
+      analytics_title: 'Cookie di Analisi o Prestazione',
+      analytics_p: 'Questi cookie ci permettono di contare le visite e le fonti di traffico per poter misurare e migliorare le prestazioni del nostro sito. Ci aiutano a sapere quali pagine sono le più e le meno popolari e a vedere come i visitatori si muovono nel sito. Tutte le informazioni raccolte da questi cookie sono aggregate e quindi anonime.',
+      analytics_examples: 'Usiamo Microsoft Clarity per capire come interagisci con il sito e migliorare l\'esperienza.',
+      marketing_title: 'Cookie di Marketing',
+      marketing_p: 'Questi cookie possono essere impostati attraverso il nostro sito dai nostri partner pubblicitari. Possono essere utilizzati da tali aziende per creare un profilo dei tuoi interessi e mostrarti annunci pertinenti su altri siti. Non memorizzano direttamente informazioni personali, ma si basano sull\'identificazione univoca del tuo browser e del tuo dispositivo internet.',
+      marketing_examples: 'Cookie di Klaviyo per gestire le iscrizioni alla nostra newsletter e le notifiche.',
+      manage_title: '3. Come gestire le tue preferenze sui cookie',
+      manage_p1: 'Hai il pieno controllo sui tuoi cookie. Quando visiti il nostro sito per la prima volta, ti mostriamo un banner dove puoi accettare tutti i cookie, rifiutare quelli non essenziali o personalizzare le tue preferenze.',
+      manage_p2: 'Puoi cambiare idea in qualsiasi momento. Inoltre, la maggior parte dei browser web ti permette di gestire i cookie attraverso le impostazioni del browser. Puoi impostare il tuo browser in modo che ti avvisi prima di accettare i cookie o puoi impostarlo per rifiutarli direttamente.',
+      manage_p3: 'Tieni presente che se scegli di bloccare i cookie tecnici, alcune parti del nostro sito web potrebbero non funzionare correttamente.'
+    },
+    disputes_page: {
+      subtitle: 'Qui troverai tutte le informazioni sui tuoi diritti e le procedure da seguire nel caso in cui tu debba risolvere un contratto o gestire una controversia.',
+      right_of_withdrawal_title: 'Diritto di Recesso Libero',
+      right_of_withdrawal_p1: 'In conformità con il Decreto-Legge n. 24/2014 del 14 febbraio, hai <strong>14 giorni di calendario</strong> dopo aver ricevuto il tuo ordine per procedere alla risoluzione del contratto e alla restituzione della merce. Per farlo, devi comunicarci la tua decisione tramite una dichiarazione inequivocabile (ad esempio, una lettera o un\'e-mail a <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).',
+      right_of_withdrawal_p2: 'Una volta comunicata la tua decisione, hai altri 14 giorni per restituire i prodotti. È importante notare che <strong>i costi di restituzione della merce sono interamente a tuo carico.</strong>',
+      right_of_withdrawal_p3: 'Devi conservare i beni per poterli restituire in condizioni d\'uso adeguate. Affinché un reso sia accettato, i prodotti devono essere restituiti <strong>perfettamente sigillati, non aperti, non usati, con tutti i sigilli di sicurezza intatti e nella loro confezione originale.</strong> Sei responsabile di qualsiasi deprezzamento del valore se la manipolazione dei prodotti supera quanto necessario per una pura ispezione visiva della loro natura.',
+      right_of_withdrawal_p4: 'Dopo aver ricevuto la merce restituita e averne verificato lo stato, ti rimborseremo tutti i pagamenti ricevuti, ad eccezione dei costi aggiuntivi se hai scelto un metodo di spedizione più costoso di quello standard che offriamo. Ci riserviamo il diritto di trattenere il rimborso fino a quando non avremo ricevuto i prodotti e verificato che soddisfino le condizioni di reso.',
+      exclusion_title: 'Esclusione del Diritto di Recesso',
+      exclusion_p1: 'I resi non saranno accettati nelle seguenti situazioni, in conformità con la legge:',
+      exclusion_item1: 'Fornitura di prodotti sigillati che non possono essere restituiti per motivi di <strong>protezione della salute o di igiene</strong> e che sono stati aperti o dissigillati dopo la consegna.',
+      exclusion_item2: 'Fornitura di prodotti come cosmetici, articoli per la cura personale, <strong>biancheria intima o qualsiasi prodotto per uso intimo</strong> la cui confezione è stata compromessa.',
+      exclusion_item3: 'Registrazioni audio/video o software a cui è stato rimosso il sigillo di inviolabilità.',
+      exclusion_item4: 'Il cliente, in qualità di <strong>importatore finale</strong>, è l\'unico responsabile di assicurarsi che il prodotto sia legale nel proprio paese. I costi doganali, i dazi o le confische sono di esclusiva responsabilità del cliente e ciò non darà diritto a un rimborso.',
+      law_title: 'Legge Applicabile, Mediazione e Giurisdizione',
+      law_p1: 'Questo contratto è regolato dalla <strong>legge francese</strong>. Per la risoluzione di qualsiasi controversia, la giurisdizione competente è quella del <strong>Distretto di Perpignan</strong>, con rinuncia a qualsiasi altra.',
+      adr_title: 'Risoluzione Alternativa delle Controversie (ADR)',
+      adr_p1: 'In caso di controversia, puoi ricorrere a un Ente di Risoluzione Alternativa delle Controversie dei Consumatori. La mediazione è un processo gratuito e confidenziale per risolvere amichevolmente i disaccordi con l\'aiuto di un terzo imparziale.',
+      adr_p2: 'Per le controversie dei consumatori online, puoi utilizzare la piattaforma ODR (Online Dispute Resolution) dell\'Unione Europea, che facilita la risoluzione delle controversie transfrontaliere.',
+      odr_platform_button: 'Piattaforma ODR dell\'UE',
+      mediators_button: 'Mediatori Ufficiali (Francia)',
+      mediation_steps_title: 'Passi per la Mediazione',
+      mediation_step1: 'Prima di qualsiasi mediazione, devi inviarci un reclamo scritto (preferibilmente via e-mail per avere una traccia).',
+      mediation_step2: 'Se non ricevi una risposta soddisfacente da parte nostra entro un tempo ragionevole, puoi avviare la procedura di mediazione tramite il sito web del mediatore.',
+      mediation_step3: 'Il mediatore ti informerà della ricezione della tua pratica e avrà 90 giorni per proporre una soluzione. Entrambe le parti sono libere di accettarla o rifiutarla.',
+      mediation_p_final: 'Per qualsiasi reclamo o richiesta iniziale, puoi contattarci all\'indirizzo <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.'
     }
   },
   pt: {
@@ -3815,6 +4054,54 @@ const translations: Record<Language, Translations> = {
       doubts_subtitle: 'Entre em contacto com a nossa equipa de especialistas.',
       contact_email: 'info@comprarpopperonline.com',
       explore_button: 'Explorar Catálogo'
+    },
+    cookies_page: {
+      title: 'Política de Cookies',
+      subtitle: 'Na Popper Online, utilizamos cookies e tecnologias semelhantes para melhorar a sua experiência, garantir a segurança e analisar a utilização do nosso site. Aqui explicamos como e porquê.',
+      what_is_title: '1. O que é um cookie?',
+      what_is_p1: 'Um cookie é um pequeno ficheiro de texto que um website armazena no seu computador ou dispositivo móvel quando o visita. Permite que o site se lembre das suas ações e preferências (como login, idioma, tamanho da fonte e outras preferências de visualização) durante um período de tempo, para que não tenha de as reintroduzir sempre que regressar ao site ou navegar de uma página para outra.',
+      what_is_p2: 'Utilizamos também o `localStorage` e `sessionStorage` do navegador, que são tecnologias semelhantes que nos permitem armazenar informações sem depender unicamente dos cookies.',
+      types_title: '2. Que tipos de cookies utilizamos?',
+      technical_title: 'Cookies Técnicos (Estritamente Necessários)',
+      technical_p: 'Estes cookies são essenciais para o funcionamento correto do website. Não podem ser desativados nos nossos sistemas. São configurados em resposta a ações realizadas por si, como iniciar sessão, adicionar produtos ao carrinho ou preencher formulários. Sem eles, os serviços que solicitou não podem ser fornecidos.',
+      examples: 'Exemplos:',
+      technical_examples: 'Cookies de sessão do utilizador, cookies do carrinho de compras, cookies de segurança do Stripe.',
+      analytics_title: 'Cookies de Análise ou Desempenho',
+      analytics_p: 'Estes cookies permitem-nos contar as visitas e as fontes de tráfego para que possamos medir e melhorar o desempenho do nosso site. Ajudam-nos a saber quais são as páginas mais e menos populares e a ver como os visitantes se movem pelo site. Todas as informações que estes cookies recolhem são agregadas e, portanto, anónimas.',
+      analytics_examples: 'Usamos o Microsoft Clarity para entender como interage com a web e melhorar a experiência.',
+      marketing_title: 'Cookies de Marketing',
+      marketing_p: 'Estes cookies podem ser definidos através do nosso site pelos nossos parceiros de publicidade. Podem ser utilizados por essas empresas para criar um perfil dos seus interesses e mostrar-lhe anúncios relevantes noutros sites. Não armazenam diretamente informações pessoais, mas baseiam-se na identificação única do seu navegador e dispositivo de internet.',
+      marketing_examples: 'Cookies da Klaviyo para gerir as subscrições da nossa newsletter e notificações.',
+      manage_title: '3. Como gerir as suas preferências de cookies',
+      manage_p1: 'Tem controlo total sobre os seus cookies. Quando visita o nosso site pela primeira vez, mostramos-lhe um banner onde pode aceitar todos os cookies, rejeitar os não essenciais ou personalizar as suas preferências.',
+      manage_p2: 'Pode mudar de ideias a qualquer momento. Além disso, a maioria dos navegadores web permite-lhe gerir os cookies através das configurações do navegador. Pode configurar o seu navegador para o notificar antes de aceitar cookies ou pode configurá-lo para os rejeitar diretamente.',
+      manage_p3: 'Tenha em atenção que, se optar por bloquear os cookies técnicos, algumas partes do nosso website poderão não funcionar corretamente.'
+    },
+    disputes_page: {
+      subtitle: 'Aqui encontrará toda a informação sobre os seus direitos e os procedimentos a seguir caso necessite de resolver um contrato ou gerir um litígio.',
+      right_of_withdrawal_title: 'Direito de Livre Resolução',
+      right_of_withdrawal_p1: 'De acordo com o Decreto-Lei n.º 24/2014, de 14 de fevereiro, dispõe de <strong>14 dias de calendário</strong> após a receção da sua encomenda para proceder à rescisão do contrato e à devolução da mercadoria. Para tal, deve comunicar-nos a sua decisão através de uma declaração inequívoca (por exemplo, uma carta ou um e-mail para <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>).',
+      right_of_withdrawal_p2: 'Uma vez comunicada a sua decisão, dispõe de mais 14 dias para devolver os produtos. É importante salientar que <strong>os custos da devolução dos bens são integralmente por sua conta.</strong>',
+      right_of_withdrawal_p3: 'Deve conservar os bens para os poder devolver em condições de uso adequadas. Para que uma devolução seja aceite, os produtos devem ser devolvidos <strong>perfeitamente selados, por abrir, sem uso, com todos os seus selos de segurança intactos e na sua embalagem original.</strong> É responsável por qualquer depreciação do valor se o manuseamento dos produtos exceder o necessário para uma inspeção puramente visual da sua natureza.',
+      right_of_withdrawal_p4: 'Após recebermos a mercadoria devolvida e verificarmos o seu estado, reembolsaremos todos os pagamentos recebidos, à exceção dos custos adicionais se escolheu um método de envio mais caro do que o padrão que oferecemos. Reservamo-nos o direito de reter o reembolso até recebermos os produtos e verificarmos que cumprem as condições de devolução.',
+      exclusion_title: 'Exclusão do Direito de Resolução',
+      exclusion_p1: 'Não serão aceites devoluções nas seguintes situações, de acordo com a lei:',
+      exclusion_item1: 'Fornecimento de produtos selados que não podem ser devolvidos por razões de <strong>proteção da saúde ou de higiene</strong> e que tenham sido abertos ou deslacrados após a entrega.',
+      exclusion_item2: 'Fornecimento de produtos como cosméticos, artigos de cuidado pessoal, <strong>roupa interior ou qualquer produto de uso íntimo</strong> cuja embalagem tenha sido comprometida.',
+      exclusion_item3: 'Gravações de áudio/vídeo ou software aos quais tenha sido retirado o selo de inviolabilidade.',
+      exclusion_item4: 'O cliente, como <strong>importador final</strong>, é o único responsável por garantir que o produto é legal no seu país. Custos de alfândega, taxas ou apreensões são da exclusiva responsabilidade do cliente e isto não dará direito a reembolso.',
+      law_title: 'Lei Aplicável, Mediação e Jurisdição',
+      law_p1: 'Este contrato rege-se pela <strong>lei francesa</strong>. Para a resolução de qualquer litígio, a jurisdição competente é a do <strong>Distrito de Perpignan</strong>, com renúncia a qualquer outra.',
+      adr_title: 'Resolução Alternativa de Litígios (RAL)',
+      adr_p1: 'Em caso de litígio, pode recorrer a uma Entidade de Resolução Alternativa de Litígios de Consumo. A mediação é um processo gratuito e confidencial para resolver desacordos de forma amigável com a ajuda de um terceiro imparcial.',
+      adr_p2: 'Para litígios de consumo online, pode utilizar a plataforma ODR (Online Dispute Resolution) da União Europeia, que facilita a resolução de litígios transfronteiriços.',
+      odr_platform_button: 'Plataforma ODR da UE',
+      mediators_button: 'Mediadores Oficiais (França)',
+      mediation_steps_title: 'Passos para a Mediação',
+      mediation_step1: 'Antes de qualquer mediação, deve enviar-nos uma queixa por escrito (preferencialmente por e-mail para ter um registo).',
+      mediation_step2: 'Se não receber uma resposta satisfatória da nossa parte num prazo razoável, pode iniciar o procedimento de mediação através do website do mediador.',
+      mediation_step3: 'O mediador informá-lo-á da receção do seu processo e disporá de 90 dias para propor uma solução. Ambas as partes são livres de a aceitar ou rejeitar.',
+      mediation_p_final: 'Para qualquer queixa ou consulta inicial, pode contactar-nos em <a href="mailto:info@comprarpopperonline.com" class="text-primary font-semibold hover:underline">info@comprarpopperonline.com</a>.'
     }
   }
 };
@@ -3827,7 +4114,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<Language>('es');
 
   const setLanguageCallback = useCallback((lang: Language) => {
@@ -3880,7 +4167,3 @@ export const useLanguage = () => {
 
 // Alias for useLanguage for convenience in components
 export const useTranslation = useLanguage;
-
-    
-
-
