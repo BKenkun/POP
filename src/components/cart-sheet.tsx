@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -9,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
+import { Trash2, ShoppingBag, Box, Truck, CreditCard, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QuantitySelector } from './quantity-selector';
 import { useTranslation } from '@/context/language-context';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const router = useRouter();
+  const [isProcessingStripe, setIsProcessingStripe] = useState(false);
 
   const handleCheckout = () => {
     if(cartCount === 0) {
@@ -45,6 +48,29 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     onOpenChange(false);
   };
   
+  const handleStripePayment = async () => {
+      if (cartCount === 0) {
+          toast({ title: t('cart.empty_title'), variant: "destructive" });
+          return;
+      }
+      setIsProcessingStripe(true);
+      try {
+          const response = await fetch('/api/purchase', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cartItems }),
+          });
+          const { checkoutUrl, error } = await response.json();
+          if (error) throw new Error(error);
+          if (checkoutUrl) {
+              window.location.href = checkoutUrl;
+          }
+      } catch (error: any) {
+          toast({ title: "Error de pago", description: error.message, variant: "destructive" });
+          setIsProcessingStripe(false);
+      }
+  };
+
   const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
   const isFreeShipping = shippingCost === 0 && cartTotal > 0;
 
@@ -132,12 +158,15 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                        </div>
                      )}
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  {t('cart.notes')}
-                </p>
-                <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
-                  <Link href="/checkout">{t('cart.checkout_button')}</Link>
-                </Button>
+                <div className="space-y-2">
+                   <Button size="lg" className="w-full" onClick={handleStripePayment} disabled={isProcessingStripe}>
+                        {isProcessingStripe ? <Loader2 className="mr-2 animate-spin" /> : <CreditCard className="mr-2" />}
+                        Pagar con Tarjeta
+                   </Button>
+                   <Button asChild size="lg" className="w-full" onClick={handleCheckout} variant="outline">
+                      <Link href="/checkout">Finalizar (Otros Métodos)</Link>
+                   </Button>
+                </div>
               </div>
             </SheetFooter>
           </>

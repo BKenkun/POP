@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Stripe } from 'stripe';
 import { CartItem } from '@/lib/types';
+import { auth as adminAuth } from '@/lib/firebase-admin';
+import { cookies } from 'next/headers';
 
 // Ensure the secret key is available
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -10,6 +12,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+async function getUserIdFromSession() {
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) return null;
+    try {
+        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+        return decodedClaims.uid;
+    } catch (error) {
+        return null;
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { cartItems, customerEmail } = await req.json();
@@ -17,6 +30,8 @@ export async function POST(req: NextRequest) {
         if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
             return NextResponse.json({ error: 'Cart items are required.' }, { status: 400 });
         }
+        
+        const userId = await getUserIdFromSession();
 
         const line_items = cartItems.map((item: CartItem) => {
             return {
@@ -26,6 +41,10 @@ export async function POST(req: NextRequest) {
                         name: item.name,
                         images: [item.imageUrl],
                         description: item.description || undefined,
+                        // Store our product ID in Stripe's metadata
+                        metadata: {
+                            productId: item.id
+                        }
                     },
                     unit_amount: item.price, // Price in cents
                 },
@@ -42,9 +61,9 @@ export async function POST(req: NextRequest) {
             success_url: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${YOUR_DOMAIN}/checkout`,
             customer_email: customerEmail,
+            // Pass the user ID to the session metadata so we can associate the order with the user later
             metadata: {
-                // You can add more data here to be retrieved later if needed
-                // e.g., userId: 'user_123'
+                userId: userId || 'guest',
             }
         });
 

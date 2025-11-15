@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { Stripe } from 'stripe';
 import { firestore } from '@/lib/firebase-admin';
@@ -15,16 +14,15 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const db = firestore;
 
-export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const sessionId = searchParams.get('session_id');
+export async function POST(req: NextRequest) {
+    const { session_id } = await req.json();
 
-    if (!sessionId) {
+    if (!session_id) {
         return NextResponse.json({ success: false, error: 'Session ID no proporcionado.' }, { status: 400 });
     }
 
     try {
-        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        const session = await stripe.checkout.sessions.retrieve(session_id, {
             expand: ['line_items.data.price.product'],
         });
 
@@ -37,21 +35,27 @@ export async function GET(req: NextRequest) {
             throw new Error("No se pudo obtener el email del cliente de la sesión de Stripe.");
         }
         
+        // Use a unique ID based on the Stripe session to prevent duplicate orders
         const orderId = `stripe_${session.id}`;
-        const orderDocRef = doc(db, 'orders', orderId);
-        const orderDocSnap = await getDoc(orderDocRef);
+        
+        // Determine the correct collection path
+        const userId = session.metadata?.userId || 'guest';
+        if (!userId) throw new Error("User ID is missing from session metadata.");
 
+        const orderDocRef = doc(db, 'users', userId, 'orders', orderId);
+
+        // Check if the order already exists to prevent duplication
+        const orderDocSnap = await getDoc(orderDocRef);
         if (orderDocSnap.exists()) {
             console.log(`El pedido ${orderId} ya existe. Verificación exitosa.`);
-            return NextResponse.json({ success: true, message: 'El pedido ya fue procesado.' });
+            return NextResponse.json({ success: true, message: 'El pedido ya fue procesado.', orderId: orderId });
         }
-        
-        let userId = session.metadata?.userId || 'guest';
         
         const lineItems = session.line_items?.data || [];
         const orderItems = lineItems.map(item => {
             const product = item.price?.product as Stripe.Product;
             return {
+                // The productId was stored in the metadata during session creation
                 productId: product.metadata.productId || item.price?.id || 'unknown_id',
                 name: product.name,
                 price: item.price?.unit_amount || 0,

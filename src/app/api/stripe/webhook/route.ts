@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 
 // This webhook endpoint is no longer functional after removing Stripe.
