@@ -1,7 +1,7 @@
-
-// This file is no longer needed as verification happens via webhook.
-// It is intentionally left blank to avoid build errors from lingering imports
-// and to complete the final architecture refactor.
+// This file is intentionally left blank.
+// Payment verification is now handled by the webhook at /api/payment/webhook/route.ts,
+// which receives notifications from the payment intermediary.
+// This client-side verification endpoint is no longer used and is kept to prevent 404s.
 import { NextResponse } from 'next/server';
 
 export async function POST() {
