@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '../quantity-selector';
+import { QuantitySelector } from '@/components/quantity-selector';
 import { serverTimestamp, collection, addDoc, doc, getDoc, writeBatch, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
