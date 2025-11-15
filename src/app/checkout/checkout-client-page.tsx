@@ -65,7 +65,7 @@ const getCheckoutSchema = (t: (key: string) => string) => z.object({
     postalCode: z.string().min(3, t('checkout.form_errors.zip_required')),
     country: z.string().min(2, t('checkout.form_errors.country_required')),
     saveAddress: z.boolean().default(false),
-    paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto'], {
+    paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto', 'stripe'], {
         required_error: t('checkout.form_errors.payment_method_required')
     }),
     useDifferentBilling: z.boolean().default(false),
@@ -135,7 +135,7 @@ export default function CheckoutClientPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
-  const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | null>('prepaid');
+  const [paymentCategory, setPaymentCategory] = useState<'cod' | 'prepaid' | 'online' | null>('prepaid');
 
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
@@ -232,7 +232,8 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscounts = subtotal - discount - couponDiscount;
     
     let shipping = 0;
-    if (!isCod) {
+    // Envío gratuito si es prepago o con tarjeta online
+    if (form.getValues('paymentMethod') === 'stripe' || !isCod) {
         shipping = 0;
     } else if (subtotalWithDiscounts > 0 && subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD) {
         shipping = SHIPPING_COST;
@@ -241,7 +242,7 @@ export default function CheckoutClientPage() {
     const total = subtotalWithDiscounts + shipping;
 
     return { subtotal, discount, shipping, total };
-  }, [cartTotal, volumeDiscount, isCod, couponDiscount]);
+  }, [cartTotal, volumeDiscount, isCod, couponDiscount, form.watch('paymentMethod')]);
 
 
     useEffect(() => {
@@ -362,6 +363,30 @@ export default function CheckoutClientPage() {
         } else {
              toast({ title: t('checkout.toasts.address_save_error_title'), description: t('checkout.toasts.address_save_error_desc'), variant: "destructive" });
         }
+    }
+
+    if (data.paymentMethod === 'stripe') {
+        try {
+            const response = await fetch('/api/stripe/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cartItems: cartItems.map(item => ({...item, quantity: item.quantity || 1})),
+                    customerEmail: data.email,
+                }),
+            });
+            const { checkoutUrl, error } = await response.json();
+            if (error) throw new Error(error);
+            if (checkoutUrl) {
+                // We don't clear the cart here. We'll do it on the success page after verification.
+                router.push(checkoutUrl);
+            }
+        } catch (error: any) {
+            toast({ title: 'Error de pago con tarjeta', description: error.message, variant: 'destructive' });
+            setLoading(false);
+        }
+        // The process stops here until redirection.
+        return;
     }
 
 
@@ -510,6 +535,9 @@ export default function CheckoutClientPage() {
           { value: 'crypto', label: t('checkout.payment_options.crypto'), icon: Bitcoin },
           { value: 'prepaid_bizum', label: t('checkout.payment_options.prepaid_bizum'), icon: Smartphone },
           { value: 'prepaid_transfer', label: t('checkout.payment_options.prepaid_transfer'), icon: Banknote },
+      ],
+      online: [
+          { value: 'stripe', label: 'Pagar con Tarjeta (Stripe)', icon: CreditCard },
       ]
   };
 
@@ -676,24 +704,30 @@ export default function CheckoutClientPage() {
                                 <FormItem className="space-y-4">
                                     <RadioGroup
                                         value={paymentCategory ?? ''}
-                                        onValueChange={(value: 'cod' | 'prepaid') => {
+                                        onValueChange={(value: 'cod' | 'prepaid' | 'online') => {
                                             setPaymentCategory(value);
                                             const defaultSubOption = paymentMethods[value][0].value;
                                             field.onChange(defaultSubOption);
                                         }}
-                                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
                                     >
                                         <Label htmlFor="cat-cod" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'cod' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="cod" id="cat-cod" className="sr-only" />
-                                            <CreditCard className="mb-2 h-8 w-8" />
+                                            <Banknote className="mb-2 h-8 w-8" />
                                             <span className="font-bold">{t('checkout.cod_label')}</span>
                                             <span className="text-xs text-muted-foreground">{t('checkout.cod_desc')}</span>
                                         </Label>
                                         <Label htmlFor="cat-prepaid" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'prepaid' && "border-primary ring-2 ring-primary")}>
                                             <RadioGroupItem value="prepaid" id="cat-prepaid" className="sr-only" />
-                                            <Banknote className="mb-2 h-8 w-8" />
+                                            <Gift className="mb-2 h-8 w-8" />
                                             <span className="font-bold">{t('checkout.prepaid_label')}</span>
                                             <span className="text-xs text-primary">{t('checkout.prepaid_desc')}</span>
+                                        </Label>
+                                         <Label htmlFor="cat-online" className={cn("flex flex-col items-center justify-center rounded-lg border p-4 cursor-pointer transition-colors hover:bg-primary/10", paymentCategory === 'online' && "border-primary ring-2 ring-primary")}>
+                                            <RadioGroupItem value="online" id="cat-online" className="sr-only" />
+                                            <CreditCard className="mb-2 h-8 w-8" />
+                                            <span className="font-bold">Pago Online</span>
+                                            <span className="text-xs text-primary">Seguro y rápido</span>
                                         </Label>
                                     </RadioGroup>
 
@@ -798,7 +832,7 @@ export default function CheckoutClientPage() {
                                 ) : (<p className="text-sm text-muted-foreground">{t('checkout.billing_address_same')}</p>)}
                             </div>
                         </div>
-                         <div><h3 className="font-semibold mb-2">{t('checkout.payment_method')}</h3><div className="text-sm text-muted-foreground"><p>{paymentMethods[form.getValues('paymentMethod').startsWith('cod') ? 'cod' : 'prepaid'].find(m => m.value === formValues.paymentMethod)?.label}</p></div></div>
+                         <div><h3 className="font-semibold mb-2">{t('checkout.payment_method')}</h3><div className="text-sm text-muted-foreground"><p>{(paymentMethods as any)[paymentCategory!]?.find((m: any) => m.value === formValues.paymentMethod)?.label || formValues.paymentMethod}</p></div></div>
                         <Separator />
                          <p className="text-xs text-muted-foreground text-center">{formValues.paymentMethod?.startsWith('prepaid') ? t('checkout.payment_instructions_prepaid') : t('checkout.payment_instructions_cod')} {t('checkout.payment_instructions_email')}</p>
                     </CardContent>
