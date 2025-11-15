@@ -159,6 +159,44 @@ const esTranslations: Translations = {
           orders: "Pedidos",
           addresses: "Direcciones",
           logout: "Cerrar Sesión"
+        },
+        invalid_date: "Fecha inválida",
+        date_unavailable: "Fecha no disponible",
+        subscription: {
+          title: "Personaliza tu Dosis Mensual",
+          subtitle_open: "Elige tus productos favoritos para la caja de este mes.",
+          subtitle_closed: "La ventana de selección está cerrada. Revisa el estado de tu envío.",
+          timeline_info: "Ventana de selección: del 4 al 25 de cada mes. Envíos: del 26 al 3 del mes siguiente.",
+          timeline_note: "Nota: Si no realizas ningún cambio, te enviaremos la misma selección que el mes anterior. Si es tu primer mes, te enviaremos una selección sorpresa de nuestros productos más vendidos.",
+          loading_products: "Cargando productos...",
+          error_title: "Error",
+          no_subscription_found: "No se encontró una suscripción activa para gestionar.",
+          cancellation_success_title: "Suscripción Cancelada",
+          cancellation_error_title: "Error al Cancelar",
+          cancelling_button: "Cancelando...",
+          manage_button: "Gestionar mi Suscripción",
+          manage_dialog_title: "Gestionar Suscripción",
+          manage_dialog_desc: "Actualmente, la gestión de la suscripción (como cambiar el método de pago) debe hacerse contactando a soporte. Sin embargo, puedes cancelar tu suscripción inmediatamente si lo deseas. ¿Estás seguro de que quieres cancelar tu suscripción?",
+          manage_dialog_close: "Cerrar",
+          manage_dialog_confirm: "Sí, cancelar suscripción",
+          selected_badge: "Seleccionado",
+          not_chosen_yet: "Aún no has elegido",
+          change_selection_button: "Cambiar Selección",
+          choose_product_button: "Elegir Producto",
+          select_dialog_title: "Selecciona tu {type}",
+          popper: "Popper",
+          accessory: "Accesorio",
+          select_button: "Seleccionar",
+          save_success_title: "Selección Guardada",
+          save_success_desc: "Hemos guardado tus preferencias para la caja de este mes.",
+          save_error_desc: "No se pudo guardar tu selección. Inténtalo de nuevo.",
+          box_on_its_way_title: "¡Tu caja está en camino!",
+          box_on_its_way_desc: "Estamos preparando y enviando su pedido. En breves podrás disfrutar de él y del regalito. La próxima ventana de selección empieza el día 4.",
+          popper_desc: "Elige tu aroma favorito.",
+          accessory_desc: "Mejora tu experiencia.",
+          surprise_gift_title: "Regalo Sorpresa",
+          surprise_gift_desc: "Cada mes incluimos un detalle extra solo para miembros del club. ¡Déjate sorprender!",
+          confirm_selection_button: "Confirmar mi selección para este mes"
         }
     },
     products: {
@@ -804,136 +842,70 @@ const esTranslations: Translations = {
     }
 };
 
-// --- ENGLISH TRANSLATIONS (Example, only some keys are translated) ---
 const enTranslations: Translations = {
-  ...esTranslations, // Start with Spanish as a base
-  home: {
-    ...esTranslations.home as Translations,
-    hero_title: "Premium Quality, Unique Sensations",
-    hero_subtitle: "Explore our curated selection of poppers and discover a purity and potency that redefines the experience.",
-  },
-  header: {
-    ...esTranslations.header as Translations,
-    products: "Products",
-    create_pack: "Create your Pack",
-    monthly_dose: "Monthly Dose",
-  },
-  cart: {
-    ...esTranslations.cart as Translations,
-    title: "Shopping Cart",
-    empty_title: "Your cart is empty",
-  },
-  products: {
-      ...esTranslations.products as Translations,
-      title: "Our Catalog",
-      subtitle: "Find your perfect scent. Use the filters to discover our selection."
-  }
+    ...esTranslations,
+    home: {
+        hero_title: "Premium Quality, Unique Sensations",
+        hero_subtitle: "Explore our curated selection of poppers and discover a purity and potency that redefines the experience.",
+        section_title_new: "New Arrivals",
+        section_title_offers: "Special Offers",
+        section_title_bestsellers: "Best Sellers",
+        feature_secure_title: "100% Secure Website",
+        feature_secure_desc: "Your security is our priority.",
+        feature_discreet_payment_title: "Discreet Payment",
+        feature_discreet_payment_desc: "No references on your statement.",
+        feature_discreet_packaging_title: "Discreet Packaging",
+        feature_discreet_packaging_desc: "Packages without branding or logos.",
+        feature_fast_shipping_title: "Fast Delivery",
+        feature_fast_shipping_desc: "Receive your order in 24/48h.",
+        subscribe_title: "Subscribe to our newsletter",
+        subscribe_desc: "You can unsubscribe at any time. To do so, please see our contact information in the legal notice.",
+        subscribe_placeholder: "Enter your email...",
+        subscribe_button: "Subscribe",
+        subscribe_button_loading: "Subscribing...",
+        subscribe_success: "Thank you for subscribing!",
+        subscribe_success_desc: "You will soon receive our best offers.",
+        subscribe_error: "Subscription Error",
+        subscribe_error_desc: "Could not complete subscription. Please try again.",
+        subscribe_error_email: "Please enter your email address.",
+    }
 };
 
-// --- FRENCH TRANSLATIONS ---
 const frTranslations: Translations = {
     ...esTranslations,
     home: {
-        ...esTranslations.home as Translations,
+        ...esTranslations.home,
         hero_title: "Qualité Premium, Sensations Uniques",
         hero_subtitle: "Explorez notre sélection soignée de poppers et découvrez une pureté et une puissance qui redéfinissent l'expérience.",
-    },
-    header: {
-        ...esTranslations.header as Translations,
-        products: "Produits",
-        create_pack: "Créez votre Pack",
-        monthly_dose: "Dose Mensuelle",
-    },
-    cart: {
-        ...esTranslations.cart as Translations,
-        title: "Panier d'Achat",
-        empty_title: "Votre panier est vide",
-    },
-    products: {
-      ...esTranslations.products as Translations,
-      title: "Notre Catalogue",
-      subtitle: "Trouvez votre arôme parfait. Utilisez les filtres pour découvrir notre sélection."
-  }
+    }
 };
 
-// --- GERMAN TRANSLATIONS ---
 const deTranslations: Translations = {
     ...esTranslations,
     home: {
-        ...esTranslations.home as Translations,
+        ...esTranslations.home,
         hero_title: "Premium-Qualität, Einzigartige Empfindungen",
         hero_subtitle: "Entdecken Sie unsere sorgfältig ausgewählte Auswahl an Poppers und erleben Sie eine Reinheit und Potenz, die das Erlebnis neu definieren.",
-    },
-    header: {
-        ...esTranslations.header as Translations,
-        products: "Produkte",
-        create_pack: "Erstellen Sie Ihr Paket",
-        monthly_dose: "Monatliche Dosis",
-    },
-    cart: {
-        ...esTranslations.cart as Translations,
-        title: "Warenkorb",
-        empty_title: "Ihr Warenkorb ist leer",
-    },
-    products: {
-      ...esTranslations.products as Translations,
-      title: "Unser Katalog",
-      subtitle: "Finden Sie Ihren perfekten Duft. Nutzen Sie die Filter, um unsere Auswahl zu entdecken."
-  }
+    }
 };
 
-// --- ITALIAN TRANSLATIONS ---
 const itTranslations: Translations = {
     ...esTranslations,
     home: {
-        ...esTranslations.home as Translations,
+        ...esTranslations.home,
         hero_title: "Qualità Premium, Sensazioni Uniche",
         hero_subtitle: "Esplora la nostra selezione curata di popper e scopri una purezza e una potenza che ridefiniscono l'esperienza.",
-    },
-    header: {
-        ...esTranslations.header as Translations,
-        products: "Prodotti",
-        create_pack: "Crea il tuo Pacchetto",
-        monthly_dose: "Dose Mensile",
-    },
-    cart: {
-        ...esTranslations.cart as Translations,
-        title: "Carrello",
-        empty_title: "Il tuo carrello è vuoto",
-    },
-    products: {
-      ...esTranslations.products as Translations,
-      title: "Il Nostro Catalogo",
-      subtitle: "Trova il tuo aroma perfetto. Usa i filtri per scoprire la nostra selezione."
     }
 };
 
-// --- PORTUGUESE TRANSLATIONS ---
 const ptTranslations: Translations = {
     ...esTranslations,
     home: {
-        ...esTranslations.home as Translations,
+        ...esTranslations.home,
         hero_title: "Qualidade Premium, Sensações Únicas",
         hero_subtitle: "Explore a nossa seleção cuidada de poppers e descubra uma pureza e potência que redefinem a experiência.",
-    },
-    header: {
-        ...esTranslations.header as Translations,
-        products: "Produtos",
-        create_pack: "Crie o seu Pack",
-        monthly_dose: "Dose Mensal",
-    },
-    cart: {
-        ...esTranslations.cart as Translations,
-        title: "Carrinho de Compras",
-        empty_title: "O seu carrinho está vazio",
-    },
-    products: {
-      ...esTranslations.products as Translations,
-      title: "O Nosso Catálogo",
-      subtitle: "Encontre o seu aroma perfeito. Use os filtros para descobrir a nossa seleção."
     }
 };
-
 
 interface LanguageContextType {
   language: Language;
@@ -976,7 +948,10 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
     // Fallback to Spanish if translation not found in the current language
     if (typeof translation !== 'string') {
-        translation = getNestedTranslation(translations.es, key);
+        const fallbackTranslation = getNestedTranslation(translations.es, key);
+        if (typeof fallbackTranslation === 'string') {
+            translation = fallbackTranslation;
+        }
     }
     
     // If still not found, return the key itself as a last resort

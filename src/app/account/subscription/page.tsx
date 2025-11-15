@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from "@/context/auth-context";
@@ -15,11 +14,13 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cancelNowPaymentsSubscription } from "@/app/actions/manage-subscription";
+import { useTranslation } from "@/context/language-context";
 
 export default function SubscriptionManagementPage() {
     const { user, isSubscribed, loading: authLoading, setUserDoc, userDoc } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [portalLoading, setPortalLoading] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
@@ -62,14 +63,13 @@ export default function SubscriptionManagementPage() {
     const poppers = products.filter(p => !p.internalTags?.includes('accesorio') && !p.internalTags?.includes('pack'));
     const accessories = products.filter(p => p.internalTags?.includes('accesorio'));
     
-    // Safely check if a subscription exists and is active before allowing cancellation.
     const canManageSubscription = !!userDoc?.subscription?.sub_id && userDoc.isSubscribed;
 
     const handleCancelSubscription = async () => {
         if (!canManageSubscription) {
              toast({
-                title: "Error",
-                description: "No se encontró una suscripción activa para gestionar.",
+                title: t('account.subscription.error_title'),
+                description: t('account.subscription.no_subscription_found'),
                 variant: "destructive"
             });
             return;
@@ -79,17 +79,16 @@ export default function SubscriptionManagementPage() {
         const result = await cancelNowPaymentsSubscription();
         if (result.success) {
             toast({
-                title: "Suscripción Cancelada",
+                title: t('account.subscription.cancellation_success_title'),
                 description: result.message,
             });
-            // Optimistically update the user document in the context
             if (userDoc) {
                 setUserDoc({ ...userDoc, isSubscribed: false, subscription: { ...userDoc.subscription, status: 'cancelled' } });
             }
-            router.push('/account'); // Redirect to account page
+            router.push('/account'); 
         } else {
             toast({
-                title: "Error al Cancelar",
+                title: t('account.subscription.cancellation_error_title'),
                 description: result.message,
                 variant: "destructive"
             });
@@ -108,11 +107,11 @@ export default function SubscriptionManagementPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-2xl font-bold">Personaliza tu Dosis Mensual</h2>
+                <h2 className="text-2xl font-bold">{t('account.subscription.title')}</h2>
                 <p className="text-muted-foreground">
                     {isSelectionWindowOpen 
-                        ? "Elige tus productos favoritos para la caja de este mes."
-                        : "La ventana de selección está cerrada. Revisa el estado de tu envío."
+                        ? t('account.subscription.subtitle_open')
+                        : t('account.subscription.subtitle_closed')
                     }
                 </p>
             </div>
@@ -121,13 +120,13 @@ export default function SubscriptionManagementPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-sm font-medium">
                         <CalendarClock className="h-5 w-5"/>
-                        <span>Ventana de selección: del 4 al 25 de cada mes. Envíos: del 26 al 3 del mes siguiente.</span>
+                        <span>{t('account.subscription.timeline_info')}</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <SubscriptionTimeline day={dayOfMonth} />
                     <p className="text-center text-xs text-muted-foreground mt-4">
-                        Nota: Si no realizas ningún cambio, te enviaremos la misma selección que el mes anterior. Si es tu primer mes, te enviaremos una selección sorpresa de nuestros productos más vendidos.
+                        {t('account.subscription.timeline_note')}
                     </p>
                 </CardContent>
             </Card>
@@ -135,7 +134,7 @@ export default function SubscriptionManagementPage() {
             {loadingProducts ? (
                  <div className="flex justify-center items-center h-60">
                     <Loader2 className="h-8 w-8 animate-spin" />
-                    <p className="ml-4">Cargando productos...</p>
+                    <p className="ml-4">{t('account.subscription.loading_products')}</p>
                 </div>
             ) : (
                 <MonthlyBoxSelector 
@@ -154,25 +153,25 @@ export default function SubscriptionManagementPage() {
                             ) : (
                                 <Settings className="mr-2 h-4 w-4" />
                             )}
-                            {portalLoading ? 'Cancelando...' : 'Gestionar mi Suscripción'}
+                            {portalLoading ? t('account.subscription.cancelling_button') : t('account.subscription.manage_button')}
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Gestionar Suscripción</AlertDialogTitle>
+                            <AlertDialogTitle>{t('account.subscription.manage_dialog_title')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                               Actualmente, la gestión de la suscripción (como cambiar el método de pago) debe hacerse contactando a soporte. Sin embargo, puedes cancelar tu suscripción inmediatamente si lo deseas. ¿Estás seguro de que quieres cancelar tu suscripción?
+                               {t('account.subscription.manage_dialog_desc')}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cerrar</AlertDialogCancel>
+                            <AlertDialogCancel>{t('account.subscription.manage_dialog_close')}</AlertDialogCancel>
                             <AlertDialogAction onClick={handleCancelSubscription} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                                Sí, cancelar suscripción
+                                {t('account.subscription.manage_dialog_confirm')}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-                 {!canManageSubscription && <p className="text-xs text-muted-foreground mt-2">No se encontró una suscripción activa para gestionar.</p>}
+                 {!canManageSubscription && <p className="text-xs text-muted-foreground mt-2">{t('account.subscription.no_subscription_found')}</p>}
             </div>
         </div>
     )

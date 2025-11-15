@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -144,7 +142,7 @@ export default function UserOrderDetailPage() {
              <CardHeader>
                 <CardTitle>{t('account.order_details_summary_title')}</CardTitle>
                 <CardDescription>
-                    {t('account.order_details_summary_date', { date: order.createdAt instanceof Date ? order.createdAt.toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' }) : 'Fecha no disponible'})}
+                    {t('account.order_details_summary_date', { date: order.createdAt instanceof Date ? order.createdAt.toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' }) : t('account.date_unavailable')})}
                 </CardDescription>
              </CardHeader>
              <CardContent className="space-y-2">

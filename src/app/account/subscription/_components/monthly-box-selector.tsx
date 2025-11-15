@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Product } from "@/lib/types";
@@ -12,6 +11,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getUserSelection, saveUserSelection } from "@/lib/subscription";
+import { useTranslation } from "@/context/language-context";
 
 interface MonthlyBoxSelectorProps {
     isSelectionWindowOpen: boolean;
@@ -39,6 +39,7 @@ const getImageUrl = (url: string) => {
 
 const SelectionCard = ({ title, description, icon: Icon, products, selectedProductId, onSelectProduct, selectionType, popperIndex }: SelectionCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const { t } = useTranslation();
     const selectedProduct = products.find(p => p.id === selectedProductId);
 
     const handleSelect = (productId: string) => {
@@ -66,21 +67,21 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
                         <p className="font-semibold">{selectedProduct.name}</p>
                         <p className="text-sm text-green-600 font-bold flex items-center justify-center gap-1">
                             <CheckCircle className="h-4 w-4"/>
-                            Seleccionado
+                            {t('account.subscription.selected_badge')}
                         </p>
                     </div>
                 ) : (
-                    <p className="text-muted-foreground">Aún no has elegido</p>
+                    <p className="text-muted-foreground">{t('account.subscription.not_chosen_yet')}</p>
                 )}
             </CardContent>
             <CardFooter>
                  <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full">{selectedProduct ? "Cambiar Selección" : "Elegir Producto"}</Button>
+                        <Button variant="outline" className="w-full">{selectedProduct ? t('account.subscription.change_selection_button') : t('account.subscription.choose_product_button')}</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
                         <DialogHeader>
-                            <DialogTitle>Selecciona tu {selectionType === 'popper' ? 'Popper' : 'Accesorio'}</DialogTitle>
+                            <DialogTitle>{t('account.subscription.select_dialog_title', { type: selectionType === 'popper' ? t('account.subscription.popper') : t('account.subscription.accessory') })}</DialogTitle>
                         </DialogHeader>
                         <div className="overflow-y-auto pr-2 -mr-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -88,7 +89,7 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
                                     <ProductCard key={product.id} product={product}>
                                         <div className="p-4 pt-0">
                                             <Button className="w-full" onClick={() => handleSelect(product.id)}>
-                                                Seleccionar
+                                                {t('account.subscription.select_button')}
                                             </Button>
                                         </div>
                                     </ProductCard>
@@ -104,6 +105,7 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
 
 export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, accessories }: MonthlyBoxSelectorProps) {
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [selectedPoppers, setSelectedPoppers] = useState<(string | null)[]>(Array(5).fill(null));
     const [selectedAccessory, setSelectedAccessory] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -140,14 +142,14 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
                 accessory: selectedAccessory,
             });
             toast({
-                title: "Selección Guardada",
-                description: "Hemos guardado tus preferencias para la caja de este mes."
+                title: t('account.subscription.save_success_title'),
+                description: t('account.subscription.save_success_desc')
             });
         } catch (error) {
             console.error("Error saving selection", error);
             toast({
-                title: "Error",
-                description: "No se pudo guardar tu selección. Inténtalo de nuevo.",
+                title: t('account.subscription.error_title'),
+                description: t('account.subscription.save_error_desc'),
                 variant: "destructive"
             });
         } finally {
@@ -164,11 +166,11 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
                     <div className="mx-auto bg-accent/20 h-16 w-16 rounded-full flex items-center justify-center mb-4">
                         <Send className="h-8 w-8 text-accent-foreground" />
                     </div>
-                    <CardTitle className="text-2xl text-accent-foreground">¡Tu caja está en camino!</CardTitle>
+                    <CardTitle className="text-2xl text-accent-foreground">{t('account.subscription.box_on_its_way_title')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        Estamos preparando y enviando su pedido. En breves podrás disfrutar de él y del regalito. La próxima ventana de selección empieza el día 4.
+                        {t('account.subscription.box_on_its_way_desc')}
                     </p>
                 </CardContent>
             </Card>
@@ -189,9 +191,9 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
                 {selectedPoppers.map((popperId, index) => (
                      <SelectionCard 
                         key={index}
-                        title="Popper"
+                        title={t('account.subscription.popper')}
                         popperIndex={index}
-                        description="Elige tu aroma favorito."
+                        description={t('account.subscription.popper_desc')}
                         icon={Package}
                         products={poppers}
                         selectedProductId={popperId}
@@ -201,8 +203,8 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
                 ))}
                
                 <SelectionCard 
-                    title="Accesorio"
-                    description="Mejora tu experiencia."
+                    title={t('account.subscription.accessory')}
+                    description={t('account.subscription.accessory_desc')}
                     icon={Package}
                     products={accessories}
                     selectedProductId={selectedAccessory}
@@ -215,10 +217,10 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
                         <div className="mx-auto bg-primary/20 h-16 w-16 rounded-full flex items-center justify-center mb-4">
                              <Gift className="h-8 w-8 text-primary" />
                         </div>
-                        <CardTitle>Regalo Sorpresa</CardTitle>
+                        <CardTitle>{t('account.subscription.surprise_gift_title')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Cada mes incluimos un detalle extra solo para miembros del club. ¡Déjate sorprender!</p>
+                        <p className="text-muted-foreground">{t('account.subscription.surprise_gift_desc')}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -226,7 +228,7 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
              <div className="text-center pt-4">
                 <Button size="lg" onClick={handleConfirmSelection} disabled={!isSelectionComplete || saving}>
                     {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Confirmar mi selección para este mes
+                    {t('account.subscription.confirm_selection_button')}
                 </Button>
             </div>
         </div>

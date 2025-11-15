@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useAuth } from "@/context/auth-context";
@@ -105,7 +103,7 @@ export default function OrdersPage() {
                 {orders.map((order) => (
                     <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.id.substring(order.id.length - 7)}</TableCell>
-                    <TableCell>{order.createdAt instanceof Date ? order.createdAt.toLocaleDateString('es-ES') : 'Fecha inválida'}</TableCell>
+                    <TableCell>{order.createdAt instanceof Date ? order.createdAt.toLocaleDateString('es-ES') : t('account.invalid_date')}</TableCell>
                     <TableCell>
                         <Badge variant={getStatusVariant(order.status)}>
                         {order.status}
