@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
@@ -928,10 +927,9 @@ const esTranslations: Translations = {
     }
 };
 
+// --- ENGLISH ---
 const enTranslations: Translations = {
-  ...esTranslations, // Start with Spanish as a base
   home: {
-    ...esTranslations.home,
     hero_title: "Premium Quality, Unique Sensations",
     hero_subtitle: "Explore our curated selection of poppers and discover a purity and potency that redefines the experience.",
     section_title_new: "New Arrivals",
@@ -957,7 +955,6 @@ const enTranslations: Translations = {
     subscribe_error_email: "Please enter your email address.",
   },
   header: {
-    ...esTranslations.header,
     free_shipping: 'FREE +40€',
     fast_delivery: '24/48h',
     nav_menu: 'Navigation Menu',
@@ -983,7 +980,6 @@ const enTranslations: Translations = {
     }
   },
   cart: {
-    ...esTranslations.cart,
     title: "Shopping Cart",
     empty_title: "Your cart is empty",
     empty_subtitle: "It seems you haven't added anything yet.",
@@ -1002,7 +998,6 @@ const enTranslations: Translations = {
     stock_limit_reached: "Stock limit reached",
   },
   account: {
-    ...esTranslations.account,
     layout_title: "My Account",
     layout_description: "Manage your personal information, orders, and addresses.",
     sidebar_admin_panel: "Admin Panel",
@@ -1085,7 +1080,6 @@ const enTranslations: Translations = {
     invalid_date: "Invalid date",
     date_unavailable: "Date unavailable",
     subscription: {
-        ...esTranslations.account.subscription,
         title: "Customize Your Monthly Dose",
         subtitle_open: "Choose your favorite products for this month's box.",
         subtitle_closed: "The selection window is closed. Check your shipment status.",
@@ -1183,7 +1177,6 @@ const enTranslations: Translations = {
     sending_button: "Sending..."
   },
   auth: {
-    ...esTranslations.auth,
     login_title: "Log In",
     login_subtitle: "Access your account to view your orders.",
     login_button: "Log In",
@@ -1218,7 +1211,6 @@ const enTranslations: Translations = {
     continue_shopping_button: "Continue Shopping"
   },
   pack_builder: {
-    ...esTranslations.pack_builder,
     page_title: 'Create Your Custom Pack',
     page_subtitle: 'Choose your favorite aromas from our catalog and build the perfect pack for you.',
     step1_title: '1. Choose your products',
@@ -1233,7 +1225,7 @@ const enTranslations: Translations = {
     original_price: 'Original Price',
     your_savings: 'Your Savings',
     pack_total: 'Pack Total',
-    unlock_discount_message: 'Add products to exceed 70€ to unlock discounts.',
+    unlock_discount_message: 'Add products to exceed €70 to unlock discounts.',
     buy_now_button: 'Buy Pack Now',
     redirecting_button: 'Redirecting...',
     product_limit_title: 'Limit per product',
@@ -1252,7 +1244,6 @@ const enTranslations: Translations = {
     checkout_error_desc: 'An error occurred. Please try again.',
   },
   popups: {
-    ...esTranslations.popups,
     age_verification_title: 'Age Verification',
     age_verification_subtitle: 'Please enter your date of birth to continue.',
     age_verification_exit_button: 'Exit',
@@ -1276,14 +1267,12 @@ const enTranslations: Translations = {
     cookies_save: 'Save Preferences',
   },
   notifications: {
-    ...esTranslations.notifications,
     recent_purchase_title: 'Recent Purchase!',
     recent_purchase_desc: '{name} from {location} just bought {quantity} x {product_name}.',
     real_order_title: 'Real Order Confirmed!',
     a_city: 'a city'
   },
   footer: {
-    ...esTranslations.footer,
     slogan: 'Your trusted store for superior quality aromas.',
     column_info: 'Information',
     column_guides: 'Guides',
@@ -1306,7 +1295,6 @@ const enTranslations: Translations = {
     copyright: 'All rights reserved.'
   },
   contact_page: {
-    ...esTranslations.contact_page,
     title: "Contact Us",
     subtitle: "Do you have a question or need help? Fill out the form and our team will get in touch with you.",
     email_card_title: "Contact Email",
@@ -1329,7 +1317,6 @@ const enTranslations: Translations = {
     success_toast_description: "Thank you for contacting us. We will get back to you as soon as possible.",
   },
   blog_page: {
-    ...esTranslations.blog_page,
     comments_title: 'Comments',
     no_comments: 'Be the first to comment.',
     leave_comment_title: 'Leave a comment',
@@ -1338,7 +1325,6 @@ const enTranslations: Translations = {
     form_submit_button: 'Submit comment'
   },
   shipping_page: {
-    ...esTranslations.shipping_page,
     title: 'Shipping and Rates',
     subtitle: 'At Popper Online, we strive to get your order to you as soon as possible, with the utmost discretion and security.',
     policy_title: 'Your Package Shipment',
@@ -1372,7 +1358,6 @@ const enTranslations: Translations = {
     explore_button: 'Explore Catalog'
   },
   legal_info: {
-    ...esTranslations.legal_info,
     title: "Legal Information",
     owner_label: "Website Owner:",
     abn_label: "ABN:",
@@ -1387,60 +1372,282 @@ const enTranslations: Translations = {
     explore_button: "Explore Catalog"
   },
   terms_page: {
-    ...esTranslations.terms_page,
     title: "General Terms and Conditions",
     welcome: "Welcome to www.comprarpopperonline.com. We ask you to carefully read the General Conditions, our Cookie Policy, and our Privacy Policy, as they regulate your access and use of this site.",
     acceptance: "Both the use and sales made through the online store imply the Client's acceptance of the Terms and Conditions, our Cookie Policy, and our Privacy Policy, which are established in compliance with applicable legislation.",
-    explore_button: "Explore Catalog"
+    explore_button: "Explore Catalog",
+    section1_title: "1. Involved Parties",
+    section1_1: "<strong>1.1. Seller Identification:</strong> The sale of products through this website is carried out by the entity registered under the trade name MARY AND POPPER (ABN 37 588 057 135), with registered office at U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA. This entity operates as a Seller to consumers over 18 years of age.",
+    section1_2: "<strong>1.2. Logistics and Supply:</strong> These Conditions regulate the purchase of products, whose logistics and shipping management (fulfillment) is carried out through a partner collaborator based in France. The Seller is not responsible for the supply of goods or services by entities other than the Seller or its logistics partner.",
+    section1_3: "The information or personal data provided will be processed in accordance with our Privacy Policy. By using this site, you consent to the processing of the information and data and declare that all information and data provided are true and accurate.",
+    section1_4: "The Client will be identified through the data provided in the Order. Providing false and/or invented data is prohibited: the Seller is exempt from any liability in this regard.",
+    section2_title: "2. Scope of the contract",
+    section2_p1: "The information referred to in these General Online Conditions and the data contained on the Website do not constitute an offer to the public, but an invitation to place an Order. After submitting the Order Proposal, the Client will receive a confirmation email of receipt (\"Order Confirmation\"). This email does not constitute acceptance of the Order, which will only be considered accepted when the Client receives an email confirming that the Order has been accepted and that the Payment has been accepted (\"Payment Accepted\"). The online purchase contract (\"Contract\") will only be considered concluded when the Client receives the Order and Shipping Confirmation.",
+    section3_title: "3. Price",
+    section3_p1: "The prices listed in the catalog of this website include VAT at the current legal rate and may vary without prior notice. It is the Seller's responsibility to check the accuracy of the Prices before sending the Order Confirmation. In case of error, the Client will be contacted to confirm whether they wish to proceed with the correct price or cancel the order. Payments are always made in euros (€).",
+    section4_title: "4. Payment Methods",
+    section4_p1: "The Seller uses secure and certified payment services. All personal payment information is encrypted via an SSL (Secure Sockets Layer) connection. The Seller does not store or have access to the sensitive data of the Client's credit or debit cards. By using an external payment service provider, the Client agrees that the processing of their payment will be subject to the terms, conditions, and privacy policies of said provider, and that any liability related to the payment transaction rests with that entity. We accept payments via Credit/debit card (Visa, Mastercard, Amex) and Bank Transfer.",
+    section5_title: "5. Orders and Shipments",
+    section5_p1: "Orders paid before 12:00 PM (Spanish time) on a business day (Monday to Friday, excluding national and local holidays in France) are generally shipped the same day. Products are shipped in a discreet package with no references to the content. In case of stock shortage, we will contact the client to offer a solution. Delivery times are indicative and may vary.",
+    section6_title: "6. Exchanges, Returns, and Cancellations",
+    section6_p1: "The client has 14 CALENDAR DAYS from receipt to request an exchange or return, provided that the products have not been used, washed, or damaged and retain their original packaging. To exercise this right, you must contact our Customer Service.",
+    section9_title: "9. Additional Information and Product Warnings",
+    section9_1: "<strong>9.1. Permitted Uses and Health Warning:</strong> The Client accepts that the purpose of the products sold by MARY AND POPPER is strictly for technical, cosmetic, or external aromatic uses. The Client agrees not to ingest, inhale for recreational purposes, inject, or apply to mucous membranes or wounds any of the products. The Seller is exempt from any liability for health damages resulting from non-compliance with this warning or from a use other than the one declared.",
+    section9_2: "<strong>9.2.</strong> The information and services provided on this site are for informational purposes only and do not replace the advice of a health professional. Always consult your doctor or pharmacist before using any product.",
+    section11_title: "11. Legality and Client Compliance",
+    section11_1: "<strong>11.1. Import Risk and Liability:</strong> The Client acts as the FINAL IMPORTER of the products. The Seller does not guarantee the legality of the product in the country of destination. Any customs costs, duties, import taxes, or confiscation of the package by local authorities will be borne solely and exclusively by the Client, with no right to a refund from the Seller.",
+    section11_2: "<strong>11.2. Client Confirmation:</strong> By placing an order, you confirm that you are at least 18 years of age. You know the use and possible side effects of the product, and you have adequately informed yourself before purchasing it. You release MARY AND POPPER, its employees, suppliers, and all associated persons from any liability for damages resulting from the misuse of our items.",
+    section12_title: "12. Right of Withdrawal and Legal Term (EU)",
+    section12_p1: "In accordance with the European regulation applicable to French Law, the consumer has 14 CALENDAR DAYS from the receipt of the goods to exercise the right to withdraw from the contract. To do so, you must communicate your decision to MARY AND POPPER through an unequivocal statement. The costs of returning the goods are borne by the consumer. The right of withdrawal does not apply, under any circumstances, to the supply of sealed products that are not suitable for return for reasons of health protection or hygiene if they have been unsealed after delivery. This expressly includes oils, flowers, e-liquids, or any CBD/aromatic product whose packaging or security seal has been opened or tampered with.",
+    section14_title: "14. Applicable Law, Conflict Resolution, and Jurisdiction",
+    section14_1: "<strong>14.1. Applicable Law:</strong> This contract is governed, first, by French Law, by virtue of the location of dispatch of the goods, and supplementally, by the legislation of Australia.",
+    section14_2: "<strong>14.2. Jurisdiction:</strong> For the resolution of any dispute, the jurisdiction of the District of Perpignan is competent, waiving any other.",
+    section15_title: "15. Contacts",
+    section15_p1: "MARY AND POPPER (ABN 37 588 057 135)<br/>U 2 58 MAIN ST<br/>OSBORNE PARK WA 6017<br/>AUSTRALIA<br/>Contact for Complaints/Support: info@comprarpopperonline.com<br/>Contact for Legal Notifications (Exercise of the Right of Withdrawal, etc.): Any communication of a legal nature or exercise of contractual rights must be made by email to the support contact and, ideally, be backed by certified mail to the registered office in Australia.",
+    section16_title: "16. Partial Invalidity",
+    section16_p1: "If any clause of these Conditions is declared null or unenforceable by a competent authority or court, the validity of the remaining clauses will not be affected, with the Contract remaining in force in its remaining terms. The Seller undertakes to replace the null or unenforceable clause with another of equivalent legal and economic effect."
   },
   venta_popper_page: {
-    ...esTranslations.venta_popper_page,
-    "title": "Sale of Poppers: Quality, Safety, and Legislation",
-    "subtitle": "Our reference online store is dedicated to offering high-quality Poppers for technical, cosmetic, and aromatic uses, ensuring that each product complies with current legislation.",
+    "title": "Poppers for Sale: Quality, Safety, and Legislation",
+    "subtitle": "Our leading online store is dedicated to offering high-quality Poppers for technical, cosmetic, and aromatic uses, ensuring that each product complies with current legislation.",
+    "what_is_title": "What are Poppers and what are their legal uses?",
+    "definition_title": "Detailed Definition",
+    "definition_p": "The term \"popper\" popularly refers to alkyl nitrites (amyl, pentyl, or propyl). They are volatile chemical compounds that in our store are exclusively marketed as <strong>leather cleaners, solvents, or technical air fresheners</strong>. Their function is that of a solvent and they are not designed or should be used for human consumption.",
+    "uses_title": "Official Permitted Uses (Not Recreational!)",
+    "uses_p": "To ensure compliance with our sales conditions, all our products have the following legal applications:",
+    "use_item1": "<strong>Technical/Air Freshener Use:</strong> For professional cleaning of surfaces or leather.",
+    "use_item2": "<strong>Cosmetic/Aromatherapy Use:</strong> As an essence for perfumery or room aromatization.",
+    "use_item3": "<strong>Collecting:</strong> For study or collection purposes.",
+    "warning_title": "Crucial Notice: Recreational Use Prohibited",
+    "warning_p": "Human consumption or recreational use of any of our products is expressly prohibited and discouraged. Non-compliance with this notice is the sole responsibility of the customer. Such use violates our General Terms of Sale and can be harmful to health.",
+    "variety_title": "Our Variety: A Catalog for Every Technical Need",
+    "variety_p": "We offer a rigorous selection of Poppers classified by their composition and technical purpose:",
+    "table_header_variety": "Variety or Formula",
+    "table_header_description": "Detailed Description",
+    "table_header_application": "Suggested Technical Application",
+    "amyl_description": "Considered one of the most potent, it offers deep cleaning action and an intense aroma. Ideal for professional use due to its high purity.",
+    "amyl_application": "Cleaning of very aged or tanned leather, aromatization of large spaces.",
+    "propyl_description": "Milder and fast-acting. Common in general-use brands. A good option for those looking for a quick result and a lighter aroma.",
+    "propyl_application": "Daily maintenance of leather, cleaning of delicate surfaces.",
+    "pentyl_description": "Famous for the durability of their effect. Excellent for purposes where a sustained result and more controlled evaporation are required.",
+    "pentyl_application": "Cleaning of collectibles, use in high-end leather goods.",
+    "services_title": "Store Services: Confidentiality and Efficiency",
+    "services_p": "We guarantee a simple and secure shopping experience, backed by our commitment to discretion and speed:",
+    "fast_shipping_title": "Fast and Totally Discreet Shipping",
+    "fast_shipping_p": "All products are shipped in packaging with no external references. Orders paid before 12:00 PM on a business day are dispatched the same day.",
+    "legality_title": "Legality and Logistics",
+    "legality_p": "We only sell items that comply with regulations. Your order is managed from France to ensure efficient logistics within the EU.",
+    "prices_title": "Competitive Prices",
+    "prices_p": "Thanks to our direct relationship with manufacturers, we offer unbeatable prices, volume discounts, and savings packs.",
+    "legal_title": "Legality, Shipping, and Customer Responsibility",
+    "legal_p1": "Our products are managed and shipped from France, where the sale of poppers as leather cleaners or air fresheners is legal. This allows us to ensure efficient logistics within the European Union. However, it is essential that as a customer, you know your responsibilities.",
+    "import_warning_title": "Notice on Use and Import Responsibility",
+    "import_warning_use": "<strong>Intended Use:</strong> The sale of our products is exclusively for technical, cosmetic, or aromatic uses. Human consumption and recreational use are strictly prohibited.",
+    "import_warning_responsibility": "<strong>Customer's Responsibility as Importer:</strong> You, as the customer, act as the final importer of the product. It is your responsibility to ensure that the product is legal in your destination country. Any customs costs, fees, import taxes, or seizure of the package will be borne exclusively by you, with no right to a refund from us.",
+    "import_warning_cancellation": "<strong>Right of Cancellation:</strong> We reserve the right to cancel any order if we suspect it will be misused or if it is sent to a place where its legality is questionable.",
     "explore_button": "Explore Full Catalog"
   },
   secure_payments_page: {
-    ...esTranslations.secure_payments_page,
     "title": "Secure and Discreet Payments",
     "subtitle": "Your security and privacy are our top priority. Here we explain how we handle your transactions.",
+    "philosophy_title": "Our Payment Philosophy",
+    "philosophy_p": "To offer you a simple and accessible shopping experience, we have opted for manual payment methods. This allows us to maintain maximum discretion and avoid the complexities of automatic payment gateways.",
+    "protected_info_title": "Your Information is Protected",
+    "protected_info_p": "Your payment details are never stored on our servers. Transactions are managed offline (cash on delivery) or through secure platforms like your bank, ensuring your privacy.",
+    "methods_title": "Accepted Payment Methods",
+    "methods_p": "We offer several options for your convenience:",
+    "cod_title": "Cash on Delivery",
+    "cod_p": "Pay in cash, by card, or Bizum directly to the delivery person when you receive your order.",
+    "prepaid_title": "Prepaid",
+    "prepaid_p": "Make the payment via Bizum or bank transfer. You will receive the instructions by email upon confirming your reservation.",
+    "discretion_alert_title": "Note on Discretion",
+    "discretion_alert_p": "To protect your privacy, the concept that will appear on your bank statements or in Bizum will be generic and will not refer to this website or the products purchased.",
     "explore_button": "Explore Catalog"
   },
   popper_info_page: {
-    ...esTranslations.popper_info_page,
     "title": "Poppers: everything you need to know",
     "subtitle": "A complete guide to their composition, effects, risks, and best safety practices.",
+    "what_is_title": "What exactly are Poppers?",
+    "what_is_p1": "\"Popper\" is the colloquial term for <strong>alkyl nitrites</strong>. It is a volatile chemical liquid classified as a depressant, which means it slows down communication between the brain and the body.",
+    "what_is_p2": "Their main characteristic is that they are <strong>vasodilators</strong>: they dilate blood vessels and relax smooth muscles (those we do not control voluntarily), which causes a temporary drop in blood pressure.",
+    "types_alert_title": "Common Types of Nitrites",
+    "types_alert_p": "There are various formulas, such as amyl nitrite, pentyl nitrite, propyl nitrite, and isopropyl nitrite. Each has different nuances in its effect and duration.",
+    "form_title": "Form, Smell, and Historical Use",
+    "form_p1": "They are presented as a colorless or yellowish liquid in small glass bottles (usually 9 to 30ml). Their smell is very characteristic and often described as strong and chemical, similar to solvents or \"dirty socks\".",
+    "form_p2": "Originally, amyl nitrite was used in medicine to treat angina. Its recreational use became popular later, especially in club culture and among men who have sex with men, for its ability to disinhibit and relax muscles, facilitating anal sex. Today, its use has spread as a \"party drug\".",
+    "effects_title": "Immediate Effects and Duration",
+    "effects_p": "The effects are almost instantaneous, but very brief, lasting between <strong>2 and 5 minutes</strong>. Each person's body reacts differently depending on their health, weight, amount inhaled, and if it is combined with other substances. The most common effects include:",
+    "effect1": "Initial euphoria and feeling of warmth.",
+    "effect2": "Flushing of the face and increased heart rate.",
+    "effect3": "Dizziness and, sometimes, headaches.",
+    "effect4": "Involuntary relaxation of smooth muscles (anal and vaginal sphincter).",
+    "effect5": "Decreased inhibitions and altered judgment.",
+    "effect6": "Possible visual distortions and increased sensual awareness.",
+    "effect7": "Nausea, blurred vision, or nosebleeds in some cases.",
+    "addiction_title": "Are Poppers Addictive?",
+    "addiction_p": "The use of poppers is <strong>not considered physically addictive</strong>, as it does not generate withdrawal syndrome. However, it can create a <strong>psychological dependence</strong>, especially linked to sex. Some users may feel they cannot enjoy sexual relations in the same way without its effect.",
+    "safety_warning_title": "Health and Safety: Crucial Warnings",
+    "safety_warning1": "<strong>NEVER INGEST!</strong> The liquid is highly toxic if ingested. It can cause blindness, brain damage, organ failure, and death.",
+    "safety_warning2": "<strong>SKIN CONTACT:</strong> The liquid is a strong irritant. Avoid direct contact with the skin, as it can cause chemical burns. If it occurs, wash the area with plenty of water.",
+    "safety_warning3": "<strong>RISK GROUPS:</strong> People with anemia, heart problems, high or low blood pressure, glaucoma, or who have suffered a head injury should avoid their use.",
+    "mixing_title": "Risks of Mixing with Other Drugs",
+    "mixing_viagra_title": "Popper + Viagra (or similar)",
+    "mixing_viagra_p": "Extreme and dangerous drop in blood pressure, risk of fainting, and medical emergency.",
+    "mixing_speed_title": "Popper + Amphetamines (Speed)",
+    "mixing_speed_p": "Drastic increase in pressure on the heart, subjecting the body to additional stress.",
+    "long_term_title": "Long-Term Effects",
+    "long_term_p": "Although no serious long-term effects have been demonstrated with sporadic and correct use, frequent and prolonged use can carry risks:",
+    "long_term1": "Skin irritation (rash) around the mouth, nose, and eyes with frequent use.",
+    "long_term2": "Skin burns if the liquid comes into direct contact.",
+    "long_term3": "Risk of maculopathy (vision loss), mainly associated with isopropyl nitrite.",
+    "long_term4": "Increased eye pressure, dangerous for people with glaucoma.",
+    "long_term5": "Possible long-term affectation of blood supply with abusive and continuous use.",
     "explore_button": "View Our Catalog"
   },
   privacy_page: {
-    ...esTranslations.privacy_page,
     "title": "Privacy and Data Protection",
     "subtitle": "Discover how we protect and manage your personal data in our store. Your security and trust are our priority.",
+    "commitment_title": "Our Commitment",
+    "commitment_p1": "This privacy policy is designed to help you understand what information we collect, why we collect it, and how you can manage it. We are subject to the strictest regulations and will only use your personal data for clearly identified purposes and in accordance with your rights.",
+    "commitment_p2": "As technology and data protection laws are constantly evolving, this Policy may be updated. By using our website, you accept this policy. All data will be kept for the legally required period, respecting the confidentiality guarantees of the GDPR (General Data Protection Regulation).",
+    "who_is_responsible_title": "1. Who is responsible for processing your data?",
+    "who_is_responsible_p": "The data controller is <strong>MARY AND POPPER</strong> (ABN 37 588 057 135), with registered office at U 2 58 MAIN ST, OSBORNE PARK WA 6017, AUSTRALIA. You can contact us at any time at: <a href=\"mailto:info@comprarpopperonline.com\" class=\"text-primary font-semibold hover:underline\">info@comprarpopperonline.com</a>.",
+    "what_data_title": "2. What data do we collect from you?",
+    "what_data_p": "Depending on your interaction with us, we may collect:",
+    "what_data_item1": "<strong>Identification and Account Data:</strong> Name, email, password, date of birth, phone number.",
+    "what_data_item2": "<strong>Order Data:</strong> Shipping address, TIN, and billing information.",
+    "what_data_item3": "<strong>Customer History:</strong> Purchases made, order status, abandoned carts, complaints, etc.",
+    "what_data_item4": "<strong>Browsing Data:</strong> IP address, browser, operating system, and pages visited. We use <strong>Microsoft Clarity</strong> to understand how you interact with the site and improve your experience.",
+    "what_for_title": "3. What is your data used for?",
+    "what_for_p1": "<strong>Purchase and order management:</strong> To process your purchases, manage shipments, billing, and payments.",
+    "what_for_p2": "<strong>Customer service:</strong> To answer your questions and help you with any need.",
+    "what_for_p3": "<strong>Sending newsletters (Marketing):</strong> With your consent, we send you promotions and news through our provider <strong>Klaviyo</strong>.",
+    "what_for_p4": "<strong>Profiling:</strong> We analyze consumption habits in an aggregated way to improve our products and personalize offers, always respecting your privacy.",
+    "share_data_title": "4. Do we share your data with third parties?",
+    "share_data_p": "To be able to offer you our services, we need to share your data with trusted partners, always with maximum security and only the strictly necessary information:",
+    "stripe_title": "Payment Processors (Stripe)",
+    "stripe_p": "Your payment data (credit/debit card) is sent encrypted directly to <strong>Stripe</strong>. We never see or store this sensitive information.",
+    "klaviyo_title": "Marketing and Communications (Klaviyo)",
+    "klaviyo_p": "If you subscribe to our newsletter, your email will be managed through <strong>Klaviyo</strong> for sending communications.",
+    "firebase_title": "Infrastructure and Database (Firebase)",
+    "firebase_p": "Your account data (profile, orders, addresses) is stored securely in <strong>Firebase</strong>, the Google platform we use for the application's operation.",
+    "clarity_title": "Usage Analysis (Microsoft Clarity)",
+    "clarity_p": "We share anonymous interaction data with <strong>Microsoft Clarity</strong> to analyze site usage and improve it.",
+    "share_data_p2": "In addition, we share data with logistics companies to be able to deliver your orders.",
+    "your_rights_title": "5. What are your rights?",
+    "your_rights_p": "You have the right to:",
+    "your_rights_item1": "<strong>Access</strong> your data and obtain a copy of it.",
+    "your_rights_item2": "<strong>Rectify</strong> your data if it is incorrect or incomplete.",
+    "your_rights_item3": "<strong>Delete</strong> your data when it is no longer necessary.",
+    "your_rights_item4": "<strong>Limit</strong> the processing of your data in certain circumstances.",
+    "your_rights_item5": "<strong>Object</strong> to the processing of your data for marketing purposes.",
+    "your_rights_item6": "Request the <strong>portability</strong> of your data.",
+    "your_rights_p2": "You can exercise these rights at any time by contacting us at <a href=\"mailto:info@comprarpopperonline.com\" class=\"text-primary font-semibold hover:underline\">info@comprarpopperonline.com</a>.",
     "explore_button": "Explore Catalog"
   },
   leather_cleaners_page: {
-    ...esTranslations.leather_cleaners_page,
     "title": "Leather Cleaners: Essential Information",
     "subtitle": "A clear guide on the purpose, sale, and use of our products to ensure a safe and informed purchase.",
+    "philosophy_title": "Our Philosophy: \"Leather Cleaners\"",
+    "philosophy_p1": "In our store, the products colloquially known as \"poppers\" are marketed under their technical and legal purpose: <strong>Leather Cleaners</strong>. We understand that many customers know these products by their popular name, and our marketing aims to facilitate their search.",
+    "philosophy_p2": "However, our goal is to be transparent and rigorous. All liquid products we offer are specifically designed and manufactured for the <strong>cleaning and conditioning of erotic clothing, toys, and leather accessories</strong>.",
+    "quality_alert_title": "Quality and European Regulations",
+    "quality_alert_p": "Our products are manufactured in accordance with European regulations, ensuring their purity and safety for the intended technical uses. They are not suitable or manufactured for human consumption.",
+    "recreational_use_alert_title": "Recreational Use Strictly Prohibited",
+    "recreational_use_alert_p": "We completely disassociate ourselves from the abuse of our products as aphrodisiacs, sexual stimulation products, or any other improper use. Direct inhalation from the bottle is prohibited. Human consumption is dangerous and violates our terms of sale.",
+    "commitment_title": "Your Commitment and Responsibility as a Customer",
+    "commitment_p": "By placing an order, you confirm and accept the following conditions:",
+    "commitment_item1": "You declare that you are <strong>over 18 years old</strong>.",
+    "commitment_item2": "You confirm that you know the <strong>technical use and possible side effects</strong> of the product, and that you have properly informed yourself before purchasing.",
+    "commitment_item3": "You have read and accept our <a href=\"/terminos-y-condiciones\" class=\"text-primary hover:underline font-semibold\">General Terms and Conditions</a>.",
+    "commitment_item4": "You act as the <strong>final importer</strong> of the product, assuming responsibility for the legality of the product in your destination country and for any customs procedures or costs.",
+    "commitment_p2": "You release the owner company, its employees, and suppliers from any liability for damages resulting from misuse of our items.",
+    "policy_title": "Our Sales and Shipping Policy",
+    "logistics_title": "Logistics from the European Union",
+    "logistics_p": "All our products are shipped from France, within the European Union, ensuring efficient logistics management and compliance with the regulations of the country of origin for the sale of these technical products.",
+    "cancellation_alert_title": "Right of Cancellation and Import Responsibility",
+    "cancellation_alert_p1": "We reserve the right to <strong>cancel any order</strong> if we suspect it will be misused or if it is destined for a location where its legality is questionable.",
+    "cancellation_alert_p2": "The customer, as the <strong>final importer</strong>, is solely responsible for ensuring that the product is legal in their country. Customs costs, fees, or seizures are the sole responsibility of the customer, with no right to a refund from us.",
     "explore_button": "Explore Catalog"
   },
   popper_shop_page: {
-    ...esTranslations.popper_shop_page,
     "title": "Popper Shop – Sale of the Best Aromas",
     "subtitle": "Welcome to the best poppers shop in Spain. Discover a wide variety of poppers, with the best offers and the lowest prices.",
+    "who_we_are_title": "Who We Are",
+    "who_we_are_subtitle": "Your trusted store with over 30 years of experience.",
+    "who_we_are_p": "We are one of the best online poppers shops, and in our store, you can find the best poppers on the market today at the most competitive prices. We have a highly qualified and specialized team, at your disposal 5 days a week to give you the necessary support or provide you with any type of information.",
+    "quality_alert_title": "Quality and Legality Guaranteed",
+    "quality_alert_p": "When you buy in our store, you have access to a wide range of poppers, all of them original, of high quality, and made only with legal nitrites such as amyl, pentyl, and isopropyl nitrite.",
+    "how_to_buy_title": "How to Buy in Our Store? Product Guide",
+    "how_to_buy_subtitle": "We help you choose the perfect aroma for your needs.",
+    "propyl_title": "Propyl Poppers: Ideal for Beginners",
+    "propyl_p": "Very popular for its milder effects, it is ideal for getting started in the world of poppers. You will find it in famous brands like <span class=\"font-semibold\">Rush, Platinum, and Blue Lad</span>. Here you can buy Popper online with total security.",
+    "amyl_title": "Amyl Poppers: The Strongest and Most Potent",
+    "amyl_p": "We recommend amyl-based poppers for expert users looking for an intense experience. The <span class=\"font-semibold\">Popper Rise Up</span>, with a concentration of more than 98% amyl, is especially appreciated for intense practices. If you are looking for high-quality Popper for sale, this is your best option.",
+    "pentyl_title": "Pentyl Poppers: Prolonged and Intense Effects",
+    "pentyl_p": "One of the most potent, the pentyl popper is in high demand for the durability of its effects. Formulas like <span class=\"font-semibold\">Extreme Ultra Strong</span> are perfect for those looking for stronger experiences and it is a highly requested format in the online sale of poppers for parties.",
+    "best_brands_title": "The Best Brands for the Best Customers",
+    "shipping_title": "Speed and Security in Every Shipment",
+    "shipping_subtitle": "Your privacy and satisfaction are our priority.",
+    "fast_shipping_title": "Fast and Discreet Shipping",
+    "fast_shipping_p": "Delivery service in 24/48 hours for the Iberian Peninsula. Orders placed before 4 PM are dispatched the same day. The packaging is always neutral, without any brand identifying the content.",
+    "secure_payment_title": "100% Secure Payment",
+    "secure_payment_p": "You will not see any reference to our store on your bank statement. In addition, your personal information is protected with SSL encryption to prevent unauthorized access.",
+    "payment_methods_p": "We accept bank transfer, credit/debit card, and cash on delivery.",
+    "doubts_title": "Do you have doubts?",
+    "doubts_subtitle": "Contact our team of experts.",
+    "contact_email": "info@comprarpopperonline.com",
     "explore_button": "Explore Catalog"
   },
   cookies_page: {
-    ...esTranslations.cookies_page,
     "title": "Cookie Policy",
-    "subtitle": "At Popper Online, we use cookies and similar technologies to improve your experience, ensure security, and analyze the use of our site. Here we explain how and why."
+    "subtitle": "At Popper Online, we use cookies and similar technologies to improve your experience, ensure security, and analyze the use of our site. Here we explain how and why.",
+    "what_is_title": "1. What is a cookie?",
+    "what_is_p1": "A cookie is a small text file that a website stores on your computer or mobile device when you visit it. It allows the site to remember your actions and preferences (such as login, language, font size, and other display preferences) over a period of time, so you don’t have to keep re-entering them whenever you come back to the site or browse from one page to another.",
+    "what_is_p2": "We also use the browser's `localStorage` and `sessionStorage`, which are similar technologies that allow us to store information without relying exclusively on cookies.",
+    "types_title": "2. What types of cookies do we use?",
+    "technical_title": "Technical Cookies (Strictly Necessary)",
+    "technical_p": "These cookies are essential for the website to function correctly. They cannot be disabled in our systems. They are set in response to actions made by you, such as logging in, adding products to the cart, or filling out forms. Without them, the services you have requested cannot be provided.",
+    "examples": "Examples:",
+    "technical_examples": "User session cookie, shopping cart cookie, Stripe security cookies.",
+    "analytics_title": "Analysis or Performance Cookies",
+    "analytics_p": "These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us know which pages are the most and least popular and see how visitors move around the site. All information these cookies collect is aggregated and therefore anonymous.",
+    "analytics_examples": "We use Microsoft Clarity to understand how you interact with the site and improve the experience.",
+    "marketing_title": "Marketing Cookies",
+    "marketing_p": "These cookies may be set through our site by our advertising partners. They may be used by those companies to build a profile of your interests and show you relevant ads on other sites. They do not store directly personal information, but are based on uniquely identifying your browser and internet device.",
+    "marketing_examples": "Klaviyo cookies to manage our newsletter subscriptions and notifications.",
+    "manage_title": "3. How to manage your cookie preferences",
+    "manage_p1": "You have full control over your cookies. When you visit our site for the first time, we show you a banner where you can accept all cookies, reject non-essential ones, or customize your preferences.",
+    "manage_p2": "You can change your mind at any time. In addition, most web browsers allow you to manage cookies through the browser settings. You can set your browser to notify you before accepting cookies or you can set it to reject them directly.",
+    "manage_p3": "Please note that if you decide to block technical cookies, some parts of our website may not function correctly."
   },
   disputes_page: {
-    ...esTranslations.disputes_page,
     "subtitle": "Here you will find all the information about your rights and the procedures to follow if you need to resolve a contract or manage a dispute.",
-    "right_of_withdrawal_title": "Right of Withdrawal"
+    "right_of_withdrawal_title": "Right of Withdrawal",
+    "right_of_withdrawal_p1": "In accordance with Royal Legislative Decree 1/2007, you have <strong>14 calendar days</strong> from the receipt of your order to withdraw from the contract and return the goods. To do so, you must inform us of your decision through an unequivocal statement (for example, a letter or an email to <a href=\"mailto:info@comprarpopperonline.com\" class=\"text-primary font-semibold hover:underline\">info@comprarpopperonline.com</a>).",
+    "right_of_withdrawal_p2": "Once you have communicated your decision, you have another 14 days to return the products. It is important to note that <strong>the costs of returning the goods are entirely your responsibility.</strong>",
+    "right_of_withdrawal_p3": "You must keep the goods in order to return them in suitable conditions of use. For a return to be accepted, the products must be returned <strong>perfectly sealed, unopened, unused, with all security seals intact and in their original packaging.</strong> You are responsible for any diminished value if the handling of the products exceeds what is necessary for a pure visual inspection of their nature.",
+    "right_of_withdrawal_p4": "Once the returned goods are received and their condition is checked, we will refund all payments received, except for additional costs if you chose a more expensive shipping method than the standard one we offer. We reserve the right to withhold the refund until we have received the products and verified that they meet the return conditions.",
+    "exclusion_title": "Exclusion of the Right of Withdrawal",
+    "exclusion_p1": "Returns will not be accepted in the following situations, in accordance with the law:",
+    "exclusion_item1": "Supply of sealed goods which are not suitable for return due to <strong>health protection or hygiene reasons</strong> and were unsealed after delivery.",
+    "exclusion_item2": "Supply of goods such as cosmetics, personal care items, <strong>underwear, or any intimate use product</strong> whose packaging has been compromised.",
+    "exclusion_item3": "Sound/video recordings or computer software from which the inviolability seal has been removed.",
+    "exclusion_item4": "The customer, as the <strong>final importer</strong>, is solely responsible for ensuring that the product is legal in their country. Customs costs, fees, or seizures are the sole responsibility of the customer and this will not entitle them to a refund.",
+    "law_title": "Applicable Law, Mediation, and Jurisdiction",
+    "law_p1": "This contract is governed by <strong>French law</strong>. For the resolution of any dispute, the jurisdiction of the <strong>District of Perpignan</strong> is competent, waiving any other.",
+    "adr_title": "Alternative Dispute Resolution (ADR)",
+    "adr_p1": "In case of a dispute, you can resort to an Alternative Dispute Resolution Entity for Consumer Disputes. Mediation is a free and confidential process to resolve disagreements amicably with the help of an impartial third party.",
+    "adr_p2": "For online consumer disputes, you can use the ODR (Online Dispute Resolution) platform of the European Union, which facilitates the resolution of cross-border disputes.",
+    "odr_platform_button": "EU ODR Platform",
+    "mediators_button": "Official Mediators (France)",
+    "mediation_steps_title": "Steps for Mediation",
+    "mediation_step1": "Before any mediation, you must send us a written complaint (preferably by email to have a record).",
+    "mediation_step2": "If you do not receive a satisfactory response from us within a reasonable time, you can initiate the mediation procedure through the mediator's website.",
+    "mediation_step3": "The mediator will inform you of the receipt of your file and will have 90 days to propose a solution. Both parties are free to accept or reject it.",
+    "mediation_p_final": "For any initial complaint or inquiry, you can contact us at <a href=\"mailto:info@comprarpopperonline.com\" class=\"text-primary font-semibold hover:underline\">info@comprarpopperonline.com</a>."
   },
   checkout: {
-    ...esTranslations.checkout,
     "title": "Checkout",
     "stepper": {
         "cart": "Cart",
@@ -1637,25 +1844,817 @@ const enTranslations: Translations = {
   }
 };
 
+// --- FRENCH ---
 const frTranslations: Translations = {
-  ...esTranslations,
-  home: { ...esTranslations.home, hero_title: "[FR] Qualité Premium, Sensations Uniques", hero_subtitle: "[FR] Explorez notre sélection soignée de poppers et découvrez une pureté et une puissance qui redéfinissent l'expérience." },
-  header: { ...esTranslations.header, products: "[FR] Produits", create_pack: "[FR] Créez votre Pack" },
+  home: {
+    hero_title: "Qualité Premium, Sensations Uniques",
+    hero_subtitle: "Explorez notre sélection soignée de poppers et découvrez une pureté et une puissance qui redéfinissent l'expérience.",
+    section_title_new: "Nouveautés",
+    section_title_offers: "Offres Spéciales",
+    section_title_bestsellers: "Meilleures Ventes",
+    feature_secure_title: "Site Web 100% Sécurisé",
+    feature_secure_desc: "Votre sécurité est notre priorité.",
+    feature_discreet_payment_title: "Paiement Discret",
+    feature_discreet_payment_desc: "Aucune référence sur votre relevé.",
+    feature_discreet_packaging_title: "Emballage Discret",
+    feature_discreet_packaging_desc: "Colis sans marques ni logos.",
+    feature_fast_shipping_title: "Livraison Rapide",
+    feature_fast_shipping_desc: "Recevez votre commande en 24/48h.",
+    subscribe_title: "Abonnez-vous à notre newsletter",
+    subscribe_desc: "Vous pouvez vous désabonner à tout moment. Pour cela, consultez nos coordonnées dans les mentions légales.",
+    subscribe_placeholder: "Entrez votre email...",
+    subscribe_button: "S'abonner",
+    subscribe_button_loading: "Abonnement...",
+    subscribe_success: "Merci de vous être abonné!",
+    subscribe_success_desc: "Vous recevrez bientôt nos meilleures offres.",
+    subscribe_error: "Erreur d'abonnement",
+    subscribe_error_desc: "L'abonnement n'a pas pu être complété. Veuillez réessayer.",
+    subscribe_error_email: "Veuillez entrer votre adresse email.",
+  },
+  header: {
+    free_shipping: 'GRATUIT +40€',
+    fast_delivery: '24/48h',
+    nav_menu: 'Menu de Navigation',
+    products: 'Produits',
+    create_pack: 'Créez votre Pack',
+    monthly_dose: 'Dose Mensuelle',
+    product_links: {
+      all: "TOUS LES PRODUITS",
+      small: "PETITS POPPERS (10ML)",
+      medium: "POPPERS MOYENS (15ML)",
+      large: "GRANDS POPPERS (25ML)",
+      packs: "PACKS DE POPPERS",
+      accessories: "ACCESSOIRES POPPERS",
+      toys: "JOUETS ÉROTIQUES",
+    },
+    composition_links: {
+      title: "COMPOSITION",
+      amyl: "POPPERS À L'AMYLE",
+      pentyl: "POPPERS AU PENTYLE",
+      propyl: "POPPERS AU PROPYLE",
+      cbd: "POPPERS AU CBD",
+      mix: "MÉLANGE DE NITRITES",
+    }
+  },
+  cart: {
+    title: "Panier d'Achat",
+    empty_title: "Votre panier est vide",
+    empty_subtitle: "Il semble que vous n'ayez encore rien ajouté.",
+    subtotal: "Sous-total",
+    volume_discount: "Remise sur volume",
+    shipping_estimate: "Livraison (estimée)",
+    total_estimate: "Total Estimé:",
+    free_shipping_banner: "Vous bénéficiez de la Livraison GRATUITE!",
+    free_shipping_threshold: "Livraison gratuite pour les commandes de plus de {price}",
+    checkout_button: "Finaliser la Commande",
+    discreet_packaging: "Emballage 100% discret.",
+    notes: "La remise sur volume et les frais de port finaux seront appliqués à l'écran de paiement en fonction du mode choisi.",
+    item_added: "Ajouté au panier",
+    item_removed: "Produit retiré",
+    item_unavailable: "Épuisé",
+    stock_limit_reached: "Limite de stock atteinte",
+  },
+  account: {
+    ...frTranslations.account,
+  },
+  products: {
+    title: "Notre Catalogue",
+    subtitle: "Trouvez votre arôme parfait. Utilisez les filtres pour découvrir notre sélection."
+  },
+  filters: {
+    title: "Filtres",
+    clear: "Effacer",
+    search: "Recherche",
+    search_placeholder: "Rechercher des produits...",
+    sort_by: "Trier par",
+    sort_placeholder: "Sélectionner l'ordre",
+    sort_options: {
+        name_asc: "Nom (A-Z)",
+        name_desc: "Nom (Z-A)",
+        price_asc: "Prix (Croissant)",
+        price_desc: "Prix (Décroissant)"
+    },
+    categories: "Catégories",
+    category_options: {
+        novedad: "Nouveautés",
+        oferta: "Offres",
+        "mas-vendido": "Meilleures Ventes",
+        pack: "Packs",
+        accesorio: "Accessoires"
+    },
+    brands: "Marques",
+    size: "Taille",
+    composition: "Composition"
+  },
+  product_card: {
+    sold_out: "Épuisé",
+    offer: "PROMO",
+    notify_me: "Prévenez-moi",
+    add_to_cart: "Ajouter"
+  },
+  product_info: {
+    secure_payment: "Achat sécurisé et paiement discret garanti.",
+    fast_shipping: "Livraison rapide en 24/48h dans toute la péninsule.",
+    discreet_packaging: "Emballage 100% discret sans marques extérieures."
+  },
+  product_details: {
+    description_tab: "Description",
+    details_tab: "Détails du produit"
+  },
+  related_products: {
+    title: "Produits Similaires"
+  },
+  stock_notification: {
+    ...frTranslations.stock_notification,
+  },
+  auth: {
+    ...frTranslations.auth,
+  },
+  pack_builder: {
+    ...frTranslations.pack_builder,
+  },
+  popups: {
+    ...frTranslations.popups,
+  },
+  notifications: {
+    ...frTranslations.notifications,
+  },
+  footer: {
+    slogan: "Votre boutique de confiance pour des arômes de qualité supérieure.",
+    column_info: "Informations",
+    column_guides: "Guides",
+    column_legal: "Légal",
+    column_help: "Aide",
+    link_legal_info: "Informations légales",
+    link_terms: "Termes et Conditions",
+    link_popper_sale: "Vente de Poppers",
+    link_secure_payments: "Paiements sécurisés",
+    link_popper_info: "Poppers: tout ce que vous devez savoir",
+    link_leather_cleaners: "Informations sur les Nettoyants pour Cuir",
+    link_popper_shop: "Boutique Popper",
+    link_privacy: "Confidentialité et protection des données",
+    link_disputes: "Règlement des litiges",
+    link_cookies: "Politique de cookies",
+    link_shipping: "Expédition et tarifs",
+    link_contact: "Contactez-nous",
+    link_blog: "Blog",
+    link_docs: "Docs du Site",
+    copyright: "Tous droits réservés."
+  },
+  contact_page: {
+    ...frTranslations.contact_page,
+  },
+  blog_page: {
+    ...frTranslations.blog_page,
+  },
+  shipping_page: {
+    ...frTranslations.shipping_page,
+  },
+  legal_info: {
+    ...frTranslations.legal_info,
+  },
+  terms_page: {
+    ...frTranslations.terms_page,
+  },
+  venta_popper_page: {
+    ...frTranslations.venta_popper_page,
+  },
+  secure_payments_page: {
+    ...frTranslations.secure_payments_page,
+  },
+  popper_info_page: {
+    ...frTranslations.popper_info_page,
+  },
+  privacy_page: {
+    ...frTranslations.privacy_page,
+  },
+  leather_cleaners_page: {
+    ...frTranslations.leather_cleaners_page,
+  },
+  popper_shop_page: {
+    ...frTranslations.popper_shop_page,
+  },
+  cookies_page: {
+    ...frTranslations.cookies_page,
+  },
+  disputes_page: {
+    ...frTranslations.disputes_page,
+  },
+  checkout: {
+    ...frTranslations.checkout,
+  },
+  docs: {
+    ...frTranslations.docs,
+  }
 };
+// --- GERMAN ---
 const deTranslations: Translations = {
-  ...esTranslations,
-  home: { ...esTranslations.home, hero_title: "[DE] Premium-Qualität, Einzigartige Empfindungen", hero_subtitle: "[DE] Entdecken Sie unsere sorgfältig ausgewählte Auswahl an Poppers und erleben Sie eine Reinheit und Potenz, die das Erlebnis neu definieren." },
-  header: { ...esTranslations.header, products: "[DE] Produkte", create_pack: "[DE] Erstellen Sie Ihr Pack" },
+  home: {
+    hero_title: "Premium Qualität, Einzigartige Empfindungen",
+    hero_subtitle: "Entdecken Sie unsere sorgfältig ausgewählte Auswahl an Poppers und erleben Sie eine Reinheit und Potenz, die das Erlebnis neu definieren.",
+    section_title_new: "Neuheiten",
+    section_title_offers: "Sonderangebote",
+    section_title_bestsellers: "Bestseller",
+    feature_secure_title: "100% sichere Webseite",
+    feature_secure_desc: "Ihre Sicherheit ist unsere Priorität.",
+    feature_discreet_payment_title: "Diskrete Zahlung",
+    feature_discreet_payment_desc: "Keine Hinweise auf Ihrem Kontoauszug.",
+    feature_discreet_packaging_title: "Diskrete Verpackung",
+    feature_discreet_packaging_desc: "Pakete ohne Markenzeichen oder Logos.",
+    feature_fast_shipping_title: "Schnelle Lieferung",
+    feature_fast_shipping_desc: "Erhalten Sie Ihre Bestellung in 24/48h.",
+    subscribe_title: "Abonnieren Sie unseren Newsletter",
+    subscribe_desc: "Sie können sich jederzeit abmelden. Dazu konsultieren Sie bitte unsere Kontaktinformationen im Impressum.",
+    subscribe_placeholder: "Geben Sie Ihre E-Mail ein...",
+    subscribe_button: "Abonnieren",
+    subscribe_button_loading: "Wird abonniert...",
+    subscribe_success: "Danke für's Abonnieren!",
+    subscribe_success_desc: "Sie erhalten bald unsere besten Angebote.",
+    subscribe_error: "Abonnementfehler",
+    subscribe_error_desc: "Das Abonnement konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+    subscribe_error_email: "Bitte geben Sie Ihre E-Mail-Adresse ein.",
+  },
+  header: {
+    free_shipping: 'GRATIS +40€',
+    fast_delivery: '24/48h',
+    nav_menu: 'Navigationsmenü',
+    products: 'Produkte',
+    create_pack: 'Ihr Pack Erstellen',
+    monthly_dose: 'Monatliche Dosis',
+    product_links: {
+      all: "ALLE PRODUKTE",
+      small: "KLEINE POPPERS (10ML)",
+      medium: "MITTLERE POPPERS (15ML)",
+      large: "GROSSE POPPERS (25ML)",
+      packs: "POPPER-PACKS",
+      accessories: "POPPER-ZUBEHÖR",
+      toys: "EROTISCHES SPIELZEUG",
+    },
+    composition_links: {
+      title: "ZUSAMMENSETZUNG",
+      amyl: "AMYL-POPPERS",
+      pentyl: "PENTYL-POPPERS",
+      propyl: "PROPYL-POPPERS",
+      cbd: "CBD-POPPERS",
+      mix: "NITRIT-MISCHUNG",
+    }
+  },
+  cart: {
+    title: "Einkaufswagen",
+    empty_title: "Ihr Einkaufswagen ist leer",
+    empty_subtitle: "Es scheint, Sie haben noch nichts hinzugefügt.",
+    subtotal: "Zwischensumme",
+    volume_discount: "Mengenrabatt",
+    shipping_estimate: "Versand (geschätzt)",
+    total_estimate: "Geschätzte Gesamtsumme:",
+    free_shipping_banner: "Sie haben KOSTENLOSEN Versand!",
+    free_shipping_threshold: "Kostenloser Versand für Bestellungen über {price}",
+    checkout_button: "Zur Kasse",
+    discreet_packaging: "100% diskrete Verpackung.",
+    notes: "Der Mengenrabatt und die endgültigen Versandkosten werden auf der Kassenseite je nach gewählter Methode angewendet.",
+    item_added: "Zum Warenkorb hinzugefügt",
+    item_removed: "Produkt entfernt",
+    item_unavailable: "Ausverkauft",
+    stock_limit_reached: "Bestandslimit erreicht",
+  },
+  account: {
+    ...deTranslations.account,
+  },
+  products: {
+    title: "Unser Katalog",
+    subtitle: "Finden Sie Ihr perfektes Aroma. Nutzen Sie die Filter, um unsere Auswahl zu entdecken."
+  },
+  filters: {
+    title: "Filter",
+    clear: "Löschen",
+    search: "Suche",
+    search_placeholder: "Produkte suchen...",
+    sort_by: "Sortieren nach",
+    sort_placeholder: "Reihenfolge auswählen",
+    sort_options: {
+        name_asc: "Name (A-Z)",
+        name_desc: "Name (Z-A)",
+        price_asc: "Preis (Aufsteigend)",
+        price_desc: "Preis (Absteigend)"
+    },
+    categories: "Kategorien",
+    category_options: {
+        novedad: "Neuheiten",
+        oferta: "Angebote",
+        "mas-vendido": "Bestseller",
+        pack: "Packs",
+        accesorio: "Zubehör"
+    },
+    brands: "Marken",
+    size: "Größe",
+    composition: "Zusammensetzung"
+  },
+  product_card: {
+    sold_out: "Ausverkauft",
+    offer: "ANGEBOT",
+    notify_me: "Benachrichtigen",
+    add_to_cart: "Hinzufügen"
+  },
+  product_info: {
+    secure_payment: "Sicherer Kauf und diskrete Zahlung garantiert.",
+    fast_shipping: "Schneller Versand in 24/48h auf der gesamten Halbinsel.",
+    discreet_packaging: "100% diskrete Verpackung ohne äußere Kennzeichnungen."
+  },
+  product_details: {
+    description_tab: "Beschreibung",
+    details_tab: "Produktdetails"
+  },
+  related_products: {
+    title: "Ähnliche Produkte"
+  },
+  stock_notification: {
+    ...deTranslations.stock_notification,
+  },
+  auth: {
+    ...deTranslations.auth,
+  },
+  pack_builder: {
+    ...deTranslations.pack_builder,
+  },
+  popups: {
+    ...deTranslations.popups,
+  },
+  notifications: {
+    ...deTranslations.notifications,
+  },
+  footer: {
+    slogan: "Ihr vertrauenswürdiger Shop für Aromen von höchster Qualität.",
+    column_info: "Informationen",
+    column_guides: "Anleitungen",
+    column_legal: "Rechtliches",
+    column_help: "Hilfe",
+    link_legal_info: "Impressum",
+    link_terms: "Allgemeine Geschäftsbedingungen",
+    link_popper_sale: "Popper-Verkauf",
+    link_secure_payments: "Sichere Zahlungen",
+    link_popper_info: "Poppers: alles, was Sie wissen müssen",
+    link_leather_cleaners: "Informationen zu Lederreinigern",
+    link_popper_shop: "Popper Shop",
+    link_privacy: "Datenschutz",
+    link_disputes: "Streitbeilegung",
+    link_cookies: "Cookie-Richtlinie",
+    link_shipping: "Versand und Tarife",
+    link_contact: "Kontaktieren Sie uns",
+    link_blog: "Blog",
+    link_docs: "Site-Dokumentation",
+    copyright: "Alle Rechte vorbehalten."
+  },
+  contact_page: {
+    ...deTranslations.contact_page,
+  },
+  blog_page: {
+    ...deTranslations.blog_page,
+  },
+  shipping_page: {
+    ...deTranslations.shipping_page,
+  },
+  legal_info: {
+    ...deTranslations.legal_info,
+  },
+  terms_page: {
+    ...deTranslations.terms_page,
+  },
+  venta_popper_page: {
+    ...deTranslations.venta_popper_page,
+  },
+  secure_payments_page: {
+    ...deTranslations.secure_payments_page,
+  },
+  popper_info_page: {
+    ...deTranslations.popper_info_page,
+  },
+  privacy_page: {
+    ...deTranslations.privacy_page,
+  },
+  leather_cleaners_page: {
+    ...deTranslations.leather_cleaners_page,
+  },
+  popper_shop_page: {
+    ...deTranslations.popper_shop_page,
+  },
+  cookies_page: {
+    ...deTranslations.cookies_page,
+  },
+  disputes_page: {
+    ...deTranslations.disputes_page,
+  },
+  checkout: {
+    ...deTranslations.checkout,
+  },
+  docs: {
+    ...deTranslations.docs,
+  }
 };
+// --- ITALIAN ---
 const itTranslations: Translations = {
-  ...esTranslations,
-  home: { ...esTranslations.home, hero_title: "[IT] Qualità Premium, Sensazioni Uniche", hero_subtitle: "[IT] Esplora la nostra selezione curata di popper e scopri una purezza e una potenza che ridefiniscono l'esperienza." },
-  header: { ...esTranslations.header, products: "[IT] Prodotti", create_pack: "[IT] Crea il tuo Pack" },
+  home: {
+    hero_title: "Qualità Premium, Sensazioni Uniche",
+    hero_subtitle: "Esplora la nostra selezione curata di popper e scopri una purezza e una potenza che ridefiniscono l'esperienza.",
+    section_title_new: "Novità",
+    section_title_offers: "Offerte Speciali",
+    section_title_bestsellers: "I più Venduti",
+    feature_secure_title: "Sito Web Sicuro al 100%",
+    feature_secure_desc: "La tua sicurezza è la nostra priorità.",
+    feature_discreet_payment_title: "Pagamento Discreto",
+    feature_discreet_payment_desc: "Nessun riferimento sul tuo estratto conto.",
+    feature_discreet_packaging_title: "Imballaggio Discreto",
+    feature_discreet_packaging_desc: "Pacchi senza marchi o loghi.",
+    feature_fast_shipping_title: "Consegna Veloce",
+    feature_fast_shipping_desc: "Ricevi il tuo ordine in 24/48 ore.",
+    subscribe_title: "Iscriviti alla nostra newsletter",
+    subscribe_desc: "Puoi annullare l'iscrizione in qualsiasi momento. Per farlo, consulta le nostre informazioni di contatto nella dichiarazione legale.",
+    subscribe_placeholder: "Inserisci la tua email...",
+    subscribe_button: "Iscriviti",
+    subscribe_button_loading: "Iscrizione...",
+    subscribe_success: "Grazie per esserti iscritto!",
+    subscribe_success_desc: "Riceverai presto le nostre migliori offerte.",
+    subscribe_error: "Errore di iscrizione",
+    subscribe_error_desc: "Impossibile completare l'iscrizione. Per favore, riprova.",
+    subscribe_error_email: "Per favore, inserisci il tuo indirizzo email.",
+  },
+  header: {
+    free_shipping: 'GRATIS +40€',
+    fast_delivery: '24/48h',
+    nav_menu: 'Menu di Navigazione',
+    products: 'Prodotti',
+    create_pack: 'Crea il tuo Pack',
+    monthly_dose: 'Dose Mensile',
+    product_links: {
+      all: "TUTTI I PRODOTTI",
+      small: "POPPER PICCOLI (10ML)",
+      medium: "POPPER MEDI (15ML)",
+      large: "POPPER GRANDI (25ML)",
+      packs: "PACK DI POPPER",
+      accessories: "ACCESSORI PER POPPER",
+      toys: "GIOCATTOLI EROTICI",
+    },
+    composition_links: {
+      title: "COMPOSIZIONE",
+      amyl: "POPPER ALL'AMILE",
+      pentyl: "POPPER AL PENTILE",
+      propyl: "POPPER AL PROPILE",
+      cbd: "POPPER AL CBD",
+      mix: "MIX DI NITRITI",
+    }
+  },
+  cart: {
+    title: "Carrello",
+    empty_title: "Il tuo carrello è vuoto",
+    empty_subtitle: "Sembra che tu non abbia ancora aggiunto nulla.",
+    subtotal: "Subtotale",
+    volume_discount: "Sconto volume",
+    shipping_estimate: "Spedizione (stimata)",
+    total_estimate: "Totale Stimato:",
+    free_shipping_banner: "Hai la Spedizione GRATUITA!",
+    free_shipping_threshold: "Spedizione gratuita per ordini superiori a {price}",
+    checkout_button: "Vai alla Cassa",
+    discreet_packaging: "Imballaggio 100% discreto.",
+    notes: "Lo sconto volume e le spese di spedizione finali verranno applicati nella schermata di pagamento a seconda del metodo scelto.",
+    item_added: "Aggiunto al carrello",
+    item_removed: "Prodotto rimosso",
+    item_unavailable: "Esaurito",
+    stock_limit_reached: "Limite di stock raggiunto",
+  },
+  account: {
+    ...itTranslations.account,
+  },
+  products: {
+    title: "Il Nostro Catalogo",
+    subtitle: "Trova il tuo aroma perfetto. Usa i filtri per scoprire la nostra selezione."
+  },
+  filters: {
+    title: "Filtri",
+    clear: "Pulisci",
+    search: "Cerca",
+    search_placeholder: "Cerca prodotti...",
+    sort_by: "Ordina per",
+    sort_placeholder: "Seleziona ordine",
+    sort_options: {
+        name_asc: "Nome (A-Z)",
+        name_desc: "Nome (Z-A)",
+        price_asc: "Prezzo (Crescente)",
+        price_desc: "Prezzo (Decrescente)"
+    },
+    categories: "Categorie",
+    category_options: {
+        novedad: "Novità",
+        oferta: "Offerte",
+        "mas-vendido": "I più Venduti",
+        pack: "Pack",
+        accesorio: "Accessori"
+    },
+    brands: "Marche",
+    size: "Dimensione",
+    composition: "Composizione"
+  },
+  product_card: {
+    sold_out: "Esaurito",
+    offer: "OFFERTA",
+    notify_me: "Avvisami",
+    add_to_cart: "Aggiungi"
+  },
+  product_info: {
+    secure_payment: "Acquisto sicuro e pagamento discreto garantiti.",
+    fast_shipping: "Spedizione rapida in 24/48h in tutta la penisola.",
+    discreet_packaging: "Imballaggio 100% discreto senza marchi esterni."
+  },
+  product_details: {
+    description_tab: "Descrizione",
+    details_tab: "Dettagli del prodotto"
+  },
+  related_products: {
+    title: "Prodotti Correlati"
+  },
+  stock_notification: {
+    ...itTranslations.stock_notification,
+  },
+  auth: {
+    ...itTranslations.auth,
+  },
+  pack_builder: {
+    ...itTranslations.pack_builder,
+  },
+  popups: {
+    ...itTranslations.popups,
+  },
+  notifications: {
+    ...itTranslations.notifications,
+  },
+  footer: {
+    slogan: "Il tuo negozio di fiducia per aromi di qualità superiore.",
+    column_info: "Informazioni",
+    column_guides: "Guide",
+    column_legal: "Legale",
+    column_help: "Aiuto",
+    link_legal_info: "Informazioni legali",
+    link_terms: "Termini e Condizioni",
+    link_popper_sale: "Vendita di Popper",
+    link_secure_payments: "Pagamenti sicuri",
+    link_popper_info: "Popper: tutto quello che devi sapere",
+    link_leather_cleaners: "Informazioni sui Pulitori per Pelle",
+    link_popper_shop: "Negozio Popper",
+    link_privacy: "Privacy e protezione dei dati",
+    link_disputes: "Risoluzione delle controversie",
+    link_cookies: "Politica sui cookie",
+    link_shipping: "Spedizione e tariffe",
+    link_contact: "Contattaci",
+    link_blog: "Blog",
+    link_docs: "Documenti del Sito",
+    copyright: "Tutti i diritti riservati."
+  },
+  contact_page: {
+    ...itTranslations.contact_page,
+  },
+  blog_page: {
+    ...itTranslations.blog_page,
+  },
+  shipping_page: {
+    ...itTranslations.shipping_page,
+  },
+  legal_info: {
+    ...itTranslations.legal_info,
+  },
+  terms_page: {
+    ...itTranslations.terms_page,
+  },
+  venta_popper_page: {
+    ...itTranslations.venta_popper_page,
+  },
+  secure_payments_page: {
+    ...itTranslations.secure_payments_page,
+  },
+  popper_info_page: {
+    ...itTranslations.popper_info_page,
+  },
+  privacy_page: {
+    ...itTranslations.privacy_page,
+  },
+  leather_cleaners_page: {
+    ...itTranslations.leather_cleaners_page,
+  },
+  popper_shop_page: {
+    ...itTranslations.popper_shop_page,
+  },
+  cookies_page: {
+    ...itTranslations.cookies_page,
+  },
+  disputes_page: {
+    ...itTranslations.disputes_page,
+  },
+  checkout: {
+    ...itTranslations.checkout,
+  },
+  docs: {
+    ...itTranslations.docs,
+  }
 };
+// --- PORTUGUESE ---
 const ptTranslations: Translations = {
-  ...esTranslations,
-  home: { ...esTranslations.home, hero_title: "[PT] Qualidade Premium, Sensações Únicas", hero_subtitle: "[PT] Explore a nossa seleção cuidada de poppers e descubra uma pureza e potência que redefinem a experiência." },
-  header: { ...esTranslations.header, products: "[PT] Produtos", create_pack: "[PT] Crie o seu Pack" },
+  home: {
+    hero_title: "Qualidade Premium, Sensações Únicas",
+    hero_subtitle: "Explore a nossa seleção cuidada de poppers e descubra uma pureza e potência que redefinem a experiência.",
+    section_title_new: "Novidades",
+    section_title_offers: "Ofertas Especiais",
+    section_title_bestsellers: "Mais Vendidos",
+    feature_secure_title: "Site 100% Seguro",
+    feature_secure_desc: "A sua segurança é a nossa prioridade.",
+    feature_discreet_payment_title: "Pagamento Discreto",
+    feature_discreet_payment_desc: "Sem referências no seu extrato.",
+    feature_discreet_packaging_title: "Embalagem Discreta",
+    feature_discreet_packaging_desc: "Pacotes sem marcas ou logotipos.",
+    feature_fast_shipping_title: "Entrega Rápida",
+    feature_fast_shipping_desc: "Receba a sua encomenda em 24/48h.",
+    subscribe_title: "Subscreva a nossa newsletter",
+    subscribe_desc: "Pode cancelar a sua subscrição a qualquer momento. Para isso, consulte as nossas informações de contacto na declaração legal.",
+    subscribe_placeholder: "Introduza o seu email...",
+    subscribe_button: "Subscrever",
+    subscribe_button_loading: "A subscrever...",
+    subscribe_success: "Obrigado por subscrever!",
+    subscribe_success_desc: "Receberá em breve as nossas melhores ofertas.",
+    subscribe_error: "Erro na subscrição",
+    subscribe_error_desc: "Não foi possível concluir a subscrição. Por favor, tente novamente.",
+    subscribe_error_email: "Por favor, introduza o seu endereço de email.",
+  },
+  header: {
+    free_shipping: 'GRÁTIS +40€',
+    fast_delivery: '24/48h',
+    nav_menu: 'Menu de Navegação',
+    products: 'Produtos',
+    create_pack: 'Crie o seu Pack',
+    monthly_dose: 'Dose Mensal',
+    product_links: {
+      all: "TODOS OS PRODUTOS",
+      small: "POPPERS PEQUENOS (10ML)",
+      medium: "POPPERS MÉDIOS (15ML)",
+      large: "POPPERS GRANDES (25ML)",
+      packs: "PACKS DE POPPERS",
+      accessories: "ACESSÓRIOS PARA POPPERS",
+      toys: "BRINQUEDOS ERÓTICOS",
+    },
+    composition_links: {
+      title: "COMPOSIÇÃO",
+      amyl: "POPPERS DE AMILO",
+      pentyl: "POPPERS DE PENTILO",
+      propyl: "POPPERS DE PROPILO",
+      cbd: "POPPERS DE CBD",
+      mix: "MISTURA DE NITRITOS",
+    }
+  },
+  cart: {
+    title: "Carrinho de Compras",
+    empty_title: "O seu carrinho está vazio",
+    empty_subtitle: "Parece que ainda não adicionou nada.",
+    subtotal: "Subtotal",
+    volume_discount: "Desconto de volume",
+    shipping_estimate: "Envio (estimado)",
+    total_estimate: "Total Estimado:",
+    free_shipping_banner: "Você tem Envio GRÁTIS!",
+    free_shipping_threshold: "Envio grátis em encomendas superiores a {price}",
+    checkout_button: "Finalizar Compra",
+    discreet_packaging: "Embalagem 100% discreta.",
+    notes: "O desconto de volume e os custos de envio finais serão aplicados no ecrã de pagamento, dependendo do método escolhido.",
+    item_added: "Adicionado ao carrinho",
+    item_removed: "Produto removido",
+    item_unavailable: "Esgotado",
+    stock_limit_reached: "Limite de stock atingido",
+  },
+  account: {
+    ...ptTranslations.account,
+  },
+  products: {
+    title: "O Nosso Catálogo",
+    subtitle: "Encontre o seu aroma perfeito. Use os filtros para descobrir a nossa seleção."
+  },
+  filters: {
+    title: "Filtros",
+    clear: "Limpar",
+    search: "Pesquisar",
+    search_placeholder: "Pesquisar produtos...",
+    sort_by: "Ordenar por",
+    sort_placeholder: "Selecionar ordem",
+    sort_options: {
+        name_asc: "Nome (A-Z)",
+        name_desc: "Nome (Z-A)",
+        price_asc: "Preço (Crescente)",
+        price_desc: "Preço (Decrescente)"
+    },
+    categories: "Categorias",
+    category_options: {
+        novedad: "Novidades",
+        oferta: "Ofertas",
+        "mas-vendido": "Mais Vendidos",
+        pack: "Packs",
+        accesorio: "Acessórios"
+    },
+    brands: "Marcas",
+    size: "Tamanho",
+    composition: "Composição"
+  },
+  product_card: {
+    sold_out: "Esgotado",
+    offer: "OFERTA",
+    notify_me: "Avise-me",
+    add_to_cart: "Adicionar"
+  },
+  product_info: {
+    secure_payment: "Compra segura e pagamento discreto garantidos.",
+    fast_shipping: "Envio rápido em 24/48h para toda a península.",
+    discreet_packaging: "Embalagem 100% discreta sem marcas externas."
+  },
+  product_details: {
+    description_tab: "Descrição",
+    details_tab: "Detalhes do produto"
+  },
+  related_products: {
+    title: "Produtos Relacionados"
+  },
+  stock_notification: {
+    ...ptTranslations.stock_notification,
+  },
+  auth: {
+    ...ptTranslations.auth,
+  },
+  pack_builder: {
+    ...ptTranslations.pack_builder,
+  },
+  popups: {
+    ...ptTranslations.popups,
+  },
+  notifications: {
+    ...ptTranslations.notifications,
+  },
+  footer: {
+    slogan: "A sua loja de confiança para aromas de qualidade superior.",
+    column_info: "Informações",
+    column_guides: "Guias",
+    column_legal: "Legal",
+    column_help: "Ajuda",
+    link_legal_info: "Informações legais",
+    link_terms: "Termos e Condições",
+    link_popper_sale: "Venda de Poppers",
+    link_secure_payments: "Pagamentos seguros",
+    link_popper_info: "Poppers: tudo o que precisa de saber",
+    link_leather_cleaners: "Informações sobre Limpadores de Couro",
+    link_popper_shop: "Loja Popper",
+    link_privacy: "Privacidade e proteção de dados",
+    link_disputes: "Resolução de litígios",
+    link_cookies: "Política de cookies",
+    link_shipping: "Envio e tarifas",
+    link_contact: "Contacte-nos",
+    link_blog: "Blog",
+    link_docs: "Documentos do Site",
+    copyright: "Todos os direitos reservados."
+  },
+  contact_page: {
+    ...ptTranslations.contact_page,
+  },
+  blog_page: {
+    ...ptTranslations.blog_page,
+  },
+  shipping_page: {
+    ...ptTranslations.shipping_page,
+  },
+  legal_info: {
+    ...ptTranslations.legal_info,
+  },
+  terms_page: {
+    ...ptTranslations.terms_page,
+  },
+  venta_popper_page: {
+    ...ptTranslations.venta_popper_page,
+  },
+  secure_payments_page: {
+    ...ptTranslations.secure_payments_page,
+  },
+  popper_info_page: {
+    ...ptTranslations.popper_info_page,
+  },
+  privacy_page: {
+    ...ptTranslations.privacy_page,
+  },
+  leather_cleaners_page: {
+    ...ptTranslations.leather_cleaners_page,
+  },
+  popper_shop_page: {
+    ...ptTranslations.popper_shop_page,
+  },
+  cookies_page: {
+    ...ptTranslations.cookies_page,
+  },
+  disputes_page: {
+    ...ptTranslations.disputes_page,
+  },
+  checkout: {
+    ...ptTranslations.checkout,
+  },
+  docs: {
+    ...ptTranslations.docs,
+  }
 };
 
 interface LanguageContextType {
@@ -1743,5 +2742,3 @@ export const useLanguage = () => {
 
 // Alias for useLanguage for convenience in components
 export const useTranslation = useLanguage;
-
-    
