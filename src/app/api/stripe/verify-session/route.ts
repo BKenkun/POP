@@ -42,11 +42,11 @@ export async function POST(req: NextRequest) {
         const userId = session.metadata?.userId || 'guest';
         if (!userId) throw new Error("User ID is missing from session metadata.");
 
-        const orderDocRef = doc(db, 'users', userId, 'orders', orderId);
+        const orderDocRef = db.doc(`users/${userId}/orders/${orderId}`);
 
         // Check if the order already exists to prevent duplication
-        const orderDocSnap = await getDoc(orderDocRef);
-        if (orderDocSnap.exists()) {
+        const orderDocSnap = await orderDocRef.get();
+        if (orderDocSnap.exists) {
             console.log(`El pedido ${orderId} ya existe. Verificación exitosa.`);
             return NextResponse.json({ success: true, message: 'El pedido ya fue procesado.', orderId: orderId });
         }
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
             createdAt: serverTimestamp(),
         };
 
-        await setDoc(orderDocRef, orderData);
+        await orderDocRef.set(orderData);
 
         const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: orderId, createdAt: new Date() }, orderId);
         await trackKlaviyoEvent('Placed Order', customerEmail, klaviyoOrderData);
