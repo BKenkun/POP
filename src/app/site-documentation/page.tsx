@@ -10,17 +10,24 @@ import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palet
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Logo } from '@/components/logo';
+import { useTranslation } from '@/context/language-context';
 
-const sections = [
+const CHECKLIST_STORAGE_KEY = 'site_documentation_checklist';
+
+export default function SiteDocumentationPage() {
+  const { t } = useTranslation();
+  const [checkedState, setCheckedState] = useState<{[key: string]: boolean}>({});
+  
+  const sections = [
     {
-    title: 'Guía de Estilo y Sistema de Diseño',
+    title: t('docs.style_guide_title'),
     icon: Palette,
     features: [
       {
-        name: 'Paleta de Colores',
+        name: t('docs.colors_title'),
         id: 'style-colors',
         path: '#',
-        description: 'La paleta de colores principal definida en `globals.css` usando variables HSL de CSS.',
+        description: t('docs.colors_desc'),
         details: [
           `**Técnico:** Los colores se aplican usando clases de Tailwind CSS que se corresponden con estas variables (ej. \`bg-primary\`, \`text-destructive\`).`,
           `
@@ -36,10 +43,10 @@ const sections = [
         ]
       },
       {
-        name: 'Tipografía',
+        name: t('docs.typography_title'),
         id: 'style-typography',
         path: '#',
-        description: 'La fuente principal de la web es Inter, configurada en `src/app/layout.tsx`.',
+        description: t('docs.typography_desc'),
         details: [
             "**Técnico:** Se usa `next/font` para optimizar la carga de la fuente. Las clases `font-headline` y `font-body` se asignan a la misma variable de CSS (`--font-inter`) en `tailwind.config.ts`, manteniendo la consistencia.",
             `
@@ -52,10 +59,10 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
         ]
       },
       {
-        name: 'Iconografía y Gráficos',
+        name: t('docs.icons_title'),
         id: 'style-icons',
         path: '#',
-        description: 'Se utiliza la librería `lucide-react` para iconos y un SVG personalizado para el logo.',
+        description: t('docs.icons_desc'),
         details: [
             "**Técnico:** Los iconos se importan directamente desde `lucide-react`. El logo (`src/components/logo.tsx`) es un componente SVG multicapa que permite el theming (cambia de color en modo oscuro/claro) al usar variables de CSS para sus colores.",
             `
@@ -72,14 +79,14 @@ import { Home, ShoppingCart } from 'lucide-react';
     ]
   },
   {
-      title: 'Activos de Marca y Recursos Visuales',
+      title: t('docs.brand_assets_title'),
       icon: Feather,
       features: [
           {
-              name: 'Logo Principal',
+              name: t('docs.logo_title'),
               id: 'brand-logo',
               path: '#',
-              description: 'El logo oficial de "Popper Online" en formato SVG y PNG, optimizado para la web y diseño gráfico.',
+              description: t('docs.logo_desc'),
               details: [
                   `**Previsualización:** El logo utiliza un diseño multicapa para crear un efecto de "sticker" con extrusión. Está diseñado para adaptarse a los modos claro y oscuro del sitio.`,
                   `<div class="my-4 p-4 border rounded-lg flex justify-center items-center bg-muted"><Logo class="h-16" /></div>`,
@@ -95,14 +102,14 @@ import { Home, ShoppingCart } from 'lucide-react';
       ]
   },
   {
-      title: 'Arquitectura de Datos y Comunicación',
+      title: t('docs.data_arch_title'),
       icon: Database,
       features: [
            {
-                name: 'Comunicación Cliente-Servidor para Productos (Lectura/Escritura)',
+                name: t('docs.data_flow_title'),
                 id: 'arch-data-flow',
                 path: '#',
-                description: 'Explicación técnica de cómo el panel de administración lee y guarda los datos de los productos sin una API REST tradicional.',
+                description: t('docs.data_flow_desc'),
                 details: [
                     "**1. El Modelo: Cliente Directo a Base de Datos**<br/>A diferencia de una arquitectura tradicional que usa una API REST como intermediaria, esta aplicación adopta un enfoque más moderno y directo. El panel de administración (que se ejecuta en el navegador del administrador) utiliza el **SDK de cliente de Firebase** para comunicarse directamente con la base de datos de Firestore. Esto elimina la necesidad de escribir y mantener un backend completo para las operaciones CRUD (Crear, Leer, Actualizar, Borrar).",
                     "**2. ¿Cómo es seguro este modelo? El rol de las Reglas de Seguridad**<br/>La seguridad no recae en un endpoint de servidor oculto, sino en las **Reglas de Seguridad de Firestore** (\`firestore.rules\`), que actúan como un vigilante inteligente en la nube. Antes de permitir cualquier operación de lectura o escritura, Firestore evalúa estas reglas. Para la gestión de productos, la regla clave es:<br/><pre><code class='language-javascript'>match /products/{productId} {<br/>  allow read: if true;<br/>  allow write: if isAdmin();<br/>}<br/><br/>function isAdmin() {<br/>  return request.auth != null && request.auth.token.email == 'maryandpopper@gmail.com';<br/>}</code></pre><br/>- **\`allow read: if true;\`**: Permite que cualquier persona (clientes, visitantes) lea la información de los productos, algo necesario para una tienda online.<br/>- **\`allow write: if isAdmin();\`**: **Esta es la clave de la seguridad**. Solo permite operaciones de escritura (crear, editar, borrar) si la petición proviene de un usuario autenticado cuyo token de autenticación (\`request.auth.token\`) contiene el email \`maryandpopper@gmail.com\`. Cualquier otro intento de escritura es rechazado automáticamente por la base de datos.",
@@ -113,14 +120,14 @@ import { Home, ShoppingCart } from 'lucide-react';
       ]
   },
     {
-    title: 'Lógica de Negocio y Marketing',
+    title: t('docs.business_logic_title'),
     icon: Wand2,
     features: [
        {
-        name: 'Verificación de Edad (Popup Modal)',
+        name: t('docs.age_gate_title'),
         id: 'logic-age-gate',
         path: '#',
-        description: 'Un popup modal que bloquea el acceso a la web hasta que el usuario verifica que es mayor de 18 años.',
+        description: t('docs.age_gate_desc'),
         details: [
           '**Funcionalidad:** Un popup modal que bloquea el acceso al sitio hasta que el usuario confirma ser mayor de 18 años, utilizando su fecha de nacimiento.',
           '**Técnico:** El componente \`AgeVerificationPopup\` (\`src/components/age-verification-popup.tsx\`) se renderiza en el \`AppLayout\`. Usa \`localStorage\` para recordar si un usuario ya ha sido verificado, evitando que el popup aparezca en cada visita. Si no hay confirmación previa, el popup aparece 500ms después de cargar la página para no ser demasiado abrupto. La validación de la fecha se realiza en tiempo real con \`useMemo\`. Si el usuario es menor de edad, se le muestra un error y el botón de "Entrar" permanece deshabilitado. Si hace clic en "Salir", es redirigido a google.com.',
@@ -142,10 +149,10 @@ useEffect(() => {
         ],
       },
       {
-        name: 'Notificaciones de Ventas Híbridas (Reales y Simuladas)',
+        name: t('docs.sales_notifications_title'),
         id: 'logic-sales-notifications',
         path: '#',
-        description: 'Popups que muestran compras para generar confianza. Prioriza las compras reales y rellena los huecos con notificaciones simuladas.',
+        description: t('docs.sales_notifications_desc'),
         details: [
             "**Técnico:** El componente \`SalesNotification\` (\`src/components/sales-notification.tsx\`) ahora tiene una lógica híbrida. Utiliza \`onSnapshot\` de Firebase para escuchar la \`collectionGroup\` 'orders' en tiempo real. Cuando se detecta un nuevo pedido, se interrumpe el ciclo de notificaciones falsas y se muestra una notificación con los datos reales. Tras mostrar la notificación real, se reanuda el ciclo de notificaciones simuladas (que usan \`setTimeout\` con un delay aleatorio) para asegurar que la tienda siempre parezca activa.",
             `
@@ -172,10 +179,10 @@ const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
         ]
       },
        {
-        name: 'Popup de Bienvenida con Descuento',
+        name: t('docs.welcome_popup_title'),
         id: 'logic-welcome-popup',
         path: '#',
-        description: 'Un popup que ofrece un 10% de descuento a cambio de la suscripción al boletín. Aparece solo a nuevos visitantes o después de 24h.',
+        description: t('docs.welcome_popup_desc'),
         details: [
             "**Técnico:** El componente \`WelcomePopup\` (\`src/components/welcome-popup.tsx\`) usa \`localStorage\` para registrar si un usuario ya ha visto el popup. Solo se muestra si no hay registro previo o si ha pasado más de 24 horas. El formulario se integra con Klaviyo a través de la API Route \`/api/subscribe\`.",
             `
@@ -195,10 +202,10 @@ useEffect(() => {
         ]
       },
        {
-        name: 'Política de Descuentos por Volumen',
+        name: t('docs.volume_discounts_title'),
         id: 'logic-volume-discounts',
         path: '/cart',
-        description: 'Sistema de descuentos automáticos en el carrito basado en la cantidad de productos. No se aplica a pagos contra-reembolso.',
+        description: t('docs.volume_discounts_desc'),
         details: [
             "**Técnico:** La lógica de cálculo se encuentra en \`CartContext\` (\`src/context/cart-context.tsx\`). Un \`useMemo\` recalcula el descuento (\`volumeDiscount\`) cada vez que cambia el número de artículos en el carrito (\`cartCount\`). En el \`checkout-client-page.tsx\`, este descuento solo se aplica al total si el método de pago no es contrareembolso.",
             `
@@ -216,10 +223,10 @@ const volumeDiscount = useMemo(() => {
         ]
       },
        {
-        name: 'Sistema de Puntos de Fidelidad',
+        name: t('docs.loyalty_points_title'),
         id: 'logic-loyalty-points',
         path: '/account',
-        description: 'Los usuarios ganan puntos por cada compra, que pueden ser canjeados por descuentos futuros.',
+        description: t('docs.loyalty_points_desc'),
         details: [
             "**Técnico:** Al confirmar un pedido en \`checkout-client-page.tsx\`, se llama a la \`Server Action\` \`updateUser\` con la acción \`update-points\`. La acción calcula los puntos a añadir (1 punto por cada 10€ de compra) y utiliza \`increment\` de Firestore para una actualización atómica y segura.",
             `
@@ -237,14 +244,14 @@ if (pointsToAdd > 0) {
     ]
   },
   {
-    title: 'Páginas Principales',
+    title: t('docs.main_pages_title'),
     icon: Home,
     features: [
       {
-        name: 'Página de Inicio',
+        name: t('docs.home_page_title'),
         id: 'page-home',
         path: '/',
-        description: 'La página de bienvenida con productos destacados y acceso a las principales secciones.',
+        description: t('docs.home_page_desc'),
         details: [
             "**Técnico:** Utiliza \`onSnapshot\` de Firebase para cargar y escuchar cambios en los productos en tiempo real. \`useMemo\` se encarga de filtrar eficientemente los productos por categorías ('Novedades', 'Ofertas', etc.) sin recalcular en cada render.",
             `
@@ -263,10 +270,10 @@ useEffect(() => {
         ]
       },
       {
-        name: 'Catálogo de Productos',
+        name: t('docs.products_page_title'),
         id: 'page-products',
         path: '/products',
-        description: 'Muestra todos los productos con filtros por marca, tamaño, composición y búsqueda.',
+        description: t('docs.products_page_desc'),
         details: [
             "**Técnico:** El componente \`ProductFilters\` gestiona el estado de los filtros (\`useState\`) y la lógica de filtrado y ordenación (\`useMemo\`). La URL se actualiza con los parámetros de filtro (\`useRouter\`, \`useSearchParams\`) para que los enlaces se puedan compartir.",
             `
@@ -282,10 +289,10 @@ router.replace(\`\${pathname}?\${params.toString()}\`);
         ]
       },
       {
-        name: 'Detalle de Producto',
+        name: t('docs.product_detail_page_title'),
         id: 'page-product-detail',
         path: '/product/rush-original-10ml',
-        description: 'Vista detallada de un producto con galería, información y productos relacionados (ejemplo con "Rush Original").',
+        description: t('docs.product_detail_page_desc'),
         details: [
             "**Técnico:** Carga los datos de un único producto desde Firestore usando \`onSnapshot\`. El estado del cliente (cantidad) se maneja con \`useState\`. La lógica para añadir al carrito (\`ProductInfo\`) se comunica con el \`CartContext\`.",
             "**Estético:** \`ProductGallery\` permite cambiar la imagen principal. \`ProductDetails\` utiliza un componente de \`Tabs\` para separar la descripción de los detalles técnicos. El carrusel de \`RelatedProducts\` está implementado con \`Embla Carousel\`."
@@ -294,14 +301,14 @@ router.replace(\`\${pathname}?\${params.toString()}\`);
     ]
   },
   {
-    title: 'Funcionalidades E-commerce',
+    title: t('docs.ecommerce_features_title'),
     icon: ShoppingCart,
     features: [
        {
-        name: 'Creador de Packs',
+        name: t('docs.pack_builder_title'),
         id: 'feature-pack-builder',
         path: '/create-pack',
-        description: 'Herramienta para que los clientes creen su propio pack de productos con descuentos por volumen.',
+        description: t('docs.pack_builder_desc'),
         details: [
             "**Técnico:** La lógica de precios es manejada por un flujo de Genkit (\`calculatePackPriceFlow\`) que calcula el descuento dinámicamente. El estado del pack se gestiona en el cliente (\`useState\`), y un \`useEffect\` con \`setTimeout\` (debounce) llama al flujo de IA para evitar peticiones excesivas.",
             `
@@ -321,10 +328,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         ]
       },
       {
-        name: 'Carrito de la Compra',
+        name: t('docs.cart_title'),
         id: 'feature-cart',
         path: '#',
-        description: 'El carrito es un panel lateral. Haz clic en el icono del carrito flotante para abrirlo después de añadir un producto.',
+        description: t('docs.cart_desc'),
         details: [
           '**Funcionalidad:** Muestra los productos añadidos, permite ajustar cantidades o eliminarlos. Recalcula el subtotal y el descuento por volumen en tiempo real.',
           '**Técnico:** Implementado como un \`Contexto de React\` (\`CartContext\`) que vive en \`src/context/cart-context.tsx\`. Este contexto maneja un estado (\`cartItems\`) que es un array de productos con su cantidad. Las funciones \`addToCart\`, \`updateQuantity\` y \`removeFromCart\` manipulan este estado. El contexto no es persistente; se reinicia si el usuario recarga la página.',
@@ -333,10 +340,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         ]
       },
        {
-        name: 'Proceso de Pago (Checkout)',
+        name: t('docs.checkout_title'),
         id: 'feature-checkout',
         path: '/checkout',
-        description: 'Flujo de pago en 4 pasos. Requiere tener productos en el carrito para funcionar.',
+        description: t('docs.checkout_desc'),
         details: [
           '**Fase 1: Confirmar Carrito.** El usuario revisa los productos, puede ajustar cantidades usando el \`QuantitySelector\` o eliminar artículos. La lógica del \`CartContext\` (\`updateQuantity\`, \`removeFromCart\`) actualiza el estado. El subtotal y el posible descuento por volumen se muestran para dar una primera estimación.',
           '**Fase 2: Tus Datos.** Se solicita la información de envío. Si el usuario está autenticado (\`useAuth\`), puede seleccionar una de sus direcciones guardadas (obtenidas del \`userDoc\`) o rellenar el formulario. Un \`RadioGroup\` permite cambiar entre direcciones. La validación se hace con \`react-hook-form\` y \`zod\`. Una \`Server Action\` (\`updateUser\`) se encarga de guardar una nueva dirección si el usuario lo solicita.',
@@ -347,14 +354,14 @@ const calculatePackPriceFlow = ai.defineFlow(
     ]
   },
   {
-    title: 'Suscripción "Dosis Mensual" (con NOWPayments)',
+    title: t('docs.subscription_title'),
     icon: PackagePlus,
     features: [
       {
-        name: 'Flujo de Inicio de Suscripción',
+        name: t('docs.subscription_start_title'),
         id: 'subscription-start',
         path: '/subscription',
-        description: 'Página de aterrizaje y proceso de pago inicial para unirse al club de suscripción.',
+        description: t('docs.subscription_start_desc'),
         details: [
           "**1. Página de Aterrizaje (`/subscription`):**<br/>- **Archivo:** `src/app/subscription/page.tsx`<br/>- **Función:** Muestra los beneficios del club y el precio. El botón principal 'Unirme al Club' es el punto de entrada al flujo de pago.<br/>- **Lógica Clave:** Al hacer clic en el botón, se llama a la función `handleSubscribe`. Esta función primero verifica si el usuario está autenticado. Si lo está, invoca a la `Server Action` `createNowPaymentsInvoice`.",
           "**2. Server Action (`createNowPaymentsInvoice`):**<br/>- **Archivo:** `src/app/actions/nowpayments.ts`<br/>- **Función:** Es el intermediario seguro entre nuestra aplicación y la API de NOWPayments. Recibe los detalles del pago (precio, moneda, etc.) desde la página de suscripción.<br/>- **Seguridad:** Utiliza la `NOWPAYMENTS_API_KEY` guardada en las variables de entorno del servidor, por lo que la clave nunca se expone en el navegador.<br/>- **Acción:** Realiza una petición `POST` a la API de NOWPayments (`https://api.nowpayments.io/v1/invoice`) para crear una factura de pago único.<br/><pre><code class='language-javascript'>// En src/app/subscription/page.tsx<br/>const result = await createNowPaymentsInvoice({<br/>  price_amount: 44, // Precio de la suscripción<br/>  price_currency: 'eur',<br/>  order_id: `sub_${user.uid}_${Date.now()}`, // ID único para la transacción<br/>  order_description: 'Suscripción Club Dosis Mensual'<br/>});</code></pre>",
@@ -363,10 +370,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         ]
       },
       {
-        name: 'Gestión y Cancelación de la Suscripción',
+        name: t('docs.subscription_management_title'),
         id: 'subscription-management',
         path: '/account/subscription',
-        description: 'Panel para suscriptores donde personalizan su caja y gestionan su membresía.',
+        description: t('docs.subscription_management_desc'),
         details: [
           "**1. Panel de Suscriptor (`/account/subscription`):**<br/>- **Archivo:** `src/app/account/subscription/page.tsx`<br/>- **Función:** Esta página es accesible solo para usuarios con una suscripción activa (`isSubscribed` en `AuthContext`). Les permite seleccionar los productos para su caja mensual (lógica simulada en `src/lib/subscription.ts`).<br/>- **Lógica de Cancelación:** Contiene el botón 'Gestionar mi Suscripción', que abre un diálogo para confirmar la cancelación.",
           "**2. Server Action de Cancelación (`cancelNowPaymentsSubscription`):**<br/>- **Archivo:** `src/app/actions/manage-subscription.ts`<br/>- **Función:** Contiene la lógica segura para cancelar una suscripción en NOWPayments.<br/>- **Autenticación con NOWPayments:** A diferencia de la creación de facturas, la cancelación requiere un **token JWT**. La `Server Action` primero obtiene este token enviando el email y la contraseña de la cuenta de NOWPayments (guardados en variables de entorno) al endpoint de autenticación de NOWPayments.<br/><pre><code class='language-javascript'>// En src/app/actions/manage-subscription.ts<br/>async function getNowPaymentsJwt(): Promise<string> {<br/>  const response = await fetch(`${NOWPAYMENTS_API_URL}/auth`, { ... });<br/>  // ...<br/>  return data.token;<br/>}</code></pre>",
@@ -374,10 +381,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         ]
       },
       {
-        name: 'Webhook de Notificaciones (IPN)',
+        name: t('docs.subscription_webhook_title'),
         id: 'subscription-webhook',
         path: '/api/nowpayments/subscription-webhook',
-        description: 'Endpoint que NOWPayments usa para notificar al servidor sobre eventos de la suscripción.',
+        description: t('docs.subscription_webhook_desc'),
         details: [
           "**Archivo:** `src/app/api/nowpayments/subscription-webhook/route.ts`",
           "**Función:** Este es un endpoint de API que **recibe** peticiones `POST` desde los servidores de NOWPayments. Es fundamental para la gestión a largo plazo de las suscripciones (pagos recurrentes, fallos, etc.).",
@@ -388,14 +395,14 @@ const calculatePackPriceFlow = ai.defineFlow(
     ]
   },
   {
-    title: 'Cuenta de Usuario y Autenticación',
+    title: t('docs.auth_title'),
     icon: User,
     features: [
       {
-        name: 'Inicio de Sesión',
+        name: t('docs.login_title'),
         id: 'auth-login',
         path: '/login',
-        description: 'Formulario para que los usuarios existentes accedan a su cuenta, con lógica de redirección basada en rol.',
+        description: t('docs.login_desc'),
         details: [
             "**Técnico:** Utiliza \`signInWithEmailAndPassword\` de Firebase. Una vez autenticado, se obtiene el \`idToken\` del usuario y se envía a la API Route \`/api/login\`, que crea una **session cookie** segura (\`httpOnly\`). Esta cookie es crucial para autenticar al usuario en las \`Server Actions\` y en el lado del servidor.",
             "**Diferenciación de Roles y Redirección:** La lógica de redirección post-login es clave. El sistema comprueba el email del usuario: si es \`maryandpopper@gmail.com\`, lo identifica como administrador y lo redirige a \`/admin\`. Los usuarios normales son dirigidos a \`/account\` o a la página que intentaban visitar. Esta diferenciación de rol (\`isAdmin\` en \`AuthContext\`) permite a la interfaz adaptarse, mostrando u ocultando elementos como el enlace al 'Panel de Admin' en los menús.",
@@ -417,23 +424,23 @@ if (loggedInIsAdmin) {
             "**Estético:** El formulario de login es simple y se presenta en una \`Card\`. La interfaz de la cuenta (\`AccountSidebar\`, \`FloatingAccountButton\`) es dinámica, mostrando opciones de administrador solo a los usuarios con ese rol, creando una experiencia coherente y segura.",
         ]
       },
-      { name: 'Registro de Nuevo Usuario', id: 'auth-register', path: '/register', description: 'Formulario para que nuevos usuarios creen una cuenta.', details: ["**Técnico:** Usa \`createUserWithEmailAndPassword\`. Al registrarse, crea un nuevo documento para el usuario en la colección \`users\` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
-      { name: 'Panel de Cuenta', id: 'auth-account-dashboard', path: '/account', description: 'Dashboard principal del usuario con resumen de su actividad. Requiere iniciar sesión.', details: ["**Técnico:** Protegido por el \`AccountLayout\`, que redirige a los usuarios no autenticados. Muestra datos del \`AuthContext\`, como \`loyaltyPoints\` e \`isSubscribed\`.", "**Estético:** Usa \`Cards\` para segmentar la información: perfil, puntos y gestión de la suscripción/admin."] },
-      { name: 'Mis Pedidos', id: 'auth-orders', path: '/account/orders', description: 'Historial de todos los pedidos realizados por el usuario.', details: ["**Técnico:** Realiza una consulta a Firestore (\`collection(db, 'users', user.uid, 'orders')\`) para obtener y mostrar los pedidos del usuario en tiempo real con \`onSnapshot\`.", "**Estético:** Muestra los pedidos en una \`Table\` con \`Badges\` de colores para indicar el estado de cada pedido."] },
-      { name: 'Mis Direcciones', id: 'auth-addresses', path: '/account/addresses', description: 'Gestión de direcciones de envío y facturación guardadas.', details: ["**Técnico:** Permite al usuario realizar operaciones CRUD en sus direcciones. Las actualizaciones se envían a la \`Server Action\` \`updateUser\`.", "**Estético:** Utiliza un \`Dialog\` con \`react-hook-form\` para añadir/editar direcciones y un \`AlertDialog\` para confirmar la eliminación."] },
+      { name: t('docs.register_title'), id: 'auth-register', path: '/register', description: t('docs.register_desc'), details: ["**Técnico:** Usa \`createUserWithEmailAndPassword\`. Al registrarse, crea un nuevo documento para el usuario en la colección \`users\` de Firestore con valores iniciales.", "**Estético:** Similar al login, un formulario claro con validación de contraseña para asegurar que coincidan."] },
+      { name: t('docs.account_dashboard_title'), id: 'auth-account-dashboard', path: '/account', description: t('docs.account_dashboard_desc'), details: ["**Técnico:** Protegido por el \`AccountLayout\`, que redirige a los usuarios no autenticados. Muestra datos del \`AuthContext\`, como \`loyaltyPoints\` e \`isSubscribed\`.", "**Estético:** Usa \`Cards\` para segmentar la información: perfil, puntos y gestión de la suscripción/admin."] },
+      { name: t('docs.orders_title'), id: 'auth-orders', path: '/account/orders', description: t('docs.orders_desc'), details: ["**Técnico:** Realiza una consulta a Firestore (\`collection(db, 'users', user.uid, 'orders')\`) para obtener y mostrar los pedidos del usuario en tiempo real con \`onSnapshot\`.", "**Estético:** Muestra los pedidos en una \`Table\` con \`Badges\` de colores para indicar el estado de cada pedido."] },
+      { name: t('docs.addresses_title'), id: 'auth-addresses', path: '/account/addresses', description: t('docs.addresses_desc'), details: ["**Técnico:** Permite al usuario realizar operaciones CRUD en sus direcciones. Las actualizaciones se envían a la \`Server Action\` \`updateUser\`.", "**Estético:** Utiliza un \`Dialog\` con \`react-hook-form\` para añadir/editar direcciones y un \`AlertDialog\` para confirmar la eliminación."] },
     ]
   },
   {
-    title: 'Panel de Administración',
+    title: t('docs.admin_panel_title'),
     icon: KeyRound,
     features: [
-        { name: 'Dashboard de Admin', id: 'admin-dashboard', path: '/admin', description: 'Panel principal con estadísticas. Requiere iniciar sesión como admin (maryandpopper@gmail.com).', details: ["**Técnico:** Protegido por \`AdminLayout\`, que comprueba el email del usuario. Obtiene todos los pedidos y usuarios con \`collectionGroup\` y \`onSnapshot\` para calcular métricas. \`OverviewChart\` usa \`recharts\` para visualizar los datos.", "**Estético:** Interfaz densa en información con \`Cards\` de estadísticas, un gráfico de líneas y listas de pedidos/clientes recientes."] },
-        { name: 'Gestión de Pedidos', id: 'admin-orders', path: '/admin/orders', description: 'Visualiza y gestiona todos los pedidos de la tienda.', details: ["**Técnico:** Usa \`Tabs\` para filtrar pedidos por estado. Los datos se obtienen una vez (\`getDocs\`) y se filtran en el cliente para mejorar el rendimiento. Cada fila enlaza a la página de detalle del pedido pasando la ruta del documento como parámetro URL.", "**Estético:** Diseño de \`Tabs\` claro y funcional. La tabla incluye acciones rápidas para ver o gestionar el envío."] },
+        { name: t('docs.admin_dashboard_title'), id: 'admin-dashboard', path: '/admin', description: t('docs.admin_dashboard_desc'), details: ["**Técnico:** Protegido por \`AdminLayout\`, que comprueba el email del usuario. Obtiene todos los pedidos y usuarios con \`collectionGroup\` y \`onSnapshot\` para calcular métricas. \`OverviewChart\` usa \`recharts\` para visualizar los datos.", "**Estético:** Interfaz densa en información con \`Cards\` de estadísticas, un gráfico de líneas y listas de pedidos/clientes recientes."] },
+        { name: t('docs.admin_orders_title'), id: 'admin-orders', path: '/admin/orders', description: t('docs.admin_orders_desc'), details: ["**Técnico:** Usa \`Tabs\` para filtrar pedidos por estado. Los datos se obtienen una vez (\`getDocs\`) y se filtran en el cliente para mejorar el rendimiento. Cada fila enlaza a la página de detalle del pedido pasando la ruta del documento como parámetro URL.", "**Estético:** Diseño de \`Tabs\` claro y funcional. La tabla incluye acciones rápidas para ver o gestionar el envío."] },
         {
-          name: 'Gestión de Productos: "Añadir" y "Editar" al detalle',
+          name: t('docs.admin_products_crud_title'),
           id: 'admin-products-crud-detail',
           path: '/admin/products',
-          description: 'Flujo técnico completo sobre cómo se crean y editan los productos desde el panel de administración.',
+          description: t('docs.admin_products_crud_desc'),
           details: [
               'La creación y edición de productos, aunque son dos acciones distintas, están diseñadas de forma muy eficiente para compartir la máxima cantidad de código posible. Así es como funciona el flujo completo, desde que haces clic hasta que los datos se guardan en la base de datos:',
               '**1. Puntos de Entrada Separados:**<br/>- **Crear Producto:** Al hacer clic en "Nuevo Producto" en \`/admin/products\`, eres dirigido a la página \`/admin/products/new\`.<br/>- **Editar Producto:** Al hacer clic en "Editar" en un producto existente, eres dirigido a una página dinámica como \`/admin/products/edit/[id-del-producto]\`.',
@@ -447,10 +454,10 @@ if (loggedInIsAdmin) {
           ]
         },
         {
-          name: 'Guía de Campos de Producto y Lógica de Precios',
+          name: t('docs.admin_products_fields_title'),
           id: 'admin-products-fields',
           path: '/admin/products/new',
-          description: 'Añade, edita, archiva y elimina productos del catálogo.',
+          description: t('docs.admin_products_fields_desc'),
           details: [
             '**- Descripción Larga:** Un editor de texto enriquecido (Rich Text Editor) basado en **Tiptap**. Permite dar formato al texto (negrita, cursiva, encabezados, listas) y cambiar colores. El contenido se guarda como una **cadena de texto HTML** en la base de datos, lo que permite renderizarlo con su formato en la página de detalle del producto.',
             '**- Inventario y Precios:** Este grupo de campos gestiona la parte comercial y logística del producto.',
@@ -460,25 +467,21 @@ if (loggedInIsAdmin) {
             '**- Etiquetas:** \`Etiquetas Visibles\` (se muestran como badges en la tarjeta del producto, ej: "Nuevo"), \`Categorías Internas\` (para control lógico, ej: "novedad", "mas-vendido", "pack").'
           ]
         },
-        { name: 'Personalización Web', id: 'admin-web', path: '/admin/web', description: 'Activa o desactiva funcionalidades clave, como la suscripción.', details: ["**Técnico:** Lee y escribe en un archivo JSON en el servidor (\`src/lib/site-settings.json\`) usando \`Server Actions\`. Este archivo actúa como una bandera de características simple.", "**Estético:** Interfaz simple con \`Switch\` para activar o desactivar la funcionalidad de suscripción en toda la web."] },
+        { name: t('docs.admin_web_customization_title'), id: 'admin-web', path: '/admin/web', description: t('docs.admin_web_customization_desc'), details: ["**Técnico:** Lee y escribe en un archivo JSON en el servidor (\`src/lib/site-settings.json\`) usando \`Server Actions\`. Este archivo actúa como una bandera de características simple.", "**Estético:** Interfaz simple con \`Switch\` para activar o desactivar la funcionalidad de suscripción en toda la web."] },
     ]
   },
   {
-    title: 'Páginas Informativas y Legales',
+    title: t('docs.info_pages_title'),
     icon: FileText,
     features: [
-      { name: 'Blog', id: 'info-blog', path: '/blog', description: 'Listado de artículos y noticias.', details: ["**Técnico:** Contenido estático hardcodeado en \`src/lib/posts.ts\`. Es una página renderizada en el servidor (Server Component) para un SEO óptimo.", "**Estético:** Diseño clásico de blog con tarjetas de previsualización que incluyen imagen, título, extracto y fecha."] },
-      { name: 'Contacto', id: 'info-contact', path: '/contacto', description: 'Formulario de contacto e información legal de la empresa.', details: ["**Técnico:** Un formulario controlado por el cliente que simula el envío de un email. No realiza una acción real de servidor.", "**Estético:** Diseño a dos columnas que presenta la información de contacto junto al formulario."] },
-      { name: 'Envíos y Tarifas', id: 'info-shipping', path: '/envio-tarifas', description: 'Detalles sobre las políticas y costes de envío.', details: ["**Técnico:** Página de contenido estático.", "**Estético:** Utiliza \`Tables\` para presentar las tarifas de forma clara y \`Alerts\` para destacar información importante."] },
-      { name: 'Términos y Condiciones', id: 'info-terms', path: '/terminos-y-condiciones', description: 'Condiciones generales de contratación y venta.', details: ["**Técnico:** Página de contenido estático.", "**Estético:** Texto largo formateado dentro de una \`Card\` con estilos \`prose\` para mejorar la legibilidad."] },
+      { name: t('docs.info_blog_title'), id: 'info-blog', path: '/blog', description: t('docs.info_blog_desc'), details: ["**Técnico:** Contenido estático hardcodeado en \`src/lib/posts.ts\`. Es una página renderizada en el servidor (Server Component) para un SEO óptimo.", "**Estético:** Diseño clásico de blog con tarjetas de previsualización que incluyen imagen, título, extracto y fecha."] },
+      { name: t('docs.info_contact_title'), id: 'info-contact', path: '/contacto', description: t('docs.info_contact_desc'), details: ["**Técnico:** Un formulario controlado por el cliente que simula el envío de un email. No realiza una acción real de servidor.", "**Estético:** Diseño a dos columnas que presenta la información de contacto junto al formulario."] },
+      { name: t('docs.info_shipping_title'), id: 'info-shipping', path: '/envio-tarifas', description: t('docs.info_shipping_desc'), details: ["**Técnico:** Página de contenido estático.", "**Estético:** Utiliza \`Tables\` para presentar las tarifas de forma clara y \`Alerts\` para destacar información importante."] },
+      { name: t('docs.info_terms_title'), id: 'info-terms', path: '/terminos-y-condiciones', description: t('docs.info_terms_desc'), details: ["**Técnico:** Página de contenido estático.", "**Estético:** Texto largo formateado dentro de una \`Card\` con estilos \`prose\` para mejorar la legibilidad."] },
     ]
   },
 ];
 
-const CHECKLIST_STORAGE_KEY = 'site_documentation_checklist';
-
-export default function SiteDocumentationPage() {
-  const [checkedState, setCheckedState] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     try {
@@ -581,14 +584,10 @@ export default function SiteDocumentationPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-12">
       <header className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Documentación del Sitio Web</h1>
+        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('docs.title')}</h1>
         <div className="prose prose-lg dark:prose-invert max-w-3xl mx-auto text-foreground/80">
-            <p>
-                Esta página es un <strong>manual de identidad y arquitectura</strong> del sitio, diseñada para ser la fuente de verdad para desarrolladores, diseñadores y gestores de contenido. Su propósito es garantizar la coherencia, facilitar el mantenimiento y guiar la implementación de nuevas funcionalidades.
-            </p>
-            <p>
-                Para los <strong>diseñadores</strong>, define el sistema de diseño visual: la paleta de colores, la tipografía y los componentes de interfaz. Para los <strong>desarrolladores</strong>, actúa como un mapa de la arquitectura técnica, detallando el stack tecnológico (Next.js, Firebase, Genkit), los patrones de código clave y ejemplos de implementación para las funcionalidades más importantes.
-            </p>
+            <p dangerouslySetInnerHTML={{ __html: t('docs.subtitle1') }} />
+            <p dangerouslySetInnerHTML={{ __html: t('docs.subtitle2') }} />
         </div>
       </header>
 
@@ -617,7 +616,7 @@ export default function SiteDocumentationPage() {
                     {feature.path !== '#' && (
                          <Button asChild variant="outline" size="sm" className="shrink-0">
                             <Link href={feature.path} target="_blank" rel="noopener noreferrer">
-                                Probar
+                                {t('docs.try_it_button')}
                                 <ExternalLink className="ml-2 h-4 w-4"/>
                             </Link>
                         </Button>
@@ -627,7 +626,7 @@ export default function SiteDocumentationPage() {
                   
                   <Accordion type="single" collapsible className="w-full mt-2">
                     <AccordionItem value="item-1" className="border-b-0">
-                      <AccordionTrigger className="text-sm py-2 hover:no-underline text-muted-foreground">Ver detalles de implementación</AccordionTrigger>
+                      <AccordionTrigger className="text-sm py-2 hover:no-underline text-muted-foreground">{t('docs.implementation_details_button')}</AccordionTrigger>
                       <AccordionContent>
                         <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80 space-y-2 pl-4 border-l-2 ml-2 border-primary/50">
                            {feature.details.map((detail, i) => {
@@ -640,11 +639,11 @@ export default function SiteDocumentationPage() {
                                 <div className="flex items-center gap-2">
                                     <Button onClick={handleDownloadLogo}>
                                         <Download className="mr-2 h-4 w-4" />
-                                        Descargar Logo (SVG)
+                                        {t('docs.download_svg_button')}
                                     </Button>
                                     <Button onClick={handleDownloadPng} variant="outline">
                                         <Download className="mr-2 h-4 w-4" />
-                                        Descargar Logo (PNG)
+                                        {t('docs.download_png_button')}
                                     </Button>
                                 </div>
                            )}
