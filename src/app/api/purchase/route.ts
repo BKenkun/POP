@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { CartItem } from '@/lib/types';
 import { auth as adminAuth } from '@/lib/firebase-admin';
@@ -18,7 +19,7 @@ async function getUserIdFromSession() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { cartItems } = await req.json();
+        const { cartItems, customerEmail } = await req.json();
 
         if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
             return NextResponse.json({ error: 'Cart items are required.' }, { status: 400 });
@@ -32,17 +33,21 @@ export async function POST(req: NextRequest) {
             
         const priceInCents = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-        const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL;
+        if (!YOUR_DOMAIN || YOUR_DOMAIN.includes('localhost')) {
+            return NextResponse.json({ error: 'La URL de la tienda no está configurada correctamente en el servidor.' }, { status: 500 });
+        }
+
 
         const purchaseDetails = {
             productName,
             priceInCents,
+            customerEmail,
             successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${YOUR_DOMAIN}/products`,
+            cancelUrl: `${YOUR_DOMAIN}/checkout`,
             metadata: {
                 userId: userId || 'guest',
-                // Storing cartItems as a string, as metadata values are limited.
-                cartItems: JSON.stringify(cartItems.map(item => ({ id: item.id, qty: item.quantity })))
+                cartItems: JSON.stringify(cartItems.map(item => ({ id: item.id, name: item.name, price: item.price, imageUrl: item.imageUrl, qty: item.quantity })))
             }
         };
 
@@ -66,3 +71,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create checkout session.' }, { status: 500 });
     }
 }
+

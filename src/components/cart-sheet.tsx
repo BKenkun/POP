@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -14,6 +15,7 @@ import { QuantitySelector } from './quantity-selector';
 import { useTranslation } from '@/context/language-context';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -33,6 +35,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const router = useRouter();
   const [isProcessingStripe, setIsProcessingStripe] = useState(false);
 
@@ -58,7 +61,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
           const response = await fetch('/api/purchase', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cartItems }),
+              body: JSON.stringify({ cartItems, customerEmail: user?.email }),
           });
           const { checkoutUrl, error } = await response.json();
           if (error) throw new Error(error);
