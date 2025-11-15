@@ -367,20 +367,30 @@ export default function CheckoutClientPage() {
 
     if (data.paymentMethod === 'crypto') {
         try {
+            const orderId = `order_${user.uid}_${Date.now()}`;
             const result = await createNowPaymentsInvoice({
                 price_amount: finalTotals.total / 100, // Convert cents to euros/dollars
                 price_currency: 'eur',
-                order_id: `order_${user.uid}_${Date.now()}`,
-                order_description: `Pedido de ${cartCount} productos en PuroRush`
+                order_id: orderId,
+                order_description: `Pedido de ${cartCount} productos en PuroRush`,
+                cartItems,
+                customerName: data.name,
+                customerEmail: data.email,
+                shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
+                finalTotal: finalTotals.total,
+                appliedCoupon,
+                couponDiscount,
             });
 
             if (result.success && result.invoice_url) {
+                clearCart();
                 window.location.href = result.invoice_url;
             } else {
                 throw new Error(result.error || t('checkout.toasts.crypto_error_desc'));
             }
         } catch (error: any) {
             toast({ title: t('checkout.toasts.crypto_error_title'), description: error.message, variant: 'destructive' });
+        } finally {
             setLoading(false);
         }
         return; 
@@ -399,6 +409,9 @@ export default function CheckoutClientPage() {
                 ? decodeURIComponent(item.imageUrl.split('url=')[1] || '')
                 : item.imageUrl,
         }));
+        
+        const orderCollectionRef = collection(db, 'users', user.uid, 'orders');
+        const newOrderRef = doc(orderCollectionRef); // Create a new doc reference
         
         const orderData = {
             userId: user.uid,
@@ -429,8 +442,6 @@ export default function CheckoutClientPage() {
         };
 
         const batch = writeBatch(db);
-        const orderCollectionRef = collection(db, 'users', user.uid, 'orders');
-        const newOrderRef = doc(orderCollectionRef); // Create a new doc reference
         batch.set(newOrderRef, orderData);
 
         // Increment coupon usage count if a coupon was applied
@@ -458,12 +469,6 @@ export default function CheckoutClientPage() {
         const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: newOrderRef.id, createdAt: new Date() }, newOrderRef.id);
         
         await trackKlaviyoEvent('Placed Order', data.email, klaviyoOrderData);
-        // await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', {
-        //     'OrderId': newOrderRef.id,
-        //     'CustomerName': data.name,
-        //     'Total': finalTotals.total / 100,
-        //     'ItemCount': itemsForPayload.length
-        // });
 
         toast({
             duration: 10000,
