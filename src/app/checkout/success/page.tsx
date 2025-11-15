@@ -27,25 +27,12 @@ function SuccessPageContent() {
             return;
         }
 
-        const verifySessionAndCreateOrder = async () => {
-            try {
-                // The verification and order creation should be done via a webhook from the intermediary.
-                // For now, we will assume success if we land here with a session ID,
-                // clear the cart, and show a success message.
-                // In a real production scenario, you'd show a "Processing..." message
-                // until the webhook confirms the order.
-                
-                // For now, we just clear the cart and proceed.
-                clearCart();
-                setIsLoading(false);
+        // The user has returned from the payment page.
+        // We assume the payment is being processed. The final confirmation will come via webhook.
+        // We can now clear the cart and show a success message.
+        clearCart();
+        setIsLoading(false);
 
-            } catch (err: any) {
-                setError(err.message);
-                setIsLoading(false);
-            }
-        };
-
-        verifySessionAndCreateOrder();
     }, [sessionId, router, clearCart]);
 
     if (isLoading) {
@@ -85,14 +72,14 @@ function SuccessPageContent() {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
                         <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400" />
                     </div>
-                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Pago Completado!</CardTitle>
+                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Pago en Proceso!</CardTitle>
                     <CardDescription className="text-lg text-foreground/80">
                         Gracias por tu compra, {user?.email?.split('@')[0] || 'cliente'}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                        Hemos recibido la confirmación de tu pago y tu pedido está siendo procesado. Recibirás un email en breve.
+                        Hemos recibido la confirmación de tu pago y tu pedido está siendo procesado. Recibirás un email de confirmación en breve, una vez que el pago esté completamente verificado.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg">

@@ -2,100 +2,131 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
-import { db } from '@/lib/firebase-admin'; // Asegúrate de que esta es la ruta correcta a tu admin-sdk
+import { firestore } from '@/lib/firebase-admin';
+import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
+import type { Order } from '@/lib/types';
 
-// TODO: Añadir esta variable al fichero .env con una clave segura compartida con el intermediario.
 const WEBHOOK_SECRET = process.env.INTERMEDIARY_WEBHOOK_SECRET;
 
-/**
- * Endpoint para recibir notificaciones de estado de pago desde el servicio intermediario.
- */
+async function findOrder(orderId: string): Promise<[FirebaseFirestore.DocumentReference | null, FirebaseFirestore.DocumentData | null]> {
+    // We need to find the order without knowing the userId.
+    // A collectionGroup query is the most efficient way to do this.
+    // It requires a composite index on (`id`, `createdAt`) or similar in Firestore.
+    // For now, we'll try to extract userId from the orderId if possible as a fallback.
+    
+    // Attempt 1: Collection Group Query
+    try {
+        const ordersRef = firestore.collectionGroup('orders');
+        const querySnapshot = await ordersRef.where('id', '==', orderId).limit(1).get();
+
+        if (!querySnapshot.empty) {
+            const orderDoc = querySnapshot.docs[0];
+            return [orderDoc.ref, orderDoc.data()];
+        }
+    } catch (e) {
+        console.warn("Collection group query for orders failed. This likely requires a composite index to be created in Firestore. Falling back to parsing userId from orderId.", e);
+    }
+    
+    // Attempt 2: Fallback by parsing userId from orderId
+    // This assumes orderId is in format like `order_USERID_TIMESTAMP`
+    const parts = orderId.split('_');
+    if (parts.length >= 3 && parts[0] === 'order') {
+        const userId = parts[1];
+        const docRef = firestore.collection('users').doc(userId).collection('orders').doc(orderId);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+            return [docRef, docSnap.data()!];
+        }
+    }
+
+    return [null, null];
+}
+
+
 export async function POST(req: NextRequest) {
   const headersList = headers();
   const signature = headersList.get('x-intermediary-signature');
 
   if (!WEBHOOK_SECRET) {
-    console.error('Error: La clave secreta del webhook no está configurada en el servidor.');
-    return NextResponse.json({ error: 'Configuración del servidor incompleta.' }, { status: 500 });
+    console.error('CRITICAL ERROR: INTERMEDIARY_WEBHOOK_SECRET is not set in the environment.');
+    return NextResponse.json({ error: 'Webhook service is not configured.' }, { status: 500 });
   }
 
   const rawBody = await req.text();
 
-  // 1. Verificar la firma para asegurar que la petición es legítima
+  // 1. Verify the signature to ensure the request is legitimate
   const expectedSignature = crypto
     .createHmac('sha256', WEBHOOK_SECRET)
     .update(rawBody)
     .digest('hex');
 
   if (signature !== expectedSignature) {
-    console.warn('Firma de webhook inválida recibida.');
-    return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
+    console.warn('Invalid webhook signature received.');
+    return NextResponse.json({ error: 'Invalid signature.' }, { status: 401 });
   }
 
   try {
     const body = JSON.parse(rawBody);
-    console.log('Webhook de pago recibido y verificado:', body);
+    console.log('Webhook from intermediary verified successfully:', body);
 
-    const { order_id, status, payment_id, paid_amount } = body;
+    const { order_id, status, payment_id } = body;
 
     if (!order_id || !status) {
-      return NextResponse.json({ error: 'Faltan campos obligatorios en el payload.' }, { status: 400 });
-    }
-
-    // 2. Lógica para actualizar el pedido en Firestore
-    // Nota: El 'order_id' que viene del intermediario debe coincidir con el que guardaste
-    // al crear el pedido inicial. El 'orderId' en Firestore debe ser el 'order_id' del intermediario.
-    // La estructura de la base de datos es /users/{userId}/orders/{orderId}
-    
-    // Este paso es más complejo porque necesitamos encontrar el pedido sin saber el userId.
-    // Una solución es hacer una collectionGroup query.
-    const ordersRef = db.collectionGroup('orders').where('id', '==', order_id);
-    const orderSnapshot = await ordersRef.get();
-
-    if (orderSnapshot.empty) {
-      console.error(`Error: No se encontró ningún pedido con el id: ${order_id}`);
-      // Respondemos con 200 para que el intermediario no siga reintentando un pedido que no existe.
-      return NextResponse.json({ success: true, message: 'Notificación recibida pero el pedido no fue encontrado.' });
+      return NextResponse.json({ error: 'Missing required fields in payload.' }, { status: 400 });
     }
     
-    const orderDoc = orderSnapshot.docs[0];
-    const currentOrderData = orderDoc.data();
+    // As the order might not exist yet, we can't easily find it.
+    // For now, we will assume this webhook is for creation.
+    // In a real app, you'd need a more robust way to handle this,
+    // perhaps by storing pending transaction details temporarily.
 
-    // Evitar procesar un webhook dos veces
-    if (currentOrderData.status !== 'Pago Pendiente de Verificación') {
-        console.log(`El pedido ${order_id} ya ha sido procesado. Estado actual: ${currentOrderData.status}`);
-        return NextResponse.json({ success: true, message: 'Webhook ya procesado.' });
+    if (status === 'completed') {
+        // This is where the logic to create the order should go.
+        // However, we don't have the cart details here.
+        // This implies the checkout success page MUST create the order with a 'pending' status,
+        // and this webhook then UPDATES it to a 'paid' status.
+        
+        const [orderDocRef, currentOrderData] = await findOrder(order_id);
+
+        if (!orderDocRef || !currentOrderData) {
+            console.error(`Webhook received for non-existent order ID: ${order_id}`);
+            return NextResponse.json({ success: true, message: 'Webhook received but order not found. It might be processed later.' });
+        }
+        
+        // Prevent processing a webhook twice or updating a non-pending order
+        if (currentOrderData.status !== 'Pago Pendiente de Verificación') {
+            console.log(`Order ${order_id} has already been processed. Current status: ${currentOrderData.status}`);
+            return NextResponse.json({ success: true, message: 'Webhook already processed.' });
+        }
+
+        await orderDocRef.update({
+            status: 'Reserva Recibida',
+            paymentId: payment_id,
+            updatedAt: new Date().toISOString(),
+        });
+
+        console.log(`Order ${order_id} successfully updated to status: Reserva Recibida`);
+        
+        // Send Klaviyo confirmation email
+        const klaviyoOrderData = await formatOrderForKlaviyo({ ...currentOrderData, id: order_id } as Order, order_id);
+        await trackKlaviyoEvent('Placed Order', currentOrderData.customerEmail, klaviyoOrderData);
+        
+    } else {
+        // Handle 'failed' or 'expired' statuses
+        const [orderDocRef] = await findOrder(order_id);
+        if (orderDocRef) {
+            await orderDocRef.update({
+                status: 'Cancelado',
+                updatedAt: new Date().toISOString(),
+            });
+            console.log(`Order ${order_id} status updated to: Cancelado`);
+        }
     }
-
-    // 3. Actualizar el estado del pedido
-    let newStatus: string;
-    switch (status) {
-      case 'completed':
-        newStatus = 'Reserva Recibida'; // O 'Pagado', según tu flujo
-        break;
-      case 'failed':
-      case 'expired':
-        newStatus = 'Cancelado';
-        break;
-      default:
-        console.warn(`Estado de webhook no manejado: ${status}`);
-        return NextResponse.json({ success: true, message: 'Estado no manejado.' });
-    }
-
-    await orderDoc.ref.update({
-      status: newStatus,
-      paymentId: payment_id, // Opcional: guardar el ID de pago del procesador
-      updatedAt: new Date().toISOString(),
-    });
-
-    console.log(`Pedido ${order_id} actualizado al estado: ${newStatus}`);
-
-    // Aquí podrías enviar un email de confirmación al cliente.
 
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    console.error('Error al procesar el webhook de pago:', error);
-    return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
+    console.error('Error processing payment webhook:', error);
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }

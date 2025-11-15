@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -64,7 +65,7 @@ const getCheckoutSchema = (t: (key: string) => string) => z.object({
     postalCode: z.string().min(3, t('checkout.form_errors.zip_required')),
     country: z.string().min(2, t('checkout.form_errors.country_required')),
     saveAddress: z.boolean().default(false),
-    paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto'], {
+    paymentMethod: z.enum(['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer'], {
         required_error: t('checkout.form_errors.payment_method_required')
     }),
     useDifferentBilling: z.boolean().default(false),
@@ -155,7 +156,7 @@ export default function CheckoutClientPage() {
         postalCode: '', 
         country: '',
         saveAddress: false,
-        paymentMethod: 'crypto', // Default to crypto
+        paymentMethod: 'prepaid_bizum',
         useDifferentBilling: false 
     },
   });
@@ -364,38 +365,6 @@ export default function CheckoutClientPage() {
         }
     }
 
-    if (data.paymentMethod === 'crypto') {
-        try {
-            const orderId = `order_${user.uid}_${Date.now()}`;
-            const result = await createNowPaymentsInvoice({
-                price_amount: finalTotals.total / 100, // Convert cents to euros/dollars
-                price_currency: 'eur',
-                order_id: orderId,
-                order_description: `Pedido de ${cartCount} productos en PuroRush`,
-                cartItems,
-                customerName: data.name,
-                customerEmail: data.email,
-                shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
-                finalTotal: finalTotals.total,
-                appliedCoupon,
-                couponDiscount,
-            });
-
-            if (result.success && result.invoice_url) {
-                clearCart();
-                window.location.href = result.invoice_url;
-            } else {
-                throw new Error(result.error || t('checkout.toasts.crypto_error_desc'));
-            }
-        } catch (error: any) {
-            toast({ title: t('checkout.toasts.crypto_error_title'), description: error.message, variant: 'destructive' });
-        } finally {
-            setLoading(false);
-        }
-        return; 
-    }
-
-
     try {
         const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
 
@@ -506,7 +475,6 @@ export default function CheckoutClientPage() {
           { value: 'cod_bizum', label: t('checkout.payment_options.cod_bizum'), icon: Smartphone }
       ],
       prepaid: [
-          { value: 'crypto', label: t('checkout.payment_options.crypto'), icon: Bitcoin },
           { value: 'prepaid_bizum', label: t('checkout.payment_options.prepaid_bizum'), icon: Smartphone },
           { value: 'prepaid_transfer', label: t('checkout.payment_options.prepaid_transfer'), icon: Banknote },
       ],
