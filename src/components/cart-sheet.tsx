@@ -37,7 +37,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
-  const [isProcessingStripe, setIsProcessingStripe] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = () => {
     if(cartCount === 0) {
@@ -56,12 +56,19 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
           toast({ title: t('cart.empty_title'), variant: "destructive" });
           return;
       }
-      setIsProcessingStripe(true);
+      setIsProcessing(true);
       try {
+          const userId = user ? user.uid : 'guest';
+          const orderId = `order_${userId}_${Date.now()}`;
+
           const response = await fetch('/api/purchase', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cartItems, customerEmail: user?.email }),
+              body: JSON.stringify({ 
+                cartItems, 
+                customerEmail: user?.email,
+                orderId: orderId, // Send the unique order ID
+              }),
           });
           const { checkoutUrl, error } = await response.json();
           if (error) throw new Error(error);
@@ -69,8 +76,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
               window.location.href = checkoutUrl;
           }
       } catch (error: any) {
-          toast({ title: "Error de pago", description: error.message, variant: "destructive" });
-          setIsProcessingStripe(false);
+          toast({ title: "Error de pago", description: error.message || "No se pudo iniciar el proceso de pago.", variant: "destructive" });
+          setIsProcessing(false);
       }
   };
 
@@ -162,8 +169,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      )}
                 </div>
                 <div className="space-y-2">
-                   <Button size="lg" className="w-full" onClick={handleStripePayment} disabled={isProcessingStripe}>
-                        {isProcessingStripe ? <Loader2 className="mr-2 animate-spin" /> : <CreditCard className="mr-2" />}
+                   <Button size="lg" className="w-full" onClick={handleStripePayment} disabled={isProcessing}>
+                        {isProcessing ? <Loader2 className="mr-2 animate-spin" /> : <CreditCard className="mr-2" />}
                         Pagar con Tarjeta
                    </Button>
                    <Button asChild size="lg" className="w-full" onClick={handleCheckout} variant="outline">

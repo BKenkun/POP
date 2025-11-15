@@ -19,10 +19,14 @@ async function getUserIdFromSession() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { cartItems, customerEmail } = await req.json();
+        const { cartItems, customerEmail, orderId } = await req.json();
 
         if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
             return NextResponse.json({ error: 'Cart items are required.' }, { status: 400 });
+        }
+        
+        if (!orderId) {
+            return NextResponse.json({ error: 'Order ID is required.' }, { status: 400 });
         }
         
         const userId = await getUserIdFromSession();
@@ -34,7 +38,8 @@ export async function POST(req: NextRequest) {
         const priceInCents = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
         const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!YOUR_DOMAIN || YOUR_DOMAIN.includes('localhost')) {
+        if (!YOUR_DOMAIN) {
+            console.error("CRITICAL: NEXT_PUBLIC_BASE_URL is not set. Falling back to localhost, which will fail in production.");
             return NextResponse.json({ error: 'La URL de la tienda no está configurada correctamente en el servidor.' }, { status: 500 });
         }
 
@@ -43,6 +48,7 @@ export async function POST(req: NextRequest) {
             productName,
             priceInCents,
             customerEmail,
+            orderId, // Pass the generated orderId to the intermediary
             successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${YOUR_DOMAIN}/checkout`,
             metadata: {
@@ -71,4 +77,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create checkout session.' }, { status: 500 });
     }
 }
-
