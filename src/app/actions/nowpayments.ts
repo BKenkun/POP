@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, writeBatch } from 'firebase/firestore';
 import type { CartItem, ShippingAddress, Order } from '@/lib/types';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from './klaviyo';
 import { getUserIdFromSession } from './user-data';
@@ -95,13 +95,27 @@ export async function createNowPaymentsInvoice(
         })
     };
     
-    await setDoc(orderDocRef, orderData);
+    const batch = writeBatch(db);
+    batch.set(orderDocRef, orderData);
+
+    // Increment coupon usage count if a coupon was applied
+    if (appliedCoupon) {
+        const couponRef = doc(db, 'coupons', appliedCoupon.id);
+        const couponSnap = await getDoc(couponRef);
+        if(couponSnap.exists()) {
+            batch.update(couponRef, {
+                usageCount: (couponSnap.data().usageCount || 0) + 1,
+            });
+        }
+    }
+    
+    await batch.commit();
     
     // Notify admin and user about the pending payment order
     const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date() }, order_id);
     await trackKlaviyoEvent('Placed Order', customerEmail, klaviyoOrderData);
     
-    // 2. Now, create the invoice on NOWPayments
+    // 2. Now, create the invoice on NOWPayments using the correct parameters
     const response = await fetch('https://api.nowpayments.io/v1/invoice', {
       method: 'POST',
       headers: {
@@ -113,14 +127,15 @@ export async function createNowPaymentsInvoice(
         price_currency,
         order_id,
         order_description,
-        success_url: `${BASE_URL}/account/orders/${order_id}`,
-        cancel_url: `${BASE_URL}/checkout`,
+        success_url: `${BASE_URL}/account/orders/${order_id}`, // Correct parameter
+        cancel_url: `${BASE_URL}/checkout`, // Correct parameter
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('NOWPayments API Error:', data);
       throw new Error(data.message || 'Error al crear la factura en NOWPayments.');
     }
 

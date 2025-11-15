@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { QuantitySelector } from '@/components/quantity-selector';
+import { QuantitySelector } from '../quantity-selector';
 import { serverTimestamp, collection, addDoc, doc, getDoc, writeBatch, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { useCheckout } from '@/context/checkout-context';
@@ -447,9 +447,12 @@ export default function CheckoutClientPage() {
         // Increment coupon usage count if a coupon was applied
         if (appliedCoupon) {
             const couponRef = doc(db, 'coupons', appliedCoupon.id);
-            batch.update(couponRef, {
-                usageCount: (appliedCoupon.usageCount || 0) + 1,
-            });
+            const couponSnap = await getDoc(couponRef);
+            if(couponSnap.exists()) {
+                 batch.update(couponRef, {
+                    usageCount: (couponSnap.data().usageCount || 0) + 1,
+                });
+            }
         }
         
         await batch.commit();
