@@ -1,26 +1,37 @@
 
 'use client';
 
-import { Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
 import { Loader2, CheckCircle, ShoppingBag, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 function SuccessPageContent() {
-    const router = useRouter();
     const { clearCart } = useCart();
     const { user } = useAuth();
-    
-    // As the checkout is now manual, we don't need to verify a session.
-    // We just show a success message and clear the cart.
+    const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get('session_id');
+
     useEffect(() => {
-        clearCart();
-    }, [clearCart]);
+        if (sessionId) {
+            // Limpiar el carrito solo si venimos de una sesión de pago exitosa.
+            clearCart();
+            // Lógica adicional para verificar la sesión si es necesario, 
+            // aunque la confirmación final debería venir por webhook.
+            // Por ejemplo, podríamos mostrar un mensaje más específico.
+            toast({
+                title: "¡Pago Completado!",
+                description: "Gracias por tu compra. Estamos procesando tu pedido.",
+                duration: 8000,
+            });
+        }
+    }, [sessionId, clearCart, toast]);
 
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8 py-12">
@@ -36,7 +47,7 @@ function SuccessPageContent() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                        Hemos recibido tu reserva correctamente. Recibirás un email con los detalles y los siguientes pasos para el pago.
+                        Hemos recibido tu reserva correctamente. Recibirás un email con los detalles y los siguientes pasos para el pago. Si has pagado con tarjeta, tu pedido se procesará en breve.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg">
