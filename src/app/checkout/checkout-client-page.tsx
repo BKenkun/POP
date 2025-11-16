@@ -35,6 +35,7 @@ import { updateUser } from '@/app/actions/user-data';
 import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { QuantitySelector } from '@/components/quantity-selector';
 
 
 interface Address {
@@ -268,11 +269,15 @@ export default function CheckoutClientPage() {
       return;
     }
     setLoading(true);
-    
+
     const orderId = `order_${user.uid}_${Date.now()}`;
     
-    // Prepare the metadata object with all order details
-    const metadataForIntermediary = {
+    const purchasePayload = {
+      priceInCents: finalTotals.priceInCents,
+      orderId: orderId,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
+      metadata: {
         userId: user.uid,
         cartItems: cartItems.map(item => ({
             productId: item.id,
@@ -302,12 +307,7 @@ export default function CheckoutClientPage() {
             country: data.billing_country
         } : null,
         coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
-    };
-
-    const purchasePayload = {
-      orderId,
-      priceInCents: finalTotals.priceInCents,
-      metadata: metadataForIntermediary
+      }
     };
     
     try {
