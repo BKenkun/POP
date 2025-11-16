@@ -59,7 +59,7 @@ service cloud.firestore {
 
       match /orders/{orderId} {
         allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId);
+        allow create: if isOwner(userId) || isAdmin();
         allow update, delete: if isExistingOwner(userId) || isAdmin();
       }
     }
