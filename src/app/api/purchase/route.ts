@@ -4,11 +4,15 @@ import type { CartItem } from '@/lib/types';
 
 // La URL del endpoint del intermediario. Debería estar en una variable de entorno.
 const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';
-const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com';
+const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL;
 
 export async function POST(req: NextRequest) {
   try {
     const { cartItems, customerEmail, orderId } = await req.json();
+
+    if (!YOUR_DOMAIN) {
+      throw new Error("La URL base del sitio no está configurada en el servidor.");
+    }
 
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return NextResponse.json({ error: 'El carrito está vacío o tiene un formato incorrecto.' }, { status: 400 });
