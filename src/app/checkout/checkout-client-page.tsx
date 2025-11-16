@@ -269,13 +269,11 @@ export default function CheckoutClientPage() {
     }
     setLoading(true);
     
-    // The orderId is now crucial for tracking, but we won't create the order document yet.
     const orderId = `order_${user.uid}_${Date.now()}`;
 
-    // We will now pass all necessary data to the purchase API.
-    // The webhook will use this data later to create the order.
     const purchasePayload = {
       orderId,
+      userId: user.uid,
       cartItems: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
       total: finalTotals.total,
       priceInCents: finalTotals.priceInCents,
@@ -284,7 +282,6 @@ export default function CheckoutClientPage() {
       shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone } as ShippingAddress,
       billingDetails: data.useDifferentBilling ? { name: data.billing_name, street: data.billing_street, city: data.billing_city, state: data.billing_state, postalCode: data.billing_postalCode, country: data.billing_country } : null,
       coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
-      userId: user.uid,
     };
     
     try {
