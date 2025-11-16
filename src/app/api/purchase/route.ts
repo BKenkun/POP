@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { CartItem } from '@/lib/types';
 import { auth as adminAuth } from '@/lib/firebase-admin';
