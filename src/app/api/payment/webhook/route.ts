@@ -2,19 +2,19 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { db } from '@/lib/firebase-admin';
-import { doc, getDoc, updateDoc, writeBatch, increment, serverTimestamp } from 'firebase-admin/firestore';
+import { firestore } from '@/lib/firebase-admin';
+import { doc, getDoc, setDoc, writeBatch, increment, serverTimestamp } from 'firebase-admin/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
 import { z } from 'zod';
 
 const EXTERNAL_WEBHOOK_SECRET = process.env.EXTERNAL_WEBHOOK_SECRET;
 
-// Simplified schema to match the new "contract"
+// Schema for the expected webhook payload from the intermediary
 const WebhookPayloadSchema = z.object({
   order_id: z.string(),
   status: z.enum(['completed', 'expired']),
-  // No metadata is expected anymore according to the new spec
+  metadata: z.record(z.any()), // We expect the full order details here
 });
 
 
@@ -47,52 +47,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payload de webhook inválido.' }, { status: 400 });
     }
     
-    const { order_id, status } = validation.data;
+    const { order_id, status, metadata } = validation.data;
 
     if (status === 'completed') {
       console.log(`Webhook recibido: Pago completado para el pedido ${order_id}`);
       
-      // Since metadata is gone, we need to find the user ID from the order ID format
-      const userId = order_id.split('_')[1];
+      const { userId, ...orderDetails } = metadata;
       if (!userId) {
-        throw new Error(`Could not extract userId from order_id: ${order_id}`);
+        throw new Error(`Could not extract userId from metadata for order_id: ${order_id}`);
       }
 
-      const orderRef = db.collection('users').doc(userId).collection('orders').doc(order_id);
+      const orderRef = firestore.collection('users').doc(userId).collection('orders').doc(order_id);
       const orderSnap = await orderRef.get();
 
-      if (!orderSnap.exists) {
-          console.error(`Webhook for order ${order_id} received, but order not found in Firestore.`);
-          // Still return 200 to avoid retries, but log the error.
-          return NextResponse.json({ received: true, message: 'Pedido no encontrado, pero webhook aceptado.' });
-      }
-
-      const orderData = orderSnap.data() as Order;
-      
-      // Check if order is already processed
-      if (orderData.status !== 'Pago Pendiente de Verificación') {
-          console.log(`El pedido ${order_id} ya fue procesado. Estado actual: ${orderData.status}. Ignorando webhook.`);
+      if (orderSnap.exists) {
+          console.log(`El pedido ${order_id} ya existe. Ignorando webhook.`);
           return NextResponse.json({ received: true, message: 'Pedido ya procesado.' });
       }
+
+      const batch = firestore.batch();
       
-      const batch = db.batch();
-      
-      // 1. Update the order status
-      batch.update(orderRef, { status: 'Reserva Recibida' });
+      // 1. CREATE the order document now
+      const newOrderData: Omit<Order, 'id'> = {
+          ...orderDetails,
+          userId,
+          status: 'Reserva Recibida',
+          createdAt: serverTimestamp() as any,
+      };
+      batch.set(orderRef, newOrderData);
 
       // 2. Increment coupon usage if a coupon was applied
-      if (orderData.coupon) {
-          const couponRef = db.collection('coupons').doc(orderData.coupon.code);
-          const couponSnap = await couponRef.get();
-          if(couponSnap.exists()) {
-              batch.update(couponRef, { usageCount: increment(1) });
-          }
+      if (metadata.coupon) {
+          const couponRef = firestore.collection('coupons').doc(metadata.coupon.code);
+          batch.update(couponRef, { usageCount: increment(1) });
       }
 
       // 3. Add loyalty points
-      const pointsToAdd = Math.floor(orderData.total / 1000); // 1 point per 10€
+      const pointsToAdd = Math.floor(metadata.total / 1000); // 1 point per 10€
       if (pointsToAdd > 0) {
-        const userRef = db.collection('users').doc(userId);
+        const userRef = firestore.collection('users').doc(userId);
         batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
       }
       
@@ -100,8 +93,8 @@ export async function POST(req: NextRequest) {
       await batch.commit();
 
       // Send confirmation emails via Klaviyo
-      const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id }, order_id);
-      await trackKlaviyoEvent('Placed Order', orderData.customerEmail, klaviyoOrderData);
+      const klaviyoOrderData = await formatOrderForKlaviyo({ ...newOrderData, id: order_id, createdAt: new Date() }, order_id);
+      await trackKlaviyoEvent('Placed Order', metadata.customerEmail, klaviyoOrderData);
       await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
       
     } else {

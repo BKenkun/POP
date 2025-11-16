@@ -5,12 +5,13 @@ import { z } from 'zod';
 
 const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';
 
-// Simplified schema to match the new "contract"
+// This schema now exactly matches what the intermediary expects.
 const PurchasePayloadSchema = z.object({
   priceInCents: z.number(),
   orderId: z.string(),
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
+  metadata: z.record(z.any()), // We expect a metadata object, not a string
 });
 
 export async function POST(req: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     
     if (!validation.success) {
       console.error("Invalid payload for /api/purchase:", validation.error.flatten());
-      return NextResponse.json({ error: 'Datos de pedido inválidos.' }, { status: 400 });
+      return NextResponse.json({ error: 'Datos de pedido inválidos enviados desde el cliente.' }, { status: 400 });
     }
     
     // The payload is already in the correct format for the intermediary

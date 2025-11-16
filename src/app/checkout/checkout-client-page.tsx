@@ -425,32 +425,58 @@ export default function CheckoutClientPage() {
     setLoading(true);
 
     const orderId = `order_${user.uid}_${Date.now()}`;
-    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL;
+    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
 
-    // Simplified payload for the intermediary
+    const orderDetailsForMetadata = {
+      userId: user.uid,
+      cartItems: cartItems.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          imageUrl: item.imageUrl,
+      })),
+      total: finalTotals.total,
+      customerName: data.name,
+      customerEmail: data.email,
+      shippingAddress: {
+        line1: data.street,
+        line2: null,
+        city: data.city,
+        state: data.state,
+        postal_code: data.postalCode,
+        country: data.country,
+        phone: data.phone,
+      },
+      paymentMethod: 'stripe', // This can be updated by webhook if needed
+      coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null
+    };
+
     const purchasePayload = {
       priceInCents: finalTotals.priceInCents,
       orderId: orderId,
-      successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
       cancelUrl: `${YOUR_DOMAIN}/checkout`,
+      metadata: orderDetailsForMetadata,
     };
-
+    
     try {
-      // PRE-CREATE ORDER in Firestore
-      const orderDocRef = doc(db, 'users', user.uid, 'orders', orderId);
-      const orderData: Omit<Order, 'id' | 'createdAt'> = {
-        userId: user.uid,
-        status: 'Pago Pendiente de Verificación',
-        total: finalTotals.total,
-        items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
-        customerName: data.name,
-        customerEmail: data.email,
-        shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
-        paymentMethod: 'stripe',
-        ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount } })
-      };
-      await setDoc(orderDocRef, { ...orderData, createdAt: serverTimestamp() });
-      // END PRE-CREATION
+      if (data.saveAddress && selectedAddressId === 'new') {
+        const addressToSave = {
+          alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`,
+          name: data.name,
+          phone: data.phone,
+          street: data.street,
+          city: data.city,
+          state: data.state,
+          postalCode: data.postalCode,
+          country: data.country,
+        };
+        const result = await updateUser('add-address', addressToSave);
+        if (result.success && result.user) {
+          setUserDoc(result.user);
+        }
+      }
 
       const response = await fetch('/api/purchase', {
         method: 'POST',
@@ -465,34 +491,6 @@ export default function CheckoutClientPage() {
       }
 
       if (checkoutUrl) {
-        if (data.saveAddress && selectedAddressId === 'new') {
-          const addressToSave = {
-            alias: `${t('account.addresses_title')} ${
-              userDoc?.addresses?.length + 1 || 1
-            }`,
-            name: data.name,
-            phone: data.phone,
-            street: data.street,
-            city: data.city,
-            state: data.state,
-            postalCode: data.postalCode,
-            country: data.country,
-          };
-          const result = await updateUser('add-address', addressToSave);
-          if (result.success && result.user) {
-            setUserDoc(result.user);
-            toast({
-              title: t('checkout.toasts.address_saved_title'),
-              description: t('checkout.toasts.address_saved_desc'),
-            });
-          } else {
-            toast({
-              title: t('checkout.toasts.address_save_error_title'),
-              description: t('checkout.toasts.address_save_error_desc'),
-              variant: 'destructive',
-            });
-          }
-        }
         window.location.href = checkoutUrl;
       } else {
         throw new Error('No se recibió la URL de pago.');
