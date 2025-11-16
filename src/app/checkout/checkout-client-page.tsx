@@ -113,7 +113,7 @@ const Stepper = ({ currentStep, t }: { currentStep: number, t: (key: string) => 
 
 export default function CheckoutClientPage() {
   const { t } = useTranslation();
-  const { cartItems, cartTotal, cartCount } = useCart();
+  const { cartItems, cartTotal, cartCount, removeFromCart, updateQuantity } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -245,7 +245,7 @@ export default function CheckoutClientPage() {
     } else if (step === 2) {
       if (!user) {
          toast({ title: t('checkout.toasts.login_required_title'), description: t('checkout.toasts.login_required_desc'), variant: "destructive" });
-         router.push('/login?redirect=/checkout');
+         router.push('/checkout?step=2');
          return;
       }
       if (selectedAddressId !== 'new') isValid = true;
@@ -270,18 +270,44 @@ export default function CheckoutClientPage() {
     setLoading(true);
     
     const orderId = `order_${user.uid}_${Date.now()}`;
+    
+    // Prepare the metadata object with all order details
+    const metadataForIntermediary = {
+        userId: user.uid,
+        cartItems: cartItems.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            imageUrl: item.imageUrl
+        })),
+        total: finalTotals.total,
+        customerName: data.name,
+        customerEmail: data.email,
+        shippingAddress: {
+            line1: data.street,
+            line2: null,
+            city: data.city,
+            state: data.state,
+            postal_code: data.postalCode,
+            country: data.country,
+            phone: data.phone
+        } as ShippingAddress,
+        billingDetails: data.useDifferentBilling ? {
+            name: data.billing_name,
+            street: data.billing_street,
+            city: data.billing_city,
+            state: data.billing_state,
+            postalCode: data.billing_postalCode,
+            country: data.billing_country
+        } : null,
+        coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
+    };
 
     const purchasePayload = {
       orderId,
-      userId: user.uid,
-      cartItems: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
-      total: finalTotals.total,
       priceInCents: finalTotals.priceInCents,
-      customerName: data.name,
-      customerEmail: data.email,
-      shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone } as ShippingAddress,
-      billingDetails: data.useDifferentBilling ? { name: data.billing_name, street: data.billing_street, city: data.billing_city, state: data.billing_state, postalCode: data.billing_postalCode, country: data.billing_country } : null,
-      coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
+      metadata: metadataForIntermediary
     };
     
     try {
@@ -339,11 +365,26 @@ export default function CheckoutClientPage() {
                 <Card>
                     <CardHeader><CardTitle>{t('checkout.confirm_cart_title')}</CardTitle></CardHeader>
                     <CardContent>
-                        <Alert className="mb-4">
-                            <ShoppingBag className="h-4 w-4"/>
-                            <AlertTitle>Revisa tu pedido</AlertTitle>
-                            <AlertDescription>Confirma los artículos y cantidades antes de continuar.</AlertDescription>
-                        </Alert>
+                        {cartItems.map((item) => (
+                           <div key={item.id} className="flex items-center gap-4 py-2">
+                               <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border">
+                                   <Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
+                               </div>
+                               <div className="flex-1">
+                                   <h3 className="font-semibold">{item.name}</h3>
+                                   <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+                                   <div className="mt-2 flex items-center gap-2">
+                                       <QuantitySelector quantity={item.quantity} onQuantityChange={(newQuantity) => updateQuantity(item.id, newQuantity)} maxStock={item.stock} />
+                                   </div>
+                               </div>
+                               <div className="flex flex-col items-end gap-2">
+                                 <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => removeFromCart(item.id)}>
+                                     <Trash2 className="h-4 w-4" />
+                                 </Button>
+                               </div>
+                           </div>
+                        ))}
                     </CardContent>
                 </Card>
             )}

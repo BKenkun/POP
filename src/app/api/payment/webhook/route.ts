@@ -1,8 +1,10 @@
 
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from '@/lib/firebase-admin';
-import { doc, getDoc, setDoc, writeBatch, increment } from 'firebase-admin/firestore';
+import { doc, getDoc, setDoc, writeBatch, increment, serverTimestamp } from 'firebase-admin/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 import { Order, ShippingAddress, OrderItem } from '@/lib/types';
 import { z } from 'zod';
@@ -13,8 +15,8 @@ const EXTERNAL_WEBHOOK_SECRET = process.env.EXTERNAL_WEBHOOK_SECRET;
 const WebhookPayloadSchema = z.object({
   order_id: z.string(),
   status: z.enum(['completed', 'expired']),
-  // The original payload we sent to the purchase endpoint, now returned to us
-  originalPayload: z.object({
+  // The metadata object we sent, now returned to us
+  metadata: z.object({
       userId: z.string(),
       total: z.number(),
       items: z.array(z.object({
@@ -64,24 +66,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // We need to parse the body now to access the nested JSON string
     const webhookData = JSON.parse(rawBody);
-
-    // The `originalPayload` comes as a string, so we need to parse it too.
-    const fullPayload = {
-      ...webhookData,
-      originalPayload: JSON.parse(webhookData.originalPayload)
-    }
-
-    const validation = WebhookPayloadSchema.safeParse(fullPayload);
+    const validation = WebhookPayloadSchema.safeParse(webhookData);
 
     if (!validation.success) {
       console.error("Invalid webhook payload:", validation.error.flatten());
       return NextResponse.json({ error: 'Payload de webhook inválido.' }, { status: 400 });
     }
     
-    const { order_id, status, originalPayload } = validation.data;
-    const { userId, total, items, customerName, customerEmail, shippingAddress, coupon } = originalPayload;
+    const { order_id, status, metadata } = validation.data;
+    const { userId, total, items, customerName, customerEmail, shippingAddress, coupon } = metadata;
 
     if (status === 'completed') {
       console.log(`Webhook recibido: Pago completado para el pedido ${order_id}`);
@@ -111,19 +105,22 @@ export async function POST(req: NextRequest) {
       const batch = db.batch();
       
       // 1. Set the order document with a server-generated timestamp
-      batch.set(orderRef, { ...orderData, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      batch.set(orderRef, { ...orderData, createdAt: serverTimestamp() });
 
       // 2. Increment coupon usage count if a coupon was applied
       if (coupon) {
           const couponRef = db.collection('coupons').doc(coupon.code);
-          batch.update(couponRef, { usageCount: admin.firestore.FieldValue.increment(1) });
+          const couponSnap = await couponRef.get();
+          if(couponSnap.exists()) {
+              batch.update(couponRef, { usageCount: increment(1) });
+          }
       }
 
       // 3. Add loyalty points
       const pointsToAdd = Math.floor(total / 1000); // 1 point per 10€
       if (pointsToAdd > 0) {
         const userRef = db.collection('users').doc(userId);
-        batch.update(userRef, { loyaltyPoints: admin.firestore.FieldValue.increment(pointsToAdd) });
+        batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
       }
       
       // Commit all database operations
