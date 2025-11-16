@@ -1,3 +1,4 @@
+
 // This file is intentionally left blank.
 // The logic for creating a payment session has been moved to /api/purchase/route.ts,
 // which communicates with the external payment intermediary instead of directly with Stripe.

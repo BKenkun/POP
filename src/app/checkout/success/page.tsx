@@ -23,12 +23,14 @@ function SuccessPageContent() {
 
     useEffect(() => {
         if (!sessionId) {
+            // If there's no session ID, it's an invalid access to this page.
             router.replace('/checkout');
             return;
         }
 
         async function verifySession() {
             try {
+                // This call goes to OUR OWN backend to verify the session securely.
                 const response = await fetch('/api/stripe/verify-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -40,13 +42,9 @@ function SuccessPageContent() {
                     throw new Error(errorData.error || "No se pudo verificar el pago.");
                 }
 
-                const { orderId } = await response.json();
-                
-                // If verification is successful, we can clear the cart.
+                // If verification is successful, the server has already created the order.
+                // We can now safely clear the cart.
                 clearCart();
-                // Optionally, redirect to a more permanent order confirmation page
-                // For now, we just stop loading and show the success message.
-                // router.push(`/account/orders/${orderId}`);
 
             } catch (err: any) {
                 console.error("Verification Error:", err);
