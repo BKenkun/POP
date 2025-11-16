@@ -15,6 +15,8 @@ import { QuantitySelector } from './quantity-selector';
 import { useTranslation } from '@/context/language-context';
 import { useAuth } from '@/context/auth-context';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -36,9 +38,11 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
+  const router = useRouter();
 
-  const handleCheckout = () => {
-    if(cartCount === 0) {
+
+  const handleGoToCheckout = () => {
+    if (cartCount === 0) {
       toast({
         title: t('cart.empty_title'),
         description: t('cart.empty_subtitle'),
@@ -46,53 +50,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
       });
       return;
     }
+    router.push('/checkout');
     onOpenChange(false);
-  };
-  
-  const handleCardPayment = async () => {
-    if (cartCount === 0) {
-      toast({ title: t('cart.empty_title'), variant: "destructive" });
-      return;
-    }
-
-    setIsProcessing(true);
-    toast({ title: "Redirigiendo a la pasarela de pago...", description: "Por favor, espera." });
-
-    try {
-      const userId = user ? user.uid : 'guest';
-      const orderId = `order_${userId}_${Date.now()}`;
-
-      const response = await fetch('/api/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          cartItems, 
-          customerEmail: user?.email,
-          orderId: orderId,
-        }),
-      });
-
-      const { checkoutUrl, error } = await response.json();
-
-      if (error) {
-        throw new Error(error);
-      }
-      
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else {
-        throw new Error('No se recibió la URL de pago.');
-      }
-
-    } catch (err: any) {
-      console.error("Error al crear la sesión de pago:", err);
-      toast({
-        title: "Error al Procesar el Pago",
-        description: err.message || "No se pudo redirigir a la pasarela de pago. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
   };
   
   const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
@@ -182,18 +141,9 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                        </div>
                      )}
                 </div>
-                 <p className="text-xs text-muted-foreground text-center">
-                  {t('cart.notes')}
-                </p>
-                <div className="flex flex-col gap-2">
-                  <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
-                    <Link href="/checkout">Finalizar Reserva</Link>
-                  </Button>
-                  <Button size="lg" className="w-full" variant="outline" onClick={handleCardPayment} disabled={isProcessing}>
-                    {isProcessing ? <Loader2 className="mr-2 animate-spin"/> : <CreditCard className="mr-2"/>}
-                    Pagar con Tarjeta
-                  </Button>
-                </div>
+                <Button asChild size="lg" className="w-full" onClick={handleGoToCheckout}>
+                  <Link href="/checkout">Finalizar Compra y Pagar</Link>
+                </Button>
               </div>
             </SheetFooter>
           </>

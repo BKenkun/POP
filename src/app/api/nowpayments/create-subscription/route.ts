@@ -1,11 +1,11 @@
-// This file is no longer needed as the subscription logic has been moved
-// to a Server Action in `src/app/actions/subscription-nowpayments.ts`.
-// This centralizes the server-side logic and resolves authentication issues.
+
+// This file is intentionally left blank as it is no longer used.
+// The subscription logic was tied to payment methods that have been removed.
 import { NextResponse } from 'next/server';
 
 export async function POST() {
     return NextResponse.json(
-        { success: false, error: 'This endpoint is deprecated. Please use the Server Action.' },
+        { success: false, error: 'This endpoint is deprecated.' },
         { status: 410 } // 410 Gone
     );
 }
