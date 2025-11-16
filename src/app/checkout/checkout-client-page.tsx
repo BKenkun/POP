@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Home, User, Mail, Phone, ArrowLeft, Lock, UserPlus, CreditCard, Ticket } from 'lucide-react';
+import { ShoppingBag, Loader2, Home, User, Mail, Phone, ArrowLeft, Lock, UserPlus, CreditCard, Ticket, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -275,8 +274,6 @@ export default function CheckoutClientPage() {
     const purchasePayload = {
       priceInCents: finalTotals.priceInCents,
       orderId: orderId,
-      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
       metadata: {
         userId: user.uid,
         cartItems: cartItems.map(item => ({
