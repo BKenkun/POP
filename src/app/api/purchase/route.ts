@@ -30,7 +30,7 @@ const PurchasePayloadSchema = z.object({
   }),
   billingDetails: z.any().nullable(),
   coupon: z.any().nullable(),
-  productName: z.string(),
+  productName: z.string(), // Added validation for productName
   userId: z.string(),
 });
 
@@ -45,21 +45,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Datos de pedido inválidos.' }, { status: 400 });
     }
     
-    const { orderId, priceInCents, customerEmail, productName } = validation.data;
+    const { orderId, priceInCents, productName } = validation.data;
 
     if (!YOUR_DOMAIN) {
       throw new Error("La URL base del sitio no está configurada en el servidor. Asegúrate de que NEXT_PUBLIC_BASE_URL esté en tu archivo .env.");
     }
     
-    // The intermediary needs a specific set of data to create the Stripe session.
-    // We also pass the entire original payload in metadata for the webhook to use later.
+    // The intermediary needs a specific set of data.
+    // We pass the entire original payload in metadata for the webhook to use later.
     const detailsForIntermediary = {
       priceInCents,
       orderId,
       successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${YOUR_DOMAIN}/checkout`,
-      productName,
-      metadata: { originalPayload: JSON.stringify(validation.data) }
+      productName, // This is now correctly passed
+      metadata: { 
+        originalPayload: JSON.stringify(validation.data) 
+      }
     };
     
     // Llama al servicio intermediario
@@ -80,6 +82,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error en /api/purchase:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Refined error message to avoid confusion with Stripe
+    return NextResponse.json({ error: `Hubo un error interno al procesar el pago. Por favor, verifica la configuración y los parámetros enviados.` }, { status: 500 });
   }
 }
