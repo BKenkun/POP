@@ -1,47 +1,20 @@
-
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from '@/lib/firebase-admin';
-import { doc, getDoc, setDoc, writeBatch, increment, serverTimestamp } from 'firebase-admin/firestore';
+import { doc, getDoc, updateDoc, writeBatch, increment, serverTimestamp } from 'firebase-admin/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
-import { Order, ShippingAddress, OrderItem } from '@/lib/types';
+import { Order } from '@/lib/types';
 import { z } from 'zod';
 
 const EXTERNAL_WEBHOOK_SECRET = process.env.EXTERNAL_WEBHOOK_SECRET;
 
-// Define a schema for the expected webhook payload from the intermediary
+// Simplified schema to match the new "contract"
 const WebhookPayloadSchema = z.object({
   order_id: z.string(),
   status: z.enum(['completed', 'expired']),
-  // The metadata object we sent, now returned to us
-  metadata: z.object({
-      userId: z.string(),
-      total: z.number(),
-      items: z.array(z.object({
-          productId: z.string(),
-          name: z.string(),
-          price: z.number(),
-          quantity: z.number(),
-          imageUrl: z.string().url(),
-      })),
-      customerName: z.string(),
-      customerEmail: z.string().email(),
-      shippingAddress: z.object({
-          line1: z.string(),
-          line2: z.string().nullable(),
-          city: z.string(),
-          state: z.string(),
-          postal_code: z.string(),
-          country: z.string(),
-          phone: z.string(),
-      }),
-      coupon: z.object({
-          code: z.string(),
-          discount: z.number(),
-      }).nullable(),
-  }),
+  // No metadata is expected anymore according to the new spec
 });
 
 
@@ -54,7 +27,7 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const receivedSignature = req.headers.get('x-intermediary-signature');
 
-  // 1. Verificar la firma HMAC
+  // 1. Verify the HMAC signature
   const expectedSignature = crypto
     .createHmac('sha256', EXTERNAL_WEBHOOK_SECRET)
     .update(rawBody)
@@ -74,42 +47,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payload de webhook inválido.' }, { status: 400 });
     }
     
-    const { order_id, status, metadata } = validation.data;
-    const { userId, total, items, customerName, customerEmail, shippingAddress, coupon } = metadata;
+    const { order_id, status } = validation.data;
 
     if (status === 'completed') {
       console.log(`Webhook recibido: Pago completado para el pedido ${order_id}`);
       
+      // Since metadata is gone, we need to find the user ID from the order ID format
+      const userId = order_id.split('_')[1];
+      if (!userId) {
+        throw new Error(`Could not extract userId from order_id: ${order_id}`);
+      }
+
       const orderRef = db.collection('users').doc(userId).collection('orders').doc(order_id);
       const orderSnap = await orderRef.get();
 
-      if (orderSnap.exists) {
-        console.log(`El pedido ${order_id} ya fue procesado. Ignorando webhook.`);
-        return NextResponse.json({ received: true, message: 'Pedido ya procesado.' });
+      if (!orderSnap.exists) {
+          console.error(`Webhook for order ${order_id} received, but order not found in Firestore.`);
+          // Still return 200 to avoid retries, but log the error.
+          return NextResponse.json({ received: true, message: 'Pedido no encontrado, pero webhook aceptado.' });
+      }
+
+      const orderData = orderSnap.data() as Order;
+      
+      // Check if order is already processed
+      if (orderData.status !== 'Pago Pendiente de Verificación') {
+          console.log(`El pedido ${order_id} ya fue procesado. Estado actual: ${orderData.status}. Ignorando webhook.`);
+          return NextResponse.json({ received: true, message: 'Pedido ya procesado.' });
       }
       
-      // Build the final order data
-      const orderData: Omit<Order, 'id' | 'createdAt'> = {
-        userId,
-        status: 'Reserva Recibida',
-        total,
-        items: items as OrderItem[],
-        customerName,
-        customerEmail,
-        shippingAddress: shippingAddress as ShippingAddress,
-        paymentMethod: 'stripe',
-        createdAt: new Date(), // This will be replaced by serverTimestamp, but needed for type
-        ...(coupon && { coupon: { code: coupon.code, discount: coupon.discount } })
-      };
-
       const batch = db.batch();
       
-      // 1. Set the order document with a server-generated timestamp
-      batch.set(orderRef, { ...orderData, createdAt: serverTimestamp() });
+      // 1. Update the order status
+      batch.update(orderRef, { status: 'Reserva Recibida' });
 
-      // 2. Increment coupon usage count if a coupon was applied
-      if (coupon) {
-          const couponRef = db.collection('coupons').doc(coupon.code);
+      // 2. Increment coupon usage if a coupon was applied
+      if (orderData.coupon) {
+          const couponRef = db.collection('coupons').doc(orderData.coupon.code);
           const couponSnap = await couponRef.get();
           if(couponSnap.exists()) {
               batch.update(couponRef, { usageCount: increment(1) });
@@ -117,7 +90,7 @@ export async function POST(req: NextRequest) {
       }
 
       // 3. Add loyalty points
-      const pointsToAdd = Math.floor(total / 1000); // 1 point per 10€
+      const pointsToAdd = Math.floor(orderData.total / 1000); // 1 point per 10€
       if (pointsToAdd > 0) {
         const userRef = db.collection('users').doc(userId);
         batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
@@ -127,8 +100,8 @@ export async function POST(req: NextRequest) {
       await batch.commit();
 
       // Send confirmation emails via Klaviyo
-      const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date() }, order_id);
-      await trackKlaviyoEvent('Placed Order', customerEmail, klaviyoOrderData);
+      const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id }, order_id);
+      await trackKlaviyoEvent('Placed Order', orderData.customerEmail, klaviyoOrderData);
       await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
       
     } else {
