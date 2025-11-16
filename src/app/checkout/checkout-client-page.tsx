@@ -448,11 +448,12 @@ export default function CheckoutClientPage() {
         country: data.country,
         phone: data.phone,
       },
-      paymentMethod: 'stripe', // This can be updated by webhook if needed
+      paymentMethod: 'stripe',
       coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null
     };
 
     const purchasePayload = {
+      storeId: "comprarpopperonline_com",
       priceInCents: finalTotals.priceInCents,
       orderId: orderId,
       successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
