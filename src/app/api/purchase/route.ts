@@ -1,6 +1,5 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { CartItem, ShippingAddress } from '@/lib/types';
 import { z } from 'zod';
 
 const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';

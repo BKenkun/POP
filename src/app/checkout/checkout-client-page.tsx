@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -186,7 +186,7 @@ export default function CheckoutClientPage() {
         }
     };
     
-    const handleApplyCoupon = async () => {
+    const handleApplyCoupon = useCallback(async () => {
         if (!couponCode.trim() || !user) return;
         setCouponLoading(true);
         try {
@@ -234,7 +234,7 @@ export default function CheckoutClientPage() {
         } finally {
             setCouponLoading(false);
         }
-    };
+    }, [couponCode, user, cartTotal, t, toast]);
 
 
   const handleNextStep = async () => {
@@ -448,7 +448,7 @@ export default function CheckoutClientPage() {
                     </CardContent>
                     <CardFooter>
                        <Button size="lg" type="submit" disabled={loading} className="w-full">
-                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>{t('checkout.confirming_button')}</> : <><CreditCard className="mr-2"/>{t('checkout.confirm_order_button')}</>}
+                            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>{t('checkout.confirming_button')}</> : <><CreditCard className="mr-2"/>Pagar con Tarjeta</>}
                         </Button>
                     </CardFooter>
                 </Card>
