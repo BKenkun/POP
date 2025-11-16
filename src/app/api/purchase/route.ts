@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const { orderId, priceInCents, customerEmail, productName } = validation.data;
 
     if (!YOUR_DOMAIN) {
-      throw new Error("La URL base del sitio no está configurada en el servidor.");
+      throw new Error("La URL base del sitio no está configurada en el servidor. Asegúrate de que NEXT_PUBLIC_BASE_URL esté en tu archivo .env.");
     }
     
     // The intermediary needs a specific set of data to create the Stripe session.
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     const responseData = await intermediaryResponse.json();
 
     if (!intermediaryResponse.ok) {
+      // Forward the error from the intermediary
       throw new Error(responseData.error || 'Error al comunicarse con el servicio de pago.');
     }
 
