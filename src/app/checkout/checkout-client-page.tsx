@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,14 +28,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { serverTimestamp, collection, doc, getDoc, writeBatch, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { updateUser } from '@/app/actions/user-data';
-import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 
 interface Address {
@@ -114,7 +113,7 @@ const Stepper = ({ currentStep, t }: { currentStep: number, t: (key: string) => 
 
 export default function CheckoutClientPage() {
   const { t } = useTranslation();
-  const { cartItems, cartTotal, cartCount, clearCart } = useCart();
+  const { cartItems, cartTotal, cartCount } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -145,7 +144,7 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscounts = subtotal - couponDiscount;
     const shipping = 0; // Free shipping
     const total = subtotalWithDiscounts + shipping;
-    return { subtotal, shipping, total };
+    return { subtotal, shipping, total, priceInCents: Math.round(total) };
   }, [cartTotal, couponDiscount]);
 
     useEffect(() => {
@@ -186,8 +185,8 @@ export default function CheckoutClientPage() {
             }
         }
     };
-
-    const handleApplyCoupon = useCallback(async () => {
+    
+    const handleApplyCoupon = async () => {
         if (!couponCode.trim() || !user) return;
         setCouponLoading(true);
         try {
@@ -235,7 +234,8 @@ export default function CheckoutClientPage() {
         } finally {
             setCouponLoading(false);
         }
-    }, [couponCode, cartTotal, toast, t, user]);
+    };
+
 
   const handleNextStep = async () => {
     let isValid = false;
@@ -268,72 +268,63 @@ export default function CheckoutClientPage() {
       return;
     }
     setLoading(true);
+    
+    // The orderId is now crucial for tracking, but we won't create the order document yet.
+    const orderId = `order_${user.uid}_${Date.now()}`;
 
-    if (data.saveAddress && selectedAddressId === 'new') {
-        const addressToSave = { alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`, name: data.name, phone: data.phone, street: data.street, city: data.city, state: data.state, postalCode: data.postalCode, country: data.country };
-        const result = await updateUser('add-address', addressToSave);
-        if (result.success && result.user) {
-            setUserDoc(result.user);
-            toast({ title: t('checkout.toasts.address_saved_title'), description: t('checkout.toasts.address_saved_desc') });
-        } else {
-             toast({ title: t('checkout.toasts.address_save_error_title'), description: t('checkout.toasts.address_save_error_desc'), variant: "destructive" });
-        }
-    }
-
+    // We will now pass all necessary data to the purchase API.
+    // The webhook will use this data later to create the order.
+    const purchasePayload = {
+      orderId,
+      cartItems: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
+      total: finalTotals.total,
+      priceInCents: finalTotals.priceInCents,
+      customerName: data.name,
+      customerEmail: data.email,
+      shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone } as ShippingAddress,
+      billingDetails: data.useDifferentBilling ? { name: data.billing_name, street: data.billing_street, city: data.billing_city, state: data.billing_state, postalCode: data.billing_postalCode, country: data.billing_country } : null,
+      coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
+      productName: `Pedido de ${cartCount} productos`,
+      userId: user.uid,
+    };
+    
     try {
-        const orderId = `order_${user.uid}_${Date.now()}`;
-        const shippingAddress: ShippingAddress = { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone };
-        const itemsForPayload = cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl }));
-
         const response = await fetch('/api/purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              cartItems: itemsForPayload,
-              customerEmail: data.email,
-              orderId,
-            }),
+            body: JSON.stringify(purchasePayload),
         });
         
         const { checkoutUrl, error } = await response.json();
-        if (error) throw new Error(error);
-
-        const orderData = {
-            userId: user.uid,
-            status: 'Pago Pendiente de Verificación' as const,
-            total: finalTotals.total,
-            items: itemsForPayload,
-            customerName: data.name,
-            customerEmail: data.email,
-            shippingAddress,
-            paymentMethod: 'stripe' as const,
-            createdAt: serverTimestamp(),
-            ...(data.useDifferentBilling && { billingDetails: { name: data.billing_name, street: data.billing_street, city: data.billing_city, state: data.billing_state, postalCode: data.billing_postalCode, country: data.billing_country } }),
-            ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount } })
-        };
-        const newOrderRef = doc(collection(db, 'users', user.uid, 'orders'), orderId);
-        const batch = writeBatch(db);
-        batch.set(newOrderRef, orderData);
-        if (appliedCoupon) {
-            const couponRef = doc(db, 'coupons', appliedCoupon.id);
-            const couponSnap = await getDoc(couponRef);
-            if(couponSnap.exists()) batch.update(couponRef, { usageCount: (couponSnap.data().usageCount || 0) + 1 });
+        
+        if (error) {
+            throw new Error(error);
         }
-        await batch.commit();
 
         if (checkoutUrl) {
+            // Save new address if needed, before redirecting
+            if (data.saveAddress && selectedAddressId === 'new') {
+                const addressToSave = { alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`, name: data.name, phone: data.phone, street: data.street, city: data.city, state: data.state, postalCode: data.postalCode, country: data.country };
+                const result = await updateUser('add-address', addressToSave);
+                if (result.success && result.user) {
+                    setUserDoc(result.user);
+                    toast({ title: t('checkout.toasts.address_saved_title'), description: t('checkout.toasts.address_saved_desc') });
+                } else {
+                     toast({ title: t('checkout.toasts.address_save_error_title'), description: t('checkout.toasts.address_save_error_desc'), variant: "destructive" });
+                }
+            }
             window.location.href = checkoutUrl;
         } else {
             throw new Error('No se recibió la URL de pago.');
         }
 
     } catch (error: any) {
-        console.error("Order Creation Error: ", error);
+        console.error("Payment Initiation Error: ", error);
         toast({ title: t('checkout.toasts.order_error_title'), description: error.message || t('checkout.toasts.order_error_desc'), variant: 'destructive' });
-    } finally {
         setLoading(false);
     }
   };
+
 
   if ((isUserLoading && !user) || (cartCount === 0 && !loading)) {
     return <div className="flex flex-col items-center justify-center h-[50vh] text-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Cargando carrito...</p></div>;

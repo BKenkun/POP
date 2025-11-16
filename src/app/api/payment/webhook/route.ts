@@ -2,11 +2,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, writeBatch, increment, collection } from 'firebase/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
-import { Order } from '@/lib/types';
+import { Order, ShippingAddress } from '@/lib/types';
+import type { Coupon } from '@/app/admin/coupons/page';
+
 
 const EXTERNAL_WEBHOOK_SECRET = process.env.EXTERNAL_WEBHOOK_SECRET;
+
+// Define a schema for the expected webhook payload from the intermediary
+const WebhookPayloadSchema = z.object({
+  order_id: z.string(),
+  status: z.enum(['completed', 'expired']),
+  payment_id: z.string(),
+  // The original payload we sent to the purchase endpoint, now returned to us
+  originalPayload: z.object({
+      userId: z.string(),
+      total: z.number(),
+      items: z.array(z.object({
+          productId: z.string(),
+          name: z.string(),
+          price: z.number(),
+          quantity: z.number(),
+          imageUrl: z.string().url(),
+      })),
+      customerName: z.string(),
+      customerEmail: z.string().email(),
+      shippingAddress: z.object({
+          line1: z.string(),
+          line2: z.string().nullable(),
+          city: z.string(),
+          state: z.string(),
+          postal_code: z.string(),
+          country: z.string(),
+          phone: z.string(),
+      }),
+      coupon: z.object({
+          id: z.string(),
+          code: z.string(),
+          discount: z.number(),
+      }).nullable(),
+  }),
+});
+
 
 export async function POST(req: NextRequest) {
   if (!EXTERNAL_WEBHOOK_SECRET) {
@@ -28,60 +66,91 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Firma inválida' }, { status: 400 });
   }
 
-  // Si la firma es válida, procesamos el cuerpo de la petición
   try {
-    const { order_id, status } = JSON.parse(rawBody);
-
-    if (!order_id || !status) {
-      return NextResponse.json({ error: 'Faltan campos obligatorios en el payload.' }, { status: 400 });
+    const webhookData = JSON.parse(rawBody);
+    
+    // Check for the existence of `metadata` and parse it if it's a string
+    let fullPayload;
+    if (webhookData.metadata && typeof webhookData.metadata.originalPayload === 'string') {
+        fullPayload = {
+            ...webhookData,
+            originalPayload: JSON.parse(webhookData.metadata.originalPayload)
+        };
+    } else {
+        // Fallback or error if metadata is not as expected
+        console.error("Webhook received without expected metadata structure.");
+        return NextResponse.json({ error: 'Payload de metadatos inválido.' }, { status: 400 });
     }
+    
+    const validation = WebhookPayloadSchema.safeParse(fullPayload);
 
-    // 2. Lógica de negocio basada en el estado
+    if (!validation.success) {
+      console.error("Invalid webhook payload:", validation.error.flatten());
+      return NextResponse.json({ error: 'Payload de webhook inválido.' }, { status: 400 });
+    }
+    
+    const { order_id, status, originalPayload } = validation.data;
+    const { userId, total, items, customerName, customerEmail, shippingAddress, coupon } = originalPayload;
+
     if (status === 'completed') {
       console.log(`Webhook recibido: Pago completado para el pedido ${order_id}`);
       
-      // El order_id tiene el formato 'order_USERID_TIMESTAMP'
-      const userId = order_id.split('_')[1];
-      if (!userId) {
-        throw new Error(`No se pudo extraer el userId del order_id: ${order_id}`);
-      }
-
-      // Buscamos el pedido en la base de datos
       const orderRef = doc(db, 'users', userId, 'orders', order_id);
       const orderSnap = await getDoc(orderRef);
 
       if (orderSnap.exists()) {
-        const orderData = orderSnap.data() as Order;
-
-        // Evitar procesar un pedido que ya está pagado
-        if (orderData.status !== 'Pago Pendiente de Verificación' && orderData.status !== 'Reserva Recibida') {
-            console.log(`El pedido ${order_id} ya fue procesado. Estado actual: ${orderData.status}`);
-            return NextResponse.json({ received: true, message: 'Pedido ya procesado.' });
-        }
-
-        // Actualizar el estado del pedido a pagado
-        await updateDoc(orderRef, {
-          status: 'Reserva Recibida' // o 'Pagado', según tu flujo
-        });
-
-        // Enviar email de confirmación a través de Klaviyo
-        const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date() }, order_id);
-        await trackKlaviyoEvent('Placed Order', orderData.customerEmail, klaviyoOrderData);
-        await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
-
-      } else {
-        console.error(`Error de webhook: No se encontró el pedido ${order_id} para el usuario ${userId}`);
+        console.log(`El pedido ${order_id} ya fue procesado. Ignorando webhook.`);
+        return NextResponse.json({ received: true, message: 'Pedido ya procesado.' });
       }
+      
+      // Build the final order data
+      const orderData: Omit<Order, 'id'> = {
+        userId,
+        status: 'Reserva Recibida',
+        total,
+        items,
+        customerName,
+        customerEmail,
+        shippingAddress: shippingAddress as ShippingAddress,
+        paymentMethod: 'stripe',
+        createdAt: serverTimestamp() as any,
+        ...(coupon && { coupon: { code: coupon.code, discount: coupon.discount } })
+      };
+
+      const batch = writeBatch(db);
+      
+      // 1. Set the order document
+      batch.set(orderRef, orderData);
+
+      // 2. Increment coupon usage count if a coupon was applied
+      if (coupon) {
+          const couponRef = doc(db, 'coupons', coupon.id);
+          batch.update(couponRef, { usageCount: increment(1) });
+      }
+
+      // 3. Add loyalty points
+      const pointsToAdd = Math.floor(total / 1000); // 1 point per 10€
+      if (pointsToAdd > 0) {
+        const userRef = doc(db, 'users', userId);
+        batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
+      }
+      
+      // Commit all database operations
+      await batch.commit();
+
+      // Send confirmation emails via Klaviyo
+      const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date() }, order_id);
+      await trackKlaviyoEvent('Placed Order', customerEmail, klaviyoOrderData);
+      await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
+      
     } else {
       console.log(`Webhook recibido para el pedido ${order_id} con estado: ${status}`);
-      // Aquí podrías añadir lógica para los pagos fallidos o expirados
     }
 
-    // 3. Responder al intermediario
     return NextResponse.json({ received: true });
 
   } catch (error: any) {
-    console.error('Error procesando el webhook del intermediario:', error);
+    console.error('Error procesando el webhook:', error);
     return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
   }
 }
