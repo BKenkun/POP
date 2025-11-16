@@ -52,15 +52,14 @@ export async function POST(req: NextRequest) {
       throw new Error("La URL base del sitio no está configurada en el servidor.");
     }
     
-    // The intermediary only needs a subset of the data to create the Stripe session
+    // The intermediary needs a specific set of data to create the Stripe session.
+    // We also pass the entire original payload in metadata for the webhook to use later.
     const detailsForIntermediary = {
       priceInCents,
       orderId,
       successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${YOUR_DOMAIN}/checkout`,
-      customerEmail,
       productName,
-      // Pass the entire original payload in metadata so the webhook can use it
       metadata: { originalPayload: JSON.stringify(validation.data) }
     };
     
