@@ -30,7 +30,6 @@ const PurchasePayloadSchema = z.object({
   }),
   billingDetails: z.any().nullable(),
   coupon: z.any().nullable(),
-  productName: z.string(), // Added validation for productName
   userId: z.string(),
 });
 
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Datos de pedido inválidos.' }, { status: 400 });
     }
     
-    const { orderId, priceInCents, productName } = validation.data;
+    const { orderId, priceInCents } = validation.data;
 
     if (!YOUR_DOMAIN) {
       throw new Error("La URL base del sitio no está configurada en el servidor. Asegúrate de que NEXT_PUBLIC_BASE_URL esté en tu archivo .env.");
@@ -58,7 +57,6 @@ export async function POST(req: NextRequest) {
       orderId,
       successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${YOUR_DOMAIN}/checkout`,
-      productName, // This is now correctly passed
       metadata: { 
         originalPayload: JSON.stringify(validation.data) 
       }
@@ -82,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error en /api/purchase:', error);
-    // Refined error message to avoid confusion with Stripe
-    return NextResponse.json({ error: `Hubo un error interno al procesar el pago. Por favor, verifica la configuración y los parámetros enviados.` }, { status: 500 });
+    // Refined error message to avoid confusion
+    return NextResponse.json({ error: `Hubo un error interno al procesar el pago. Por favor, verifica los parámetros enviados.` }, { status: 500 });
   }
 }

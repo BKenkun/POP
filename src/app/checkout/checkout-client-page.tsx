@@ -284,7 +284,6 @@ export default function CheckoutClientPage() {
       shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone } as ShippingAddress,
       billingDetails: data.useDifferentBilling ? { name: data.billing_name, street: data.billing_street, city: data.billing_city, state: data.billing_state, postalCode: data.billing_postalCode, country: data.billing_country } : null,
       coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
-      productName: `Pedido de ${cartCount} productos`,
       userId: user.uid,
     };
     
