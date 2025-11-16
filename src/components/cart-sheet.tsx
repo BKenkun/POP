@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -9,13 +8,10 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, ShoppingBag, Box, Truck, CreditCard, Loader2 } from 'lucide-react';
+import { Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QuantitySelector } from './quantity-selector';
 import { useTranslation } from '@/context/language-context';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -35,9 +31,6 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = () => {
     if(cartCount === 0) {
@@ -51,37 +44,6 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     onOpenChange(false);
   };
   
-  const handleCardPayment = async () => {
-      if (cartCount === 0) {
-          toast({ title: t('cart.empty_title'), variant: "destructive" });
-          return;
-      }
-      setIsProcessing(true);
-      try {
-          const userId = user ? user.uid : 'guest';
-          // Create a unique order ID on the client to pass to the intermediary
-          const orderId = `order_${userId}_${Date.now()}`;
-
-          const response = await fetch('/api/purchase', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                cartItems, 
-                customerEmail: user?.email,
-                orderId: orderId, // Send the unique order ID
-              }),
-          });
-          const { checkoutUrl, error } = await response.json();
-          if (error) throw new Error(error);
-          if (checkoutUrl) {
-              window.location.href = checkoutUrl;
-          }
-      } catch (error: any) {
-          toast({ title: "Error de pago", description: error.message || "No se pudo iniciar el proceso de pago.", variant: "destructive" });
-          setIsProcessing(false);
-      }
-  };
-
   const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
   const isFreeShipping = shippingCost === 0 && cartTotal > 0;
 
@@ -169,15 +131,12 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                        </div>
                      )}
                 </div>
-                <div className="space-y-2">
-                   <Button size="lg" className="w-full" onClick={handleCardPayment} disabled={isProcessing}>
-                        {isProcessing ? <Loader2 className="mr-2 animate-spin" /> : <CreditCard className="mr-2" />}
-                        Pagar con Tarjeta
-                   </Button>
-                   <Button asChild size="lg" className="w-full" onClick={handleCheckout} variant="outline">
-                      <Link href="/checkout">Finalizar (Otros Métodos)</Link>
-                   </Button>
-                </div>
+                 <p className="text-xs text-muted-foreground text-center">
+                  {t('cart.notes')}
+                </p>
+                <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
+                  <Link href="/checkout">{t('cart.checkout_button')}</Link>
+                </Button>
               </div>
             </SheetFooter>
           </>

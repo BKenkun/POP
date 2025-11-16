@@ -3,7 +3,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
 import { Loader2, CheckCircle, ShoppingBag, User } from 'lucide-react';
@@ -12,81 +12,15 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import Link from 'next/link';
 
 function SuccessPageContent() {
-    const searchParams = useSearchParams();
     const router = useRouter();
-    const sessionId = searchParams.get('session_id');
     const { clearCart } = useCart();
     const { user } = useAuth();
-
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
+    
+    // As the checkout is now manual, we don't need to verify a session.
+    // We just show a success message and clear the cart.
     useEffect(() => {
-        if (!sessionId) {
-            // If there's no session ID, it's an invalid access to this page.
-            router.replace('/checkout');
-            return;
-        }
-
-        async function verifySession() {
-            try {
-                // This call goes to OUR OWN backend to verify the session securely.
-                const response = await fetch('/api/stripe/verify-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_id: sessionId }),
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "No se pudo verificar el pago.");
-                }
-
-                // If verification is successful, the server has already created the order.
-                // We can now safely clear the cart.
-                clearCart();
-
-            } catch (err: any) {
-                console.error("Verification Error:", err);
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        verifySession();
-
-    }, [sessionId, router, clearCart]);
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="mt-4 text-muted-foreground">Verificando tu pago, por favor espera...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-             <div className="flex flex-col items-center justify-center text-center space-y-8 py-12">
-                 <Card className="w-full max-w-lg border-destructive">
-                     <CardHeader className="items-center space-y-4">
-                        <CardTitle className="text-3xl font-headline text-destructive font-bold">Error en el Pago</CardTitle>
-                        <CardDescription className="text-lg text-foreground/80">
-                           No hemos podido confirmar tu pago.
-                        </CardDescription>
-                     </CardHeader>
-                     <CardContent className="space-y-6">
-                        <p className="text-muted-foreground">{error}</p>
-                         <Button asChild variant="outline">
-                            <Link href="/checkout">Volver al Checkout</Link>
-                        </Button>
-                     </CardContent>
-                 </Card>
-            </div>
-        );
-    }
+        clearCart();
+    }, [clearCart]);
 
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8 py-12">
@@ -95,14 +29,14 @@ function SuccessPageContent() {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
                         <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400" />
                     </div>
-                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Pago Confirmado!</CardTitle>
+                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Reserva Confirmada!</CardTitle>
                     <CardDescription className="text-lg text-foreground/80">
                         Gracias por tu compra, {user?.email?.split('@')[0] || 'cliente'}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                        Hemos verificado tu pago y tu pedido está siendo procesado. Recibirás un email de confirmación en breve.
+                        Hemos recibido tu reserva correctamente. Recibirás un email con los detalles y los siguientes pasos para el pago.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg">

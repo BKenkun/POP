@@ -1,74 +1,11 @@
+// This file is intentionally left blank.
+// The logic for creating a payment session via an intermediary has been removed
+// to simplify the checkout flow and resolve integration issues.
+import { NextResponse } from 'next/server';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { CartItem } from '@/lib/types';
-import { auth as adminAuth } from '@/lib/firebase-admin';
-import { cookies } from 'next/headers';
-
-const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';
-
-async function getUserIdFromSession() {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) return null;
-    try {
-        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
-        return decodedClaims.uid;
-    } catch (error) {
-        return null;
-    }
-}
-
-export async function POST(req: NextRequest) {
-    try {
-        const { cartItems, customerEmail, orderId } = await req.json();
-
-        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-            return NextResponse.json({ error: 'Cart items are required.' }, { status: 400 });
-        }
-        
-        if (!orderId) {
-            return NextResponse.json({ error: 'Order ID is required.' }, { status: 400 });
-        }
-        
-        const userId = await getUserIdFromSession();
-
-        const productName = cartItems.length > 1 
-            ? `${cartItems[0].name} y ${cartItems.length - 1} más` 
-            : cartItems[0].name;
-            
-        const priceInCents = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-
-        const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
-
-        const purchaseDetails = {
-            productName,
-            priceInCents,
-            customerEmail,
-            orderId, // Pass the generated orderId to the intermediary
-            successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${YOUR_DOMAIN}/checkout`,
-            metadata: {
-                userId: userId || 'guest',
-                cartItems: JSON.stringify(cartItems.map(item => ({ id: item.id, name: item.name, price: item.price, imageUrl: item.imageUrl, qty: item.quantity })))
-            }
-        };
-
-        const intermediaryResponse = await fetch(INTERMEDIARY_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(purchaseDetails),
-        });
-
-        if (!intermediaryResponse.ok) {
-            const errorData = await intermediaryResponse.json();
-            throw new Error(errorData.error || 'The payment gateway is not available.');
-        }
-
-        const { checkoutUrl } = await intermediaryResponse.json();
-        
-        return NextResponse.json({ checkoutUrl });
-
-    } catch (error: any) {
-        console.error('Error creating checkout session via intermediary:', error);
-        return NextResponse.json({ error: 'Failed to create checkout session.' }, { status: 500 });
-    }
+export async function POST() {
+    return NextResponse.json(
+        { success: false, error: 'This payment method is temporarily disabled.' },
+        { status: 503 } // 503 Service Unavailable
+    );
 }
