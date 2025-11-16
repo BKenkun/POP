@@ -19,15 +19,12 @@ function SuccessPageContent() {
     const sessionId = searchParams.get('session_id');
 
     useEffect(() => {
+        // Clear the cart when the user lands on the success page after a payment.
         if (sessionId) {
-            // Limpiar el carrito solo si venimos de una sesión de pago exitosa.
             clearCart();
-            // Lógica adicional para verificar la sesión si es necesario, 
-            // aunque la confirmación final debería venir por webhook.
-            // Por ejemplo, podríamos mostrar un mensaje más específico.
             toast({
-                title: "¡Pago Completado!",
-                description: "Gracias por tu compra. Estamos procesando tu pedido.",
+                title: "¡Pago Iniciado!",
+                description: "Gracias por tu compra. Recibirás una confirmación cuando el pago se haya procesado.",
                 duration: 8000,
             });
         }

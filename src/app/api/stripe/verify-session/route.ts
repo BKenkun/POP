@@ -1,4 +1,3 @@
-
 // This file is intentionally left blank.
 // Payment verification is now handled by the webhook at /api/payment/webhook/route.ts,
 // which receives notifications from the payment intermediary.
