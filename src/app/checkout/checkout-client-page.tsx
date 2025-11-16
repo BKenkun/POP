@@ -28,13 +28,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { serverTimestamp, collection, doc, getDoc, writeBatch } from 'firebase/firestore';
+import { serverTimestamp, collection, doc, getDoc, writeBatch, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { ShippingAddress } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { updateUser } from '@/app/actions/user-data';
 import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
-import { Coupon } from '@/app/admin/coupons/page';
+import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 
 
@@ -186,6 +186,56 @@ export default function CheckoutClientPage() {
             }
         }
     };
+
+    const handleApplyCoupon = useCallback(async () => {
+        if (!couponCode.trim() || !user) return;
+        setCouponLoading(true);
+        try {
+            const q = query(collection(db, 'coupons'), where('code', '==', couponCode.toUpperCase()));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                throw new Error(t('checkout.toasts.coupon_error_invalid'));
+            }
+
+            const couponDoc = querySnapshot.docs[0];
+            const coupon = { id: couponDoc.id, ...couponDoc.data() } as Coupon;
+            const now = new Date();
+
+            if (!coupon.isActive) throw new Error(t('checkout.toasts.coupon_error_inactive'));
+            if (coupon.startDate && now < new Date(coupon.startDate)) throw new Error(t('checkout.toasts.coupon_error_not_yet_valid'));
+            if (coupon.endDate && now > new Date(coupon.endDate)) throw new Error(t('checkout.toasts.coupon_error_expired'));
+            if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) throw new Error(t('checkout.toasts.coupon_error_limit_reached'));
+            if (coupon.minPurchase && cartTotal < coupon.minPurchase) throw new Error(t('checkout.toasts.coupon_error_min_purchase', {price: formatPrice(coupon.minPurchase)}));
+            
+            if (coupon.onePerUser) {
+                const ordersQuery = query(
+                    collection(db, 'users', user.uid, 'orders'),
+                    where('coupon.code', '==', coupon.code)
+                );
+                const pastOrdersSnap = await getDocs(ordersQuery);
+                if (!pastOrdersSnap.empty) {
+                    throw new Error(t('checkout.toasts.coupon_error_already_used'));
+                }
+            }
+            
+            let discount = 0;
+            if (coupon.discountType === 'percentage') {
+                discount = (cartTotal * coupon.discountValue) / 100;
+            } else {
+                discount = coupon.discountValue;
+            }
+            
+            setAppliedCoupon(coupon);
+            setCouponDiscount(Math.round(discount));
+            toast({ title: t('checkout.toasts.coupon_applied_title'), description: t('checkout.toasts.coupon_applied_desc', {discount: formatPrice(discount)}) });
+
+        } catch (error: any) {
+            toast({ title: t('checkout.toasts.coupon_error_title'), description: error.message, variant: 'destructive' });
+        } finally {
+            setCouponLoading(false);
+        }
+    }, [couponCode, cartTotal, toast, t, user]);
 
   const handleNextStep = async () => {
     let isValid = false;
@@ -382,8 +432,19 @@ export default function CheckoutClientPage() {
                         <div>
                             <h3 className="font-semibold mb-2">{t('checkout.order_summary_title')}</h3>
                             <div className="space-y-4">
-                                <div className="flex items-center space-x-2"><Input placeholder={t('checkout.coupon_placeholder')} value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="flex-grow" disabled={couponLoading || !!appliedCoupon} /><Button type="button" onClick={useCallback(async() => {}, [])} disabled={couponLoading || !couponCode.trim() || !!appliedCoupon}>{couponLoading ? <Loader2 className="animate-spin" /> : (appliedCoupon ? t('checkout.applied_button') : t('checkout.apply_button'))}</Button></div>
-                                <div className="space-y-2 text-sm"><div className="flex justify-between"><span>{t('checkout.subtotal')}</span><span>{formatPrice(finalTotals.subtotal)}</span></div>{couponDiscount > 0 && (<div className="flex justify-between text-destructive"><span>{t('checkout.coupon_discount')} ({appliedCoupon?.code})</span><span>-{formatPrice(couponDiscount)}</span></div>)}<div className="flex justify-between"><span>{t('checkout.shipping')}</span><span>{t('checkout.free_shipping')}</span></div><Separator/><div className="flex justify-between font-bold text-xl"><span>{t('checkout.total_payable')}</span><span className="text-primary">{formatPrice(finalTotals.total)}</span></div></div>
+                                <div className="flex items-center space-x-2">
+                                    <Input placeholder={t('checkout.coupon_placeholder')} value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="flex-grow" disabled={couponLoading || !!appliedCoupon} />
+                                    <Button type="button" onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim() || !!appliedCoupon}>
+                                        {couponLoading ? <Loader2 className="animate-spin" /> : (appliedCoupon ? t('checkout.applied_button') : t('checkout.apply_button'))}
+                                    </Button>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between"><span>{t('checkout.subtotal')}</span><span>{formatPrice(finalTotals.subtotal)}</span></div>
+                                    {couponDiscount > 0 && (<div className="flex justify-between text-destructive"><span>{t('checkout.coupon_discount')} ({appliedCoupon?.code})</span><span>-{formatPrice(couponDiscount)}</span></div>)}
+                                    <div className="flex justify-between"><span>{t('checkout.shipping')}</span><span>{t('checkout.free_shipping')}</span></div>
+                                    <Separator/>
+                                    <div className="flex justify-between font-bold text-xl"><span>{t('checkout.total_payable')}</span><span className="text-primary">{formatPrice(finalTotals.total)}</span></div>
+                                </div>
                             </div>
                         </div>
                         <Separator />
