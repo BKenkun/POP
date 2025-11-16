@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { CartItem } from '@/lib/types';
 import { auth as adminAuth } from '@/lib/firebase-admin';
@@ -37,12 +36,7 @@ export async function POST(req: NextRequest) {
             
         const priceInCents = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-        const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!YOUR_DOMAIN) {
-            console.error("CRITICAL: NEXT_PUBLIC_BASE_URL is not set. Falling back to localhost, which will fail in production.");
-            return NextResponse.json({ error: 'La URL de la tienda no está configurada correctamente en el servidor.' }, { status: 500 });
-        }
-
+        const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
 
         const purchaseDetails = {
             productName,

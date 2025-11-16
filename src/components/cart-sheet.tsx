@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -51,7 +50,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     onOpenChange(false);
   };
   
-  const handleStripePayment = async () => {
+  const handleCardPayment = async () => {
       if (cartCount === 0) {
           toast({ title: t('cart.empty_title'), variant: "destructive" });
           return;
@@ -59,6 +58,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
       setIsProcessing(true);
       try {
           const userId = user ? user.uid : 'guest';
+          // Create a unique order ID on the client to pass to the intermediary
           const orderId = `order_${userId}_${Date.now()}`;
 
           const response = await fetch('/api/purchase', {
@@ -169,7 +169,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      )}
                 </div>
                 <div className="space-y-2">
-                   <Button size="lg" className="w-full" onClick={handleStripePayment} disabled={isProcessing}>
+                   <Button size="lg" className="w-full" onClick={handleCardPayment} disabled={isProcessing}>
                         {isProcessing ? <Loader2 className="mr-2 animate-spin" /> : <CreditCard className="mr-2" />}
                         Pagar con Tarjeta
                    </Button>
