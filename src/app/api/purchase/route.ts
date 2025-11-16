@@ -10,32 +10,7 @@ const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL;
 const PurchasePayloadSchema = z.object({
   orderId: z.string(),
   priceInCents: z.number(),
-  metadata: z.object({
-      userId: z.string(),
-      cartItems: z.array(z.object({
-        productId: z.string(),
-        name: z.string(),
-        price: z.number(),
-        quantity: z.number(),
-        imageUrl: z.string().url(),
-      })),
-      total: z.number(),
-      customerName: z.string(),
-      customerEmail: z.string().email(),
-      shippingAddress: z.object({
-        line1: z.string(),
-        line2: z.string().nullable(),
-        city: z.string(),
-        state: z.string(),
-        postal_code: z.string(),
-        country: z.string(),
-        phone: z.string(),
-      }),
-      billingDetails: z.any().nullable(),
-      coupon: z.any().nullable(),
-  })
 });
-
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,22 +22,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Datos de pedido inválidos.' }, { status: 400 });
     }
     
-    const { orderId, priceInCents, metadata } = validation.data;
+    const { orderId, priceInCents } = validation.data;
 
     if (!YOUR_DOMAIN) {
       throw new Error("La URL base del sitio no está configurada en el servidor. Asegúrate de que NEXT_PUBLIC_BASE_URL esté en tu archivo .env.");
     }
     
-    // The intermediary needs a specific set of data, with metadata containing the full order info
+    // The intermediary needs a specific set of data
     const detailsForIntermediary = {
       priceInCents,
       orderId,
       successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${YOUR_DOMAIN}/checkout`,
-      metadata: metadata, // Pass the validated metadata object directly
     };
     
-    // Llama al servicio intermediario
     const intermediaryResponse = await fetch(INTERMEDIARY_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,7 +45,6 @@ export async function POST(req: NextRequest) {
     const responseData = await intermediaryResponse.json();
 
     if (!intermediaryResponse.ok) {
-      // Forward the error from the intermediary
       throw new Error(responseData.error || 'Error al comunicarse con el servicio de pago.');
     }
 
@@ -83,3 +55,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Hubo un error interno al procesar el pago. Por favor, verifica los parámetros enviados.` }, { status: 500 });
   }
 }
+

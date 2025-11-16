@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -12,6 +13,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp, getDoc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,13 +29,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ShippingAddress } from '@/lib/types';
+import { ShippingAddress, Order } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { updateUser } from '@/app/actions/user-data';
 import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { QuantitySelector } from '@/components/quantity-selector';
 
 
@@ -274,40 +275,25 @@ export default function CheckoutClientPage() {
     const purchasePayload = {
       priceInCents: finalTotals.priceInCents,
       orderId: orderId,
-      metadata: {
-        userId: user.uid,
-        cartItems: cartItems.map(item => ({
-            productId: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            imageUrl: item.imageUrl
-        })),
-        total: finalTotals.total,
-        customerName: data.name,
-        customerEmail: data.email,
-        shippingAddress: {
-            line1: data.street,
-            line2: null,
-            city: data.city,
-            state: data.state,
-            postal_code: data.postalCode,
-            country: data.country,
-            phone: data.phone
-        } as ShippingAddress,
-        billingDetails: data.useDifferentBilling ? {
-            name: data.billing_name,
-            street: data.billing_street,
-            city: data.billing_city,
-            state: data.billing_state,
-            postalCode: data.billing_postalCode,
-            country: data.billing_country
-        } : null,
-        coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null,
-      }
     };
     
     try {
+        // --- PRE-CREATION OF ORDER ---
+        const orderDocRef = doc(db, 'users', user.uid, 'orders', orderId);
+        const orderData: Omit<Order, 'id' | 'createdAt'> = {
+            userId: user.uid,
+            status: 'Pago Pendiente de Verificación',
+            total: finalTotals.total,
+            items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
+            customerName: data.name,
+            customerEmail: data.email,
+            shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
+            paymentMethod: 'stripe',
+            ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount } })
+        };
+        await setDoc(orderDocRef, { ...orderData, createdAt: serverTimestamp() });
+        // --- END PRE-CREATION ---
+
         const response = await fetch('/api/purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -321,7 +307,6 @@ export default function CheckoutClientPage() {
         }
 
         if (checkoutUrl) {
-            // Save new address if needed, before redirecting
             if (data.saveAddress && selectedAddressId === 'new') {
                 const addressToSave = { alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`, name: data.name, phone: data.phone, street: data.street, city: data.city, state: data.state, postalCode: data.postalCode, country: data.country };
                 const result = await updateUser('add-address', addressToSave);
@@ -497,3 +482,4 @@ export default function CheckoutClientPage() {
     </div>
   );
 }
+
