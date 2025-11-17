@@ -1,6 +1,7 @@
 
 'use server';
 
+// Este comentario fuerza el reinicio del servidor para cargar las nuevas dependencias.
 import WebSocket from 'ws';
 import { firestore } from './firebase-admin';
 import { serverTimestamp, increment } from 'firebase-admin/firestore';
@@ -22,7 +23,6 @@ function connect() {
     return;
   }
   
-  // Log para verificar la clave de forma segura
   const safeKeyDisplay = `Starts with: ${SECRET_KEY.substring(0, 4)}, Ends with: ${SECRET_KEY.substring(SECRET_KEY.length - 4)}`;
   console.log(`[WebSocket] SECRET_KEY is loaded. ${safeKeyDisplay}`);
   
