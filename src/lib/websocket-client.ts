@@ -1,3 +1,4 @@
+
 'use server';
 
 import WebSocket from 'ws';
@@ -16,7 +17,7 @@ let ws: WebSocket | null = null;
 let reconnectInterval: NodeJS.Timeout | null = null;
 
 function connect() {
-  console.log('[WebSocket] Attempting to connect to:', process.env.NODE_ENV === 'production' ? 'wss://...' : WEBSOCKET_URL);
+  console.log('[WebSocket] Attempting to connect to:', WEBSOCKET_URL);
 
   ws = new WebSocket(WEBSOCKET_URL);
 
