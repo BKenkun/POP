@@ -1,14 +1,11 @@
-'use server';
 
-// This file should be imported in a server-side context, e.g., your main server entry file
-// to ensure the WebSocket client starts with the server.
+'use server';
 
 import WebSocket from 'ws';
 import { firestore } from './firebase-admin';
 import { serverTimestamp, increment } from 'firebase-admin/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
-import crypto from 'crypto';
 
 const STORE_ID = 'comprarpopperonline_com';
 const SECRET_KEY = process.env.WEBSOCKET_SECRET_KEY || 'CAMBIAME_POR_UN_SECRETO_MUY_SEGURO_COMPARTIDO_CON_LA_TIENDA';
@@ -37,8 +34,7 @@ function connect() {
       console.log('[WebSocket] Received message:', message);
       const data = JSON.parse(message);
 
-      // Validate incoming data structure
-      if (data.status === 'completed' && data.order_id && data.metadata) {
+      if (data.status === 'completed' && data.order_id) {
         await processCompletedOrder(data);
       } else {
         console.warn('[WebSocket] Received message with unknown format:', data);
@@ -62,55 +58,55 @@ function connect() {
 }
 
 async function processCompletedOrder(data: any) {
-  const { order_id, metadata } = data;
-  const { userId, ...orderDetails } = metadata;
-
-  if (!userId) {
-    console.error(`[WebSocket] Could not extract userId from metadata for order_id: ${order_id}`);
-    return;
+  const { order_id } = data;
+  
+  // The user ID is part of the order_id, e.g., "order_USERID_TIMESTAMP"
+  const parts = order_id.split('_');
+  if (parts.length < 2 || parts[0] !== 'order') {
+     console.error(`[WebSocket] Could not extract userId from order_id: ${order_id}`);
+     return;
   }
+  const userId = parts[1];
 
   const orderRef = firestore.collection('users').doc(userId).collection('orders').doc(order_id);
-  const orderSnap = await orderRef.get();
-
-  if (orderSnap.exists) {
-    console.log(`[WebSocket] Order ${order_id} already exists. Ignoring message.`);
-    return;
-  }
-  
-  console.log(`[WebSocket] Creating order ${order_id} in Firestore...`);
-
-  const batch = firestore.batch();
-
-  const newOrderData: Omit<Order, 'id'> = {
-    ...orderDetails,
-    userId,
-    status: 'Reserva Recibida',
-    createdAt: serverTimestamp() as any,
-  };
-  batch.set(orderRef, newOrderData);
-
-  if (metadata.coupon) {
-    const couponRef = firestore.collection('coupons').doc(metadata.coupon.code);
-    batch.update(couponRef, { usageCount: increment(1) });
-  }
-
-  const pointsToAdd = Math.floor(metadata.total / 1000); // 1 point per 10€
-  if (pointsToAdd > 0) {
-    const userRef = firestore.collection('users').doc(userId);
-    batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
-  }
-
-  await batch.commit();
-  console.log(`[WebSocket] Successfully created order ${order_id}.`);
 
   try {
-    const klaviyoOrderData = await formatOrderForKlaviyo({ ...newOrderData, id: order_id, createdAt: new Date() }, order_id);
-    await trackKlaviyoEvent('Placed Order', metadata.customerEmail, klaviyoOrderData);
+    const orderSnap = await orderRef.get();
+    if (!orderSnap.exists) {
+        console.error(`[WebSocket] Order ${order_id} not found in Firestore. Cannot update status.`);
+        return;
+    }
+
+    const orderData = orderSnap.data() as Order;
+    if (orderData.status === 'Reserva Recibida') {
+        console.log(`[WebSocket] Order ${order_id} is already marked as 'Reserva Recibida'. Ignoring update.`);
+        return;
+    }
+
+    await orderRef.update({ status: 'Reserva Recibida' });
+    console.log(`[WebSocket] Successfully updated order ${order_id} to 'Reserva Recibida'.`);
+    
+    // Perform post-payment actions
+    const batch = firestore.batch();
+    if (orderData.coupon) {
+        const couponRef = firestore.collection('coupons').doc(orderData.coupon.code);
+        batch.update(couponRef, { usageCount: increment(1) });
+    }
+
+    const pointsToAdd = Math.floor(orderData.total / 1000); // 1 point per 10€
+    if (pointsToAdd > 0) {
+        const userRef = firestore.collection('users').doc(userId);
+        batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
+    }
+    await batch.commit();
+
+    // Send emails
+    const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date(orderData.createdAt) }, order_id);
+    await trackKlaviyoEvent('Placed Order', orderData.customerEmail, klaviyoOrderData);
     await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
-    console.log(`[WebSocket] Klaviyo events sent for order ${order_id}.`);
+
   } catch (error) {
-    console.error(`[WebSocket] Error sending Klaviyo events for order ${order_id}:`, error);
+    console.error(`[WebSocket] Error processing completed order ${order_id}:`, error);
   }
 }
 

@@ -6,13 +6,13 @@ import { z } from 'zod';
 
 const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';
 
+// This schema now expects a minimal payload, as metadata is handled by our DB now.
 const PurchasePayloadSchema = z.object({
   storeId: z.string(),
   priceInCents: z.number().int().positive(),
   orderId: z.string().min(1),
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
-  metadata: z.record(z.any()),
 });
 
 export async function POST(req: NextRequest) {

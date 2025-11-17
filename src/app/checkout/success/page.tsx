@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Suspense, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
 import { Loader2, CheckCircle, ShoppingBag, User } from 'lucide-react';
@@ -11,23 +12,35 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
 function SuccessPageContent() {
-    const { clearCart } = useCart();
+    const router = useRouter();
+    const { clearCart, cartCount } = useCart();
     const { user } = useAuth();
     const { toast } = useToast();
     const searchParams = useSearchParams();
-    const sessionId = searchParams.get('session_id');
+    const orderId = searchParams.get('order_id');
 
     useEffect(() => {
-        // Clear the cart when the user lands on the success page after a payment.
-        if (sessionId) {
+        if (orderId && cartCount > 0) {
             clearCart();
             toast({
                 title: "¡Pago Iniciado!",
-                description: "Gracias por tu compra. Recibirás una confirmación cuando el pago se haya procesado.",
+                description: "Gracias por tu compra. Tu pedido se está procesando.",
                 duration: 8000,
             });
+        } else if (!orderId) {
+            // If there's no orderId, it might be a direct navigation. Redirect home.
+            router.replace('/');
         }
-    }, [sessionId, clearCart, toast]);
+    }, [orderId, clearCart, toast, cartCount, router]);
+
+    if (!orderId) {
+       return (
+         <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Verificando estado del pedido...</p>
+          </div>
+       );
+    }
 
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8 py-12">
@@ -43,20 +56,20 @@ function SuccessPageContent() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                        Hemos recibido tu reserva correctamente. Recibirás un email con los detalles y los siguientes pasos para el pago. Si has pagado con tarjeta, tu pedido se procesará en breve.
+                        Hemos recibido tu reserva correctamente. Recibirás un email con los detalles cuando el pago se haya procesado completamente.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg">
-                            <Link href="/account/orders">
+                            <Link href={`/account/orders/${orderId}`}>
                                 <ShoppingBag className="mr-2" />
-                                Ver Mis Pedidos
+                                Ver Mi Pedido
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
                              <Link href="/account">
                                 <User className="mr-2" />
                                 Ir a mi Cuenta
-                            </Link>
+                             </Link>
                         </Button>
                     </div>
                 </CardContent>

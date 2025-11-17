@@ -194,7 +194,7 @@ const Stepper = ({
 
 export default function CheckoutClientPage() {
   const { t } = useTranslation();
-  const { cartItems, cartTotal, cartCount, removeFromCart, updateQuantity } =
+  const { cartItems, cartTotal, cartCount, removeFromCart, updateQuantity, clearCart } =
     useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
@@ -427,18 +427,14 @@ export default function CheckoutClientPage() {
 
     const orderId = `order_${user.uid}_${Date.now()}`;
     const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
-
-    // Simplified payload for the intermediary
-    const purchasePayload = {
-        storeId: "comprarpopperonline_com",
-        priceInCents: finalTotals.priceInCents,
-        orderId: orderId,
-        successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${YOUR_DOMAIN}/checkout`,
-        metadata: { 
-            // The intermediary will echo this back to us via WebSocket
+    
+    // --- Create the order in Firestore BEFORE redirecting ---
+    try {
+        const orderRef = doc(db, 'users', user.uid, 'orders', orderId);
+        
+        const orderData: Omit<Order, 'id'> = {
             userId: user.uid,
-            cartItems: cartItems.map(item => ({
+            items: cartItems.map(item => ({
                 productId: item.id,
                 name: item.name,
                 price: item.price,
@@ -457,29 +453,25 @@ export default function CheckoutClientPage() {
                 country: data.country,
                 phone: data.phone,
             },
-            paymentMethod: 'stripe', // Hardcoded as this is the only flow now
-            coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null
-        }
-    };
+            status: 'Pago Pendiente de Verificación',
+            paymentMethod: 'stripe',
+            createdAt: serverTimestamp() as any,
+            ...(appliedCoupon && {
+                coupon: { code: appliedCoupon.code, discount: couponDiscount }
+            })
+        };
+        
+        await setDoc(orderRef, orderData);
 
-    try {
-        if (data.saveAddress && selectedAddressId === 'new') {
-            const addressToSave = {
-                alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`,
-                name: data.name,
-                phone: data.phone,
-                street: data.street,
-                city: data.city,
-                state: data.state,
-                postalCode: data.postalCode,
-                country: data.country,
-            };
-            const result = await updateUser('add-address', addressToSave);
-            if (result.success && result.user) {
-                setUserDoc(result.user);
-            }
-        }
-
+        // --- Now, create the payment session ---
+        const purchasePayload = {
+            storeId: "comprarpopperonline_com",
+            priceInCents: finalTotals.priceInCents,
+            orderId: orderId,
+            successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
+            cancelUrl: `${YOUR_DOMAIN}/checkout`,
+        };
+        
         const response = await fetch('/api/purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -493,12 +485,14 @@ export default function CheckoutClientPage() {
         }
 
         if (checkoutUrl) {
+            clearCart();
             window.location.href = checkoutUrl;
         } else {
             throw new Error('No se recibió la URL de pago.');
         }
+
     } catch (error: any) {
-        console.error('Payment Initiation Error: ', error);
+        console.error('Payment Initiation or Order Creation Error: ', error);
         toast({
             title: t('checkout.toasts.order_error_title'),
             description: error.message || t('checkout.toasts.order_error_desc'),
@@ -507,6 +501,7 @@ export default function CheckoutClientPage() {
         setLoading(false);
     }
   };
+
 
   if ((isUserLoading && !user) || (cartCount === 0 && !loading)) {
     return (
