@@ -8,7 +8,7 @@ import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo'
 import { Order } from '@/lib/types';
 
 const STORE_ID = 'comprarpopperonline_com';
-const SECRET_KEY = process.env.WEBSOCKET_SECRET_KEY || 'CAMBIAME_POR_UN_SECRETO_MUY_SEGURO_COMPARTIDO_CON_LA_TIENDA';
+const SECRET_KEY = process.env.WEBSOCKET_SECRET_KEY;
 const WEBSOCKET_URL = process.env.NODE_ENV === 'production'
   ? `wss://studio--studio-953389996-b1a64.us-central1.hosted.app/api/orders/subscribe?storeId=${STORE_ID}&token=${SECRET_KEY}`
   : `ws://localhost:9002/api/orders/subscribe?storeId=${STORE_ID}&token=${SECRET_KEY}`;
@@ -17,6 +17,11 @@ let ws: WebSocket | null = null;
 let reconnectInterval: NodeJS.Timeout | null = null;
 
 function connect() {
+  if (!SECRET_KEY) {
+    console.error('[WebSocket] Error: La variable de entorno WEBSOCKET_SECRET_KEY no está configurada. La conexión no se puede establecer.');
+    return;
+  }
+  
   console.log('[WebSocket] Attempting to connect to:', WEBSOCKET_URL);
 
   ws = new WebSocket(WEBSOCKET_URL);
@@ -108,7 +113,7 @@ async function processCompletedOrder(data: any) {
     await batch.commit();
 
     // 3. Send confirmation emails
-    const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date(orderData.createdAt) }, order_id);
+    const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date(orderData.createdAt as any) }, order_id);
     await trackKlaviyoEvent('Placed Order', orderData.customerEmail, klaviyoOrderData);
     await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
 
