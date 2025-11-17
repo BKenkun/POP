@@ -18,11 +18,15 @@ let reconnectInterval: NodeJS.Timeout | null = null;
 
 function connect() {
   if (!SECRET_KEY) {
-    console.error('[WebSocket] Error: La variable de entorno WEBSOCKET_SECRET_KEY no está configurada. La conexión no se puede establecer.');
+    console.error('[WebSocket] Error: WEBSOCKET_SECRET_KEY environment variable is not set. Connection cannot be established.');
     return;
   }
   
-  console.log('[WebSocket] Attempting to connect to:', WEBSOCKET_URL);
+  // Log para verificar la clave de forma segura
+  const safeKeyDisplay = `Starts with: ${SECRET_KEY.substring(0, 4)}, Ends with: ${SECRET_KEY.substring(SECRET_KEY.length - 4)}`;
+  console.log(`[WebSocket] SECRET_KEY is loaded. ${safeKeyDisplay}`);
+  
+  console.log('[WebSocket] Attempting to connect to:', WEBSOCKET_URL.replace(SECRET_KEY, '***'));
 
   ws = new WebSocket(WEBSOCKET_URL);
 
