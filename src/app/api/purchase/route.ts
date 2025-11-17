@@ -7,8 +7,8 @@ const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1
 
 const PurchasePayloadSchema = z.object({
   storeId: z.string(),
-  priceInCents: z.number(),
-  orderId: z.string(),
+  priceInCents: z.number().int().positive(),
+  orderId: z.string().min(1),
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
   metadata: z.record(z.any()),
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     
     if (!validation.success) {
       console.error("Invalid payload for /api/purchase:", validation.error.flatten());
-      return NextResponse.json({ error: 'Datos de pedido inválidos enviados desde el cliente.' }, { status: 400 });
+      return NextResponse.json({ error: 'Datos de pedido inválidos enviados desde el cliente.', details: validation.error.flatten() }, { status: 400 });
     }
     
     const detailsForIntermediary = validation.data;
