@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
 import { ReactNode, Suspense } from 'react';
+import '@/lib/websocket-client'; // Importar para efectos secundarios (iniciar conexión)
 
 const inter = Inter({
   subsets: ['latin'],
