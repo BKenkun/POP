@@ -1,4 +1,3 @@
-
 'use server';
 
 import WebSocket from 'ws';
@@ -78,29 +77,36 @@ async function processCompletedOrder(data: any) {
     }
 
     const orderData = orderSnap.data() as Order;
-    if (orderData.status === 'Reserva Recibida') {
-        console.log(`[WebSocket] Order ${order_id} is already marked as 'Reserva Recibida'. Ignoring update.`);
+    // Check if the order is still in a pending state before updating
+    if (orderData.status !== 'Pago Pendiente de Verificación') {
+        console.log(`[WebSocket] Order ${order_id} status is already '${orderData.status}'. Ignoring update.`);
         return;
     }
 
     await orderRef.update({ status: 'Reserva Recibida' });
     console.log(`[WebSocket] Successfully updated order ${order_id} to 'Reserva Recibida'.`);
     
-    // Perform post-payment actions
+    // --- Post-payment actions that were previously in the webhook ---
     const batch = firestore.batch();
+    
+    // 1. Increment coupon usage if a coupon was applied
     if (orderData.coupon) {
+        // Coupon ID is its code
         const couponRef = firestore.collection('coupons').doc(orderData.coupon.code);
         batch.update(couponRef, { usageCount: increment(1) });
     }
 
+    // 2. Add loyalty points
     const pointsToAdd = Math.floor(orderData.total / 1000); // 1 point per 10€
     if (pointsToAdd > 0) {
         const userRef = firestore.collection('users').doc(userId);
         batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
     }
+    
+    // Commit batch updates
     await batch.commit();
 
-    // Send emails
+    // 3. Send confirmation emails
     const klaviyoOrderData = await formatOrderForKlaviyo({ ...orderData, id: order_id, createdAt: new Date(orderData.createdAt) }, order_id);
     await trackKlaviyoEvent('Placed Order', orderData.customerEmail, klaviyoOrderData);
     await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
@@ -110,8 +116,7 @@ async function processCompletedOrder(data: any) {
   }
 }
 
-// Initialize the connection
+// Initialize the connection only on the server
 if (typeof window === 'undefined') {
-  // Ensure this only runs on the server
   connect();
 }

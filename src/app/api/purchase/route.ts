@@ -1,4 +1,3 @@
-
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,7 +5,7 @@ import { z } from 'zod';
 
 const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';
 
-// This schema now expects a minimal payload, as metadata is handled by our DB now.
+// This schema now defines the simple, required structure for the intermediary API.
 const PurchasePayloadSchema = z.object({
   storeId: z.string(),
   priceInCents: z.number().int().positive(),
@@ -25,6 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Datos de pedido inválidos enviados desde el cliente.', details: validation.error.flatten() }, { status: 400 });
     }
     
+    // We send only the validated data to the intermediary
     const detailsForIntermediary = validation.data;
     
     const intermediaryResponse = await fetch(INTERMEDIARY_API_URL, {
@@ -43,6 +43,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error en /api/purchase:', error);
-    return NextResponse.json({ error: `Hubo un error interno al procesar el pago. Por favor, verifica los parámetros enviados.` }, { status: 500 });
+    return NextResponse.json({ error: `Hubo un error interno al procesar el pago.` }, { status: 500 });
   }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -428,7 +427,7 @@ export default function CheckoutClientPage() {
     const orderId = `order_${user.uid}_${Date.now()}`;
     const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
     
-    // --- Create the order in Firestore BEFORE redirecting ---
+    // --- 1. Create the order in Firestore BEFORE redirecting ---
     try {
         const orderRef = doc(db, 'users', user.uid, 'orders', orderId);
         
@@ -463,7 +462,7 @@ export default function CheckoutClientPage() {
         
         await setDoc(orderRef, orderData);
 
-        // --- Now, create the payment session ---
+        // --- 2. Now, create the payment session via the intermediary ---
         const purchasePayload = {
             storeId: "comprarpopperonline_com",
             priceInCents: finalTotals.priceInCents,
@@ -485,7 +484,7 @@ export default function CheckoutClientPage() {
         }
 
         if (checkoutUrl) {
-            clearCart();
+            // Do not clear cart here. Let the success page handle it.
             window.location.href = checkoutUrl;
         } else {
             throw new Error('No se recibió la URL de pago.');
