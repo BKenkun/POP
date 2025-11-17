@@ -1,7 +1,7 @@
 
 'use server';
 
-// Este comentario fuerza el reinicio del servidor para cargar las nuevas dependencias.
+// Forzando reinicio para reconectar al WebSocket del intermediario.
 import WebSocket from 'ws';
 import { firestore } from './firebase-admin';
 import { serverTimestamp, increment } from 'firebase-admin/firestore';
