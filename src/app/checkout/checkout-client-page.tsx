@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -464,7 +465,7 @@ export default function CheckoutClientPage() {
 
         // --- 2. Now, create the payment session via the intermediary ---
         const purchasePayload = {
-            storeId: "comprarpopperonline_com",
+            storeId: "comprarpopperonline.com",
             priceInCents: finalTotals.priceInCents,
             orderId: orderId,
             successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
