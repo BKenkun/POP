@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -414,96 +415,96 @@ export default function CheckoutClientPage() {
 
   const onFinalSubmit = async (data: CheckoutFormValues) => {
     if (!user) {
-      toast({
-        title: t('auth.login_title'),
-        description: t('checkout.toasts.login_required_desc'),
-        variant: 'destructive',
-      });
-      setStep(2);
-      return;
+        toast({
+            title: t('auth.login_title'),
+            description: t('checkout.toasts.login_required_desc'),
+            variant: 'destructive',
+        });
+        setStep(2);
+        return;
     }
     setLoading(true);
 
     const orderId = `order_${user.uid}_${Date.now()}`;
     const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
 
-    const orderDetailsForMetadata = {
-      userId: user.uid,
-      cartItems: cartItems.map(item => ({
-          productId: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          imageUrl: item.imageUrl,
-      })),
-      total: finalTotals.total,
-      customerName: data.name,
-      customerEmail: data.email,
-      shippingAddress: {
-        line1: data.street,
-        line2: null,
-        city: data.city,
-        state: data.state,
-        postal_code: data.postalCode,
-        country: data.country,
-        phone: data.phone,
-      },
-      paymentMethod: 'stripe',
-      coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null
-    };
-
+    // Simplified payload for the intermediary
     const purchasePayload = {
-      storeId: "comprarpopperonline_com",
-      priceInCents: finalTotals.priceInCents,
-      orderId: orderId,
-      successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
-      cancelUrl: `${YOUR_DOMAIN}/checkout`,
-      metadata: orderDetailsForMetadata,
-    };
-    
-    try {
-      if (data.saveAddress && selectedAddressId === 'new') {
-        const addressToSave = {
-          alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`,
-          name: data.name,
-          phone: data.phone,
-          street: data.street,
-          city: data.city,
-          state: data.state,
-          postalCode: data.postalCode,
-          country: data.country,
-        };
-        const result = await updateUser('add-address', addressToSave);
-        if (result.success && result.user) {
-          setUserDoc(result.user);
+        storeId: "comprarpopperonline_com",
+        priceInCents: finalTotals.priceInCents,
+        orderId: orderId,
+        successUrl: `${YOUR_DOMAIN}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${YOUR_DOMAIN}/checkout`,
+        metadata: { 
+            // The intermediary will echo this back to us via WebSocket
+            userId: user.uid,
+            cartItems: cartItems.map(item => ({
+                productId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                imageUrl: item.imageUrl,
+            })),
+            total: finalTotals.total,
+            customerName: data.name,
+            customerEmail: data.email,
+            shippingAddress: {
+                line1: data.street,
+                line2: null,
+                city: data.city,
+                state: data.state,
+                postal_code: data.postalCode,
+                country: data.country,
+                phone: data.phone,
+            },
+            paymentMethod: 'stripe', // Hardcoded as this is the only flow now
+            coupon: appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : null
         }
-      }
+    };
 
-      const response = await fetch('/api/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(purchasePayload),
-      });
+    try {
+        if (data.saveAddress && selectedAddressId === 'new') {
+            const addressToSave = {
+                alias: `${t('account.addresses_title')} ${userDoc?.addresses?.length + 1 || 1}`,
+                name: data.name,
+                phone: data.phone,
+                street: data.street,
+                city: data.city,
+                state: data.state,
+                postalCode: data.postalCode,
+                country: data.country,
+            };
+            const result = await updateUser('add-address', addressToSave);
+            if (result.success && result.user) {
+                setUserDoc(result.user);
+            }
+        }
 
-      const { checkoutUrl, error } = await response.json();
+        const response = await fetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(purchasePayload),
+        });
 
-      if (error) {
-        throw new Error(error);
-      }
+        const { checkoutUrl, error } = await response.json();
 
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else {
-        throw new Error('No se recibió la URL de pago.');
-      }
+        if (error) {
+            throw new Error(error);
+        }
+
+        if (checkoutUrl) {
+            window.location.href = checkoutUrl;
+        } else {
+            throw new Error('No se recibió la URL de pago.');
+        }
     } catch (error: any) {
-      console.error('Payment Initiation Error: ', error);
-      toast({
-        title: t('checkout.toasts.order_error_title'),
-        description: error.message || t('checkout.toasts.order_error_desc'),
-        variant: 'destructive',
-      });
-      setLoading(false);
+        console.error('Payment Initiation Error: ', error);
+        toast({
+            title: t('checkout.toasts.order_error_title'),
+            description: error.message || t('checkout.toasts.order_error_desc'),
+            variant: 'destructive',
+        });
+        setLoading(false);
     }
   };
 
