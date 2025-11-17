@@ -1,7 +1,7 @@
 
 'use server';
 
-// Forzando reinicio para reconectar al WebSocket del intermediario.
+// Forzando un reinicio final para reconectar al endpoint corregido.
 import WebSocket from 'ws';
 import { firestore } from './firebase-admin';
 import { serverTimestamp, increment } from 'firebase-admin/firestore';
