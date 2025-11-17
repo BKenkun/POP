@@ -1,105 +1,141 @@
 
 'use server';
 
-import { firestore } from './firebase-admin';
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, collection, query, where, onSnapshot } from "firebase/firestore";
+import { firestore as adminFirestore } from './firebase-admin'; // Our admin DB for writing
 import { serverTimestamp, increment } from 'firebase-admin/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
 
-const STORE_ID = 'comprarpopperonline_com';
-const COLLECTION_PATH = `portals/${STORE_ID}/orders`;
+// --- 1. Configuración de Conexión ---
+// Utiliza la configuración que nos has proporcionado.
+const hilowFirebaseConfig = {
+  projectId: "studio-953389996-b1a64",
+  appId: "1:272897992610:web:b39d784458a79edf2274fb",
+  apiKey: "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8",
+  authDomain: "studio-953389996-b1a64.firebaseapp.com",
+};
 
-console.log(`[FirestoreListener] Setting up listener for collection: ${COLLECTION_PATH}`);
+// --- 2. Inicialización de Firebase ---
+// Nos aseguramos de inicializar la app solo una vez, dándole un nombre único.
+const appName = "hilow-orders-listener";
+const app = !getApps().some(app => app.name === appName)
+  ? initializeApp(hilowFirebaseConfig, appName)
+  : getApp(appName);
 
-const ordersCollection = firestore.collection(COLLECTION_PATH);
+const db = getFirestore(app);
 
-const unsubscribe = ordersCollection.onSnapshot(
-  (snapshot) => {
-    snapshot.docChanges().forEach(async (change) => {
-      // We only care about modifications, specifically status changes
-      if (change.type === 'modified') {
-        const orderData = change.doc.data();
-        const orderId = change.doc.id;
-
-        console.log(`[FirestoreListener] Detected change in order: ${orderId}`);
-
-        // If the status is now 'completed', process the order
-        if (orderData.status === 'completed') {
-          console.log(`[FirestoreListener] Order ${orderId} has been completed. Processing...`);
-          await processCompletedOrder(orderId);
-        }
-      }
-    });
-  },
-  (error) => {
-    console.error('[FirestoreListener] Error listening to collection:', error);
-  }
-);
-
+// --- 3. Lógica de Procesamiento de Pedido ---
+// Esta es nuestra lógica interna que se ejecuta cuando un pedido se completa.
 async function processCompletedOrder(orderId: string) {
-  // The user ID is part of the orderId, e.g., "order_USERID_TIMESTAMP"
+  // El ID de usuario es parte del orderId, ej: "order_USERID_TIMESTAMP"
   const parts = orderId.split('_');
   if (parts.length < 2 || parts[0] !== 'order') {
-    console.error(`[FirestoreListener] Could not extract userId from order_id: ${orderId}`);
+    console.error(`[FirestoreListener] No se pudo extraer el userId de order_id: ${orderId}`);
     return;
   }
   const userId = parts[1];
 
-  const orderRef = firestore.collection('users').doc(userId).collection('orders').doc(orderId);
+  const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(orderId);
 
   try {
     const orderSnap = await orderRef.get();
     if (!orderSnap.exists) {
-      console.error(`[FirestoreListener] Order ${orderId} not found in our local Firestore. Cannot update.`);
+      console.error(`[FirestoreListener] El pedido ${orderId} no se encontró en nuestra Firestore local. No se puede actualizar.`);
       return;
     }
 
     const localOrderData = orderSnap.data() as Order;
 
-    // Check if the order is still in a pending state before updating
+    // Comprobamos si el pedido todavía está pendiente antes de actualizarlo
     if (localOrderData.status !== 'Pago Pendiente de Verificación') {
-      console.log(`[FirestoreListener] Local order ${orderId} status is already '${localOrderData.status}'. Ignoring update.`);
+      console.log(`[FirestoreListener] El estado del pedido local ${orderId} ya es '${localOrderData.status}'. Ignorando actualización.`);
       return;
     }
 
-    // Update the local order status
+    // Actualizamos el estado del pedido local
     await orderRef.update({ status: 'Reserva Recibida' });
-    console.log(`[FirestoreListener] Successfully updated local order ${orderId} to 'Reserva Recibida'.`);
+    console.log(`[FirestoreListener] Se actualizó correctamente el pedido local ${orderId} a 'Reserva Recibida'.`);
     
-    // --- Perform post-payment actions ---
-    const batch = firestore.batch();
+    // --- Realizar acciones posteriores al pago ---
+    const batch = adminFirestore.batch();
     
-    // 1. Increment coupon usage if a coupon was applied
+    // 1. Incrementar el uso del cupón si se aplicó uno
     if (localOrderData.coupon) {
-      // Assuming coupon ID is its code
-      const couponRef = firestore.collection('coupons').doc(localOrderData.coupon.code);
+      const couponRef = adminFirestore.collection('coupons').doc(localOrderData.coupon.code);
       batch.update(couponRef, { usageCount: increment(1) });
     }
 
-    // 2. Add loyalty points
-    const pointsToAdd = Math.floor(localOrderData.total / 1000); // 1 point per 10€
+    // 2. Añadir puntos de fidelidad
+    const pointsToAdd = Math.floor(localOrderData.total / 1000); // 1 punto por cada 10€
     if (pointsToAdd > 0) {
-      const userRef = firestore.collection('users').doc(userId);
+      const userRef = adminFirestore.collection('users').doc(userId);
       batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
     }
     
     await batch.commit();
-    console.log(`[FirestoreListener] Processed loyalty points and coupon usage for order ${orderId}.`);
+    console.log(`[FirestoreListener] Se procesaron los puntos de fidelidad y el uso del cupón para el pedido ${orderId}.`);
 
-    // 3. Send confirmation emails via Klaviyo
-    const klaviyoOrderData = await formatOrderForKlaviyo({ ...localOrderData, id: orderId, createdAt: new Date(localOrderData.createdAt as any) }, orderId);
+    // 3. Enviar correos de confirmación a través de Klaviyo
+    const klaviyoOrderData = await formatOrderForKlaviyo({ ...localOrderData, id: orderId, createdAt: new Date() }, orderId);
     await trackKlaviyoEvent('Placed Order', localOrderData.customerEmail, klaviyoOrderData);
     await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
-    console.log(`[FirestoreListener] Sent Klaviyo notifications for order ${orderId}.`);
+    console.log(`[FirestoreListener] Se enviaron notificaciones de Klaviyo para el pedido ${orderId}.`);
 
   } catch (error) {
-    console.error(`[FirestoreListener] Error processing completed order ${orderId}:`, error);
+    console.error(`[FirestoreListener] Error al procesar el pedido completado ${orderId}:`, error);
   }
 }
 
-// Keep the server process alive. In some environments, top-level async operations
-// might not be awaited indefinitely. This ensures our listener stays active.
+// --- 4. Lógica del Listener en Tiempo Real ---
+function initializeOrderListener() {
+  console.log("[Firestore Listener] Inicializando listener para pedidos completados...");
+
+  // La ruta a la colección de pedidos de nuestra tienda.
+  const storeId = "comprarpopperonline_com";
+  const ordersRef = collection(db, "portals", storeId, "orders");
+
+  // Creamos una consulta para escuchar solo los pedidos que están o cambian a "completed".
+  // Esto es más eficiente que escuchar todos los cambios.
+  const q = query(ordersRef, where("status", "==", "completed"));
+
+  const processedOrders = new Set<string>();
+
+  onSnapshot(q, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      // Nos interesan los pedidos que se añaden a la lista de "completed"
+      // y que no hemos procesado antes.
+      if (change.type === "added") {
+        const order = change.doc.data();
+        const orderId = order.orderId;
+
+        if (processedOrders.has(orderId)) {
+          // Si ya lo hemos procesado en esta sesión, lo ignoramos.
+          console.log(`[Firestore Listener] El pedido ${orderId} ya ha sido procesado en esta sesión. Ignorando.`);
+          return;
+        }
+
+        console.log(`[Firestore Listener] Pedido completado detectado: ${orderId}`);
+        
+        // Llamamos a nuestra función para procesar el pedido.
+        processCompletedOrder(orderId);
+        
+        // Marcamos el pedido como procesado para evitar duplicados.
+        processedOrders.add(orderId);
+      }
+    });
+  }, (error) => {
+    // Manejo de errores en el listener
+    console.error("[Firestore Listener] Error al escuchar cambios en pedidos: ", error);
+  });
+}
+
+// --- 5. Activación del Listener ---
+// Llamamos a la función para que el listener se active cuando este archivo se cargue.
+initializeOrderListener();
+
+// Mantenemos el proceso del servidor activo.
 process.on('SIGTERM', () => {
-    console.log('[FirestoreListener] SIGTERM signal received. Shutting down listener.');
-    unsubscribe();
+    console.log('[FirestoreListener] Señal SIGTERM recibida. Finalizando listener.');
 });
