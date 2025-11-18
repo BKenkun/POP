@@ -7,6 +7,8 @@ import { firestore as adminFirestore } from './firebase-admin'; // Our admin DB 
 import { serverTimestamp, increment } from 'firebase-admin/firestore';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
+import { Timestamp } from "firebase/firestore";
+
 
 // --- 1. Configuración de Conexión ---
 // Utiliza la configuración que nos has proporcionado.
