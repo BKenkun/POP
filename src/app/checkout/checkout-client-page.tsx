@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -425,7 +424,7 @@ export default function CheckoutClientPage() {
     }
     setLoading(true);
 
-    const orderId = `order_${user.uid}_${Date.now()}`;
+    const orderId = `CPO_order_${user.uid}_${Date.now()}`;
     const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
     
     // --- 1. Create the order in Firestore BEFORE redirecting ---
@@ -465,7 +464,6 @@ export default function CheckoutClientPage() {
 
         // --- 2. Now, create the payment session via the intermediary ---
         const purchasePayload = {
-            storeId: "comprarpopperonline.com",
             priceInCents: finalTotals.priceInCents,
             orderId: orderId,
             successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
