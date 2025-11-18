@@ -29,19 +29,19 @@ const db = getFirestore(app);
 // --- 3. Lógica de Procesamiento de Pedido ---
 // Esta es nuestra lógica interna que se ejecuta cuando un pedido se completa.
 async function processCompletedOrder(orderId: string) {
-  // El ID de usuario es parte del orderId, ej: "order_USERID_TIMESTAMP"
+  // El ID de usuario es parte del orderId, ej: "CPO_order_USERID_TIMESTAMP"
   const parts = orderId.split('_');
-  if (parts.length < 2 || parts[0] !== 'order') {
+  if (parts.length < 3 || parts[0] !== 'CPO' || parts[1] !== 'order') {
     console.error(`[FirestoreListener] No se pudo extraer el userId de order_id: ${orderId}`);
     return;
   }
-  const userId = parts[1];
+  const userId = parts[2];
 
   const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(orderId);
 
   try {
     const orderSnap = await orderRef.get();
-    if (!orderSnap.exists) {
+    if (!orderSnap.exists()) {
       console.error(`[FirestoreListener] El pedido ${orderId} no se encontró en nuestra Firestore local. No se puede actualizar.`);
       return;
     }
@@ -92,8 +92,8 @@ async function processCompletedOrder(orderId: string) {
 function initializeOrderListener() {
   console.log("[Firestore Listener] Inicializando listener para pedidos completados...");
 
-  // La ruta a la colección de pedidos de nuestra tienda.
-  const storeId = "comprarpopperonline_com";
+  // La ruta a la colección de pedidos de nuestra tienda. CORREGIDO
+  const storeId = "comprarpopperonline.com";
   const ordersRef = collection(db, "portals", storeId, "orders");
 
   // Creamos una consulta para escuchar solo los pedidos que están o cambian a "completed".
