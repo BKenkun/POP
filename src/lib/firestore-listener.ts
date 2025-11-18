@@ -43,20 +43,22 @@ async function processCompletedOrder(orderId: string) {
 
   try {
     const orderSnap = await orderRef.get();
-    if (!orderSnap.exists()) {
+    if (!orderSnap.exists) {
       console.error(`[FirestoreListener] El pedido ${orderId} no se encontró en nuestra Firestore local. No se puede actualizar.`);
+      // Podríamos incluso decidir crear un pedido "fantasma" aquí si fuera necesario, pero por ahora solo lo notificamos.
       return;
     }
 
     const localOrderData = orderSnap.data() as Order;
 
-    // Comprobamos si el pedido todavía está pendiente antes de actualizarlo
+    // Si el pedido ya fue procesado y no está pendiente, no hacemos nada más.
+    // Esto evita procesar duplicados o sobrescribir estados finales como 'Enviado'.
     if (localOrderData.status !== 'Pago Pendiente de Verificación') {
       console.log(`[FirestoreListener] El estado del pedido local ${orderId} ya es '${localOrderData.status}'. Ignorando actualización.`);
       return;
     }
 
-    // Actualizamos el estado del pedido local
+    // ACTUALIZACIÓN CRÍTICA: Cambiamos el estado a 'Reserva Recibida'
     await orderRef.update({ status: 'Reserva Recibida' });
     console.log(`[FirestoreListener] Se actualizó correctamente el pedido local ${orderId} a 'Reserva Recibida'.`);
     
@@ -65,8 +67,12 @@ async function processCompletedOrder(orderId: string) {
     
     // 1. Incrementar el uso del cupón si se aplicó uno
     if (localOrderData.coupon) {
+      // Necesitamos el ID del cupón, no solo el código. Asumimos que el código es el ID por ahora.
       const couponRef = adminFirestore.collection('coupons').doc(localOrderData.coupon.code);
-      batch.update(couponRef, { usageCount: increment(1) });
+      const couponSnap = await couponRef.get();
+      if (couponSnap.exists()){
+         batch.update(couponRef, { usageCount: increment(1) });
+      }
     }
 
     // 2. Añadir puntos de fidelidad
@@ -76,11 +82,13 @@ async function processCompletedOrder(orderId: string) {
       batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
     }
     
+    // Ejecutamos las actualizaciones de puntos y cupones.
     await batch.commit();
     console.log(`[FirestoreListener] Se procesaron los puntos de fidelidad y el uso del cupón para el pedido ${orderId}.`);
 
     // 3. Enviar correos de confirmación a través de Klaviyo
-    const klaviyoOrderData = await formatOrderForKlaviyo({ ...localOrderData, id: orderId, createdAt: new Date() }, orderId);
+    // Aseguramos que los datos que enviamos a Klaviyo sean consistentes.
+    const klaviyoOrderData = await formatOrderForKlaviyo({ ...localOrderData, id: orderId, status: 'Reserva Recibida', createdAt: new Date() }, orderId);
     await trackKlaviyoEvent('Placed Order', localOrderData.customerEmail, klaviyoOrderData);
     await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
     console.log(`[FirestoreListener] Se enviaron notificaciones de Klaviyo para el pedido ${orderId}.`);
@@ -108,7 +116,8 @@ function initializeOrderListener() {
     snapshot.docChanges().forEach((change) => {
       // Nos interesan los pedidos que se añaden a la lista de "completed"
       // y que no hemos procesado antes.
-      if (change.type === "added") {
+      // Usamos 'added' y 'modified' para ser más robustos, en caso de que un pedido pase de 'pending' a 'completed'.
+      if (change.type === "added" || change.type === "modified") {
         const order = change.doc.data();
         const orderId = order.orderId;
 
@@ -136,8 +145,3 @@ function initializeOrderListener() {
 // --- 5. Activación del Listener ---
 // Llamamos a la función para que el listener se active cuando este archivo se cargue.
 initializeOrderListener();
-
-// Mantenemos el proceso del servidor activo.
-process.on('SIGTERM', () => {
-    console.log('[FirestoreListener] Señal SIGTERM recibida. Finalizando listener.');
-});
