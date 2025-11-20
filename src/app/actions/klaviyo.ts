@@ -10,14 +10,24 @@ if (!KLAVIYO_API_KEY) {
     console.warn("Klaviyo API Key is not set. Marketing and transactional emails will be simulated.");
 }
 
+// Expand the event name type to include all possible order statuses
+type KlaviyoEventName =
+  | 'Placed Order'
+  | 'Admin New Order Notification'
+  | 'Admin New User Notification'
+  | 'Order Shipped'
+  | 'Order Out For Delivery'
+  | 'Order Delivered'
+  | 'Order Cancelled'
+  | 'Order Issue';
+
 /**
  * Sends a specific event to the Klaviyo Events API.
- * This is used for transactional emails like order confirmations.
  * @param eventName The name of the event to track.
  * @param customerEmail The email address of the customer.
  * @param properties An object containing data about the event.
  */
-export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New Order Notification' | 'Admin New User Notification', customerEmail: string, properties: { [key: string]: any }) {
+export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEmail: string, properties: { [key: string]: any }) {
     if (!KLAVIYO_API_KEY) {
         console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail}.`);
         return { success: true, message: 'Simulated event tracking.' };
@@ -48,11 +58,9 @@ export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New O
         
         if (response.status !== 202) {
             const errorData = await response.json();
-            // Try to create the metric if it doesn't exist
             if (errorData.errors?.[0]?.detail.includes("does not exist")) {
                 console.warn(`Klaviyo metric '${eventName}' does not exist. Attempting to create it with a simple event.`);
                 await trackKlaviyoEvent(eventName, customerEmail, { note: "Metric creation trigger" });
-                // Retry the original event
                 return trackKlaviyoEvent(eventName, customerEmail, properties);
             }
             throw new Error(errorData.errors?.[0]?.detail || 'Could not track event.');
@@ -69,8 +77,67 @@ export async function trackKlaviyoEvent(eventName: 'Placed Order' | 'Admin New O
 
 
 /**
+ * Tracks order status updates in Klaviyo.
+ * This central function maps your internal order status to specific Klaviyo events.
+ * @param order The full order object.
+ * @param newStatus The new status of the order.
+ */
+export async function trackOrderStatusUpdate(order: Order, newStatus: Order['status']) {
+    let eventName: KlaviyoEventName | null = null;
+    let isAdminNotification = false;
+
+    switch (newStatus) {
+        case 'Reserva Recibida':
+            eventName = 'Placed Order';
+            isAdminNotification = true;
+            break;
+        case 'Enviado':
+            eventName = 'Order Shipped';
+            break;
+        case 'En Reparto':
+            eventName = 'Order Out For Delivery';
+            break;
+        case 'Entregado':
+            eventName = 'Order Delivered';
+            break;
+        case 'Cancelado':
+            eventName = 'Order Cancelled';
+            break;
+        case 'Incidencia':
+            eventName = 'Order Issue';
+            break;
+        default:
+            // For statuses like 'Pago Pendiente de Verificación', we don't send a customer-facing email yet.
+            console.log(`No Klaviyo event mapped for status: ${newStatus}`);
+            return { success: true, message: 'No event mapped for this status.' };
+    }
+
+    if (!eventName) {
+        return { success: false, message: 'Event name could not be determined.' };
+    }
+
+    try {
+        const klaviyoOrderData = await formatOrderForKlaviyo(order, order.id);
+        
+        // Send notification to the customer
+        await trackKlaviyoEvent(eventName, order.customerEmail, klaviyoOrderData);
+        
+        // Also send a notification to the admin for new orders
+        if (isAdminNotification) {
+            await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
+        }
+
+        return { success: true, message: `Event '${eventName}' tracked successfully.` };
+
+    } catch (error: any) {
+        console.error(`Error in trackOrderStatusUpdate for order ${order.id}:`, error);
+        return { success: false, message: error.message };
+    }
+}
+
+
+/**
  * Creates or updates a product in the Klaviyo Catalog.
- * This function is called automatically when a product is saved in the admin panel.
  * @param product The product data from the store.
  */
 export async function syncKlaviyoProduct(product: Product) {
@@ -79,22 +146,17 @@ export async function syncKlaviyoProduct(product: Product) {
         return { success: true, message: 'Simulated product sync.' };
     }
 
-    // Klaviyo uses the product ID as the foreign key.
     const itemId = product.id;
-
     const payload = {
         data: {
             type: 'catalog-item',
             id: itemId,
             attributes: {
-                // external_id: product.sku || product.id, // Using product.id as the primary identifier
                 title: product.name,
                 description: product.description || 'Sin descripción.',
                 url: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${product.id}`,
                 image_full_url: product.imageUrl,
-                // price must be a number, not a formatted string
                 price: product.price / 100, 
-                // You can add more attributes here as needed, like inventory_quantity
                 inventory_quantity: product.stock,
                 custom_metadata: {
                     brand: product.brand,
@@ -106,7 +168,6 @@ export async function syncKlaviyoProduct(product: Product) {
         }
     };
     
-    // We use a PUT request with the item ID to create or update (upsert) the item.
     const url = `https://a.klaviyo.com/api/catalog-items/${itemId}/`;
 
     try {
@@ -141,11 +202,9 @@ export async function syncKlaviyoProduct(product: Product) {
 export async function formatOrderForKlaviyo(order: Order, orderId: string) {
     const orderDate = order.createdAt instanceof Date 
         ? order.createdAt.toISOString() 
-        // Handle Firestore serverTimestamp which might not be resolved yet on client
         : new Date().toISOString();
     
     return {
-      // Event-specific properties
       '$event_id': orderId,
       '$value': order.total / 100,
       'OrderId': orderId,
@@ -156,8 +215,6 @@ export async function formatOrderForKlaviyo(order: Order, orderId: string) {
       'Status': order.status,
       'Items': order.items.map(formatOrderItemForKlaviyo),
       'OrderDate': orderDate,
-      
-      // Customer properties
       'CustomerName': order.customerName,
     };
 }

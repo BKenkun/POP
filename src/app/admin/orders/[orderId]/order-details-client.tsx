@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 
 
 const getImageUrl = (url: string) => {
@@ -74,9 +75,12 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
         status: order.status,
       });
 
+      // After successful update, trigger Klaviyo event
+      await trackOrderStatusUpdate(order, order.status);
+
       toast({
         title: 'Pedido Actualizado',
-        description: `El estado del pedido #${order.id.substring(order.id.length - 7)} se ha actualizado a "${order.status}".`,
+        description: `El estado del pedido #${order.id.substring(order.id.length - 7)} se ha actualizado a "${order.status}" y se ha notificado al cliente.`,
       });
     } catch (error) {
       console.error('Error updating order:', error);
@@ -95,9 +99,14 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
     }
     setIsShipping(true);
     try {
+      const newStatus = 'En Reparto';
       const orderDocRef = doc(db, order.path);
-      await updateDoc(orderDocRef, { status: 'En Reparto' });
-      toast({ title: 'Pedido en camino', description: 'El pedido se ha marcado como "En Reparto".' });
+      await updateDoc(orderDocRef, { status: newStatus });
+      
+      // Trigger Klaviyo event for 'Out for Delivery'
+      await trackOrderStatusUpdate({ ...order, status: newStatus }, newStatus);
+
+      toast({ title: 'Pedido en camino', description: 'El pedido se ha marcado como "En Reparto" y se ha notificado al cliente.' });
       router.push(`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path)}`);
     } catch (error) {
       console.error('Error setting order to shipping:', error);
