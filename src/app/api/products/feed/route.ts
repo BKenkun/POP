@@ -31,11 +31,8 @@ export async function GET() {
         "title": product.name,
         "description": product.description || '',
         "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
+        "image_full_url": product.imageUrl,
         "price": product.price / 100,
-        "featured_image": {
-          "full": { "src": product.imageUrl },
-          "thumbnail": { "src": product.imageUrl } // Use the same image for thumbnail
-        },
 
         // Optional but recommended standard fields
         "compare_at_price": isOnSale ? product.originalPrice! / 100 : undefined,
