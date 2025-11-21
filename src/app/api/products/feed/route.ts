@@ -16,7 +16,7 @@ export async function GET() {
     const snapshot = await productsRef.where('active', '!=', false).get();
 
     if (snapshot.empty) {
-      return NextResponse.json({ data: [] });
+      return NextResponse.json([]);
     }
 
     const products = snapshot.docs.map(doc => {
@@ -24,35 +24,25 @@ export async function GET() {
       
       const isOnSale = !!product.originalPrice && product.originalPrice > product.price;
 
-      // This structure now matches Klaviyo's documented format.
+      // This structure now matches the simple array format Klaviyo expects.
       return {
-        // Klaviyo standard fields
-        "$custom_id": doc.id,
+        "id": doc.id,
         "title": product.name,
+        "link": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
         "description": product.description || '',
-        "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
-        "image_full_url": product.imageUrl,
         "price": product.price / 100,
-
-        // Optional but recommended standard fields
-        "compare_at_price": isOnSale ? product.originalPrice! / 100 : undefined,
+        "image_link": product.imageUrl,
         "categories": product.tags || [],
-        "brand": product.brand || 'PuroRush',
         "inventory_quantity": product.stock !== undefined ? product.stock : 99,
         "inventory_policy": product.stock !== undefined && product.stock > 0 ? 1 : 2, // 1: Deny, 2: Continue if sold out
-
-        // Custom metadata for segmentation
-        "custom_metadata": {
-          "size": product.size || null,
-          "composition": product.composition || null,
-          "is_on_sale": isOnSale,
-          "internal_tags": product.internalTags || [],
-        }
+        // Optional: you can add more metadata if needed, but keeping it simple for now.
+        "brand": product.brand || 'PuroRush',
+        "compare_at_price": isOnSale ? product.originalPrice! / 100 : undefined,
       };
     });
     
-    // The final response must be wrapped in a 'data' object.
-    return NextResponse.json({ data: products });
+    // The final response must be a simple array of product objects.
+    return NextResponse.json(products);
 
   } catch (error) {
     console.error('Error fetching product feed for Klaviyo:', error);
