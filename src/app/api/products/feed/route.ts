@@ -24,7 +24,7 @@ export async function GET() {
       
       const isOnSale = !!product.originalPrice && product.originalPrice > product.price;
 
-      // This structure now matches the simple array format Klaviyo expects.
+      // This structure now matches the simple array format Klaviyo expects from the user's example.
       return {
         "id": doc.id,
         "title": product.name,
