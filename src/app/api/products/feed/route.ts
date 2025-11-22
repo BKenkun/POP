@@ -14,7 +14,6 @@ export async function GET() {
     const snapshot = await productsRef.where('active', '!=', false).get();
 
     if (snapshot.empty) {
-      // Return an empty list if no products are found
       return NextResponse.json([]);
     }
 
