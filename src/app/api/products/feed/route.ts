@@ -16,7 +16,7 @@ export async function GET() {
     const snapshot = await productsRef.where('active', '!=', false).get();
 
     if (snapshot.empty) {
-      return NextResponse.json([]);
+      return NextResponse.json([]); // Return an empty list if no products
     }
 
     const products = snapshot.docs.map(doc => {
@@ -24,7 +24,7 @@ export async function GET() {
       
       const isOnSale = !!product.originalPrice && product.originalPrice > product.price;
 
-      // This structure now matches the simple array format Klaviyo expects from the user's example.
+      // This structure now matches the simple array/list format Klaviyo expects.
       return {
         "id": doc.id,
         "title": product.name,
@@ -35,7 +35,6 @@ export async function GET() {
         "categories": product.tags || [],
         "inventory_quantity": product.stock !== undefined ? product.stock : 99,
         "inventory_policy": product.stock !== undefined && product.stock > 0 ? 1 : 2, // 1: Deny, 2: Continue if sold out
-        // Optional: you can add more metadata if needed, but keeping it simple for now.
         "brand": product.brand || 'PuroRush',
         "compare_at_price": isOnSale ? product.originalPrice! / 100 : undefined,
       };
