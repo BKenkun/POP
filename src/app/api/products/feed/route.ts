@@ -3,8 +3,6 @@ import { NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase-admin';
 import { Product } from '@/lib/types';
 
-export const revalidate = 3600; // Revalidate at most every hour
-
 /**
  * API endpoint to fetch all active products for a Klaviyo catalog feed.
  * This format is specifically tailored for what Klaviyo's custom catalog source expects.
@@ -16,7 +14,8 @@ export async function GET() {
     const snapshot = await productsRef.where('active', '!=', false).get();
 
     if (snapshot.empty) {
-      return NextResponse.json([]); // Return an empty list if no products
+      // Return an empty list if no products are found
+      return NextResponse.json([]);
     }
 
     const products = snapshot.docs.map(doc => {
