@@ -1,0 +1,19 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            .logo-text {
+                font-family: 'Inter', sans-serif;
+                font-size: 100px;
+                font-weight: 900;
+                text-anchor: middle;
+                dominant-baseline: central;
+            }
+        </style>
+    </defs>
+    <g transform="skewX(-15) translate(8, 0)">
+        <text x="50" y="55" class="logo-text" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linejoin="round">P</text>
+        <text x="51" y="56" class="logo-text" fill="#FFC107">P</text>
+        <text x="50" y="55" class="logo-text" fill="none" stroke="#FFC107" stroke-width="3" stroke-linejoin="miter">P</text>
+        <text x="50" y="55" class="logo-text" fill="#F44336">P</text>
+    </g>
+</svg>
