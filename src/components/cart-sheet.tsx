@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -142,7 +141,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      )}
                 </div>
                 <Button asChild size="lg" className="w-full" onClick={handleGoToCheckout}>
-                  <Link href="/checkout">Finalizar Compra y Pagar</Link>
+                  <Link href="/checkout">{t('cart.checkout_button')}</Link>
                 </Button>
               </div>
             </SheetFooter>
