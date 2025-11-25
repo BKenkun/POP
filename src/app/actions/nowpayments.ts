@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { firestore as db } from '@/lib/firebase-admin'; // Use Admin SDK
 import { doc, setDoc, serverTimestamp, getDoc, writeBatch } from 'firebase/firestore';
 import type { CartItem, ShippingAddress, Order } from '@/lib/types';
 import { trackKlaviyoEvent, formatOrderForKlaviyo } from './klaviyo';

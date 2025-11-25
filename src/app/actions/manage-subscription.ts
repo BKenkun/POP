@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { firestore as db } from '@/lib/firebase-admin'; // Use Admin SDK
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getUserIdFromSession } from './user-data';
 
