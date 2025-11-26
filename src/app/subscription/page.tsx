@@ -4,31 +4,33 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
-import { CheckCircle, Gift, Package, Sparkles, User, Loader2, Truck, Settings, UserPlus, ShoppingBag } from 'lucide-react';
+import { Gift, Package, Sparkles, Loader2, UserPlus, ShoppingBag, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
 import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
-import Link from 'next/link';
+import { useTranslation } from '@/context/language-context';
 
-const benefits = [
-    { icon: Package, title: "5 Poppers a tu Elección", description: "Explora nuestro catálogo y elige tus 5 aromas favoritos cada mes. ¡Ideal para descubrir novedades o asegurar tus clásicos!" },
-    { icon: Sparkles, title: "1 Accesorio Práctico", description: "Recibe un accesorio útil para mejorar tu experiencia, como inhaladores, limpiadores o tapones especiales." },
-    { icon: Gift, title: "1 Regalo Sorpresa", description: "Nos encanta sorprenderte. Cada mes incluiremos un pequeño detalle extra solo para los miembros del club." },
-];
-
-const howItWorks = [
-    { icon: UserPlus, title: "1. Suscríbete", description: "Únete al club con un pago seguro con tarjeta o criptomonedas. Es rápido y 100% fiable." },
-    { icon: Settings, title: "2. Personaliza tu Caja", description: "Desde tu panel de usuario, elige los poppers y el accesorio que quieres recibir cada mes." },
-    { icon: ShoppingBag, title: "3. Disfruta y Ahorra", description: "Recibe tu caja discretamente en casa y disfruta del mejor precio garantizado." },
-]
 
 export default function SubscriptionPage() {
     const { user, loading: authLoading, isSubscribed } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const { t } = useTranslation();
+
+    const benefits = [
+        { icon: Package, title: t('subscription_page.benefit1_title'), description: t('subscription_page.benefit1_desc') },
+        { icon: Sparkles, title: t('subscription_page.benefit2_title'), description: t('subscription_page.benefit2_desc') },
+        { icon: Gift, title: t('subscription_page.benefit3_title'), description: t('subscription_page.benefit3_desc') },
+    ];
+
+    const howItWorks = [
+        { icon: UserPlus, title: t('subscription_page.howitworks1_title'), description: t('subscription_page.howitworks1_desc') },
+        { icon: Settings, title: t('subscription_page.howitworks2_title'), description: t('subscription_page.howitworks2_desc') },
+        { icon: ShoppingBag, title: t('subscription_page.howitworks3_title'), description: t('subscription_page.howitworks3_desc') },
+    ];
     
     if (authLoading) {
         return (
@@ -43,7 +45,7 @@ export default function SubscriptionPage() {
         return (
              <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="ml-4">Ya eres miembro. Redirigiendo a tu panel...</p>
+                <p className="ml-4">{t('subscription_page.redirect_message')}</p>
             </div>
         );
     }
@@ -52,8 +54,8 @@ export default function SubscriptionPage() {
     const handleSubscribe = async () => {
         if (!user) {
             toast({
-                title: "Necesitas iniciar sesión",
-                description: "Por favor, inicia sesión para unirte al club.",
+                title: t('subscription_page.login_required_title'),
+                description: t('subscription_page.login_required_desc'),
                 variant: "destructive"
             });
             router.push('/login?redirect=/subscription');
@@ -72,18 +74,18 @@ export default function SubscriptionPage() {
             
             if (result.success && result.invoice_url) {
                 toast({
-                    title: "Redirigiendo a la pasarela de pago...",
-                    description: "Completa el pago para activar tu suscripción."
+                    title: t('subscription_page.redirecting_toast_title'),
+                    description: t('subscription_page.redirecting_toast_desc')
                 });
                 window.location.href = result.invoice_url;
             } else {
-                throw new Error(result.error || "No se pudo iniciar el proceso de suscripción.");
+                throw new Error(result.error || t('subscription_page.start_error_generic'));
             }
 
         } catch (error: any) {
             console.error("Subscription Error:", error);
             toast({
-                title: "Error al suscribirse",
+                title: t('subscription_page.start_error_title'),
                 description: error.message,
                 variant: "destructive"
             });
@@ -95,9 +97,9 @@ export default function SubscriptionPage() {
     return (
         <div className="max-w-5xl mx-auto space-y-16">
             <div className="text-center space-y-4">
-                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Club Dosis Mensual</h1>
+                <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('subscription_page.title')}</h1>
                 <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
-                   Accede a nuestro club exclusivo y recibe tus poppers favoritos en casa cada mes, ahorrando dinero y sin preocupaciones. ¡La forma más inteligente de disfrutar!
+                   {t('subscription_page.subtitle')}
                 </p>
             </div>
 
@@ -106,18 +108,18 @@ export default function SubscriptionPage() {
                      <CardHeader className="px-0 pt-0">
                         <CardTitle className="text-3xl font-bold flex items-center gap-2">
                            <Sparkles className="h-8 w-8 text-primary" />
-                           Tu Plan de Placer Mensual
+                           {t('subscription_page.plan_title')}
                         </CardTitle>
-                        <CardDescription>Una experiencia completa, entregada discretamente en tu puerta cada mes.</CardDescription>
+                        <CardDescription>{t('subscription_page.plan_desc')}</CardDescription>
                     </CardHeader>
                     <CardContent className="px-0 space-y-4">
                          <div>
-                            <p className="text-5xl font-bold text-primary">44€<span className="text-2xl text-muted-foreground">/mes</span></p>
-                            <p className="text-sm text-muted-foreground mt-1">Ahorra más de un 35%. Cancela cuando quieras, sin compromiso.</p>
+                            <p className="text-5xl font-bold text-primary">44€<span className="text-2xl text-muted-foreground">/{t('subscription_page.per_month')}</span></p>
+                            <p className="text-sm text-muted-foreground mt-1">{t('subscription_page.price_desc')}</p>
                         </div>
                         <Button size="lg" className="w-full" onClick={handleSubscribe} disabled={loading}>
                             {loading ? <Loader2 className="mr-2 animate-spin" /> : null}
-                            {loading ? "Procesando..." : "Unirme al Club"}
+                            {loading ? t('subscription_page.processing_button') : t('subscription_page.join_button')}
                         </Button>
                     </CardContent>
                 </div>
@@ -127,8 +129,8 @@ export default function SubscriptionPage() {
             </Card>
 
             <div className="text-center space-y-6">
-                <h2 className="text-3xl font-bold text-foreground">¿Cómo Funciona el Club?</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">Unirse es fácil y rápido. En solo tres pasos estarás disfrutando de tus beneficios exclusivos.</p>
+                <h2 className="text-3xl font-bold text-foreground">{t('subscription_page.howitworks_title')}</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">{t('subscription_page.howitworks_subtitle')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
                     {howItWorks.map((step) => (
                         <div key={step.title} className="flex flex-col items-center text-center">
@@ -143,7 +145,7 @@ export default function SubscriptionPage() {
             </div>
             
             <div className="text-center space-y-6">
-                <h2 className="text-3xl font-bold text-foreground">Tu Dosis Mensual Incluye</h2>
+                <h2 className="text-3xl font-bold text-foreground">{t('subscription_page.includes_title')}</h2>
                 <div className="space-y-4 max-w-2xl mx-auto">
                     {benefits.map((benefit, index) => (
                         <Card key={index} className="text-left">
@@ -162,7 +164,7 @@ export default function SubscriptionPage() {
             <div className="text-center space-y-4 pt-8">
                  <Button size="lg" className="w-full max-w-xs mx-auto" onClick={handleSubscribe} disabled={loading}>
                     {loading ? <Loader2 className="mr-2 animate-spin" /> : null}
-                    {loading ? "Procesando..." : "Unirme al Club por 44€/mes"}
+                    {loading ? t('subscription_page.processing_button') : t('subscription_page.join_button_price', {price: '44€'})}
                 </Button>
             </div>
         </div>
