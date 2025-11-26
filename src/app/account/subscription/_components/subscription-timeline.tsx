@@ -1,8 +1,8 @@
-
 'use client';
 
 import { cn } from "@/lib/utils";
 import { Calendar, PackageCheck, Send, CheckCircle } from "lucide-react";
+import { useTranslation } from "@/context/language-context";
 
 interface SubscriptionTimelineProps {
     day: number;
@@ -43,6 +43,7 @@ const Milestone = ({ label, icon: Icon, status }: { label: string; icon: React.E
 };
 
 export default function SubscriptionTimeline({ day }: SubscriptionTimelineProps) {
+    const { t } = useTranslation();
     const [startStatus, selectionStatus, shippingStatus] = getStepStatus(day);
     const progressPercentage = Math.min(100, Math.max(0, (day / 31) * 100));
 
@@ -55,9 +56,9 @@ export default function SubscriptionTimeline({ day }: SubscriptionTimelineProps)
                 />
             </div>
             <div className="flex justify-between">
-                <Milestone label="Inicio del Ciclo" icon={Calendar} status={startStatus} />
-                <Milestone label="Selección Abierta" icon={PackageCheck} status={selectionStatus} />
-                <Milestone label="Preparando Envío" icon={Send} status={shippingStatus} />
+                <Milestone label={t('account.subscription.timeline_step1')} icon={Calendar} status={startStatus} />
+                <Milestone label={t('account.subscription.timeline_step2')} icon={PackageCheck} status={selectionStatus} />
+                <Milestone label={t('account.subscription.timeline_step3')} icon={Send} status={shippingStatus} />
             </div>
         </div>
     );

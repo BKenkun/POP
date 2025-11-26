@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import Link from 'next/link';
 import { AlertTriangle, Home, Phone } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
+import { useTranslation } from '@/context/language-context';
 
 export default function SubscriptionFailedPage() {
     const { user } = useAuth();
+    const { t } = useTranslation();
 
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8 py-12">
@@ -17,25 +18,25 @@ export default function SubscriptionFailedPage() {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
                         <AlertTriangle className="h-10 w-10 text-destructive" />
                     </div>
-                    <CardTitle className="text-3xl font-headline text-destructive font-bold">Pago Fallido</CardTitle>
+                    <CardTitle className="text-3xl font-headline text-destructive font-bold">{t('account.subscription.failed_title')}</CardTitle>
                     <CardDescription className="text-lg text-foreground/80">
-                        Lo sentimos, {user?.email?.split('@')[0] || 'usuario'}, no hemos podido procesar tu suscripción.
+                        {t('account.subscription.failed_subtitle', { name: user?.email?.split('@')[0] || t('account.subscription.user_placeholder') })}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                       El pago no se pudo completar. Por favor, vuelve a intentarlo o prueba con otro método de pago. Si el problema persiste, no dudes en contactar con nosotros.
+                       {t('account.subscription.failed_desc')}
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg" variant="default">
                             <Link href="/subscription">
-                                Reintentar Suscripción
+                                {t('account.subscription.retry_button')}
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
                              <Link href="/contacto">
                                 <Phone className="mr-2" />
-                                Contactar Soporte
+                                {t('account.subscription.contact_support_button')}
                             </Link>
                         </Button>
                     </div>

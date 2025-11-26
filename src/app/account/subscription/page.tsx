@@ -49,8 +49,8 @@ export default function SubscriptionManagementPage() {
             }, (error) => {
                 console.error("Failed to fetch products for subscription page", error);
                 toast({
-                    title: "Error",
-                    description: "No se pudieron cargar los productos para la selección.",
+                    title: t('account.subscription.error_title'),
+                    description: t('account.subscription.products_load_error'),
                     variant: "destructive"
                 });
                 setLoadingProducts(false);
@@ -58,7 +58,7 @@ export default function SubscriptionManagementPage() {
             return () => unsubscribe();
         };
         fetchProducts();
-    }, [toast]);
+    }, [toast, t]);
     
     const poppers = products.filter(p => !p.internalTags?.includes('accesorio') && !p.internalTags?.includes('pack'));
     const accessories = products.filter(p => p.internalTags?.includes('accesorio'));
@@ -120,7 +120,7 @@ export default function SubscriptionManagementPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-sm font-medium">
                         <CalendarClock className="h-5 w-5"/>
-                        <span>{t('account.subscription.timeline_info')}</span>
+                        <span>{t('account.subscription.timeline_info_title')}</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
