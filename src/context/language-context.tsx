@@ -978,6 +978,12 @@ const esTranslations: Translations = {
   }
 };
 
+const enTranslations: Translations = {};
+const frTranslations: Translations = {};
+const deTranslations: Translations = {};
+const itTranslations: Translations = {};
+const ptTranslations: Translations = {};
+
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
