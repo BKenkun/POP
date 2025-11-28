@@ -9,9 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import Image from 'next/image';
-import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 import { useTranslation } from '@/context/language-context';
-
 
 export default function SubscriptionPage() {
     const { user, loading: authLoading, isSubscribed } = useAuth();
@@ -50,7 +48,6 @@ export default function SubscriptionPage() {
         );
     }
 
-
     const handleSubscribe = async () => {
         if (!user) {
             toast({
@@ -63,25 +60,43 @@ export default function SubscriptionPage() {
         }
 
         setLoading(true);
+        toast({
+            title: t('subscription_page.redirecting_toast_title'),
+            description: t('subscription_page.redirecting_toast_desc')
+        });
+
+        // Generamos un ID de pedido único con el prefijo correcto.
+        const orderId = `CPO_SUB_${user.uid}_${new Date().getTime()}`;
 
         try {
-            const result = await createNowPaymentsInvoice({
-                price_amount: 44,
-                price_currency: 'eur',
-                order_id: `sub_${user.uid}_${Date.now()}`,
-                order_description: 'Suscripción Club Dosis Mensual'
+            const response = await fetch('https://hilowglobal.com/api/create-subscription', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                // 1. Describimos el plan de suscripción
+                subscriptionDetails: {
+                  amountInCents: 4400,        // 44.00€
+                  interval: 'month',          // Cobro mensual
+                  productName: 'Club Dosis Mensual',
+                },
+                // 2. Proporcionamos los datos del pedido y las URLs de redirección
+                orderId: orderId,
+                successUrl: `https://comprarpopperonline.com/account/subscription/success?sub_id=${orderId}`,
+                cancelUrl: 'https://comprarpopperonline.com/subscription/failed',
+              }),
             });
-            
-            if (result.success && result.invoice_url) {
-                toast({
-                    title: t('subscription_page.redirecting_toast_title'),
-                    description: t('subscription_page.redirecting_toast_desc')
-                });
-                window.location.href = result.invoice_url;
-            } else {
-                throw new Error(result.error || t('subscription_page.start_error_generic'));
-            }
 
+            const data = await response.json();
+
+            // 3. Si todo va bien, redirigimos al cliente a la URL de pago
+            if (response.ok && data.checkoutUrl) {
+              window.location.href = data.checkoutUrl;
+            } else {
+              // En caso de error, lanzamos una excepción para ser capturada por el bloque catch.
+              throw new Error(data.error || t('subscription_page.start_error_generic'));
+            }
         } catch (error: any) {
             console.error("Subscription Error:", error);
             toast({
@@ -89,7 +104,6 @@ export default function SubscriptionPage() {
                 description: error.message,
                 variant: "destructive"
             });
-        } finally {
             setLoading(false);
         }
     };
