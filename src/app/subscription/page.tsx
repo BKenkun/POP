@@ -65,23 +65,16 @@ export default function SubscriptionPage() {
             description: t('subscription_page.redirecting_toast_desc')
         });
 
-        // Generamos un ID de pedido único con el prefijo correcto.
         const orderId = `CPO_SUB_${user.uid}_${new Date().getTime()}`;
 
         try {
-            const response = await fetch('https://hilowglobal.com/api/create-subscription', {
+            // Call our OWN backend endpoint, which will then call the external API.
+            const response = await fetch('/api/create-subscription', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                // 1. Describimos el plan de suscripción
-                subscriptionDetails: {
-                  amountInCents: 4400,        // 44.00€
-                  interval: 'month',          // Cobro mensual
-                  productName: 'Club Dosis Mensual',
-                },
-                // 2. Proporcionamos los datos del pedido y las URLs de redirección
                 orderId: orderId,
                 successUrl: `https://comprarpopperonline.com/account/subscription/success?sub_id=${orderId}`,
                 cancelUrl: 'https://comprarpopperonline.com/subscription/failed',
@@ -90,11 +83,9 @@ export default function SubscriptionPage() {
 
             const data = await response.json();
 
-            // 3. Si todo va bien, redirigimos al cliente a la URL de pago
             if (response.ok && data.checkoutUrl) {
               window.location.href = data.checkoutUrl;
             } else {
-              // En caso de error, lanzamos una excepción para ser capturada por el bloque catch.
               throw new Error(data.error || t('subscription_page.start_error_generic'));
             }
         } catch (error: any) {
