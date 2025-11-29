@@ -28,75 +28,97 @@ const db = getFirestore(app);
 
 // --- 3. Lógica de Procesamiento de Pedido ---
 
-// --- FUNCIÓN ACTUAL (SIN CAMBIOS) ---
-// Se encarga de activar pedidos por primera vez.
-async function processCompletedOrder(orderId: string) {
+// --- FUNCIÓN ACTUALIZADA ---
+// Ahora maneja tanto pedidos normales como la activación de suscripciones.
+async function processCompletedOrder(orderId: string, eventData: any) {
+  const isSubscription = orderId.startsWith('CPO_SUB_');
+  
   const parts = orderId.split('_');
-  if (parts.length < 3 || (parts[0] !== 'CPO' && parts[0] !== 'SUB')) {
+  if (parts.length < 3) {
     console.error(`[FirestoreListener] No se pudo extraer el userId de order_id: ${orderId}`);
     return;
   }
   
-  // Adaptado para ambos prefijos: CPO_order_USERID_... y SUB_USERID_...
-  const userId = parts[0] === 'CPO' ? parts[2] : parts[1];
-
+  const userId = parts[isSubscription ? 1 : 2];
   const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(orderId);
 
   try {
     const orderSnap = await orderRef.get();
     
-    if (!orderSnap.exists || orderSnap.data()?.status !== 'Pago Pendiente de Verificación') {
-      if (orderSnap.exists()) {
-        console.log(`[FirestoreListener] El estado del pedido local ${orderId} ya es '${orderSnap.data()?.status}'. Ignorando activación.`);
-      } else {
-         console.warn(`[FirestoreListener] El pedido ${orderId} no se encontró en nuestra base de datos. Se procesará si se crea en breve.`);
-      }
+    if (orderSnap.exists() && orderSnap.data()?.status !== 'Pago Pendiente de Verificación') {
+      console.log(`[FirestoreListener] El pedido ${orderId} ya fue procesado. Ignorando evento.`);
       return;
     }
     
-    const localOrderData = orderSnap.data() as Order;
-    const newStatus = 'Reserva Recibida';
+    // --- Lógica para activar la suscripción en el perfil del usuario ---
+    if (isSubscription) {
+        const userRef = adminFirestore.collection('users').doc(userId);
+        const stripeSubscriptionId = eventData.stripeSubscriptionId;
+        const subscriptionStatus = eventData.subscriptionStatus;
 
-    await orderRef.update({ status: newStatus });
-    console.log(`[FirestoreListener] Se actualizó correctamente el pedido local ${orderId} a '${newStatus}'.`);
-    
-    const batch = adminFirestore.batch();
-    
-    if (localOrderData.coupon) {
-      const couponRef = adminFirestore.collection('coupons').doc(localOrderData.coupon.code);
-      const couponSnap = await couponRef.get();
-      if(couponSnap.exists()){
-         batch.update(couponRef, { usageCount: increment(1) });
-      }
+        if (!stripeSubscriptionId || subscriptionStatus !== 'active') {
+             console.error(`[FirestoreListener] Faltan datos de suscripción para el evento ${orderId}. No se puede activar la suscripción.`);
+             return;
+        }
+
+        await userRef.update({
+            isSubscribed: true,
+            subscription: {
+                sub_id: stripeSubscriptionId,
+                status: 'active',
+                last_renewed: serverTimestamp(),
+                // Aquí podrías añadir la fecha de fin de ciclo si viniera en el evento inicial
+            }
+        });
+        console.log(`[FirestoreListener] Suscripción activada para el usuario ${userId} con ID de Stripe ${stripeSubscriptionId}.`);
     }
 
-    const pointsToAdd = Math.floor(localOrderData.total / 1000);
-    if (pointsToAdd > 0) {
-      const userRef = adminFirestore.collection('users').doc(userId);
-      batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
-    }
-    
-    await batch.commit();
-    console.log(`[FirestoreListener] Se procesaron los puntos de fidelidad y el uso del cupón para el pedido ${orderId}.`);
+    // --- Lógica existente para actualizar el pedido ---
+    if (orderSnap.exists()) {
+        const localOrderData = orderSnap.data() as Order;
+        const newStatus = 'Reserva Recibida';
 
-    const updatedOrderForKlaviyo: Order = {
-        ...localOrderData,
-        id: orderId,
-        status: newStatus,
-        createdAt: localOrderData.createdAt,
-    };
-    await trackOrderStatusUpdate(updatedOrderForKlaviyo, newStatus);
-    console.log(`[FirestoreListener] Se enviaron notificaciones de Klaviyo para el pedido ${orderId}.`);
+        await orderRef.update({ status: newStatus });
+        console.log(`[FirestoreListener] Estado del pedido ${orderId} actualizado a '${newStatus}'.`);
+
+        const batch = adminFirestore.batch();
+        if (localOrderData.coupon) {
+          const couponRef = adminFirestore.collection('coupons').doc(localOrderData.coupon.code);
+          const couponSnap = await couponRef.get();
+          if(couponSnap.exists()){
+             batch.update(couponRef, { usageCount: increment(1) });
+          }
+        }
+        
+        const pointsToAdd = Math.floor(localOrderData.total / 1000);
+        if (pointsToAdd > 0) {
+          const userRef = adminFirestore.collection('users').doc(userId);
+          batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
+        }
+        
+        await batch.commit();
+        console.log(`[FirestoreListener] Se procesaron puntos y cupones para ${orderId}.`);
+
+        const updatedOrderForKlaviyo: Order = {
+            ...localOrderData,
+            id: orderId,
+            status: newStatus,
+            createdAt: localOrderData.createdAt,
+        };
+        await trackOrderStatusUpdate(updatedOrderForKlaviyo, newStatus);
+        console.log(`[FirestoreListener] Notificación de Klaviyo enviada para ${orderId}.`);
+    } else {
+        console.warn(`[FirestoreListener] El pedido ${orderId} no se encontró en la DB local al momento de la activación. Se activó la suscripción pero el pedido no se pudo actualizar.`);
+    }
 
   } catch (error) {
-    console.error(`[FirestoreListener] Error al procesar el pedido completado ${orderId}:`, error);
+    console.error(`[FirestoreListener] Error al procesar el evento ${orderId}:`, error);
   }
 }
 
-// --- NUEVA FUNCIÓN ---
-// Se encarga de gestionar la renovación del ciclo de suscripción.
+
 async function processSubscriptionRenewal(subId: string, userId: string, newPeriodEndDate?: string) {
-    console.log(`Procesando renovación en 'purorush' para subscripción ${subId} del usuario ${userId}.`);
+    console.log(`Procesando renovación en 'purorush' para suscripción ${subId} del usuario ${userId}.`);
     
     try {
         const userRef = adminFirestore.collection('users').doc(userId);
@@ -127,16 +149,6 @@ async function processSubscriptionRenewal(subId: string, userId: string, newPeri
 
         console.log(`[FirestoreListener] Renovación procesada para el usuario ${userId}. La suscripción está activa.`);
         
-        // Aquí se podrían añadir más lógicas de negocio, como:
-        // - Reiniciar la selección de productos del mes para el usuario.
-        // - Enviar un email de confirmación de renovación a través de Klaviyo.
-        
-        // Ejemplo de evento para Klaviyo
-        // await trackKlaviyoEvent('Subscription Renewed', userSnap.data()?.email, {
-        //   'SubscriptionID': subId,
-        //   'NewPeriodEnd': newPeriodEndDate,
-        // });
-
     } catch (error) {
         console.error(`[FirestoreListener] Error al procesar la renovación para la suscripción ${subId}:`, error);
     }
@@ -150,31 +162,26 @@ function initializeOrderListener() {
   const storeId = "comprarpopperonline.com";
   const ordersRef = collection(db, "portals", storeId, "orders");
   
-  // MODIFICACIÓN: La consulta ahora escucha dos estados.
   const q = query(ordersRef, where("status", "in", ["completed", "renewal_succeeded"]));
   const processedEvents = new Set<string>();
 
   onSnapshot(q, (snapshot) => {
     snapshot.docChanges().forEach((change) => {
-      // Usamos el ID del documento de Hilow para evitar duplicados en una misma sesión.
       const eventId = change.doc.id;
       if ((change.type === "added" || change.type === "modified") && !processedEvents.has(eventId)) {
         
-        const orderData = change.doc.data();
-        const orderId = orderData.orderId; // ID de nuestro sistema
-        const status = orderData.status;
+        const eventData = change.doc.data();
+        const status = eventData.status;
 
-        // MODIFICACIÓN: La lógica interna diferencia la señal recibida.
         if (status === "completed") {
-            // SEÑAL 1: Activación de un nuevo pedido.
+            const orderId = eventData.orderId;
             console.log(`[SEÑAL RECIBIDA] Activación de pedido/suscripción detectada para: ${orderId}`);
-            processCompletedOrder(orderId);
+            processCompletedOrder(orderId, eventData);
 
         } else if (status === "renewal_succeeded") {
-            // SEÑAL 2: Renovación de una suscripción existente.
-            const subId = orderData.subscriptionId; // El ID de la suscripción en Stripe/Hilow
-            const userId = orderData.userId; // El ID de nuestro usuario
-            const newPeriodEnd = orderData.currentPeriodEnd; 
+            const subId = eventData.stripeSubscriptionId;
+            const userId = eventData.userId;
+            const newPeriodEnd = eventData.currentPeriodEnd; 
             
             console.log(`[SEÑAL RECIBIDA] Renovación exitosa para la suscripción: ${subId}`);
             processSubscriptionRenewal(subId, userId, newPeriodEnd);
@@ -190,3 +197,4 @@ function initializeOrderListener() {
 
 // --- 5. Activación del Listener ---
 initializeOrderListener();
+
