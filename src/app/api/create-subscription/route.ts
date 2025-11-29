@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       subscriptionDetails: {
         amountInCents: 4400,
         interval: 'month',
-        productName: 'Club Dosis Mensual',
+        productName: 'Club mensual',
       },
       orderId,
       successUrl,
