@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from "@/context/auth-context";
@@ -26,7 +27,7 @@ export default function SubscriptionManagementPage() {
     const [loadingProducts, setLoadingProducts] = useState(true);
 
     const dayOfMonth = new Date().getDate();
-    const isSelectionWindowOpen = dayOfMonth >= 4 && dayOfMonth <= 25;
+    const isSelectionWindowOpen = dayOfMonth >= 1 && dayOfMonth <= 4;
 
     useEffect(() => {
         if (!authLoading && !user) {

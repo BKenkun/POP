@@ -1,3 +1,4 @@
+
 'use client';
 
 import { cn } from "@/lib/utils";
@@ -9,13 +10,14 @@ interface SubscriptionTimelineProps {
 }
 
 const getStepStatus = (day: number): [string, string, string] => {
-    if (day >= 26 || day < 4) { // Preparing shipment
-        return ['completed', 'completed', 'active'];
-    }
-    if (day >= 4 && day < 26) { // Selection open
+    if (day >= 1 && day <= 4) { // Selection open
         return ['completed', 'active', 'pending'];
     }
-    return ['pending', 'pending', 'pending']; // Should not happen
+    if (day >= 5 && day <= 6) { // Preparing shipment
+        return ['completed', 'completed', 'active'];
+    }
+    // Days 7-31 (and others), enjoy and wait
+    return ['completed', 'completed', 'completed']; 
 }
 
 const Milestone = ({ label, icon: Icon, status }: { label: string; icon: React.ElementType, status: string }) => {
@@ -32,7 +34,7 @@ const Milestone = ({ label, icon: Icon, status }: { label: string; icon: React.E
                 {isCompleted ? <CheckCircle className="h-6 w-6" /> : <Icon className={cn("h-6 w-6", isActive ? "text-primary" : "text-muted-foreground")} />}
             </div>
             <p className={cn(
-                "text-xs font-medium transition-all",
+                "text-xs font-medium text-center transition-all",
                 isActive ? "text-primary" : "text-muted-foreground",
                 isCompleted && "text-foreground"
             )}>
@@ -45,7 +47,9 @@ const Milestone = ({ label, icon: Icon, status }: { label: string; icon: React.E
 export default function SubscriptionTimeline({ day }: SubscriptionTimelineProps) {
     const { t } = useTranslation();
     const [startStatus, selectionStatus, shippingStatus] = getStepStatus(day);
-    const progressPercentage = Math.min(100, Math.max(0, (day / 31) * 100));
+    
+    // Day 1 is 0% progress, Day 7 is 100% progress of the "active" phase (selection + prep)
+    const progressPercentage = Math.min(100, Math.max(0, ((day - 1) / 6) * 100));
 
     return (
         <div className="w-full">
@@ -55,7 +59,7 @@ export default function SubscriptionTimeline({ day }: SubscriptionTimelineProps)
                     style={{ width: `${progressPercentage}%` }}
                 />
             </div>
-            <div className="flex justify-between">
+            <div className="grid grid-cols-3 gap-2">
                 <Milestone label={t('account.subscription.timeline_step1')} icon={Calendar} status={startStatus} />
                 <Milestone label={t('account.subscription.timeline_step2')} icon={PackageCheck} status={selectionStatus} />
                 <Milestone label={t('account.subscription.timeline_step3')} icon={Send} status={shippingStatus} />
