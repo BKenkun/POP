@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -193,8 +194,7 @@ const Stepper = ({
 
 export default function CheckoutClientPage() {
   const { t } = useTranslation();
-  const { cartItems, cartTotal, cartCount, removeFromCart, updateQuantity, clearCart } =
-    useCart();
+  const { cartItems, cartTotal, cartCount, removeFromCart, updateQuantity, volumeDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc, setUserDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -232,11 +232,11 @@ export default function CheckoutClientPage() {
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
-    const subtotalWithDiscounts = subtotal - couponDiscount;
+    const subtotalWithDiscounts = subtotal - volumeDiscount - couponDiscount;
     const shipping = 0; // Free shipping
     const total = subtotalWithDiscounts + shipping;
     return { subtotal, shipping, total, priceInCents: Math.round(total) };
-  }, [cartTotal, couponDiscount]);
+  }, [cartTotal, volumeDiscount, couponDiscount]);
 
   useEffect(() => {
     if (!isUserLoading && cartCount === 0 && !loading) {
@@ -998,6 +998,12 @@ export default function CheckoutClientPage() {
                         <span>{t('checkout.subtotal')}</span>
                         <span>{formatPrice(finalTotals.subtotal)}</span>
                       </div>
+                       {volumeDiscount > 0 && (
+                        <div className="flex justify-between text-destructive">
+                          <span>{t('cart.volume_discount')}</span>
+                          <span>-{formatPrice(volumeDiscount)}</span>
+                        </div>
+                      )}
                       {couponDiscount > 0 && (
                         <div className="flex justify-between text-destructive">
                           <span>
