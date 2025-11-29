@@ -235,7 +235,7 @@ export default function CheckoutClientPage() {
     const subtotalWithDiscounts = subtotal - volumeDiscount - couponDiscount;
     const shipping = 0; // Free shipping
     const total = subtotalWithDiscounts + shipping;
-    return { subtotal, shipping, total, priceInCents: Math.round(total) };
+    return { subtotal, shipping, total, priceInCents: Math.round(total), totalWithDiscount: subtotalWithDiscounts };
   }, [cartTotal, volumeDiscount, couponDiscount]);
 
   useEffect(() => {
@@ -569,6 +569,25 @@ export default function CheckoutClientPage() {
                   </div>
                 ))}
               </CardContent>
+               <CardFooter className="flex-col items-start gap-2 bg-secondary/50 p-4 rounded-b-lg">
+                  <div className="flex justify-between w-full font-semibold">
+                    <span>{t('checkout.subtotal')}</span>
+                    <span className={volumeDiscount > 0 ? 'line-through text-muted-foreground' : ''}>{formatPrice(cartTotal)}</span>
+                  </div>
+                  {volumeDiscount > 0 && (
+                    <>
+                      <div className="flex justify-between w-full text-destructive font-semibold">
+                        <span>{t('cart.volume_discount')}</span>
+                        <span>-{formatPrice(volumeDiscount)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between w-full font-bold text-lg">
+                        <span>Total</span>
+                        <span>{formatPrice(finalTotals.totalWithDiscount)}</span>
+                      </div>
+                    </>
+                  )}
+              </CardFooter>
             </Card>
           )}
 
@@ -996,7 +1015,7 @@ export default function CheckoutClientPage() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>{t('checkout.subtotal')}</span>
-                        <span>{formatPrice(finalTotals.subtotal)}</span>
+                        <span className={volumeDiscount > 0 ? 'line-through text-muted-foreground' : ''}>{formatPrice(finalTotals.subtotal)}</span>
                       </div>
                        {volumeDiscount > 0 && (
                         <div className="flex justify-between text-destructive">
