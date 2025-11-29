@@ -1,9 +1,8 @@
 
 'use client';
 
-// THIS IS A MOCK/SIMULATED DATA SERVICE
-// In a real application, this would interact with Firestore
-// under db.collection('users').doc(userId).collection('subscriptions').doc('monthly')
+import { auth, db } from './firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export interface MonthlySelectionData {
     poppers: (string | null)[];
@@ -11,48 +10,55 @@ export interface MonthlySelectionData {
 }
 
 /**
- * Simulates fetching the user's current selection from a database.
- * Uses localStorage to persist the selection for demonstration purposes.
+ * Fetches the user's current monthly selection from Firestore.
  */
 export async function getUserSelection(): Promise<MonthlySelectionData | null> {
-    console.log("Simulating fetching user selection...");
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("User not authenticated. Cannot get selection.");
+        return null;
+    }
+
+    const selectionDocRef = doc(db, 'users', user.uid, 'subscriptions', 'monthly_selection');
     
     try {
-        if (typeof window !== 'undefined') {
-            const storedSelection = localStorage.getItem('monthly_selection');
-            if (storedSelection) {
-                const parsed = JSON.parse(storedSelection);
-                // Basic validation
-                if (Array.isArray(parsed.poppers) && 'accessory' in parsed) {
-                    console.log("Found selection in localStorage:", parsed);
-                    return parsed;
-                }
+        const docSnap = await getDoc(selectionDocRef);
+        if (docSnap.exists()) {
+            console.log("Found selection in Firestore.");
+            const data = docSnap.data();
+            // Basic validation
+            if (data && Array.isArray(data.poppers) && 'accessory' in data) {
+                return data as MonthlySelectionData;
             }
         }
     } catch (error) {
-        console.error("Could not parse user selection from localStorage", error);
+        console.error("Error fetching user selection from Firestore:", error);
     }
     
-    console.log("No valid selection found, returning null.");
+    console.log("No valid selection found in Firestore, returning null.");
     return null;
 }
 
 /**
- * Simulates saving the user's selection to a database.
- * Uses localStorage to persist the selection for demonstration purposes.
+ * Saves the user's monthly selection to Firestore.
  */
 export async function saveUserSelection(selection: MonthlySelectionData): Promise<void> {
-    console.log("Simulating saving user selection:", selection);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("User not authenticated. Cannot save selection.");
+        throw new Error("Authentication required to save selection.");
+    }
+    
+    const selectionDocRef = doc(db, 'users', user.uid, 'subscriptions', 'monthly_selection');
 
     try {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('monthly_selection', JSON.stringify(selection));
-            console.log("Successfully saved selection to localStorage.");
-        }
+        await setDoc(selectionDocRef, {
+            ...selection,
+            updatedAt: serverTimestamp(),
+        });
+        console.log("Successfully saved selection to Firestore.");
     } catch (error) {
-        console.error("Could not save user selection to localStorage", error);
-        throw new Error("Failed to save selection.");
+        console.error("Error saving user selection to Firestore:", error);
+        throw new Error("Failed to save selection to the database.");
     }
 }
