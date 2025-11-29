@@ -38,7 +38,11 @@ export default function AccountSidebar() {
     { href: '/account', label: t('account.sidebar_dashboard'), icon: LayoutDashboard },
     { href: '/account/orders', label: t('account.sidebar_orders'), icon: Package },
     { href: '/account/addresses', label: t('account.sidebar_addresses'), icon: MapPin },
-    ...(isSubscribed && settings?.showSubscriptionFeature ? [{ href: '/account/subscription', label: t('account.sidebar_subscription'), icon: HeartPulse }] : []),
+    ...(settings?.showSubscriptionFeature ? [{ 
+        href: isSubscribed ? '/account/subscription' : '/subscription', 
+        label: t('account.sidebar_subscription'), 
+        icon: HeartPulse 
+    }] : []),
   ];
 
   return (
