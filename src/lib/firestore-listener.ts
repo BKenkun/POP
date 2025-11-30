@@ -40,6 +40,35 @@ async function processCompletedOrder(orderId: string, eventData: any) {
   }
   
   const userId = parts[isSubscription ? 1 : 2];
+
+  // Lógica para activar la suscripción en el perfil del usuario
+  if (isSubscription) {
+    const userRef = adminFirestore.collection('users').doc(userId);
+    const stripeSubscriptionId = eventData.stripeSubscriptionId;
+    const subscriptionStatus = eventData.subscriptionStatus;
+
+    if (!stripeSubscriptionId || subscriptionStatus !== 'active') {
+         console.error(`[FirestoreListener] Faltan datos de suscripción para el evento ${orderId}. No se puede activar la suscripción.`);
+         return;
+    }
+
+    try {
+        await userRef.update({
+            isSubscribed: true,
+            subscription: {
+                sub_id: stripeSubscriptionId,
+                status: 'active',
+                last_renewed: serverTimestamp(),
+            }
+        });
+        console.log(`[FirestoreListener] Suscripción activada para el usuario ${userId} con ID de Stripe ${stripeSubscriptionId}.`);
+    } catch (error) {
+        console.error(`[FirestoreListener] Error al activar la suscripción para el usuario ${userId}:`, error);
+        // Aún así, intentamos procesar el pedido si existe
+    }
+  }
+
+  // Lógica para actualizar el estado del pedido (se ejecuta para ambos, suscripciones y pedidos normales)
   const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(orderId);
 
   try {
@@ -50,30 +79,6 @@ async function processCompletedOrder(orderId: string, eventData: any) {
       return;
     }
     
-    // --- Lógica para activar la suscripción en el perfil del usuario ---
-    if (isSubscription) {
-        const userRef = adminFirestore.collection('users').doc(userId);
-        const stripeSubscriptionId = eventData.stripeSubscriptionId;
-        const subscriptionStatus = eventData.subscriptionStatus;
-
-        if (!stripeSubscriptionId || subscriptionStatus !== 'active') {
-             console.error(`[FirestoreListener] Faltan datos de suscripción para el evento ${orderId}. No se puede activar la suscripción.`);
-             return;
-        }
-
-        await userRef.update({
-            isSubscribed: true,
-            subscription: {
-                sub_id: stripeSubscriptionId,
-                status: 'active',
-                last_renewed: serverTimestamp(),
-                // Aquí podrías añadir la fecha de fin de ciclo si viniera en el evento inicial
-            }
-        });
-        console.log(`[FirestoreListener] Suscripción activada para el usuario ${userId} con ID de Stripe ${stripeSubscriptionId}.`);
-    }
-
-    // --- Lógica existente para actualizar el pedido ---
     if (orderSnap.exists()) {
         const localOrderData = orderSnap.data() as Order;
         const newStatus = 'Reserva Recibida';
@@ -92,8 +97,8 @@ async function processCompletedOrder(orderId: string, eventData: any) {
         
         const pointsToAdd = Math.floor(localOrderData.total / 1000);
         if (pointsToAdd > 0) {
-          const userRef = adminFirestore.collection('users').doc(userId);
-          batch.update(userRef, { loyaltyPoints: increment(pointsToAdd) });
+          const userRefForPoints = adminFirestore.collection('users').doc(userId);
+          batch.update(userRefForPoints, { loyaltyPoints: increment(pointsToAdd) });
         }
         
         await batch.commit();
@@ -108,7 +113,9 @@ async function processCompletedOrder(orderId: string, eventData: any) {
         await trackOrderStatusUpdate(updatedOrderForKlaviyo, newStatus);
         console.log(`[FirestoreListener] Notificación de Klaviyo enviada para ${orderId}.`);
     } else {
-        console.warn(`[FirestoreListener] El pedido ${orderId} no se encontró en la DB local al momento de la activación. Se activó la suscripción pero el pedido no se pudo actualizar.`);
+        // This is now just a warning, as for subscriptions, there might not be a local order record
+        // if the payment was for the subscription itself and not a product order.
+        console.warn(`[FirestoreListener] El pedido ${orderId} no se encontró en la DB local. Si era una suscripción, esto es normal. Si era un pedido, podría ser un error.`);
     }
 
   } catch (error) {
