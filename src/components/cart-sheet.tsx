@@ -8,14 +8,11 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, ShoppingBag, Box, Truck, CreditCard, Loader2 } from 'lucide-react';
+import { Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QuantitySelector } from './quantity-selector';
 import { useTranslation } from '@/context/language-context';
-import { useAuth } from '@/context/auth-context';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 
 interface CartSheetProps {
   isOpen: boolean;
@@ -33,15 +30,13 @@ const FREE_SHIPPING_THRESHOLD = 4000; // 40€
 
 export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart, volumeDiscount, totalWithDiscount } = useCart();
-  const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
 
 
-  const handleGoToCheckout = () => {
-    if (cartCount === 0) {
+  const handleCheckout = () => {
+    if(cartCount === 0) {
       toast({
         title: t('cart.empty_title'),
         description: t('cart.empty_subtitle'),
@@ -140,7 +135,10 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                        </div>
                      )}
                 </div>
-                <Button asChild size="lg" className="w-full" onClick={handleGoToCheckout}>
+                <p className="text-xs text-muted-foreground text-center">
+                  {t('cart.notes')}
+                </p>
+                <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">{t('cart.checkout_button')}</Link>
                 </Button>
               </div>
