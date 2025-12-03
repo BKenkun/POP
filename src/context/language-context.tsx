@@ -67,7 +67,7 @@ const esTranslations: Translations = {
         empty_title: "Tu carrito está vacío",
         empty_subtitle: "Parece que aún no has añadido nada.",
         subtotal: "Subtotal",
-        volume_discount: "Descuento por volumen",
+        volume_discount: "Descuento por volumen:",
         shipping_estimate: "Envío (estimado)",
         total_estimate: "Total Estimado:",
         free_shipping_banner: "¡Disfrutas de Envío GRATIS!",
@@ -735,7 +735,7 @@ const esTranslations: Translations = {
     },
     cookies_page: {
         "title": "Política de Cookies",
-        "subtitle": "Na Popper Online, utilizamos cookies e tecnologias semelhantes para melhorar a sua experiência, garantir a segurança e analisar a utilização do nosso site. Explicamos aqui como e porquê.",
+        "subtitle": "Na Popper Online, utilizamos cookies e tecnologias semelhantes para mejorar a sua experiência, garantir a segurança e analisar a utilização do nosso site. Explicamos aqui como e porquê.",
         "what_is_title": "1. O que é um cookie?",
         "what_is_p1": "Um cookie é um pequeno ficheiro de texto que um site armazena no seu computador ou dispositivo móvel quando o visita. Permite que o site se lembre das suas ações e preferências (como login, idioma, tamanho da fonte e outras preferências de visualização) durante um período de tempo, para que não tenha de as reintroduzir sempre que volta ao site ou navega de uma página para outra.",
         "what_is_p2": "Também utilizamos o `localStorage` e o `sessionStorage` do navegador, que são tecnologias semelhantes que nos permitem armazenar informações sem depender exclusivamente de cookies.",
@@ -745,8 +745,8 @@ const esTranslations: Translations = {
         "examples": "Exemplos:",
         "technical_examples": "Cookie de sessão do utilizador, cookie do carrinho de compras, cookies de segurança da Stripe.",
         "analytics_title": "Cookies de Análise ou de Desempenho",
-        "analytics_p": "Estes cookies permitem-nos contar as visitas e as fontes de tráfego para que possamos medir e melhorar o desempenho do nosso site. Ajudam-nos a saber quais as páginas mais e menos populares e a ver como os visitantes se movem no site. Todas as informações que estes cookies recolhem são agregadas e, portanto, anónimas.",
-        "analytics_examples": "Utilizamos o Microsoft Clarity para compreender como interage com o site e mejorar a experiência.",
+        "analytics_p": "Estes cookies permitem-nos contar as visitas e as fontes de tráfego para que possamos medir e mejorar o desempenho do nosso site. Ajudam-nos a saber quais as páginas mais e menos populares e a ver como os visitantes se movem no site. Todas as informações que estes cookies recolhem são agregadas e, portanto, anónimas.",
+        "analytics_examples": "Utilizamos o Microsoft Clarity para comprender como interage com o site e mejorar a experiência.",
         "marketing_title": "Cookies de Marketing",
         "marketing_p": "Estes cookies podem ser definidos através do nosso site pelos nossos parceiros de publicidade. Podem ser utilizados por essas empresas para criar um perfil dos seus interesses e mostrar-lhe anúncios relevantes noutros sites. Não armazenam diretamente informações pessoais, mas baseiam-se na identificação única do seu navegador e dispositivo de internet.",
         "marketing_examples": "Cookies da Klaviyo para gerir as nossas subscrições de newsletter e notificações.",
@@ -978,11 +978,21 @@ const esTranslations: Translations = {
   }
 };
 
-const enTranslations: Translations = {};
-const frTranslations: Translations = {};
-const deTranslations: Translations = {};
-const itTranslations: Translations = {};
-const ptTranslations: Translations = {};
+const enTranslations: Translations = {
+  // English translations would go here
+};
+const frTranslations: Translations = {
+  // French translations would go here
+};
+const deTranslations: Translations = {
+  // German translations would go here
+};
+const itTranslations: Translations = {
+  // Italian translations would go here
+};
+const ptTranslations: Translations = {
+  // Portuguese translations would go here
+};
 
 interface LanguageContextType {
   language: Language;
@@ -1011,7 +1021,7 @@ const translations: Record<Language, Translations> = {
   pt: ptTranslations,
 };
 
-export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+export const LanguageProvider = ({ children }: { children: React.Node }) => {
   const [language, setLanguage] = useState<Language>('es');
 
   const setLanguageCallback = useCallback((lang: Language) => {
@@ -1069,3 +1079,5 @@ export const useLanguage = () => {
 
 // Alias for useLanguage for convenience in components
 export const useTranslation = useLanguage;
+
+    
