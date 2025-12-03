@@ -12,7 +12,7 @@ if (!KLAVIYO_API_KEY) {
 
 // Expand the event name type to include all possible order statuses
 type KlaviyoEventName =
-  | 'Placed Order'
+  | 'COMPRA REALIZADA'
   | 'Admin New Order Notification'
   | 'Admin New User Notification'
   | 'Order Shipped'
@@ -88,7 +88,7 @@ export async function trackOrderStatusUpdate(order: Order, newStatus: Order['sta
 
     switch (newStatus) {
         case 'Reserva Recibida':
-            eventName = 'Placed Order';
+            eventName = 'COMPRA REALIZADA';
             isAdminNotification = true;
             break;
         case 'Enviado':
