@@ -9,48 +9,6 @@ Actúa como un mapa de la arquitectura técnica, detallando el stack tecnológic
 
 ---
 
-## Guía de Estilo y Sistema de Diseño
-
-### Paleta de Colores
-*La paleta de colores principal definida en `globals.css` usando variables CSS HSL.*
-
-**Técnico:** Los colores se aplican usando clases de Tailwind CSS que se corresponden con estas variables (ej. `bg-primary`, `text-destructive`).
-
-```css
---primary: 45 95% 51%;      // Amarillo/Ámbar vibrante
---destructive: 0 84.2% 60.2%; // Rojo para ofertas/alertas
---secondary: 210 40% 96.1%;   // Gris azulado claro
---accent: 0 84.2% 60.2%;      // Mismo que destructive, para énfasis
---background: 0 0% 100%;       // Fondo principal (blanco)
---foreground: 240 10% 3.9%;  // Texto principal (casi negro)
-```
-
-### Tipografía
-*La fuente principal del sitio es Inter, configurada en `src/app/layout.tsx`.*
-
-**Técnico:** Se usa `next/font` para optimizar la carga de la fuente. Las clases `font-headline` y `font-body` se asignan a la misma variable de CSS (`--font-inter`) en `tailwind.config.ts`, manteniendo la consistencia.
-
-```javascript
-// En src/app/layout.tsx
-import { Inter } from 'next/font/google';
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-```
-
-### Iconografia y Gráficos
-*La biblioteca `lucide-react` es usada para iconos y un SVG personalizado es usado para el logótipo.*
-
-**Técnico:** Los iconos se importan directamente desde `lucide-react`. El logo (`src/components/logo.tsx`) es un componente SVG multicapa que permite el theming (cambia de color en modo oscuro/claro) al usar variables de CSS para sus colores.
-
-```jsx
-import { Home, ShoppingCart } from 'lucide-react';
-// ...
-<Button>
-  <ShoppingCart className="mr-2" /> Añadir
-</Button>
-```
-
----
-
 ## Arquitectura de Datos y Comunicación
 
 ### Comunicación Cliente-Servidor para Productos (Leitura/Escrita)
@@ -196,44 +154,6 @@ if (pointsToAdd > 0) {
 
 ---
 
-## Páginas Principales
-
-### Página Inicial
-*La página de bienvenida con productos en destaque y acceso a las secciones principales.*
-
-**Técnico:** Utiliza `onSnapshot` de Firebase para cargar y escuchar cambios en los productos en tiempo real. `useMemo` se encarga de filtrar eficientemente los productos por categorías ('Novedades', 'Ofertas', etc.) sin recalcular en cada render.
-
-```javascript
-// En src/app/page.tsx
-useEffect(() => {
-  const q = query(collection(db, 'products'), where('active', '!=', false));
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    // ... actualiza el estado de los productos
-  });
-  return () => unsubscribe();
-}, []);
-```
-
-### Catálogo de Productos
-*Muestra todos los productos con filtros por marca, tamaño, composición y búsqueda.*
-
-**Técnico:** El componente `ProductFilters` gestiona el estado de los filtros (`useState`) y la lógica de filtrado y ordenación (`useMemo`). La URL se actualiza con los parámetros de filtro (`useRouter`, `useSearchParams`) para que los enlaces se puedan compartir.
-
-```javascript
-// En src/app/products/filters.tsx
-const params = new URLSearchParams(searchParams.toString());
-params.delete(key);
-values.forEach(value => params.append(key, value));
-router.replace(`${pathname}?${params.toString()}`);
-```
-
-### Detalle del Producto
-*Vista detallada de un producto con una galería, informaciones y productos relacionados (ejemplo con "Rush Original").*
-
-**Técnico:** Carga los datos de un único producto desde Firestore usando `onSnapshot`. El estado del cliente (cantidad) se maneja con `useState`. La lógica para añadir al carrito (`ProductInfo`) se comunica con el `CartContext`.
-
----
-
 ## Funcionalidades de E-commerce
 
 ### Constructor de Packs
@@ -260,16 +180,52 @@ const calculatePackPriceFlow = ai.defineFlow(
 
 **Lógica de Precios:** En el carrito se muestra de forma estimada el descuento por volumen (si aplica por pago anticipado) y los costes de envío. La lógica de precios final y definitiva, que diferencia entre pago anticipado y contra-reembolso, se aplica en la página de checkout.
 
-### Proceso de Checkout
-*Un flujo de checkout de 4 pasos. Requiere artículos en el carrito para funcionar.*
+### Proceso de Checkout (Pago y Creación de Pedido)
+*Un flujo de checkout multi-paso que culmina con la creación del pedido en la base de datos y la iniciación del pago a través de un intermediario.*
 
-**Fase 1: Confirmar Carrito.** El usuario revisa los productos y puede ajustar cantidades o eliminar artículos usando la lógica del `CartContext`.
+**Paso 1: Recopilación de Datos (`/checkout/checkout-client-page.tsx`)**
+- El componente `checkout-client-page.tsx` gestiona el estado del flujo con un `useState` para el `step`.
+- **Datos del Usuario y Dirección:** Se utiliza `react-hook-form` con `zod` para la validación del formulario de dirección. Si el usuario está autenticado (`useAuth`), puede seleccionar una dirección guardada.
+- **Lógica de Precios Final:** Un `useMemo` (`finalTotals`) recalcula el total definitivo del pedido. Esta es la fase crítica donde se decide si aplicar el descuento por volumen basándose en el método de pago seleccionado.
+- **Aplicación de Cupones:** Si el usuario introduce un código de cupón, la función `handleApplyCoupon` realiza una consulta a la colección `coupons` en Firestore para validar el código y aplicar el descuento correspondiente, actualizando el estado `couponDiscount`.
 
-**Fase 2: Tus Datos.** Se solicita la información de envío. Si el usuario está autenticado, puede seleccionar una de sus direcciones guardadas. Una `Server Action` (`updateUser`) se encarga de guardar una nueva dirección si el usuario lo solicita.
+**Paso 2: Creación del Pedido y Llamada a la Pasarela de Pago (`onFinalSubmit`)**
+- Cuando el usuario llega al último paso y hace clic en "Pagar con Tarjeta", se invoca la función `onFinalSubmit`.
+- **Creación del Pedido en Firestore (Cliente):** La aplicación crea un documento de pedido **directamente desde el cliente** en la colección `/users/{userId}/orders/{orderId}`. Esto es seguro gracias a las reglas de Firestore que solo permiten a los usuarios escribir en su propia subcolección de pedidos. El estado inicial del pedido es `Pago Pendiente de Verificación`.
+```javascript
+// Fragmento de /app/checkout/checkout-client-page.tsx
+const orderRef = doc(db, 'users', user.uid, 'orders', orderId);
+const orderData = {
+    // ...datos del pedido
+    status: 'Pago Pendiente de Verificación',
+    // ...
+};
+await setDoc(orderRef, orderData);
+```
 
-**Fase 3: Método de Pago.** El usuario elige entre "Contrareembolso" y "Pago por adelantado". Un `useMemo` (`finalTotals`) recalcula el total del pedido en tiempo real basándose en el método seleccionado.
+- **Llamada a la API Intermediaria:** Inmediatamente después, se realiza una llamada `fetch` a la API Route local `/api/purchase`. Esta API Route actúa como un proxy seguro.
+```javascript
+// Fragmento de /app/checkout/checkout-client-page.tsx
+const purchasePayload = {
+    storeId: "comprarpopperonline.com",
+    priceInCents: finalTotals.priceInCents,
+    orderId: orderId,
+    successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
+    cancelUrl: `${YOUR_DOMAIN}/checkout`,
+};
+const response = await fetch('/api/purchase', { /* ... */ });
+```
 
-**Fase 4: Revisión y Confirmación Final.** Si el método es "crypto", se llama a la `Server Action` `createNowPaymentsInvoice` que devuelve una URL de pago. Para los demás métodos, se crea un nuevo documento en la colección `orders` de Firestore con todos los detalles del pedido usando `addDoc`.
+**Paso 3: Proxy de API y Pasarela Externa (`/api/purchase/route.ts`)**
+- La API Route `/api/purchase` recibe los datos del cliente.
+- Su única función es reenviar esta petición a la **API del intermediario de pagos** (en este caso, `https://studio--.../api/purchase`), utilizando credenciales o claves que solo existen en el servidor, si fueran necesarias.
+- El intermediario procesa el pago con su propia pasarela (ej. Stripe) y devuelve una `checkoutUrl`.
+- Nuestra API Route devuelve esta `checkoutUrl` al cliente.
+
+**Paso 4: Redirección y Notificación Asíncrona**
+- El `checkout-client-page.tsx` recibe la `checkoutUrl` y redirige al usuario a la página de pago.
+- **Confirmación en Tiempo Real:** En paralelo, un listener de larga duración (`/lib/firestore-listener.ts`) está escuchando en una base de datos externa (`studio-9533...`). Cuando el intermediario de pagos confirma la transacción, escribe un documento en esa base de datos externa.
+- Nuestro listener detecta este nuevo documento, extrae el `orderId`, y actualiza el pedido correspondiente en nuestra base de datos local a `Reserva Recibida`, además de enviar notificaciones (ej. a Klaviyo). Este sistema asíncrono garantiza la confirmación del pedido incluso si el usuario cierra la ventana de pago.
 
 ---
 
@@ -383,8 +339,41 @@ if (loggedInIsAdmin) {
 
 **Técnico:** Protegido por `AdminLayout`, que comprueba el email del usuario. Obtiene todos los pedidos y usuarios con `collectionGroup` y `onSnapshot` para calcular métricas. `OverviewChart` usa `recharts` para visualizar los datos.
 
-### Gestión de Pedidos
-**Técnico:** Usa `Tabs` para filtrar pedidos por estado. Los datos se obtienen una vez (`getDocs`) y se filtran en el cliente. Cada fila enlaza a la página de detalle del pedido pasando la ruta del documento como parámetro URL.
+### Gestión de Pedidos (Panel de Administración)
+*Un sistema centralizado para visualizar, filtrar y actualizar el estado de todos los pedidos de la tienda.*
+
+**Paso 1: Visualización de Todos los Pedidos (`/admin/orders`)**
+- **Componente Principal:** `orders-client-page.tsx`.
+- **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders` de Firestore, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
+- **Rendimiento:** Al ser una consulta de grupo, requiere un índice compuesto en Firestore, que debe ser creado desde la consola de Firebase. La consola suele sugerir el índice necesario si la consulta falla por primera vez.
+- **Interfaz:** Los pedidos se muestran en un `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
+
+**Paso 2: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
+- **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle que pasa la ruta completa del documento de Firestore como un parámetro de URL (`/admin/orders/{id}?path={encodedPath}`). Esto permite al componente de detalle saber exactamente qué documento obtener, independientemente de si está en la subcolección de un usuario o de un invitado.
+- **Componente de Detalle:** `order-details-client.tsx`.
+- **Actualización de Estado:** El administrador puede cambiar el estado del pedido a través de un `Select`. Al guardar, se ejecuta la función `handleSaveChanges`.
+```javascript
+// Fragmento de /admin/orders/[orderId]/order-details-client.tsx
+const handleSaveChanges = async () => {
+    // ...
+    const orderDocRef = doc(db, order.path);
+    await updateDoc(orderDocRef, {
+        status: order.status,
+    });
+    // ...
+};
+```
+- **Integración con Notificaciones:** Después de actualizar el estado en Firestore, se invoca una `Server Action` (`trackOrderStatusUpdate`) que se comunica con la API de Klaviyo. Esto envía un email transaccional al cliente informándole del nuevo estado de su pedido (ej. "Tu pedido ha sido enviado").
+```javascript
+// Fragmento de /admin/orders/[orderId]/order-details-client.tsx
+await trackOrderStatusUpdate(order, order.status);
+```
+
+**Paso 3: Gestión del Envío y Entrega (`/admin/shipping/[orderId]`)**
+- **Flujo de Envío:** Desde el detalle del pedido, el botón "Gestionar Envío" actualiza el estado a `En Reparto` y redirige al administrador a la página de gestión de entrega.
+- **Componente de Entrega:** `shipping-client.tsx`.
+- **Recopilación de Prueba de Entrega:** Esta interfaz está diseñada para ser usada en un dispositivo móvil (como el del repartidor). Permite introducir el DNI de la persona que recibe el paquete y capturar su firma usando `react-signature-canvas`.
+- **Confirmación o Incidencia:** El repartidor puede marcar el pedido como `Entregado` (guardando la firma y el DNI en el documento del pedido) o como `Incidencia` (si hay un problema). Ambas acciones actualizan el documento del pedido en Firestore.
 
 ### Gestión de Productos: "Añadir" y "Editar" en detalle
 *Flujo técnico completo sobre cómo los productos son creados y editados desde el panel de administración.*
@@ -458,18 +447,4 @@ form.setValue('price', salePrice);
 
 **Técnico:** Lee y escribe en un archivo JSON en el servidor (`src/lib/site-settings.json`) usando `Server Actions`.
 
----
-
-## Páginas Informativas y Legales
-
-### Blog
-**Técnico:** Contenido estático hardcodeado en `src/lib/posts.ts`. Es una página renderizada en el servidor (Server Component) para un SEO óptimo.
-
-### Contacto
-**Técnico:** Un formulario controlado por el cliente que simula el envío de un email.
-
-### Envío y Tarifas
-**Técnico:** Página de contenido estático.
-
-### Términos y Condiciones
-**Técnico:** Página de contenido estático.
+    
