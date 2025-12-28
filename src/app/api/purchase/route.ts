@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-const INTERMEDIARY_API_URL = 'https://studio--studio-953389996-b1a64.us-central1.hosted.app/api/purchase';
+const INTERMEDIARY_API_URL = 'https://studio--purorush.us-central1.hosted.app/api/purchase';
 
 // This schema now defines the simple, required structure for the intermediary API.
 const PurchasePayloadSchema = z.object({
