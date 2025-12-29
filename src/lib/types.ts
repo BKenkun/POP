@@ -80,7 +80,7 @@ export const ShippingAddressSchema = z.object({
   phone: z.string().nullable(),
 });
 
-const paymentMethods = ['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'crypto', 'stripe'] as const;
+const paymentMethods = ['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'stripe'] as const;
 
 // Helper function to handle different date types (Timestamp, Date, string)
 const dateSchema = z.preprocess((arg) => {
@@ -130,7 +130,7 @@ export interface MonthlySelection {
 
 // This type will be stored in the user's document
 export interface UserSubscription {
-    sub_id: string; // The subscription ID from NOWPayments
+    sub_id: string; // The subscription ID from the payment provider
     status: 'active' | 'cancelled' | 'past_due';
     // We don't get period end from NOWPayments directly in the same way as Stripe
     // We might rely on webhooks to update the status
