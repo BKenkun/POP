@@ -191,107 +191,30 @@ const calculatePackPriceFlow = ai.defineFlow(
 
 **Paso 2: Creación del Pedido y Llamada a la Pasarela de Pago (`onFinalSubmit`)**
 - Cuando el usuario llega al último paso y hace clic en "Pagar con Tarjeta", se invoca la función `onFinalSubmit`.
-- **Creación del Pedido en Firestore (Cliente):** La aplicación crea un documento de pedido **directamente desde el cliente** en la colección `/users/{userId}/orders/{orderId}`. Esto es seguro gracias a las reglas de Firestore que solo permiten a los usuarios escribir en su propia subcolección de pedidos. El estado inicial del pedido es `Pago Pendiente de Verificación`.
+- **Creación del Pedido Local:** La aplicación crea un documento de pedido **directamente desde el cliente** en la colección `/users/{userId}/orders/{orderId}` de la base de datos **local**. Esto es seguro gracias a las reglas de Firestore que solo permiten a los usuarios escribir en su propia subcolección de pedidos. El estado inicial del pedido es `Pago Pendiente de Verificación`.
 ```javascript
 // Fragmento de /app/checkout/checkout-client-page.tsx
-const orderRef = doc(db, 'users', user.uid, 'orders', orderId);
-const orderData = {
-    // ...datos del pedido
-    status: 'Pago Pendiente de Verificación',
-    // ...
-};
-await setDoc(orderRef, orderData);
+const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
+await setDoc(localOrderRef, localOrderData);
 ```
 
-- **Llamada a la API Intermediaria:** Inmediatamente después, se realiza una llamada `fetch` a la API Route local `/api/purchase`. Esta API Route actúa como un proxy seguro.
+- **Creación del Pedido en la Plataforma del Intermediario:** Inmediatamente después, se crea un segundo documento de pedido, esta vez en la base de datos **externa** de Hilow.
 ```javascript
 // Fragmento de /app/checkout/checkout-client-page.tsx
-const purchasePayload = {
-    storeId: "comprarpopperonline.com",
-    priceInCents: finalTotals.priceInCents,
-    orderId: orderId,
-    successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
-    cancelUrl: `${YOUR_DOMAIN}/checkout`,
-};
-const response = await fetch('/api/purchase', { /* ... */ });
+const storeId = 'comprarpopperonline.com';
+const hilowOrderId = `CPO_${uniqueId}`;
+const hilowOrderRef = doc(hilowDb, 'portals', storeId, 'orders', hilowOrderId);
+await setDoc(hilowOrderRef, hilowOrderData);
 ```
 
-**Paso 3: Proxy de API y Pasarela Externa (`/api/purchase/route.ts`)**
-- La API Route `/api/purchase` recibe los datos del cliente.
-- Su única función es reenviar esta petición a la **API del intermediario de pagos** (en este caso, `https://studio--.../api/purchase`), utilizando credenciales o claves que solo existen en el servidor, si fueran necesarias.
-- El intermediario procesa el pago con su propia pasarela (ej. Stripe) y devuelve una `checkoutUrl`.
-- Nuestra API Route devuelve esta `checkoutUrl` al cliente.
-
-**Paso 4: Redirección y Notificación Asíncrona**
-- El `checkout-client-page.tsx` recibe la `checkoutUrl` y redirige al usuario a la página de pago.
-- **Confirmación en Tiempo Real:** En paralelo, un listener de larga duración (`/lib/firestore-listener.ts`) está escuchando en una base de datos externa (`studio-9533...`). Cuando el intermediario de pagos confirma la transacción, escribe un documento en esa base de datos externa.
-- Nuestro listener detecta este nuevo documento, extrae el `orderId`, y actualiza el pedido correspondiente en nuestra base de datos local a `Reserva Recibida`, además de enviar notificaciones (ej. a Klaviyo). Este sistema asíncrono garantiza la confirmación del pedido incluso si el usuario cierra la ventana de pago.
-
----
-
-## Suscripción "Dosis Mensual" (con NOWPayments)
-
-### Flujo de Inicio de Suscripción
-*Página de destino y proceso de pago inicial para adherirse al club de suscripción.*
-
-**1. Página de Aterrizaje (`/subscription`):**
-- **Archivo:** `src/app/subscription/page.tsx`
-- **Función:** El botón principal 'Unirme al Club' invoca a la `Server Action` `createNowPaymentsInvoice`.
-
-**2. Server Action (`createNowPaymentsInvoice`):**
-- **Archivo:** `src/app/actions/nowpayments.ts`
-- **Función:** Es el intermediario seguro entre nuestra aplicación y la API de NOWPayments. Utiliza la `NOWPAYMENTS_API_KEY` guardada en las variables de entorno del servidor.
-- **Acción:** Realiza una petición `POST` a la API de NOWPayments (`https://api.nowpayments.io/v1/invoice`) para crear una factura de pago único.
-
+**Paso 3: Redirección a la Pasarela de Pago**
+- Una vez que ambos documentos de pedido han sido creados, el cliente es redirigido a la URL de pago del intermediario.
 ```javascript
-// En src/app/subscription/page.tsx
-const result = await createNowPaymentsInvoice({
-  price_amount: 44, // Precio de la suscripción
-  price_currency: 'eur',
-  order_id: `sub_${user.uid}_${Date.now()}`, // ID único para la transacción
-  order_description: 'Suscripción Club Dosis Mensual'
-});
+// Fragmento de /app/checkout/checkout-client-page.tsx
+const paymentUrl = `https://hilowglobal.com/pay/${hilowOrderId}`;
+window.location.href = paymentUrl;
 ```
-
-**3. Redirección al Pago:**
-- La `Server Action` devuelve un objeto con una URL de pago (`invoice_url`) a la que se redirige automáticamente al usuario.
-
-```javascript
-// En src/app/subscription/page.tsx
-if (result.success && result.invoice_url) {
-  window.location.href = result.invoice_url;
-}
-```
-
-### Gestión y Cancelación de Suscripción
-*Un panel para los suscriptores personalizaren su caja y gestionaren su adhesión.*
-
-**1. Panel de Suscriptor (`/account/subscription`):**
-- **Archivo:** `src/app/account/subscription/page.tsx`
-- **Función:** Esta página es accesible solo para usuarios con una suscripción activa (`isSubscribed` en `AuthContext`). Contiene el botón 'Gestionar mi Suscripción' para la cancelación.
-
-**2. Server Action de Cancelación (`cancelNowPaymentsSubscription`):**
-- **Archivo:** `src/app/actions/manage-subscription.ts`
-- **Función:** Lógica segura para cancelar una suscripción en NOWPayments. Primero obtiene un token JWT de NOWPayments y luego realiza una petición `DELETE` al endpoint de suscripciones, incluyendo el ID de la suscripción del usuario.
-- Si la cancelación es exitosa, actualiza el estado del usuario en Firestore (`isSubscribed: false`).
-
-```javascript
-// En src/app/actions/manage-subscription.ts
-async function getNowPaymentsJwt(): Promise<string> {
-  const response = await fetch(`${NOWPAYMENTS_API_URL}/auth`, { ... });
-  // ...
-  return data.token;
-}
-```
-
-### Webhook de Notificaciones (IPN)
-*Endpoint que a NOWPayments usa para notificar o servidor sobre eventos de subscrição.*
-
-**Archivo:** `src/app/api/nowpayments/subscription-webhook/route.ts`
-
-**Función:** Endpoint de API que recibe peticiones `POST` desde los servidores de NOWPayments para gestionar eventos de suscripción (pagos recurrentes, fallos, etc.).
-
-**Seguridad:** En producción, este endpoint debe verificar la firma (`x-nowpayments-sig`) para asegurar que la petición es legítima.
+- **Confirmación en Tiempo Real:** En paralelo, un listener de larga duración (`/lib/firestore-listener.ts`) está escuchando en la base de datos externa de Hilow. Cuando el intermediario de pagos confirma la transacción, escribe un documento en esa base de datos. Nuestro listener detecta este cambio, extrae el `orderId`, y actualiza el pedido correspondiente en nuestra base de datos local a `Reserva Recibida`, además de enviar notificaciones (ej. a Klaviyo). Este sistema asíncrono garantiza la confirmación del pedido incluso si el usuario cierra la ventana de pago.
 
 ---
 
