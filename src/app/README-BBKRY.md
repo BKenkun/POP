@@ -342,45 +342,15 @@ if (loggedInIsAdmin) {
 ### Gestión de Pedidos (Panel de Administración)
 *Un sistema centralizado para visualizar, filtrar y actualizar el estado de todos los pedidos de la tienda.*
 
-**1. Estructura de Datos de Pedidos en Firestore**
-El éxito de la gestión de pedidos depende de cómo se almacenan. La estructura es:
-`/users/{userId}/orders/{orderId}`
-- **`userId`**: Es el UID del usuario de Firebase Authentication. Para los clientes que compran como invitados, se podría usar un `userId` especial como `"guest"`.
-- **`orderId`**: Un identificador único para el pedido.
-- **Ventaja**: Al anidar los pedidos dentro del documento del usuario, las reglas de seguridad de Firestore son muy simples: un usuario solo puede ver sus propios pedidos. Sin embargo, esto plantea un desafío para el administrador, que necesita verlos todos.
-
-**2. Solución para el Administrador: `collectionGroup`**
-Para que el administrador pueda ver todos los pedidos de todos los usuarios sin tener que iterar por cada usuario, se utiliza una **consulta de grupo de colección (`collectionGroup`)**. Esta consulta especial de Firestore busca en todos los documentos de una colección con un ID específico (en este caso, `orders`), sin importar en qué parte de la base de datos se encuentren.
-
-**Regla de Seguridad Clave:** Para que esto funcione, se necesita una regla de seguridad específica en `firestore.rules`:
-```javascript
-// Esta regla permite a un administrador realizar una consulta collectionGroup en 'orders'.
-match /{path=**}/orders/{orderId} {
-   allow list: if isAdmin();
-}
-```
-- **`{path=**}`** es un comodín que coincide con cualquier ruta.
-- Esto permite que un `list` (que es lo que hace una consulta) sobre cualquier colección llamada `orders` sea exitoso, pero solo si el solicitante es un administrador (`isAdmin()`).
-
-**3. Flujo de Gestión en el Panel de Administración**
-
-**Paso A: Visualización de Todos los Pedidos (`/admin/orders`)**
+**Paso 1: Visualización de Todos los Pedidos (`/admin/orders`)**
 - **Componente Principal:** `orders-client-page.tsx`.
-- **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders`, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
-```javascript
-// En src/app/admin/orders/orders-client-page.tsx
-const q = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    // ... procesar los pedidos y actualizar el estado de React
-});
-```
+- **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders` de Firestore, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
 - **Rendimiento:** Al ser una consulta de grupo, requiere un índice compuesto en Firestore, que debe ser creado desde la consola de Firebase. La consola suele sugerir el índice necesario si la consulta falla por primera vez.
+- **Interfaz:** Los pedidos se muestran en un `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
 
-**Paso B: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
-- **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle. Este enlace es crucial: no solo pasa el `orderId`, sino que también pasa la **ruta completa del documento** de Firestore como un parámetro de URL.
-  - Ejemplo de URL: `/admin/orders/{orderId}?path={encodedPath}`
-  - `encodedPath` sería algo como `users%2F{userId}%2Forders%2F{orderId}` (URL-encoded).
-- **Componente de Detalle:** `order-details-client.tsx`. Este componente lee el parámetro `path` de la URL, lo decodifica y lo usa para apuntar directamente al documento correcto en Firestore con `doc(db, decodedPath)`. Esto elimina la necesidad de saber a qué usuario pertenece el pedido.
+**Paso 2: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
+- **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle que pasa la ruta completa del documento de Firestore como un parámetro de URL (`/admin/orders/{id}?path={encodedPath}`). Esto permite al componente de detalle saber exactamente qué documento obtener, independientemente de si está en la subcolección de un usuario o de un invitado.
+- **Componente de Detalle:** `order-details-client.tsx`.
 - **Actualización de Estado:** El administrador puede cambiar el estado del pedido a través de un `Select`. Al guardar, se ejecuta la función `handleSaveChanges`.
 ```javascript
 // Fragmento de /admin/orders/[orderId]/order-details-client.tsx
@@ -399,8 +369,8 @@ const handleSaveChanges = async () => {
 await trackOrderStatusUpdate(order, order.status);
 ```
 
-**Paso C: Gestión del Envío y Entrega (`/admin/shipping/[orderId]`)**
-- **Flujo de Envío:** Desde el detalle del pedido, el botón "Gestionar Envío" actualiza el estado a `En Reparto` y redirige al administrador a la página de gestión de entrega, pasando también la ruta del documento.
+**Paso 3: Gestión del Envío y Entrega (`/admin/shipping/[orderId]`)**
+- **Flujo de Envío:** Desde el detalle del pedido, el botón "Gestionar Envío" actualiza el estado a `En Reparto` y redirige al administrador a la página de gestión de entrega.
 - **Componente de Entrega:** `shipping-client.tsx`.
 - **Recopilación de Prueba de Entrega:** Esta interfaz está diseñada para ser usada en un dispositivo móvil (como el del repartidor). Permite introducir el DNI de la persona que recibe el paquete y capturar su firma usando `react-signature-canvas`.
 - **Confirmación o Incidencia:** El repartidor puede marcar el pedido como `Entregado` (guardando la firma y el DNI en el documento del pedido) o como `Incidencia` (si hay un problema). Ambas acciones actualizan el documento del pedido en Firestore.
