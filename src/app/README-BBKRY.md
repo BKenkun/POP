@@ -242,7 +242,37 @@ if (loggedInIsAdmin) {
 ```
 
 ### Registro de Nuevo Usuario
-**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.
+*Flujo técnico para la creación de una nueva cuenta de cliente.*
+
+**Técnico:** El proceso de registro se gestiona íntegramente en el lado del cliente para una experiencia rápida y fluida, aprovechando la seguridad de Firebase.
+1.  **Formulario y Validación:** El usuario rellena el formulario en `/register`. Se utiliza `react-hook-form` y se valida que la contraseña cumpla los requisitos de seguridad y que ambas contraseñas coincidan.
+2.  **Creación en Firebase Auth:** Al enviar el formulario, se llama a la función `createUserWithEmailAndPassword` del SDK de cliente de Firebase. Esto crea el usuario en el sistema de autenticación de Firebase.
+3.  **Creación de Documento en Firestore:** Inmediatamente después, se crea un documento para el nuevo usuario en la colección `users` de Firestore, utilizando el `uid` del usuario como ID del documento. Este documento se inicializa con valores por defecto como `loyaltyPoints: 0`, `isSubscribed: false` y un array vacío para `addresses`.
+4.  **Verificación de Email y Notificación:**
+    -   Se envía automáticamente un email de verificación al usuario llamando a `sendEmailVerification`.
+    -   Paralelamente, se invoca la `Server Action` `trackKlaviyoEvent` para enviar una notificación `Admin New User Notification` al correo del administrador, informando del nuevo registro.
+
+```javascript
+// En src/app/register/page.tsx
+// 1. Crear usuario en Auth
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const newUser = userCredential.user;
+
+// 2. Enviar email de verificación
+await sendEmailVerification(newUser);
+
+// 3. Crear documento en Firestore
+const userDocRef = doc(db, "users", newUser.uid);
+await setDoc(userDocRef, {
+    email: newUser.email,
+    uid: newUser.uid,
+    loyaltyPoints: 0,
+    // ... otros campos iniciales
+});
+
+// 4. Notificar al admin vía Klaviyo
+await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', { ... });
+```
 
 ### Panel de Control de la Cuenta
 **Técnico:** Protegido por el `AccountLayout`, que redirige a los usuarios no autenticados. Muestra datos del `AuthContext`, como `loyaltyPoints` e `isSubscribed`.
@@ -269,7 +299,7 @@ if (loggedInIsAdmin) {
 - **Componente Principal:** `orders-client-page.tsx`.
 - **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders` de Firestore, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
 - **Rendimiento:** Al ser una consulta de grupo, requiere un índice compuesto en Firestore, que debe ser creado desde la consola de Firebase. La consola suele sugerir el índice necesario si la consulta falla por primera vez.
-- **Interfaz:** Los pedidos se muestran en un `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
+- **Interfaz:** Los pedidos se muestran en una `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
 
 **Paso 2: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
 - **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle que pasa la ruta completa del documento de Firestore como un parámetro de URL (`/admin/orders/{id}?path={encodedPath}`). Esto permite al componente de detalle saber exactamente qué documento obtener, independientemente de si está en la subcolección de un usuario o de un invitado.
@@ -369,3 +399,5 @@ form.setValue('price', salePrice);
 *Activar o desactivar funcionalidades clave, como la suscripción.*
 
 **Técnico:** Lee y escribe en un archivo JSON en el servidor (`src/lib/site-settings.json`) usando `Server Actions`.
+
+    
