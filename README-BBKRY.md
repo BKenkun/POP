@@ -44,16 +44,16 @@ c. **Llamada a Firestore**: La función `handleSave` en las páginas `new` o `ed
 // En: src/app/admin/products/new/page.tsx
 import { doc, setDoc } from 'firebase/firestore';
 
-const productRef = doc(db, 'products', data.id);
-await setDoc(productRef, productData); // Crea el documento.
+const productRef = doc(db, 'products', data.id); // Crea una referencia a un nuevo documento.
+await setDoc(productRef, productData); // Escribe los datos en ese documento.
 ```
 - **Para modificar un producto existente:**
 ```javascript
 // En: src/app/admin/products/edit/[id]/page.tsx
 import { doc, updateDoc } from 'firebase/firestore';
 
-const productRef = doc(db, 'products', product.id);
-await updateDoc(productRef, productData); // Actualiza el documento.
+const productRef = doc(db, 'products', product.id); // Apunta al documento existente.
+await updateDoc(productRef, productData); // Actualiza los campos de ese documento.
 ```
 
 **4. Flujo de Lectura (Leer los Productos)**
@@ -189,43 +189,32 @@ const calculatePackPriceFlow = ai.defineFlow(
 - **Lógica de Precios Final:** Un `useMemo` (`finalTotals`) recalcula el total definitivo del pedido. Esta es la fase crítica donde se decide si aplicar el descuento por volumen basándose en el método de pago seleccionado.
 - **Aplicación de Cupones:** Si el usuario introduce un código de cupón, la función `handleApplyCoupon` realiza una consulta a la colección `coupons` en Firestore para validar el código y aplicar el descuento correspondiente, actualizando el estado `couponDiscount`.
 
-**Paso 2: Creación del Pedido y Llamada a la Pasarela de Pago (`onFinalSubmit`)**
+**Paso 2: Creación de Pedidos y Redirección a la Pasarela de Pago (`onFinalSubmit`)**
 - Cuando el usuario llega al último paso y hace clic en "Pagar con Tarjeta", se invoca la función `onFinalSubmit`.
-- **Creación del Pedido en Firestore (Cliente):** La aplicación crea un documento de pedido **directamente desde el cliente** en la colección `/users/{userId}/orders/{orderId}`. Esto es seguro gracias a las reglas de Firestore que solo permiten a los usuarios escribir en su propia subcolección de pedidos. El estado inicial del pedido es `Pago Pendiente de Verificación`.
+- **Creación del Pedido Local:** La aplicación crea un documento de pedido **directamente desde el cliente** en la colección `/users/{userId}/orders/{orderId}` de la base de datos **local**. Esto es seguro gracias a las reglas de Firestore que solo permiten a los usuarios escribir en su propia subcolección de pedidos. El estado inicial del pedido es `Pago Pendiente de Verificación`.
 ```javascript
 // Fragmento de /app/checkout/checkout-client-page.tsx
-const orderRef = doc(db, 'users', user.uid, 'orders', orderId);
-const orderData = {
-    // ...datos del pedido
-    status: 'Pago Pendiente de Verificación',
-    // ...
-};
-await setDoc(orderRef, orderData);
+const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
+await setDoc(localOrderRef, localOrderData);
 ```
 
-- **Llamada a la API Intermediaria:** Inmediatamente después, se realiza una llamada `fetch` a la API Route local `/api/purchase`. Esta API Route actúa como un proxy seguro.
+- **Creación del Pedido en la Plataforma del Intermediario (Hilow):** Inmediatamente después, se crea un segundo documento de pedido, esta vez en la base de datos **externa** de Hilow, utilizando el cliente de Firestore específico (`hilowDb`).
 ```javascript
 // Fragmento de /app/checkout/checkout-client-page.tsx
-const purchasePayload = {
-    storeId: "comprarpopperonline.com",
-    priceInCents: finalTotals.priceInCents,
-    orderId: orderId,
-    successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${orderId}`,
-    cancelUrl: `${YOUR_DOMAIN}/checkout`,
-};
-const response = await fetch('/api/purchase', { /* ... */ });
+const storeId = 'comprarpopperonline.com';
+const hilowOrderId = `CPO_${uniqueId}`;
+const hilowOrderRef = doc(hilowDb, 'portals', storeId, 'orders', hilowOrderId);
+await setDoc(hilowOrderRef, hilowOrderData);
 ```
 
-**Paso 3: Proxy de API y Pasarela Externa (`/api/purchase/route.ts`)**
-- La API Route `/api/purchase` recibe los datos del cliente.
-- Su única función es reenviar esta petición a la **API del intermediario de pagos** (en este caso, `https://studio--.../api/purchase`), utilizando credenciales o claves que solo existen en el servidor, si fueran necesarias.
-- El intermediario procesa el pago con su propia pasarela (ej. Stripe) y devuelve una `checkoutUrl`.
-- Nuestra API Route devuelve esta `checkoutUrl` al cliente.
-
-**Paso 4: Redirección y Notificación Asíncrona**
-- El `checkout-client-page.tsx` recibe la `checkoutUrl` y redirige al usuario a la página de pago.
-- **Confirmación en Tiempo Real:** En paralelo, un listener de larga duración (`/lib/firestore-listener.ts`) está escuchando en una base de datos externa (`studio-9533...`). Cuando el intermediario de pagos confirma la transacción, escribe un documento en esa base de datos externa.
-- Nuestro listener detecta este nuevo documento, extrae el `orderId`, y actualiza el pedido correspondiente en nuestra base de datos local a `Reserva Recibida`, además de enviar notificaciones (ej. a Klaviyo). Este sistema asíncrono garantiza la confirmación del pedido incluso si el usuario cierra la ventana de pago.
+**Paso 3: Redirección a la Pasarela de Pago**
+- Una vez que ambos documentos de pedido han sido creados, el cliente es redirigido a la URL de pago del intermediario.
+```javascript
+// Fragmento de /app/checkout/checkout-client-page.tsx
+const paymentUrl = `https://hilowglobal.com/pay/${hilowOrderId}`;
+window.location.href = paymentUrl;
+```
+- **Confirmación en Tiempo Real:** En paralelo, un listener de larga duración (`/lib/firestore-listener.ts`) está escuchando en la base de datos externa de Hilow. Cuando el intermediario de pagos confirma la transacción, escribe un documento en esa base de datos. Nuestro listener detecta este cambio, extrae el `orderId`, y actualiza el pedido correspondiente en nuestra base de datos local a `Reserva Recibida`, además de enviar notificaciones (ej. a Klaviyo). Este sistema asíncrono garantiza la confirmación del pedido incluso si el usuario cierra la ventana de pago.
 
 ---
 
@@ -253,7 +242,65 @@ if (loggedInIsAdmin) {
 ```
 
 ### Registro de Nuevo Usuario
-**Técnico:** Usa `createUserWithEmailAndPassword`. Al registrarse, crea un nuevo documento para el usuario en la colección `users` de Firestore con valores iniciales.
+*Flujo técnico detallado para la creación de una nueva cuenta de cliente.*
+
+**Técnico:** El proceso de registro se gestiona íntegramente en el lado del cliente para una experiencia rápida y fluida, aprovechando la seguridad de Firebase. El flujo es el siguiente:
+
+**1. Formulario y Validación del Cliente:**
+- El usuario rellena el formulario en `/register`. Se utiliza `react-hook-form` para gestionar el estado del formulario y se valida en tiempo real que las contraseñas coincidan y cumplan los requisitos de seguridad.
+- Un componente de feedback, `PasswordStrengthIndicator`, guía al usuario mientras escribe su contraseña.
+
+```javascript
+// En src/app/register/page.tsx
+const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+    setLoading(true);
+    // ...
+```
+
+**2. Creación del Usuario en Firebase Authentication:**
+- Al enviar el formulario, se llama a la función `createUserWithEmailAndPassword` del SDK de cliente de Firebase. Esto crea el usuario en el sistema de autenticación de Firebase, que gestiona de forma segura la contraseña y el estado de autenticación.
+
+```javascript
+// En src/app/register/page.tsx
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const newUser = userCredential.user;
+```
+
+**3. Creación del Documento del Usuario en Firestore:**
+- Inmediatamente después de la creación en Auth, es **fundamental** crear un documento para el nuevo usuario en nuestra colección `users` de Firestore. Este paso vincula la cuenta de autenticación con los datos específicos de la tienda (pedidos, puntos, etc.).
+- El ID del documento en la colección `users` es el `uid` que Firebase Auth asigna al nuevo usuario, creando una conexión segura e inequívoca.
+- Este documento se inicializa con valores por defecto (puntos de fidelidad a cero, sin direcciones guardadas), preparando la cuenta del cliente para futuras interacciones como guardar direcciones o acumular puntos.
+
+```javascript
+// En src/app/register/page.tsx
+const userDocRef = doc(db, "users", newUser.uid);
+await setDoc(userDocRef, {
+    email: newUser.email,
+    uid: newUser.uid,
+    loyaltyPoints: 0,
+    isSubscribed: false,
+    addresses: [], // Array vacío listo para futuras direcciones
+    creationTime: serverTimestamp(),
+});
+```
+
+**4. Verificación de Email y Notificación al Administrador:**
+- Se invoca a `sendEmailVerification` para enviar automáticamente un email al usuario pidiéndole que confirme su dirección de correo. Esto es crucial para asegurar que el email es válido.
+- Paralelamente, se invoca la `Server Action` `trackKlaviyoEvent` para enviar una notificación (`Admin New User Notification`) al correo del administrador, informando del nuevo registro en tiempo real.
+
+```javascript
+// En src/app/register/page.tsx
+await sendEmailVerification(newUser);
+await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', { /* ... */ });
+```
+
+**5. Redirección:**
+- Finalmente, se redirige al usuario a una página de éxito (`/register/success`) que le informa de que debe revisar su correo para completar la activación, mejorando la experiencia de usuario.
 
 ### Panel de Control de la Cuenta
 **Técnico:** Protegido por el `AccountLayout`, que redirige a los usuarios no autenticados. Muestra datos del `AuthContext`, como `loyaltyPoints` e `isSubscribed`.
@@ -280,7 +327,7 @@ if (loggedInIsAdmin) {
 - **Componente Principal:** `orders-client-page.tsx`.
 - **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders` de Firestore, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
 - **Rendimiento:** Al ser una consulta de grupo, requiere un índice compuesto en Firestore, que debe ser creado desde la consola de Firebase. La consola suele sugerir el índice necesario si la consulta falla por primera vez.
-- **Interfaz:** Los pedidos se muestran en un `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
+- **Interfaz:** Los pedidos se muestran en una `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
 
 **Paso 2: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
 - **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle que pasa la ruta completa del documento de Firestore como un parámetro de URL (`/admin/orders/{id}?path={encodedPath}`). Esto permite al componente de detalle saber exactamente qué documento obtener, independientemente de si está en la subcolección de un usuario o de un invitado.
