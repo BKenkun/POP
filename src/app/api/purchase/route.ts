@@ -1,4 +1,3 @@
-
 # Arquitectura y Guía de Implementación del E-commerce
 
 ## Introducción
