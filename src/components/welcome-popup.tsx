@@ -16,54 +16,56 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/context/language-context';
 
-const POPUP_DISMISSED_KEY = 'popper_popup_dismissed';
-const SUBSCRIBED_KEY = 'popper_newsletter_subscribed';
+export const POPUP_DISMISSED_KEY = 'popper_popup_dismissed';
+export const SUBSCRIBED_KEY = 'popper_newsletter_subscribed';
 
-const WelcomePopup = () => {
+interface WelcomePopupProps {
+    isDismissed: boolean;
+    onStateChange: (state: { isOpen: boolean, isDismissed: boolean }) => void;
+}
+
+const WelcomePopup = ({ isDismissed, onStateChange }: WelcomePopupProps) => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
-    setIsClient(true);
     if (user) {
       setIsOpen(false);
-      setIsMinimized(false);
+      onStateChange({ isOpen: false, isDismissed: true }); // Effectively hide it for logged-in users
       return;
     }
 
     try {
       const isSubscribed = localStorage.getItem(SUBSCRIBED_KEY);
       if (isSubscribed === 'true') {
+        onStateChange({ isOpen: false, isDismissed: true });
         return;
       }
 
-      const isDismissed = localStorage.getItem(POPUP_DISMISSED_KEY);
-      if (isDismissed === 'true') {
-          setIsMinimized(true);
+      if (isDismissed) {
+         setIsOpen(false);
       } else {
         const timer = setTimeout(() => {
             setIsOpen(true);
+            onStateChange({ isOpen: true, isDismissed: false });
         }, 2000); 
         return () => clearTimeout(timer);
       }
     } catch (e) {
       console.error("localStorage not available.", e);
     }
-  }, [user]);
+  }, [user, isDismissed, onStateChange]);
 
   const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
     if (!open) {
-      setIsOpen(false);
-      setIsMinimized(true);
-       try {
+      onStateChange({ isOpen: false, isDismissed: true });
+      try {
         localStorage.setItem(POPUP_DISMISSED_KEY, 'true');
       } catch (e) { console.error(e) }
     } else {
-      setIsOpen(true);
-      setIsMinimized(false);
+       onStateChange({ isOpen: true, isDismissed: false });
        try {
         localStorage.removeItem(POPUP_DISMISSED_KEY);
       } catch (e) { console.error(e) }
@@ -72,34 +74,14 @@ const WelcomePopup = () => {
   
   const handleSubscriptionSuccess = () => {
     setIsOpen(false);
-    setIsMinimized(false);
+    onStateChange({ isOpen: false, isDismissed: true });
     try {
       localStorage.setItem(SUBSCRIBED_KEY, 'true');
       localStorage.removeItem(POPUP_DISMISSED_KEY);
     } catch (e) { console.error(e) }
   };
-
-  if (!isClient || user) {
-    return null;
-  }
   
-  const MinimizedButton = () => {
-    if (!isMinimized) return null;
-    return (
-       <Button
-            variant="default"
-            size="icon"
-            onClick={() => handleOpenChange(true)}
-            className="relative h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 animate-pulse-slow"
-            aria-label={t('popups.welcome_open_offer_aria')}
-        >
-            <Gift className="h-7 w-7" />
-        </Button>
-    )
-  }
-
   return (
-    <>
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md bg-background text-foreground text-center p-8">
           <DialogHeader className="space-y-4">
@@ -119,10 +101,8 @@ const WelcomePopup = () => {
           </div>
         </DialogContent>
       </Dialog>
-      
-      <MinimizedButton />
-    </>
   );
 };
 
 export default WelcomePopup;
+

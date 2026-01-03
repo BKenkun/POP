@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import FloatingLanguageButton from './floating-language-button';
 import { useToast } from '@/hooks/use-toast';
+import { MinimizedWelcomeButton } from './welcome-popup-loader';
 
 export default function FloatingLeftButtons() {
     const pathname = usePathname();
@@ -30,7 +31,9 @@ export default function FloatingLeftButtons() {
             "fixed left-6 z-40 flex flex-col items-center gap-4 transition-all duration-300",
             (isBannerVisible || areToastsVisible) ? "bottom-[72px]" : "bottom-6"
         )}>
-            {/* El WelcomePopupLoader que causaba el icono duplicado ha sido eliminado de aquí. */}
+            <div className={cn("transition-opacity duration-300", areToastsVisible && "opacity-0 invisible")}>
+                <MinimizedWelcomeButton />
+            </div>
             <div className={cn("transition-opacity duration-300", areToastsVisible && "opacity-0 invisible")}>
                  <FloatingLanguageButton />
             </div>
