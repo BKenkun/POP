@@ -271,7 +271,7 @@ await setDoc(userDocRef, {
 });
 
 // 4. Notificar al admin vía Klaviyo
-await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', { ... });
+await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', { /* ... */ });
 ```
 
 ### Panel de Control de la Cuenta
@@ -299,7 +299,7 @@ await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com'
 - **Componente Principal:** `orders-client-page.tsx`.
 - **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders` de Firestore, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
 - **Rendimiento:** Al ser una consulta de grupo, requiere un índice compuesto en Firestore, que debe ser creado desde la consola de Firebase. La consola suele sugerir el índice necesario si la consulta falla por primera vez.
-- **Interfaz:** Los pedidos se muestran en una `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
+- **Interfaz:** Los pedidos se muestran en un `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
 
 **Paso 2: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
 - **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle que pasa la ruta completa del documento de Firestore como un parámetro de URL (`/admin/orders/{id}?path={encodedPath}`). Esto permite al componente de detalle saber exactamente qué documento obtener, independientemente de si está en la subcolección de un usuario o de un invitado.
@@ -399,5 +399,3 @@ form.setValue('price', salePrice);
 *Activar o desactivar funcionalidades clave, como la suscripción.*
 
 **Técnico:** Lee y escribe en un archivo JSON en el servidor (`src/lib/site-settings.json`) usando `Server Actions`.
-
-    
