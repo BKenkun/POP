@@ -326,13 +326,20 @@ await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com'
 **Paso 1: Visualización de Todos los Pedidos (`/admin/orders`)**
 - **Componente Principal:** `orders-client-page.tsx`.
 - **Obtención de Datos:** Se utiliza una consulta `collectionGroup` sobre la colección `orders` de Firestore, ordenada por fecha. `onSnapshot` mantiene la lista actualizada en tiempo real.
+- **Seguridad:** La consulta solo es posible gracias a una regla de seguridad específica en `firestore.rules` que permite al administrador (y solo a él) leer de cualquier subcolección 'orders' en la base de datos.
+```javascript
+// En firestore.rules
+match /{path=**}/orders/{orderId} {
+   allow get, list: if isAdmin();
+}
+```
 - **Rendimiento:** Al ser una consulta de grupo, requiere un índice compuesto en Firestore, que debe ser creado desde la consola de Firebase. La consola suele sugerir el índice necesario si la consulta falla por primera vez.
-- **Interfaz:** Los pedidos se muestran en una `Tabs` que los filtra localmente por estado (`Reserva Recibida`, `En Reparto`, etc.), lo que es eficiente y rápido para el usuario.
+- **Interfaz:** Los pedidos se muestran en una tabla. El componente no utiliza `Tabs` para filtrar por estado, sino que muestra todos los pedidos en una única lista para simplicidad y rendimiento.
 
 **Paso 2: Detalle y Actualización de un Pedido (`/admin/orders/[orderId]`)**
 - **Paso de Datos:** Desde la tabla principal, cada fila de pedido tiene un enlace al detalle que pasa la ruta completa del documento de Firestore como un parámetro de URL (`/admin/orders/{id}?path={encodedPath}`). Esto permite al componente de detalle saber exactamente qué documento obtener, independientemente de si está en la subcolección de un usuario o de un invitado.
 - **Componente de Detalle:** `order-details-client.tsx`.
-- **Actualización de Estado:** El administrador puede cambiar el estado del pedido a través de un `Select`. Al guardar, se ejecuta la función `handleSaveChanges`.
+- **Actualización de Estado:** El administrador puede cambiar el estado del pedido a través de un `Select`. Al guardar, se ejecuta la función `handleSaveChanges` que utiliza `updateDoc` del SDK de cliente de Firebase para modificar el estado directamente en Firestore.
 ```javascript
 // Fragmento de /admin/orders/[orderId]/order-details-client.tsx
 const handleSaveChanges = async () => {
