@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
@@ -22,7 +22,7 @@ import type { Order, OrderItem, Product } from "@/lib/types";
 import { db } from "@/lib/firebase";
 import { collection, collectionGroup, query, where, orderBy, limit, Timestamp, onSnapshot } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { addDays, startOfMonth, format as formatDate } from "date-fns";
+import { addDays, startOfMonth, format as formatDate, subDays } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
@@ -43,7 +43,27 @@ const getImageUrl = (url: string) => {
     return url;
 };
 
-const StatCard = ({ title, icon: Icon, loading, children }: { title: string, icon: React.ElementType, loading: boolean, children: React.ReactNode }) => {
+const StatCard = ({ 
+    title, 
+    icon: Icon, 
+    loading, 
+    value, 
+    description,
+    compareValue,
+}: { 
+    title: string;
+    icon: React.ElementType;
+    loading: boolean; 
+    value: string | number;
+    description: string;
+    compareValue?: string | number | null;
+}) => {
+    const hasComparison = compareValue !== null && compareValue !== undefined;
+    const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9,-]+/g, "").replace(',', '.')) : value;
+    const numericCompareValue = typeof compareValue === 'string' ? parseFloat(compareValue.replace(/[^0-9,-]+/g, "").replace(',', '.')) : (compareValue ?? 0);
+    const difference = hasComparison ? numericValue - numericCompareValue : 0;
+    const isPositive = difference >= 0;
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -53,7 +73,14 @@ const StatCard = ({ title, icon: Icon, loading, children }: { title: string, ico
             <CardContent>
                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : (
                     <div className="space-y-1">
-                        {children}
+                        <div className="text-2xl font-bold">{value}</div>
+                        <p className="text-xs text-muted-foreground">{description}</p>
+                        {hasComparison && (
+                            <div className={cn("flex items-center text-xs font-semibold", isPositive ? "text-green-600" : "text-red-600")}>
+                                {isPositive ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                                {difference.toLocaleString('es-ES', { maximumFractionDigits: 2 })} vs. periodo anterior
+                            </div>
+                        )}
                     </div>
                 )}
             </CardContent>
@@ -69,8 +96,11 @@ export default function AdminDashboardPage() {
     to: today,
   });
   
-  const [compareDateRange, setCompareDateRange] = useState<DateRange | undefined>();
-  const [isCompareEnabled, setIsCompareEnabled] = useState(false);
+  const [compareDateRange, setCompareDateRange] = useState<DateRange | undefined>({
+      from: subDays(startOfMonth(today), 30),
+      to: subDays(today, 30)
+  });
+  const [isCompareEnabled, setIsCompareEnabled] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
@@ -126,35 +156,47 @@ export default function AdminDashboardPage() {
     };
   }, [user, isAdmin]);
 
-  const { 
-      filteredOrders, 
-      filteredUsers, 
-      recentOrders, 
-      topCustomers,
-      totalRevenue,
-      collectedRevenue,
-      chartData,
-      popularProducts,
-  } = useMemo(() => {
-      if (!allOrders || !allUsers) return { filteredOrders: [], filteredUsers: [], recentOrders: [], topCustomers: [], totalRevenue: 0, collectedRevenue: 0, chartData: [], popularProducts: [] };
+  const processDateRange = (range: DateRange | undefined, orders: Order[], users: Customer[]) => {
+      if (!orders || !users) return { filteredOrders: [], filteredUsers: [], totalRevenue: 0, collectedRevenue: 0 };
+      
+      const from = range?.from;
+      const to = range?.to;
 
-      const from = dateRange?.from;
-      const to = dateRange?.to;
-
-      const filteredOrders = allOrders.filter(order => {
+      const filteredOrders = orders.filter(order => {
           if (!from) return true;
           const orderDate = order.createdAt instanceof Timestamp ? order.createdAt.toDate() : new Date(order.createdAt);
           const toDate = to ? addDays(to, 1) : new Date(); // include the whole "to" day
           return orderDate >= from && orderDate < toDate;
       });
 
-      const filteredUsers = allUsers.filter(user => {
+      const filteredUsers = users.filter(user => {
           if (!from || !user.creationTime) return false;
           const userDate = user.creationTime instanceof Timestamp ? user.creationTime.toDate() : new Date(user.creationTime);
           const toDate = to ? addDays(to, 1) : new Date();
           return userDate >= from && userDate < toDate;
       });
 
+      const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+      const collectedRevenue = filteredOrders
+        .filter(order => order.status === 'Entregado')
+        .reduce((sum, order) => sum + order.total, 0);
+
+      return { filteredOrders, filteredUsers, totalRevenue, collectedRevenue };
+  };
+
+  const { 
+      currentPeriod,
+      previousPeriod,
+      recentOrders, 
+      topCustomers,
+      chartData,
+      popularProducts,
+  } = useMemo(() => {
+      if (!allOrders || !allUsers) return { currentPeriod: null, previousPeriod: null, recentOrders: [], topCustomers: [], chartData: [], popularProducts: [] };
+
+      const currentPeriod = processDateRange(dateRange, allOrders, allUsers);
+      const previousPeriod = isCompareEnabled ? processDateRange(compareDateRange, allOrders, allUsers) : null;
+      
       const recentOrders = allOrders.slice(0, 5);
       
       const customerSpending = allOrders.reduce((acc, order) => {
@@ -170,12 +212,7 @@ export default function AdminDashboardPage() {
       
       const topCustomers = Object.values(customerSpending).sort((a, b) => b.total - a.total).slice(0, 5);
       
-      const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
-      const collectedRevenue = filteredOrders
-        .filter(order => order.status === 'Entregado')
-        .reduce((sum, order) => sum + order.total, 0);
-      
-        const dailyData = filteredOrders.reduce((acc, order) => {
+        const dailyData = currentPeriod.filteredOrders.reduce((acc, order) => {
             const date = formatDate(order.createdAt instanceof Timestamp ? order.createdAt.toDate() : new Date(order.createdAt), 'yyyy-MM-dd');
             if (!acc[date]) {
                 acc[date] = { date, proyectados: 0, recogidos: 0 };
@@ -189,7 +226,7 @@ export default function AdminDashboardPage() {
         
         const chartData = Object.values(dailyData).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       
-        const productSales = filteredOrders.flatMap(o => o.items).reduce((acc, item: OrderItem) => {
+        const productSales = currentPeriod.filteredOrders.flatMap(o => o.items).reduce((acc, item: OrderItem) => {
             if (!acc[item.productId]) {
                 const productInfo = products.find(p => p.id === item.productId);
                 acc[item.productId] = { 
@@ -205,12 +242,12 @@ export default function AdminDashboardPage() {
 
         const popularProducts = Object.values(productSales).sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 5);
 
-      return { filteredOrders, filteredUsers, recentOrders, topCustomers, totalRevenue, collectedRevenue, chartData, popularProducts };
-  }, [allOrders, allUsers, dateRange, products]);
+      return { currentPeriod, previousPeriod, recentOrders, topCustomers, chartData, popularProducts };
+  }, [allOrders, allUsers, dateRange, compareDateRange, isCompareEnabled, products]);
 
 
-  const totalOrders = filteredOrders.length;
-  const newCustomers = filteredUsers.length;
+  const totalOrders = currentPeriod?.filteredOrders.length ?? 0;
+  const newCustomers = currentPeriod?.filteredUsers.length ?? 0;
   const lowStockCount = products.filter(p => p.stock !== undefined && p.stock <= 5).length;
   const loadingStats = loadingOrders || loadingUsers;
 
@@ -236,39 +273,40 @@ export default function AdminDashboardPage() {
         <OverviewChart data={chartData} />
 
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Ingresos" icon={DollarSign} loading={loadingStats}>
-                <div className="text-2xl font-bold">{formatPrice(collectedRevenue)}</div>
-                <p className="text-xs text-muted-foreground">
-                    <span className="font-semibold">{formatPrice(totalRevenue)}</span> proyectados
-                </p>
-            </StatCard>
+            <StatCard 
+                title="Ingresos Recogidos" 
+                icon={DollarSign} 
+                loading={loadingStats}
+                value={formatPrice(currentPeriod?.collectedRevenue ?? 0)}
+                description={`${formatPrice(currentPeriod?.totalRevenue ?? 0)} proyectados`}
+                compareValue={previousPeriod ? formatPrice(previousPeriod.collectedRevenue) : null}
+            />
 
-            <StatCard title="Pedidos" icon={ShoppingCart} loading={loadingStats}>
-                <div className="text-2xl font-bold">{totalOrders.toLocaleString('es-ES')}</div>
-                <p className="text-xs text-muted-foreground invisible">Placeholder</p>
-            </StatCard>
+            <StatCard 
+                title="Pedidos" 
+                icon={ShoppingCart} 
+                loading={loadingStats}
+                value={totalOrders.toLocaleString('es-ES')}
+                description="Total de pedidos en el período."
+                compareValue={previousPeriod?.filteredOrders.length}
+            />
 
-            <StatCard title="Clientes Nuevos" icon={Users} loading={loadingStats}>
-            <div className="text-2xl font-bold">{newCustomers.toLocaleString('es-ES')}</div>
-            <p className="text-xs text-muted-foreground invisible">Placeholder</p>
-            </StatCard>
+            <StatCard 
+                title="Clientes Nuevos" 
+                icon={Users} 
+                loading={loadingStats}
+                value={newCustomers.toLocaleString('es-ES')}
+                description="Usuarios registrados en el período."
+                compareValue={previousPeriod?.filteredUsers.length}
+            />
 
-            <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Productos Activos</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                {loadingProducts ? <Loader2 className="h-6 w-6 animate-spin" /> : <>
-                <div className="text-2xl font-bold">{products.length}</div>
-                <Link href="/admin/products">
-                    <p className={cn("text-xs font-bold hover:underline cursor-pointer", lowStockCount > 0 ? "text-red-500" : "text-muted-foreground")}>
-                        {lowStockCount} con bajo stock
-                    </p>
-                </Link>
-                </>}
-            </CardContent>
-            </Card>
+             <StatCard 
+                title="Productos Activos" 
+                icon={Package} 
+                loading={loadingProducts}
+                value={products.length}
+                description={`${lowStockCount} con bajo stock`}
+            />
         </div>
 
 
