@@ -1,3 +1,4 @@
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -85,6 +86,9 @@ export async function POST(req: NextRequest) {
 
   const signature = req.headers.get('hilow-signature');
   const body = await req.text();
+
+  // Log the incoming request body for easier debugging
+  console.log("Received Hilow Webhook Body:", body);
 
   if (!signature) {
     return NextResponse.json({ error: 'Petición no autorizada. Falta la cabecera hilow-signature.' }, { status: 401 });
