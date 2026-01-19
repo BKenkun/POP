@@ -31,7 +31,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { hilowDb } from '@/lib/firebase-hilow';
 import { doc, setDoc, serverTimestamp, getDoc, writeBatch, collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from 'react-hook-form';
@@ -55,6 +54,7 @@ import { updateUser } from '@/app/actions/user-data';
 import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 import { QuantitySelector } from '@/components/quantity-selector';
+import { createHilowOrder } from '@/app/actions/hilow';
 
 interface Address {
   id: string;
@@ -425,8 +425,7 @@ export default function CheckoutClientPage() {
     setLoading(true);
 
     const uniqueId = `CPO_${user.uid.substring(0,5)}_${Date.now()}`;
-    const YOUR_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || 'https://comprarpopperonline.com';
-
+    
     try {
         // --- 1. Crear el pedido en nuestra base de datos local ---
         const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
@@ -440,36 +439,29 @@ export default function CheckoutClientPage() {
             customerEmail: data.email,
             shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
             status: 'Pago Pendiente de Verificación',
-            paymentMethod: 'stripe',
+            paymentMethod: 'hilow',
             createdAt: serverTimestamp() as any,
             ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount }})
         };
         await setDoc(localOrderRef, localOrderData);
 
-        // --- 2. Crear el pedido en la base de datos de Hilow ---
-        const storeId = 'comprarpopperonline.com';
-        const hilowOrderId = `CPO_${uniqueId}`;
-        const hilowOrderRef = doc(hilowDb, 'portals', storeId, 'orders', hilowOrderId);
-
-        const hilowOrderData = {
-          orderId: hilowOrderId,
-          storeId: storeId,
-          amountInCents: finalTotals.priceInCents,
-          productName: cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
-          isSubscription: false,
-          status: 'pending_payment',
-          createdAt: new Date().toISOString(),
-          successUrl: `${YOUR_DOMAIN}/checkout/success?order_id=${uniqueId}`,
-          cancelUrl: `${YOUR_DOMAIN}/checkout`,
-        };
-        await setDoc(hilowOrderRef, hilowOrderData);
+        // --- 2. Comunicar el pedido a la API de Hilow para obtener la URL de pago ---
+        const hilowResult = await createHilowOrder(
+            uniqueId, // This is our internalOrderId
+            finalTotals.priceInCents,
+            cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
+            false // isSubscription
+        );
+        
+        if (!hilowResult.success || !hilowResult.checkoutUrl) {
+            throw new Error(hilowResult.message || 'No se pudo iniciar el proceso de pago.');
+        }
 
         // --- 3. Redirigir al cliente a la pasarela de pago de Hilow ---
-        const paymentUrl = `https://hilowglobal.com/pay/${hilowOrderId}`;
-        window.location.href = paymentUrl;
+        window.location.href = hilowResult.checkoutUrl;
 
     } catch (error: any) {
-        console.error('Payment Initiation or Order Creation Error: ', error);
+        console.error('Error en el proceso de pago: ', error);
         toast({
             title: t('checkout.toasts.order_error_title'),
             description: error.message || t('checkout.toasts.order_error_desc'),
