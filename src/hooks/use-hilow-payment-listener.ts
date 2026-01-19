@@ -67,27 +67,33 @@ export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPa
       
       const ordersCollectionGroup = collectionGroup(hilowDb, 'orders');
       
-      // Las reglas de seguridad de Hilow REQUIEREN que la consulta filtre por `internalOrderId` Y por `status`.
-      // Añadimos 'paid' al array de estados para mayor robustez.
+      // NUEVA LÓGICA:
+      // 1. Buscamos el pedido solo por su ID.
+      // 2. Una vez encontrado, el listener se queda esperando a que el campo 'status' cambie.
       const q = query(
         ordersCollectionGroup, 
-        where('internalOrderId', '==', yourInternalOrderId),
-        where('status', 'in', ['completed', 'renewal_succeeded', 'paid'])
+        where('internalOrderId', '==', yourInternalOrderId)
       );
       
       unsubscribe = onSnapshot(q, (querySnapshot) => {
         if (!querySnapshot.empty && isSubscribed) {
+          const doc = querySnapshot.docs[0];
+          const orderData = doc.data();
+          const isCompleted = ['completed', 'renewal_succeeded', 'paid'].includes(orderData.status);
           
-          toast({
-            title: "¡Pago Confirmado!",
-            description: `Tu pedido ${yourInternalOrderId} se ha procesado correctamente.`
-          });
-          
-          onPaymentSuccess();
+          // 3. Si el estado es uno de los de éxito, ejecutamos la acción.
+          if (isCompleted) {
+            toast({
+              title: "¡Pago Confirmado!",
+              description: `Tu pedido ${yourInternalOrderId} se ha procesado correctamente.`
+            });
+            
+            onPaymentSuccess();
 
-          // Dejamos de escuchar para ahorrar recursos.
-          unsubscribe();
-          isSubscribed = false; // Prevent double execution
+            // Dejamos de escuchar para ahorrar recursos.
+            unsubscribe();
+            isSubscribed = false; // Prevent double execution
+          }
         }
       }, (error) => {
         console.error("Error al escuchar los pedidos de Hilow:", error.message);
