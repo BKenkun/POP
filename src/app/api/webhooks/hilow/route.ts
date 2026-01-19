@@ -7,6 +7,8 @@ import { firestore as adminFirestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
+import { headers } from 'next/headers';
+
 
 /**
  * ESTA FUNCIÓN CONTIENE LA LÓGICA DE NEGOCIO REAL DE NUESTRA TIENDA.
@@ -83,8 +85,9 @@ export async function POST(req: NextRequest) {
     console.error('CRÍTICO: La variable de entorno HILOW_WEBHOOK_SECRET no está configurada.');
     return NextResponse.json({ error: 'Configuración de servidor incompleta.' }, { status: 500 });
   }
-
-  const signature = req.headers.get('hilow-signature');
+  
+  const headerStore = headers();
+  const signature = headerStore.get('hilow-signature');
   const body = await req.text();
 
   // Log the incoming request body for easier debugging
@@ -109,12 +112,10 @@ export async function POST(req: NextRequest) {
 
     const payload = JSON.parse(body);
     
-    // Para ser robusto, comprobemos múltiples formatos de payload posibles.
-    const eventType = payload.type || payload.eventType;
-    const internalOrderId = payload.internalOrderId || payload.data?.object?.internalOrderId || payload.data?.internalOrderId;
+    const { eventType, internalOrderId } = payload;
 
     if (!internalOrderId || !eventType) {
-        console.error('Payload del webhook inválido: faltan campos requeridos (internalOrderId o eventType/type).', payload);
+        console.error('Payload del webhook inválido: faltan campos requeridos (internalOrderId o eventType).', payload);
         return NextResponse.json({ error: 'Payload del webhook inválido.' }, { status: 400 });
     }
 
