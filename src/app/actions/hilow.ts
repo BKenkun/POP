@@ -6,6 +6,10 @@ export async function createHilowOrder(
   productName: string,
   isSubscription: boolean
 ) {
+  if (amountInCents < 0 || !Number.isInteger(amountInCents)) {
+    return { success: false, message: 'El importe debe ser un número entero positivo de céntimos.' };
+  }
+
   const HILOW_API_KEY = process.env.HILOW_API_KEY;
   const HILOW_API_URL = 'https://hilowglobal.com/api/v1/create-order';
   const storeHostname = process.env.NEXT_PUBLIC_BASE_URL?.replace(/https?:\/\//, '') || 'comprarpopperonline.com';
