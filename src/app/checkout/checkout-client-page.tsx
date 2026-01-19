@@ -447,10 +447,10 @@ export default function CheckoutClientPage() {
 
         // --- 2. Comunicar el pedido a la API de Hilow para obtener la URL de pago ---
         const hilowResult = await createHilowOrder(
-            uniqueId, // This is our internalOrderId
+            uniqueId,
             finalTotals.priceInCents,
             cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
-            false // isSubscription
+            false
         );
         
         if (!hilowResult.success || !hilowResult.checkoutUrl) {
