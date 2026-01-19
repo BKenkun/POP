@@ -424,7 +424,7 @@ export default function CheckoutClientPage() {
     }
     setLoading(true);
 
-    const uniqueId = `CPO_${user.uid.substring(0,5)}_${Date.now()}`;
+    const uniqueId = `CPO_${user.uid}_${Date.now()}`;
     
     try {
         // --- 1. Crear el pedido en nuestra base de datos local ---

@@ -68,10 +68,11 @@ export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPa
       const ordersCollectionGroup = collectionGroup(hilowDb, 'orders');
       
       // Las reglas de seguridad de Hilow REQUIEREN que la consulta filtre por `internalOrderId` Y por `status`.
+      // Añadimos 'paid' al array de estados para mayor robustez.
       const q = query(
         ordersCollectionGroup, 
         where('internalOrderId', '==', yourInternalOrderId),
-        where('status', 'in', ['completed', 'renewal_succeeded'])
+        where('status', 'in', ['completed', 'renewal_succeeded', 'paid'])
       );
       
       unsubscribe = onSnapshot(q, (querySnapshot) => {
