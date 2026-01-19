@@ -1,3 +1,5 @@
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { firestore as adminFirestore } from '@/lib/firebase-admin';
@@ -5,41 +7,22 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
 
-const HILOW_WEBHOOK_SECRET = process.env.HILOW_WEBHOOK_SECRET;
-
 /**
- * Verify the webhook signature from Hilow to ensure it's authentic.
+ * ESTA FUNCIÓN CONTIENE LA LÓGICA DE NEGOCIO REAL DE NUESTRA TIENDA.
+ * Actualiza la base de datos y ejecuta acciones post-pago.
+ * @param internalOrderId El ID interno del pedido del cliente.
+ * @param eventType El tipo de evento recibido de Hilow.
+ * @param payload El cuerpo completo del webhook para información adicional.
  */
-async function verifySignature(req: NextRequest): Promise<string> {
-    if (!HILOW_WEBHOOK_SECRET) {
-        throw new Error('El secreto del webhook de Hilow no está configurado en el servidor.');
-    }
-
-    const signature = req.headers.get('x-hilow-signature');
-    if (!signature) {
-        throw new Error('Falta la cabecera de la firma del webhook.');
-    }
-
-    const body = await req.text(); // Read body as text to verify signature
-    const hmac = crypto.createHmac('sha256', HILOW_WEBHOOK_SECRET);
-    hmac.update(body);
-    const expectedSignature = hmac.digest('hex');
-
-    if (signature !== expectedSignature) {
-        throw new Error('Firma del webhook inválida.');
-    }
-
-    return body; // Return the body so it can be parsed as JSON later
-}
-
-/**
- * Updates the local order in our Firestore database.
- * This is where the business logic for a successful payment goes.
- */
-async function updateLocalOrder(internalOrderId: string) {
-    console.log(`Procesando pedido confirmado: ${internalOrderId}`);
+async function updateLocalOrder(internalOrderId: string, eventType: string, payload: any) {
+    console.log(`Procesando evento '${eventType}' para el pedido ${internalOrderId}`);
     
-    // The order ID contains the user ID, e.g., 'CPO_abcde_167...'
+    // Solo actuar en eventos de pago exitoso.
+    if (eventType !== 'payment.succeeded' && eventType !== 'payment.completed' && eventType !== 'payment.renewal_succeeded') {
+        console.log(`Evento '${eventType}' no requiere actualización de estado de pedido.`);
+        return;
+    }
+    
     const parts = internalOrderId.split('_');
     if (parts.length < 3) {
         console.error(`ID de pedido inválido, no se pudo extraer el ID de usuario: ${internalOrderId}`);
@@ -56,7 +39,6 @@ async function updateLocalOrder(internalOrderId: string) {
         
         const localOrderData = orderSnap.data() as Order;
         
-        // Prevent processing already completed orders
         if (localOrderData.status !== 'Pago Pendiente de Verificación') {
             console.log(`El pedido ${internalOrderId} ya fue procesado. Estado actual: ${localOrderData.status}`);
             return;
@@ -65,16 +47,13 @@ async function updateLocalOrder(internalOrderId: string) {
         const newStatus = 'Reserva Recibida';
         const batch = adminFirestore.batch();
 
-        // 1. Update order status
         batch.update(orderRef, { status: newStatus });
 
-        // 2. Increment coupon usage if one was used
         if ((localOrderData as any).coupon) {
           const couponRef = adminFirestore.collection('coupons').doc((localOrderData as any).coupon.code);
           batch.update(couponRef, { usageCount: FieldValue.increment(1) });
         }
         
-        // 3. Add loyalty points
         const pointsToAdd = Math.floor((localOrderData.total || 0) / 1000);
         if (pointsToAdd > 0) {
           const userRef = adminFirestore.collection('users').doc(userId);
@@ -86,35 +65,76 @@ async function updateLocalOrder(internalOrderId: string) {
         await batch.commit();
         console.log(`Pedido ${internalOrderId} actualizado a "${newStatus}" y puntos/cupón aplicados.`);
         
-        // 4. Send confirmation email via Klaviyo
         await trackOrderStatusUpdate({...localOrderData, id: internalOrderId, status: newStatus}, newStatus);
 
     } catch (error) {
         console.error(`Error al actualizar el pedido local ${internalOrderId}:`, error);
-        // Optionally, send an alert to admins here
     }
 }
 
+/**
+ * Manejador para las peticiones POST que llegan desde Hilow.
+ */
 export async function POST(req: NextRequest) {
-    try {
-        const rawBody = await verifySignature(req);
-        const event = JSON.parse(rawBody);
+  const webhookSecret = process.env.HILOW_WEBHOOK_SECRET;
 
-        // Process the event based on its type
-        if (event.type === 'payment.succeeded') {
-            const { internalOrderId } = event.data;
-            if (internalOrderId) {
-                await updateLocalOrder(internalOrderId);
-            } else {
-                 console.warn('Webhook de pago exitoso recibido sin internalOrderId.');
-            }
-        } else {
-            console.log(`Webhook de tipo "${event.type}" recibido y no procesado.`);
-        }
+  if (!webhookSecret) {
+    console.error('CRÍTICO: La variable de entorno HILOW_WEBHOOK_SECRET no está configurada.');
+    return NextResponse.json({ error: 'Configuración de servidor incompleta.' }, { status: 500 });
+  }
 
-        return NextResponse.json({ received: true });
-    } catch (error: any) {
-        console.error('Error en el webhook de Hilow:', error.message);
-        return new NextResponse(`Error en el Webhook: ${error.message}`, { status: 400 });
+  const signature = req.headers.get('hilow-signature');
+  const body = await req.text();
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Petición no autorizada. Falta la cabecera hilow-signature.' }, { status: 401 });
+  }
+
+  try {
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(body)
+      .digest('hex');
+
+    const signatureBuffer = Buffer.from(signature);
+    const expectedSignatureBuffer = Buffer.from(expectedSignature);
+
+    if (signatureBuffer.length !== expectedSignatureBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedSignatureBuffer)) {
+      throw new Error('La firma del webhook no es válida.');
     }
+
+    const payload = JSON.parse(body);
+    
+    // Para ser robusto, comprobemos múltiples formatos de payload posibles.
+    const eventType = payload.type || payload.eventType;
+    const internalOrderId = payload.internalOrderId || payload.data?.object?.internalOrderId || payload.data?.internalOrderId;
+
+    if (!internalOrderId || !eventType) {
+        console.error('Payload del webhook inválido: faltan campos requeridos (internalOrderId o eventType/type).', payload);
+        return NextResponse.json({ error: 'Payload del webhook inválido.' }, { status: 400 });
+    }
+
+    // Procesar el evento según su tipo.
+    switch (eventType) {
+      case 'payment.succeeded':
+      case 'payment.completed':
+      case 'payment.renewal_succeeded':
+        await updateLocalOrder(internalOrderId, eventType, payload);
+        break;
+      case 'subscription.cancelled':
+      case 'subscription.payment_failed':
+        console.log(`Evento de suscripción '${eventType}' recibido para el pedido ${internalOrderId}. Lógica de manejo pendiente.`);
+        // Aquí se podría añadir lógica para marcar la suscripción como cancelada en la DB.
+        break;
+      default:
+        console.warn(`Evento de webhook no manejado recibido de Hilow: ${eventType}`);
+    }
+
+  } catch (err: any) {
+    console.error(`Error procesando el webhook de Hilow: ${err.message}`);
+    const statusCode = err.message.includes('firma') ? 400 : 500;
+    return NextResponse.json({ error: `Error en el webhook: ${err.message}` }, { status: statusCode });
+  }
+
+  return NextResponse.json({ received: true });
 }
