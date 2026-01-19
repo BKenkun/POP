@@ -12,7 +12,7 @@ export async function createHilowOrder(
 
   const HILOW_API_KEY = process.env.HILOW_API_KEY;
   const HILOW_API_URL = 'https://hilowglobal.com/api/v1/create-order';
-  const storeHostname = process.env.NEXT_PUBLIC_BASE_URL?.replace(/https?:\/\//, '') || 'comprarpopperonline.com';
+  const storeHostname = 'comprarpopperonline.com';
   
   if (!HILOW_API_KEY) {
     console.error('Hilow API key is not configured.');
@@ -25,8 +25,8 @@ export async function createHilowOrder(
     amountInCents,
     productName,
     isSubscription,
-    successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${internalOrderId}`,
-    cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
+    successUrl: `https://${storeHostname}/checkout/success?order_id=${internalOrderId}`,
+    cancelUrl: `https://${storeHostname}/checkout`,
   };
 
   try {
