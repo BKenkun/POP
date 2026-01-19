@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
@@ -9,35 +9,42 @@ import { Loader2, CheckCircle, ShoppingBag, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast';
+import { useHilowPaymentListener } from '@/hooks/use-hilow-payment-listener';
 
 function SuccessPageContent() {
     const router = useRouter();
     const { clearCart, cartCount } = useCart();
     const { user } = useAuth();
-    const { toast } = useToast();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('order_id');
 
-    useEffect(() => {
-        if (orderId && cartCount > 0) {
+    const [isConfirmed, setIsConfirmed] = useState(false);
+
+    // Callback que se ejecuta cuando el listener detecta un pago exitoso
+    const handlePaymentSuccess = () => {
+        if (cartCount > 0) {
             clearCart();
-            toast({
-                title: "¡Pago Iniciado!",
-                description: "Gracias por tu compra. Tu pedido se está procesando.",
-                duration: 8000,
-            });
-        } else if (!orderId) {
-            // If there's no orderId, it might be a direct navigation. Redirect home.
+        }
+        setIsConfirmed(true);
+    };
+
+    // Usamos el hook para escuchar la confirmación del pago
+    useHilowPaymentListener(orderId, handlePaymentSuccess);
+
+    useEffect(() => {
+        // Si no hay un ID de pedido, podría ser una navegación directa. Redirigir a la página de inicio.
+        if (!orderId) {
             router.replace('/');
         }
-    }, [orderId, clearCart, toast, cartCount, router]);
+    }, [orderId, router]);
 
-    if (!orderId) {
+
+    if (!isConfirmed) {
        return (
          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">Verificando estado del pedido...</p>
+            <p className="mt-4 text-muted-foreground">Verificando estado del pago...</p>
+            <p className="text-sm mt-2 text-muted-foreground/80">Por favor, no cierres esta ventana.</p>
           </div>
        );
     }
@@ -49,14 +56,14 @@ function SuccessPageContent() {
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
                         <CheckCircle className="h-10 w-10 text-green-500 dark:text-green-400" />
                     </div>
-                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Reserva Confirmada!</CardTitle>
+                    <CardTitle className="text-3xl font-headline text-primary font-bold">¡Pago Completado!</CardTitle>
                     <CardDescription className="text-lg text-foreground/80">
                         Gracias por tu compra, {user?.email?.split('@')[0] || 'cliente'}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-muted-foreground">
-                        Hemos recibido tu reserva correctamente. Recibirás un email con los detalles cuando el pago se haya procesado completamente.
+                        Hemos recibido tu pago correctamente. Recibirás un email con los detalles del pedido en breve.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg">
