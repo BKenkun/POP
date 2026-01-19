@@ -80,7 +80,15 @@ export const ShippingAddressSchema = z.object({
   phone: z.string().nullable(),
 });
 
-const paymentMethods = ['cod_cash', 'cod_card', 'cod_bizum', 'prepaid_bizum', 'prepaid_transfer', 'stripe'] as const;
+const paymentMethods = [
+  'cod_cash', 
+  'cod_card', 
+  'cod_bizum', 
+  'prepaid_bizum', 
+  'prepaid_transfer', 
+  'stripe', 
+  'hilow' // <--- Añade esto
+] as const;
 
 // Helper function to handle different date types (Timestamp, Date, string)
 const dateSchema = z.preprocess((arg) => {
