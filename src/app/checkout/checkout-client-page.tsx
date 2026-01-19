@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -427,7 +428,6 @@ export default function CheckoutClientPage() {
     const uniqueId = `CPO_${user.uid}_${Date.now()}`;
     
     try {
-        // --- 1. Crear el pedido en nuestra base de datos local ---
         const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
         const localOrderData: Omit<Order, 'id'> = {
             userId: user.uid,
@@ -445,7 +445,6 @@ export default function CheckoutClientPage() {
         };
         await setDoc(localOrderRef, localOrderData);
 
-        // --- 2. Comunicar el pedido a la API de Hilow para obtener la URL de pago ---
         const hilowResult = await createHilowOrder(
             uniqueId,
             finalTotals.priceInCents,
@@ -457,7 +456,6 @@ export default function CheckoutClientPage() {
             throw new Error(hilowResult.message || 'No se pudo iniciar el proceso de pago.');
         }
 
-        // --- 3. Redirigir al cliente a la pasarela de pago de Hilow ---
         window.location.href = hilowResult.checkoutUrl;
 
     } catch (error: any) {
