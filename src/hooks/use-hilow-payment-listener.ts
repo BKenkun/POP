@@ -67,18 +67,24 @@ export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPa
       
       const ordersCollectionGroup = collectionGroup(hilowDb, 'orders');
       
-      // NUEVA LÓGICA:
-      // 1. Buscamos el pedido solo por su ID.
-      // 2. Una vez encontrado, el listener se queda esperando a que el campo 'status' cambie.
+      // LÓGICA CORREGIDA:
+      // 1. Buscamos el pedido solo por su ID para evitar problemas con las reglas de seguridad de Hilow.
       const q = query(
         ordersCollectionGroup, 
         where('internalOrderId', '==', yourInternalOrderId)
       );
       
+      // onSnapshot es el listener en tiempo real.
       unsubscribe = onSnapshot(q, (querySnapshot) => {
-        if (!querySnapshot.empty && isSubscribed) {
+        if (querySnapshot.empty) {
+            console.warn(`Hilow Listener: No se encontró ningún pedido con el internalOrderId ${yourInternalOrderId}. Esperando...`);
+            return;
+        }
+          
+        if (isSubscribed) {
           const doc = querySnapshot.docs[0];
           const orderData = doc.data();
+          // 2. Comprobamos el estado del pedido DENTRO del listener.
           const isCompleted = ['completed', 'renewal_succeeded', 'paid'].includes(orderData.status);
           
           // 3. Si el estado es uno de los de éxito, ejecutamos la acción.
@@ -90,9 +96,9 @@ export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPa
             
             onPaymentSuccess();
 
-            // Dejamos de escuchar para ahorrar recursos.
+            // 4. Dejamos de escuchar para ahorrar recursos.
             unsubscribe();
-            isSubscribed = false; // Prevent double execution
+            isSubscribed = false;
           }
         }
       }, (error) => {
