@@ -1,74 +1,108 @@
 'use client';
 /**
- * @fileoverview Hook de React para escuchar la confirmación de un pedido en nuestra PROPIA base de datos.
+ * @fileoverview Hook de React para escuchar notificaciones de pago de Hilow en tiempo real DESDE EL FRONTEND.
  *
- * Propósito: Dar feedback visual inmediato al usuario en la página de éxito.
- * ¿Qué hace?: Este hook se conecta a la subcolección de pedidos del usuario actual y espera a que el 
- * estado de un pedido específico cambie a un estado de éxito (ej. 'Reserva Recibida').
- * Cuando lo detecta, ejecuta una acción en la UI, como mostrar una notificación "toast" o cambiar el estado de la página.
+ * Propósito: Dar feedback visual inmediato al usuario (ej. un "tick" de confirmación en la página de éxito).
+ * ¿Qué hace?: Este hook establece una conexión segura y de solo lectura con la base de datos de Hilow
+ * para "escuchar" cuándo un pedido se marca como 'completed' o 'renewal_succeeded'. Cuando lo detecta, puede ejecutar
+ * una acción en la UI, como mostrar una notificación "toast".
  * 
  * IMPORTANTE: Este hook es OPCIONAL y solo debe usarse para mejorar la experiencia de usuario.
- * NO debe usarse para lógica de negocio crítica. Para eso, se usa el Webhook de servidor.
+ * NO debe usarse para lógica de negocio crítica (activar envíos, etc.). Para eso, se debe usar el Webhook de servidor.
  */
 
 import { useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase'; // Importamos NUESTRA instancia de DB
-import { useAuth } from '@/context/auth-context'; // Para obtener el ID del usuario actual
-import { useToast } from '@/hooks/use-toast';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, collectionGroup, query, where, onSnapshot } from 'firebase/firestore';
+
+// Import our app's toast system
+import { useToast } from '@/hooks/use-toast'; 
+
+// --- Configuración de Conexión a Hilow (Segura para el frontend) ---
+const HILOW_API_KEY = "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8";
+
+const hilowFirebaseConfig = {
+  apiKey: HILOW_API_KEY,
+  authDomain: "studio-953389996-b1a64.firebaseapp.com",
+  projectId: "studio-953389996-b1a64",
+};
+
+const HILOW_APP_NAME = 'hilowListener';
 
 /**
- * Un hook de React que escucha los pedidos completados en NUESTRA base de datos y ejecuta una acción.
+ * Inicializa y devuelve una instancia de la aplicación de Firebase para Hilow.
+ * Evita inicializaciones múltiples.
+ * @returns La instancia de la app de Firebase para Hilow.
+ */
+const getHilowApp = (): FirebaseApp => {
+  const existingApp = getApps().find(app => app.name === HILOW_APP_NAME);
+  if (existingApp) {
+    return existingApp;
+  }
+  // Crea una instancia con un nombre único para no interferir con la app principal del cliente.
+  return initializeApp(hilowFirebaseConfig, HILOW_APP_NAME);
+};
+
+
+/**
+ * Un hook de React que escucha los pedidos completados en el sistema de Hilow y ejecuta una acción.
  *
- * @param yourInternalOrderId El ID del pedido que queremos vigilar.
+ * @param yourInternalOrderId El ID del pedido del sistema propio del cliente.
  * @param onPaymentSuccess Un callback que se ejecuta cuando se detecta el pago.
  */
 export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPaymentSuccess: () => void) => {
   const { toast } = useToast();
-  const { user } = useAuth(); // Obtenemos el usuario autenticado
   
   useEffect(() => {
-    // No hacer nada si no hay ID de pedido o no hay usuario
-    if (!yourInternalOrderId || !user) {
+    if (!yourInternalOrderId) {
       return;
     }
     
     let unsubscribe: () => void = () => {};
-    let isSubscribed = true; // Flag para evitar llamadas al callback después de desmontar
+    let isSubscribed = true; // Flag to prevent calling callback after unmount
 
     try {
-      // Construimos la ruta al documento del pedido en NUESTRA base de datos
-      const orderDocRef = doc(db, 'users', user.uid, 'orders', yourInternalOrderId);
+      const hilowApp = getHilowApp();
+      const hilowDb = getFirestore(hilowApp);
       
-      // onSnapshot es el listener en tiempo real
-      unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
-        if (docSnap.exists() && isSubscribed) {
-          const orderData = docSnap.data();
+      const ordersCollectionGroup = collectionGroup(hilowDb, 'orders');
+      
+      // LÓGICA CORREGIDA:
+      // 1. Buscamos el pedido solo por su ID para evitar problemas con las reglas de seguridad de Hilow.
+      const q = query(
+        ordersCollectionGroup, 
+        where('internalOrderId', '==', yourInternalOrderId)
+      );
+      
+      // onSnapshot es el listener en tiempo real.
+      unsubscribe = onSnapshot(q, (querySnapshot) => {
+        // En cuanto encontramos el documento...
+        if (!querySnapshot.empty && isSubscribed) {
+          const doc = querySnapshot.docs[0];
+          const orderData = doc.data();
+          // 2. Comprobamos el estado del pedido DENTRO del listener.
+          const isCompleted = ['completed', 'renewal_succeeded', 'paid'].includes(orderData.status);
           
-          // VERIFICACIÓN EN EL CLIENTE:
-          // Reaccionamos si el estado ya es uno de los estados de éxito que define el webhook
-          const isCompleted = ['Reserva Recibida', 'completed', 'paid', 'renewal_succeeded'].includes(orderData.status);
-          
+          // 3. Si el estado es uno de los de éxito, ejecutamos la acción.
           if (isCompleted) {
             toast({
               title: "¡Pago Confirmado!",
               description: `Tu pedido ${yourInternalOrderId} se ha procesado correctamente.`
             });
             
-            // Ejecutamos el callback para actualizar la UI (ej. quitar el spinner)
             onPaymentSuccess();
 
-            // Dejamos de escuchar para ahorrar recursos.
+            // 4. Dejamos de escuchar para ahorrar recursos.
             unsubscribe();
-            isSubscribed = false; // Prevenir doble ejecución
+            isSubscribed = false;
           }
         }
       }, (error) => {
-        console.error("Error al escuchar el pedido en nuestra base de datos:", error.message);
+        console.error("Error al escuchar los pedidos de Hilow:", error.message);
       });
 
     } catch (error) {
-      console.error("No se pudo inicializar el listener de pagos:", error);
+      console.error("No se pudo inicializar el listener de pagos de Hilow:", error);
     }
     
     return () => {
@@ -76,5 +110,5 @@ export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPa
         isSubscribed = false;
     };
 
-  }, [yourInternalOrderId, user, onPaymentSuccess, toast]);
+  }, [yourInternalOrderId, onPaymentSuccess, toast]);
 };
