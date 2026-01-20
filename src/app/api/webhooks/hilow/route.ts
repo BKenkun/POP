@@ -1,4 +1,3 @@
-
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -18,13 +17,7 @@ import { headers } from 'next/headers';
  * @param payload El cuerpo completo del webhook para información adicional.
  */
 async function updateLocalOrder(internalOrderId: string, eventType: string, payload: any) {
-    console.log(`Procesando evento '${eventType}' para el pedido ${internalOrderId}`);
-    
-    // Solo actuar en eventos de pago exitoso.
-    if (eventType !== 'payment.succeeded' && eventType !== 'payment.completed' && eventType !== 'payment.renewal_succeeded') {
-        console.log(`Evento '${eventType}' no requiere actualización de estado de pedido.`);
-        return;
-    }
+    console.log("🔍 RECIBIDO EN WEBHOOK:", internalOrderId);
     
     const parts = internalOrderId.split('_');
     if (parts.length < 3) {
@@ -32,20 +25,24 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         return;
     }
     const userId = parts[1];
+    console.log("👤 USER ID EXTRAÍDO:", userId);
+
     const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(internalOrderId);
+    console.log("📍 BUSCANDO EN RUTA:", orderRef.path);
     
     try {
         const orderSnap = await orderRef.get();
         if (!orderSnap.exists) {
-            throw new Error(`El pedido ${internalOrderId} no fue encontrado en nuestra base de datos.`);
+            console.error(`❌ ERROR: El documento ${internalOrderId} NO existe en Firestore. Revisa si el ID coincide o si se creó antes del pago.`);
+            return;
         }
         
         const localOrderData = orderSnap.data() as Order;
         
         if (localOrderData.status !== 'Pago Pendiente de Verificación') {
-            console.log(`El pedido ${internalOrderId} ya fue procesado. Estado actual: ${localOrderData.status}`);
-            return;
-        }
+          console.log(`El pedido ${internalOrderId} ya fue procesado. Estado actual: ${localOrderData.status}`);
+          return;
+      }
 
         const newStatus = 'Reserva Recibida';
         const batch = adminFirestore.batch();
@@ -71,7 +68,7 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         await trackOrderStatusUpdate({...localOrderData, id: internalOrderId, status: newStatus}, newStatus);
 
     } catch (error) {
-        console.error(`Error al actualizar el pedido local ${internalOrderId}:`, error);
+        console.error("❌ ERROR DE FIREBASE:", error);
     }
 }
 
@@ -103,12 +100,12 @@ export async function POST(req: NextRequest) {
       .update(body)
       .digest('hex');
 
-    const signatureBuffer = Buffer.from(signature);
-    const expectedSignatureBuffer = Buffer.from(expectedSignature);
-
-    if (signatureBuffer.length !== expectedSignatureBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedSignatureBuffer)) {
-      throw new Error('La firma del webhook no es válida.');
-    }
+      const signatureBuffer = new TextEncoder().encode(signature);
+      const expectedSignatureBuffer = new TextEncoder().encode(expectedSignature);
+      
+      if (signatureBuffer.length !== expectedSignatureBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedSignatureBuffer)) {
+        throw new Error('La firma del webhook no es válida.');
+      }
 
     const payload = JSON.parse(body);
     
