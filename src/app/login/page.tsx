@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,8 +9,8 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
 // Dynamically import the form component with SSR turned off.
-// Changed relative path to absolute path to fix ChunkLoadError.
-const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
+// Using a relative path for dynamic imports is often more reliable.
+const LoginForm = dynamic(() => import('./login-form'), { 
   ssr: false,
   loading: () => <div className="p-6">Cargando...</div> 
 });
