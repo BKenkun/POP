@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# Dependencies
+# Dependencias
 /node_modules
 /.pnp
 .pnp.js
@@ -8,24 +6,37 @@
 # Testing
 /coverage
 
-# Next.js
+# Producción / Build
 /.next/
 /out/
-
-# Production
 /build
+bin-debug/
+obj/
 
-# Misc
-.DS_Store
-*.pem
-
-# Local Environment Variables
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Log files
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+
+# Variables de entorno locales
+.env
+.env*.local
+
+# Firebase
+.firebase/
+firebase-debug.log*
+ui-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Genkit
+.genkit/
