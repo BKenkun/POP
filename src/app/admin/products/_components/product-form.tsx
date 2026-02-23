@@ -85,7 +85,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
       galleryImages: product?.galleryImages?.join(', ') || '',
       tags: product?.tags?.join(', ') || '',
       internalTags: product?.internalTags?.join(', ') || '',
-      web: product?.web || (product?.internalTags?.includes('popper') ? 'popper' : ''),
+      web: product?.web || '',
       url: product?.url || '',
       cost: product?.cost || 0,
       includesVat: product?.includesVat === undefined ? true : product.includesVat,
@@ -147,7 +147,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                 <FormField control={form.control} name="longDescription" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Long Description</FormLabel>
-                    <FormDescription>Rich text editor for detailed descriptions.</FormDescription>
+                    <FormDescription>Rich text for detailed specs.</FormDescription>
                     <FormControl>
                         <RichTextEditor
                             value={field.value || ''}
@@ -157,39 +157,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField
-                    control={form.control} name="productDetails" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Technical Details</FormLabel>
-                            <FormDescription>One detail per line (Key: Value). E.g.: "Aroma: Fruity".</FormDescription>
-                            <FormControl><Textarea rows={5} {...field} /></FormControl><FormMessage /></FormItem>
-                    )} 
-                />
               </CardContent>
-            </Card>
-             <Card>
-                <CardHeader><CardTitle>Images</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                     <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                        <FormItem><FormLabel>Main Image URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="imageHint" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Image Hint (for AI)</FormLabel>
-                            <FormDescription>One or two descriptive words. E.g.: "yellow bottle".</FormDescription>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                     <FormField control={form.control} name="galleryImages" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Gallery Image URLs</FormLabel>
-                            <FormDescription>Separated by commas.</FormDescription>
-                            <FormControl><Textarea {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                </CardContent>
             </Card>
             <Card>
                 <CardHeader><CardTitle>Inventory & Pricing</CardTitle></CardHeader>
@@ -204,7 +172,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name={originalPrice ? 'originalPrice' : 'price'} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Standard Price (in cents)</FormLabel>
+                      <FormLabel>Standard Price (cents)</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -213,7 +181,7 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                   )} />
                   <FormField control={form.control} name="price" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sale Price (in cents)</FormLabel>
+                      <FormLabel>Sale Price (cents)</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="Optional" value={originalPrice ? field.value : ''} onChange={handleOfferPriceChange} />
                       </FormControl>
@@ -225,71 +193,27 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                   <Alert variant="default" className="bg-green-50 border-green-200">
                       <AlertCircle className="h-4 w-4 !text-green-600" />
                       <AlertDescription className="text-green-700">
-                          Customer savings: <span className="font-bold">{(savings / 100).toFixed(2)}€</span> ({savingsPercentage.toFixed(0)}%)
+                          Savings: <span className="font-bold">{(savings / 100).toFixed(2)}€</span> ({savingsPercentage.toFixed(0)}%)
                       </AlertDescription>
                   </Alert>
                 )}
                 <FormField control={form.control} name="stock" render={({ field }) => (
-                    <FormItem><FormLabel>Available Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader><CardTitle>Offer Management</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <FormField control={form.control} name="offerStartDate" render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Offer Duration</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value && form.getValues('offerEndDate') ? (
-                                        <>{format(field.value, "LLL dd, y", { locale: enUS })} - {format(form.getValues('offerEndDate')!, "LLL dd, y", { locale: enUS })}</>
-                                    ) : <span>Select a date range</span>}
-                                </Button>
-                            </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                initialFocus
-                                mode="range"
-                                defaultMonth={field.value}
-                                selected={{ from: field.value!, to: form.getValues('offerEndDate') }}
-                                onSelect={(range: DateRange | undefined) => {
-                                    form.setValue('offerStartDate', range?.from)
-                                    form.setValue('offerEndDate', range?.to)
-                                }}
-                                numberOfMonths={2}
-                                locale={enUS}
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle>Categorization & Filters</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Categorization</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                  <FormField control={form.control} name="brand" render={({ field }) => (
                     <FormItem><FormLabel>Brand</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <FormField control={form.control} name="size" render={({ field }) => (
-                    <FormItem><FormLabel>Size</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="composition" render={({ field }) => (
-                    <FormItem><FormLabel>Composition</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="tags" render={({ field }) => (
-                    <FormItem><FormLabel>Visible Labels</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Comma separated. E.g.: New, Limited Edition</FormDescription><FormMessage /></FormItem>
+                <FormField control={form.control} name="imageUrl" render={({ field }) => (
+                    <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="internalTags" render={({ field }) => (
-                    <FormItem><FormLabel>Internal Categories</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Comma separated. E.g.: novelty, bestseller, offer</FormDescription><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Internal Tags</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Comma separated: novelty, offer, bestseller</FormDescription><FormMessage /></FormItem>
                 )} />
               </CardContent>
             </Card>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,22 +23,32 @@ import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore'
 const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
         case 'delivered':
-        case 'entregado':
             return 'default';
         case 'shipped':
-        case 'enviado':
+        case 'out_for_delivery':
             return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
+        case 'pending_payment':
+        case 'order_received':
             return 'outline';
         case 'cancelled':
-        case 'cancelado':
+        case 'issue':
             return 'destructive';
         default:
             return 'secondary';
     }
+}
+
+const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+        'pending_payment': 'Pending Payment',
+        'order_received': 'Order Received',
+        'shipped': 'Shipped',
+        'out_for_delivery': 'Out for Delivery',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+        'issue': 'Issue'
+    };
+    return labels[status.toLowerCase()] || status;
 }
 
 export default function OrdersClientPage() {
@@ -52,7 +61,6 @@ export default function OrdersClientPage() {
           const fetchedOrders: Order[] = [];
           querySnapshot.forEach((doc) => {
                const data = doc.data();
-               // Ensure createdAt is a serializable Date object
                const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
                fetchedOrders.push({ id: doc.id, ...data, path: doc.ref.path, createdAt } as Order);
           });
@@ -65,56 +73,54 @@ export default function OrdersClientPage() {
       return () => unsubscribe();
   }, []);
 
-  const hasOrders = orders && orders.length > 0;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Todos los Pedidos</h1>
+        <h1 className="text-3xl font-bold">All Orders</h1>
       </div>
       
       <Card>
         <CardHeader>
-            <CardTitle>Listado de Pedidos</CardTitle>
-            <CardDescription>Aquí se listan todos los pedidos de la tienda, tanto de usuarios como de invitados.</CardDescription>
+            <CardTitle>Order List</CardTitle>
+            <CardDescription>View and manage all orders from both users and guests.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (
                  <div className="flex justify-center items-center h-60">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
-            ) : !hasOrders ? (
+            ) : orders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Package className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
-                    <h3 className="mt-4 text-lg font-semibold">No hay pedidos todavía</h3>
-                    <p className="text-muted-foreground">Los nuevos pedidos aparecerán aquí cuando lleguen.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No orders yet</h3>
+                    <p className="text-muted-foreground">New orders will appear here as they arrive.</p>
                 </div>
             ) : (
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead>Nº Pedido</TableHead>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Estado</TableHead>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Total</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
                     {orders.map((order) => (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
-                        <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES') : 'N/A'}</TableCell>
+                        <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US') : 'N/A'}</TableCell>
                         <TableCell>
                             <div>
                                 {order.customerName}
-                                {order.userId === 'guest' && <Badge variant="secondary" className="ml-2">Invitado</Badge>}
+                                {order.userId === 'guest' && <Badge variant="secondary" className="ml-2">Guest</Badge>}
                             </div>
                         </TableCell>
                         <TableCell>
                             <Badge variant={getStatusVariant(order.status)}>
-                            {order.status}
+                                {getStatusLabel(order.status)}
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">{formatPrice(order.total)}</TableCell>
@@ -122,7 +128,7 @@ export default function OrdersClientPage() {
                            <Button asChild variant="outline" size="sm">
                                 <Link href={`/admin/orders/${order.id}?path=${encodeURIComponent(order.path || '')}`}>
                                     <Eye className="mr-2 h-4 w-4" />
-                                    Ver
+                                    View
                                 </Link>
                             </Button>
                         </TableCell>

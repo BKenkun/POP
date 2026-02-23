@@ -15,7 +15,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { consent } = useCookieConsent();
   const pathname = usePathname();
 
-  // Load Clarity script if consent is given
   useEffect(() => {
     if (consent.analytics) {
       (function(c,l,a,r,i,t,y){
@@ -29,8 +28,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isAdminRoute = pathname.startsWith('/admin');
 
   if (isAdminRoute) {
-    // For admin routes, we render the children directly,
-    // as the AdminLayout from providers.tsx will wrap it.
     return (
         <>
             {children}

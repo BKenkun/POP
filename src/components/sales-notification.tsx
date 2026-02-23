@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from 'react';
@@ -13,25 +12,25 @@ import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
 
 const internationalData = {
-  "España": {
-    names: ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofía L."],
-    cities: ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Málaga", "Bilbao", "Alicante"],
+  "Spain": {
+    names: ["Javier G.", "Laura M.", "Carlos S.", "Ana P.", "David R.", "Sofia L."],
+    cities: ["Madrid", "Barcelona", "Valencia", "Sevilla", "Zaragoza", "Malaga", "Bilbao", "Alicante"],
   },
   "France": {
-    names: ["Lucas M.", "Chloé D.", "Léo P.", "Manon L.", "Gabriel F.", "Emma R."],
+    names: ["Lucas M.", "Chloe D.", "Leo P.", "Manon L.", "Gabriel F.", "Emma R."],
     cities: ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Bordeaux"],
   },
-  "Deutschland": {
+  "Germany": {
     names: ["Lukas S.", "Hanna M.", "Felix W.", "Mia K.", "Leon B.", "Sophie Z."],
-    cities: ["Berlin", "Hamburg", "München", "Köln", "Frankfurt", "Stuttgart", "Düsseldorf", "Leipzig"],
+    cities: ["Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt", "Stuttgart", "Dusseldorf", "Leipzig"],
   },
-  "Italia": {
+  "Italy": {
     names: ["Leonardo R.", "Sofia C.", "Alessandro F.", "Giulia G.", "Francesco M.", "Chiara B."],
-    cities: ["Roma", "Milano", "Napoli", "Torino", "Palermo", "Genova", "Bologna", "Firenze"],
+    cities: ["Rome", "Milan", "Naples", "Turin", "Palermo", "Genoa", "Bologna", "Florence"],
   },
   "Portugal": {
-    names: ["Tiago S.", "Beatriz F.", "Diogo P.", "Mariana A.", "João C.", "Leonor M."],
-    cities: ["Lisboa", "Porto", "Coimbra", "Braga", "Faro", "Aveiro"],
+    names: ["Tiago S.", "Beatriz F.", "Diogo P.", "Mariana A.", "Joao C.", "Leonor M."],
+    cities: ["Lisbon", "Porto", "Coimbra", "Braga", "Faro", "Aveiro"],
   },
 };
 
@@ -41,7 +40,7 @@ const getRandomCountry = () => getRandomItem(Object.keys(internationalData));
 export function SalesNotification() {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { isAdmin } = useAuth(); // Use the auth context to check for admin status
+  const { isAdmin } = useAuth();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -75,7 +74,6 @@ export function SalesNotification() {
       });
   }, [toast]);
 
-  // Function for FAKE toasts
   const showRandomToast = useCallback(() => {
     if (allProducts.length === 0) return;
     
@@ -95,12 +93,11 @@ export function SalesNotification() {
     );
   }, [showToast, allProducts, t]);
   
-  // Function for REAL toasts from Firestore
   const showRealOrderToast = useCallback((order: Order) => {
       const firstItem = order.items[0];
       if (!firstItem) return;
 
-      const customerName = order.customerName.split(' ')[0]; // Show only first name
+      const customerName = order.customerName.split(' ')[0];
       const city = order.shippingAddress?.city || t('notifications.a_city');
       
       showToast(
@@ -115,7 +112,7 @@ export function SalesNotification() {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    const randomDelay = Math.random() * 15000 + 12000; // Between 12-27 seconds
+    const randomDelay = Math.random() * 15000 + 12000;
     timeoutRef.current = setTimeout(() => {
       showRandomToast();
       scheduleNextToast();
@@ -131,7 +128,6 @@ export function SalesNotification() {
     
     let unsubscribeOrders = () => {};
 
-    // Only set up the real-time listener if the user is an admin
     if (isAdmin) {
         const ordersQuery = query(
           collectionGroup(db, 'orders'),
@@ -155,7 +151,6 @@ export function SalesNotification() {
         });
     }
 
-    // Always start the FAKE toast loop for all users
     const initialDelay = setTimeout(() => {
         showRandomToast();
         scheduleNextToast();

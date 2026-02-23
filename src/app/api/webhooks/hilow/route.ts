@@ -39,19 +39,25 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         if (localOrderData.status !== 'pending_payment') {
           console.log(`Order ${internalOrderId} already processed. Current status: ${localOrderData.status}`);
           return;
-      }
+        }
 
         const newStatus = 'order_received';
         const batch = adminFirestore.batch();
 
-        batch.update(orderRef, { status: newStatus });
+        batch.update(orderRef, { 
+            status: newStatus,
+            paidAt: FieldValue.serverTimestamp()
+        });
 
+        // Update coupon usage if applicable
         if ((localOrderData as any).coupon) {
-          const couponRef = adminFirestore.collection('coupons').doc((localOrderData as any).coupon.code);
+          const couponCode = (localOrderData as any).coupon.code;
+          const couponRef = adminFirestore.collection('coupons').doc(couponCode);
           batch.update(couponRef, { usageCount: FieldValue.increment(1) });
         }
         
-        const pointsToAdd = Math.floor((localOrderData.total || 0) / 1000);
+        // Add loyalty points
+        const pointsToAdd = Math.floor((localOrderData.total || 0) / 1000); // 1 point per 10€
         if (pointsToAdd > 0) {
           const userRef = adminFirestore.collection('users').doc(userId);
           batch.update(userRef, { 
@@ -104,7 +110,6 @@ export async function POST(req: NextRequest) {
       }
 
     const payload = JSON.parse(body);
-    
     const { eventType, internalOrderId } = payload;
 
     if (!internalOrderId || !eventType) {
@@ -117,10 +122,6 @@ export async function POST(req: NextRequest) {
       case 'payment.completed':
       case 'payment.renewal_succeeded':
         await updateLocalOrder(internalOrderId, eventType, payload);
-        break;
-      case 'subscription.cancelled':
-      case 'subscription.payment_failed':
-        console.log(`Subscription event '${eventType}' received for order ${internalOrderId}.`);
         break;
       default:
         console.warn(`Unhandled webhook event from Hilow: ${eventType}`);

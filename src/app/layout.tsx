@@ -1,10 +1,8 @@
-
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
 import { ReactNode, Suspense } from 'react';
-import '@/lib/firestore-listener'; // Import for side effects (start listener)
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Popper Online',
-  description: 'The official store for Popper products in Spain and Europe.',
+  title: 'PuroRush | Premium Aromas',
+  description: 'The official store for premium quality aromas.',
 };
 
 export default function RootLayout({
@@ -24,9 +22,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light" suppressHydrationWarning>
-      <head>
-        {/* The font link in head is now handled by next/font */}
-      </head>
       <body className={`${inter.variable} font-body antialiased`}>
         <Suspense>
           <Providers>{children}</Providers>
