@@ -1,42 +1,37 @@
-# Dependencias
+# dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# Testing
+# testing
 /coverage
 
-# Producción / Build
+# next.js
 /.next/
 /out/
-/build
-bin-debug/
-obj/
 
-# Debug
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# Variables de entorno locales
-.env
+# local env files
 .env*.local
+.env
 
-# Firebase
-.firebase/
-firebase-debug.log*
-ui-debug.log*
+# vercel
+.vercel
 
-# Sistema operativo
-.DS_Store
-Thumbs.db
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Genkit
-.genkit/
+# firebase
+.firebase
