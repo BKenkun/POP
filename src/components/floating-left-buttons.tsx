@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { useCookieConsent } from '@/context/cookie-context';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import FloatingLanguageButton from './floating-language-button';
 import { useToast } from '@/hooks/use-toast';
 import { MinimizedWelcomeButton } from './welcome-popup-loader';
 
@@ -33,9 +32,6 @@ export default function FloatingLeftButtons() {
         )}>
             <div className={cn("transition-opacity duration-300", areToastsVisible && "opacity-0 invisible")}>
                 <MinimizedWelcomeButton />
-            </div>
-            <div className={cn("transition-opacity duration-300", areToastsVisible && "opacity-0 invisible")}>
-                 <FloatingLanguageButton />
             </div>
         </div>
     );

@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/context/providers';
 import { ReactNode, Suspense } from 'react';
-import '@/lib/firestore-listener'; // Importar para efectos secundarios (iniciar listener)
+import '@/lib/firestore-listener'; // Import for side effects (start listener)
 
 const inter = Inter({
   subsets: ['latin'],
@@ -14,7 +14,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Popper Online',
-  description: 'La tienda oficial de productos Popper en España.',
+  description: 'The official store for Popper products in Spain and Europe.',
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="es" className="light" suppressHydrationWarning>
+    <html lang="en" className="light" suppressHydrationWarning>
       <head>
         {/* The font link in head is now handled by next/font */}
       </head>
