@@ -1,5 +1,3 @@
-
-
 import { z } from 'zod';
 import { Timestamp } from 'firebase/firestore';
 
@@ -87,7 +85,7 @@ const paymentMethods = [
   'prepaid_bizum', 
   'prepaid_transfer', 
   'stripe', 
-  'hilow' // <--- Añade esto
+  'hilow'
 ] as const;
 
 // Helper function to handle different date types (Timestamp, Date, string)
@@ -102,7 +100,6 @@ const dateSchema = z.preprocess((arg) => {
   if (typeof arg === 'object' && arg !== null && '_seconds' in arg && '_nanoseconds' in arg) {
     return new Timestamp((arg as any)._seconds, (arg as any)._nanoseconds).toDate();
   }
-  // Return undefined for zod to handle validation error
   return undefined;
 }, z.date({ required_error: "Invalid date" }));
 
@@ -111,7 +108,15 @@ export const OrderSchema = z.object({
   id: z.string(),
   userId: z.string(),
   createdAt: dateSchema,
-  status: z.enum(['pending', 'shipped', 'delivered', 'cancelled', 'entregado', 'enviado', 'pendiente', 'cancelado', 'Reserva Recibida', 'Pago Pendiente de Verificación', 'En Reparto', 'Incidencia']),
+  status: z.enum([
+    'pending_payment', 
+    'order_received', 
+    'shipped', 
+    'out_for_delivery', 
+    'delivered', 
+    'cancelled', 
+    'issue'
+  ]),
   total: z.number(),
   items: z.array(OrderItemSchema),
   customerName: z.string(),
@@ -133,23 +138,19 @@ export type OrderStatus = Order['status'];
 // --- NEW SUBSCRIPTION TYPES ---
 
 export interface MonthlySelection {
-    [key:string]: string; // e.g., { popper1: 'prod_xxxx', popper2: 'prod_yyyy', ... }
+    [key:string]: string; 
 }
 
-// This type will be stored in the user's document
 export interface UserSubscription {
-    sub_id: string; // The subscription ID from the payment provider
+    sub_id: string; 
     status: 'active' | 'cancelled' | 'past_due';
-    // We don't get period end from NOWPayments directly in the same way as Stripe
-    // We might rely on webhooks to update the status
 }
 
-// For the Admin flow
 export type Customer = {
     uid: string;
     email?: string;
     displayName?: string;
     photoURL?: string;
     disabled: boolean;
-    creationTime: string; // Serialized as ISO string
+    creationTime: string; 
 };

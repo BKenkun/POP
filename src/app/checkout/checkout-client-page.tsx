@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -89,46 +88,6 @@ const getCheckoutSchema = (t: (key: string) => string) =>
       billing_state: z.string().optional(),
       billing_postalCode: z.string().optional(),
       billing_country: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-      if (data.useDifferentBilling) {
-        if (!data.billing_name)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('checkout.form_errors.billing_field_required'),
-            path: ['billing_name'],
-          });
-        if (!data.billing_street)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('checkout.form_errors.billing_field_required'),
-            path: ['billing_street'],
-          });
-        if (!data.billing_city)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('checkout.form_errors.billing_field_required'),
-            path: ['billing_city'],
-          });
-        if (!data.billing_state)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('checkout.form_errors.billing_field_required'),
-            path: ['billing_state'],
-          });
-        if (!data.billing_postalCode)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('checkout.form_errors.billing_field_required'),
-            path: ['billing_postalCode'],
-          });
-        if (!data.billing_country)
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('checkout.form_errors.billing_field_required'),
-            path: ['billing_country'],
-          });
-      }
     });
 
 type CheckoutFormValues = z.infer<ReturnType<typeof getCheckoutSchema>>;
@@ -223,7 +182,7 @@ export default function CheckoutClientPage() {
       city: '',
       state: '',
       postalCode: '',
-      country: 'España',
+      country: 'Spain',
       saveAddress: false,
       useDifferentBilling: false,
     },
@@ -234,7 +193,7 @@ export default function CheckoutClientPage() {
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
     const subtotalWithDiscounts = subtotal - volumeDiscount - couponDiscount;
-    const shipping = 0; // Free shipping
+    const shipping = 0; 
     const total = subtotalWithDiscounts + shipping;
     return { subtotal, shipping, total, priceInCents: Math.round(total), totalWithDiscount: subtotalWithDiscounts };
   }, [cartTotal, volumeDiscount, couponDiscount]);
@@ -275,7 +234,7 @@ export default function CheckoutClientPage() {
         city: '',
         state: '',
         postalCode: '',
-        country: 'España',
+        country: 'Spain',
         saveAddress: false,
       });
     } else {
@@ -329,17 +288,6 @@ export default function CheckoutClientPage() {
           })
         );
 
-      if (coupon.onePerUser) {
-        const ordersQuery = query(
-          collection(db, 'users', user.uid, 'orders'),
-          where('coupon.code', '==', coupon.code)
-        );
-        const pastOrdersSnap = await getDocs(ordersQuery);
-        if (!pastOrdersSnap.empty) {
-          throw new Error(t('checkout.toasts.coupon_error_already_used'));
-        }
-      }
-
       let discount = 0;
       if (coupon.discountType === 'percentage') {
         discount = (cartTotal * coupon.discountValue) / 100;
@@ -378,32 +326,9 @@ export default function CheckoutClientPage() {
           description: t('checkout.toasts.login_required_desc'),
           variant: 'destructive',
         });
-        router.push('/checkout?step=2');
         return;
       }
-      if (selectedAddressId !== 'new') isValid = true;
-      else {
-        const fieldsToValidate: (keyof CheckoutFormValues)[] = [
-          'name',
-          'email',
-          'phone',
-          'street',
-          'city',
-          'state',
-          'postalCode',
-          'country',
-        ];
-        if (form.getValues('useDifferentBilling'))
-          fieldsToValidate.push(
-            'billing_name',
-            'billing_street',
-            'billing_city',
-            'billing_state',
-            'billing_postalCode',
-            'billing_country'
-          );
-        isValid = await form.trigger(fieldsToValidate);
-      }
+      isValid = await form.trigger();
     } else isValid = true;
 
     if (isValid) setStep((prev) => prev + 1);
@@ -414,15 +339,7 @@ export default function CheckoutClientPage() {
   };
 
   const onFinalSubmit = async (data: CheckoutFormValues) => {
-    if (!user) {
-        toast({
-            title: t('auth.login_title'),
-            description: t('checkout.toasts.login_required_desc'),
-            variant: 'destructive',
-        });
-        setStep(2);
-        return;
-    }
+    if (!user) return;
     setLoading(true);
 
     const uniqueId = `CPO_${user.uid}_${Date.now()}`;
@@ -438,7 +355,7 @@ export default function CheckoutClientPage() {
             customerName: data.name,
             customerEmail: data.email,
             shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
-            status: 'Pago Pendiente de Verificación',
+            status: 'pending_payment',
             paymentMethod: 'hilow',
             createdAt: serverTimestamp() as any,
             ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount }})
@@ -453,13 +370,13 @@ export default function CheckoutClientPage() {
         );
         
         if (!hilowResult.success || !hilowResult.checkoutUrl) {
-            throw new Error(hilowResult.message || 'No se pudo iniciar el proceso de pago.');
+            throw new Error(hilowResult.message || 'Could not start payment process.');
         }
 
         window.location.href = hilowResult.checkoutUrl;
 
     } catch (error: any) {
-        console.error('Error en el proceso de pago: ', error);
+        console.error('Error in payment process: ', error);
         toast({
             title: t('checkout.toasts.order_error_title'),
             description: error.message || t('checkout.toasts.order_error_desc'),
@@ -474,7 +391,7 @@ export default function CheckoutClientPage() {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Cargando carrito...</p>
+        <p className="mt-4 text-muted-foreground">Loading cart...</p>
       </div>
     );
   }
@@ -774,7 +691,7 @@ export default function CheckoutClientPage() {
                             <FormItem>
                               <FormLabel>
                                 {t('checkout.country_label')}
-                              </FormLabel>
+                              </Label>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -803,140 +720,6 @@ export default function CheckoutClientPage() {
                         />
                       )}
                     </div>
-                  </>
-                )}
-                {user && (
-                  <>
-                    <Separator />
-                    <FormField
-                      control={form.control}
-                      name="useDifferentBilling"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">
-                              {t('checkout.use_different_billing_label')}
-                            </FormLabel>
-                            <p className="text-sm text-muted-foreground">
-                              {t('checkout.use_different_billing_desc')}
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    {formValues.useDifferentBilling && (
-                      <div className="space-y-4 pt-4 border-t">
-                        <h3 className="font-bold text-lg">
-                          {t('checkout.billing_address_title')}
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="billing_name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  <User className="inline-block mr-2" />
-                                  {t('checkout.fullname_label')} (
-                                  {t('checkout.billing_address_title')})
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="billing_street"
-                            render={({ field }) => (
-                              <FormItem className="md:col-span-2">
-                                <FormLabel>
-                                  <Home className="inline-block mr-2" />
-                                  {t('checkout.street_label')} (
-                                  {t('checkout.billing_address_title')})
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="billing_city"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('checkout.city_label')} (
-                                  {t('checkout.billing_address_title')})
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="billing_state"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('checkout.state_label')} (
-                                  {t('checkout.billing_address_title')})
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="billing_postalCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('checkout.zip_label')} (
-                                  {t('checkout.billing_address_title')})
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="billing_country"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('checkout.country_label')} (
-                                  {t('checkout.billing_address_title')})
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
               </CardContent>
@@ -1035,7 +818,7 @@ export default function CheckoutClientPage() {
                       <div className="flex-1">
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          Cantidad: {item.quantity}
+                          Quantity: {item.quantity}
                         </p>
                       </div>
                       <p className="font-medium">
@@ -1061,27 +844,6 @@ export default function CheckoutClientPage() {
                       <p>{formValues.country}</p>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">
-                      {t('checkout.billing_address_title')}
-                    </h3>
-                    {formValues.useDifferentBilling ? (
-                      <div className="text-sm text-muted-foreground">
-                        <p>{formValues.billing_name}</p>
-                        <p>{formValues.billing_street}</p>
-                        <p>
-                          {formValues.billing_city},{' '}
-                          {formValues.billing_state},{' '}
-                          {formValues.billing_postalCode}
-                        </p>
-                        <p>{formValues.billing_country}</p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {t('checkout.billing_address_same')}
-                      </p>
-                    )}
-                  </div>
                 </div>
               </CardContent>
               <CardFooter>
@@ -1094,7 +856,7 @@ export default function CheckoutClientPage() {
                   ) : (
                     <>
                       <CreditCard className="mr-2" />
-                      Pagar con Tarjeta
+                      Pay by Card
                     </>
                   )}
                 </Button>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -28,22 +27,17 @@ const getImageUrl = (url: string) => {
 };
 
 const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status) {
         case 'delivered':
-        case 'entregado':
             return 'default';
         case 'shipped':
-        case 'enviado':
-        case 'en reparto':
+        case 'out_for_delivery':
             return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
+        case 'order_received':
+        case 'pending_payment':
             return 'outline';
         case 'cancelled':
-        case 'cancelado':
-        case 'incidencia':
+        case 'issue':
             return 'destructive';
         default:
             return 'secondary';
@@ -64,7 +58,7 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
 
   const handleSaveChanges = async () => {
     if (!order.path) {
-        toast({ title: 'Error', description: 'No se puede guardar el pedido. Ruta no encontrada.', variant: 'destructive'});
+        toast({ title: 'Error', description: 'Cannot save order. Path not found.', variant: 'destructive'});
         return;
     }
     setIsSaving(true);
@@ -75,17 +69,15 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
         status: order.status,
       });
 
-      // After successful update, trigger Klaviyo event
       await trackOrderStatusUpdate(order, order.status);
 
       toast({
-        title: 'Pedido Actualizado',
-        description: `El estado del pedido #${order.id.substring(order.id.length - 7)} se ha actualizado a "${order.status}" y se ha notificado al cliente.`,
+        title: 'Order Updated',
+        description: `Order #${order.id.substring(order.id.length - 7)} status updated to "${order.status}".`,
       });
     } catch (error) {
       console.error('Error updating order:', error);
-      toast({ title: 'Error', description: 'No se pudo actualizar el pedido.', variant: 'destructive' });
-      // Revert optimistic update on error
+      toast({ title: 'Error', description: 'Could not update order.', variant: 'destructive' });
       setOrder(initialOrder);
     } finally {
       setIsSaving(false);
@@ -94,23 +86,22 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
 
   const handleShipping = async () => {
     if (!order.path) {
-      toast({ title: 'Error', description: 'No se puede enviar el pedido. Ruta no encontrada.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Cannot ship order. Path not found.', variant: 'destructive' });
       return;
     }
     setIsShipping(true);
     try {
-      const newStatus = 'En Reparto';
+      const newStatus = 'out_for_delivery';
       const orderDocRef = doc(db, order.path);
       await updateDoc(orderDocRef, { status: newStatus });
       
-      // Trigger Klaviyo event for 'Out for Delivery'
       await trackOrderStatusUpdate({ ...order, status: newStatus }, newStatus);
 
-      toast({ title: 'Pedido en camino', description: 'El pedido se ha marcado como "En Reparto" y se ha notificado al cliente.' });
+      toast({ title: 'Order on its way', description: 'Order marked as "Out for Delivery".' });
       router.push(`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path)}`);
     } catch (error) {
       console.error('Error setting order to shipping:', error);
-      toast({ title: 'Error', description: 'No se pudo poner el pedido en reparto.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not set order to shipping.', variant: 'destructive' });
     } finally {
       setIsShipping(false);
     }
@@ -122,34 +113,33 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Pedido #{order.id.substring(order.id.length - 7)}</h1>
+          <h1 className="text-3xl font-bold">Order #{order.id.substring(order.id.length - 7)}</h1>
            <p className="text-muted-foreground">
-                Realizado el {new Date(order.createdAt).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}
+                Placed on {new Date(order.createdAt).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}
             </p>
         </div>
         <div className="flex items-center gap-2">
            <Button asChild variant="outline">
                 <Link href="/admin/orders">
                     <ArrowLeft className="mr-2" />
-                    Volver
+                    Back
                 </Link>
             </Button>
             <Button onClick={handleSaveChanges} disabled={!hasChanges || isSaving}>
                 {isSaving ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
-                Guardar Cambios
+                Save Changes
             </Button>
         </div>
       </div>
       
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main Content (Cols 1-2) */}
         <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                        <span>Resumen del Pedido</span>
-                        <Badge variant={getStatusVariant(order.status)} className="text-base">
-                            {order.status}
+                        <span>Order Summary</span>
+                        <Badge variant={getStatusVariant(order.status)} className="text-base uppercase">
+                            {order.status.replace('_', ' ')}
                         </Badge>
                     </CardTitle>
                 </CardHeader>
@@ -184,60 +174,59 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" />Historial y Notas</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" />History and Notes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                     <Textarea placeholder="Añadir una nota interna sobre el pedido..." />
-                     <Button variant="outline" size="sm" className="mt-2">Añadir Nota</Button>
+                     <Textarea placeholder="Add internal note about the order..." />
+                     <Button variant="outline" size="sm" className="mt-2">Add Note</Button>
                 </CardContent>
             </Card>
         </div>
 
-        {/* Sidebar (Col 3) */}
         <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Truck className="h-5 w-5" />
-                        Estado del Pedido
+                        Order Status
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <Select value={order.status} onValueChange={(value: OrderStatus) => handleStatusChange(value)}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Cambiar estado..." />
+                            <SelectValue placeholder="Change status..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Reserva Recibida">Reserva Recibida</SelectItem>
-                            <SelectItem value="Pago Pendiente de Verificación">Pago Pendiente de Verificación</SelectItem>
-                            <SelectItem value="En Reparto">En Reparto</SelectItem>
-                            <SelectItem value="Enviado">Enviado</SelectItem>
-                            <SelectItem value="Entregado">Entregado</SelectItem>
-                            <SelectItem value="Cancelado">Cancelado</SelectItem>
-                             <SelectItem value="Incidencia">Incidencia</SelectItem>
+                            <SelectItem value="order_received">Order Received</SelectItem>
+                            <SelectItem value="pending_payment">Pending Payment</SelectItem>
+                            <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                            <SelectItem value="shipped">Shipped</SelectItem>
+                            <SelectItem value="delivered">Delivered</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                             <SelectItem value="issue">Issue</SelectItem>
                         </SelectContent>
                     </Select>
                      <Button className="w-full" onClick={handleShipping} disabled={isShipping}>
                         {isShipping ? <Loader2 className="mr-2 animate-spin" /> : <Truck className="mr-2" />}
-                        {isShipping ? 'Enviando...' : 'Gestionar Envío'}
+                        {isShipping ? 'Shipping...' : 'Manage Delivery'}
                     </Button>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><UserIcon className="h-5 w-5" />Información del Cliente</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><UserIcon className="h-5 w-5" />Customer Info</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                     <p className="font-semibold text-base">{order.customerName}</p>
                     <a href={`mailto:${order.customerEmail}`} className="text-primary hover:underline flex items-center gap-2"><MessageSquare className="h-4 w-4"/>{order.customerEmail}</a>
-                    <a href={`tel:${order.shippingAddress?.phone}`} className="text-primary hover:underline flex items-center gap-2"><Phone className="h-4 w-4"/>{order.shippingAddress?.phone || 'No disponible'}</a>
+                    <a href={`tel:${order.shippingAddress?.phone}`} className="text-primary hover:underline flex items-center gap-2"><Phone className="h-4 w-4"/>{order.shippingAddress?.phone || 'Not available'}</a>
                 </CardContent>
             </Card>
 
             {order.shippingAddress && (
               <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Dirección de Envío</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Shipping Address</CardTitle></CardHeader>
                 <CardContent className="space-y-1 text-sm">
                     <p>{order.shippingAddress.line1}</p>
                     {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}

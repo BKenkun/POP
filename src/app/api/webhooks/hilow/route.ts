@@ -10,41 +10,38 @@ import { headers } from 'next/headers';
 
 
 /**
- * ESTA FUNCIÓN CONTIENE LA LÓGICA DE NEGOCIO REAL DE NUESTRA TIENDA.
- * Actualiza la base de datos y ejecuta acciones post-pago.
- * @param internalOrderId El ID interno del pedido del cliente.
- * @param eventType El tipo de evento recibido de Hilow.
- * @param payload El cuerpo completo del webhook para información adicional.
+ * BUSINESS LOGIC FOR THE STORE.
+ * Updates the database and triggers post-payment actions.
  */
 async function updateLocalOrder(internalOrderId: string, eventType: string, payload: any) {
-    console.log("🔍 RECIBIDO EN WEBHOOK:", internalOrderId);
+    console.log("🔍 RECEIVED IN WEBHOOK:", internalOrderId);
     
     const parts = internalOrderId.split('_');
     if (parts.length < 3) {
-        console.error(`ID de pedido inválido, no se pudo extraer el ID de usuario: ${internalOrderId}`);
+        console.error(`Invalid order ID, could not extract user ID: ${internalOrderId}`);
         return;
     }
     const userId = parts[1];
-    console.log("👤 USER ID EXTRAÍDO:", userId);
+    console.log("👤 USER ID EXTRACTED:", userId);
 
     const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(internalOrderId);
-    console.log("📍 BUSCANDO EN RUTA:", orderRef.path);
+    console.log("📍 SEARCHING IN PATH:", orderRef.path);
     
     try {
         const orderSnap = await orderRef.get();
         if (!orderSnap.exists) {
-            console.error(`❌ ERROR: El documento ${internalOrderId} NO existe en Firestore. Revisa si el ID coincide o si se creó antes del pago.`);
+            console.error(`❌ ERROR: Document ${internalOrderId} DOES NOT exist in Firestore.`);
             return;
         }
         
         const localOrderData = orderSnap.data() as Order;
         
-        if (localOrderData.status !== 'Pago Pendiente de Verificación') {
-          console.log(`El pedido ${internalOrderId} ya fue procesado. Estado actual: ${localOrderData.status}`);
+        if (localOrderData.status !== 'pending_payment') {
+          console.log(`Order ${internalOrderId} already processed. Current status: ${localOrderData.status}`);
           return;
       }
 
-        const newStatus = 'Reserva Recibida';
+        const newStatus = 'order_received';
         const batch = adminFirestore.batch();
 
         batch.update(orderRef, { status: newStatus });
@@ -63,35 +60,34 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         }
         
         await batch.commit();
-        console.log(`Pedido ${internalOrderId} actualizado a "${newStatus}" y puntos/cupón aplicados.`);
+        console.log(`Order ${internalOrderId} updated to "${newStatus}"`);
         
         await trackOrderStatusUpdate({...localOrderData, id: internalOrderId, status: newStatus}, newStatus);
 
     } catch (error) {
-        console.error("❌ ERROR DE FIREBASE:", error);
+        console.error("❌ FIREBASE ERROR:", error);
     }
 }
 
 /**
- * Manejador para las peticiones POST que llegan desde Hilow.
+ * Handler for POST requests from Hilow.
  */
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.HILOW_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error('CRÍTICO: La variable de entorno HILOW_WEBHOOK_SECRET no está configurada.');
-    return NextResponse.json({ error: 'Configuración de servidor incompleta.' }, { status: 500 });
+    console.error('CRITICAL: HILOW_WEBHOOK_SECRET is not configured.');
+    return NextResponse.json({ error: 'Server configuration incomplete.' }, { status: 500 });
   }
   
   const headerStore = headers();
   const signature = headerStore.get('hilow-signature');
   const body = await req.text();
 
-  // Log the incoming request body for easier debugging
   console.log("Received Hilow Webhook Body:", body);
 
   if (!signature) {
-    return NextResponse.json({ error: 'Petición no autorizada. Falta la cabecera hilow-signature.' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized request. Missing hilow-signature header.' }, { status: 401 });
   }
 
   try {
@@ -104,7 +100,7 @@ export async function POST(req: NextRequest) {
       const expectedSignatureBuffer = new TextEncoder().encode(expectedSignature);
       
       if (signatureBuffer.length !== expectedSignatureBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedSignatureBuffer)) {
-        throw new Error('La firma del webhook no es válida.');
+        throw new Error('Webhook signature is invalid.');
       }
 
     const payload = JSON.parse(body);
@@ -112,11 +108,10 @@ export async function POST(req: NextRequest) {
     const { eventType, internalOrderId } = payload;
 
     if (!internalOrderId || !eventType) {
-        console.error('Payload del webhook inválido: faltan campos requeridos (internalOrderId o eventType).', payload);
-        return NextResponse.json({ error: 'Payload del webhook inválido.' }, { status: 400 });
+        console.error('Invalid webhook payload: missing internalOrderId or eventType.', payload);
+        return NextResponse.json({ error: 'Invalid webhook payload.' }, { status: 400 });
     }
 
-    // Procesar el evento según su tipo.
     switch (eventType) {
       case 'payment.succeeded':
       case 'payment.completed':
@@ -125,17 +120,16 @@ export async function POST(req: NextRequest) {
         break;
       case 'subscription.cancelled':
       case 'subscription.payment_failed':
-        console.log(`Evento de suscripción '${eventType}' recibido para el pedido ${internalOrderId}. Lógica de manejo pendiente.`);
-        // Aquí se podría añadir lógica para marcar la suscripción como cancelada en la DB.
+        console.log(`Subscription event '${eventType}' received for order ${internalOrderId}.`);
         break;
       default:
-        console.warn(`Evento de webhook no manejado recibido de Hilow: ${eventType}`);
+        console.warn(`Unhandled webhook event from Hilow: ${eventType}`);
     }
 
   } catch (err: any) {
-    console.error(`Error procesando el webhook de Hilow: ${err.message}`);
-    const statusCode = err.message.includes('firma') ? 400 : 500;
-    return NextResponse.json({ error: `Error en el webhook: ${err.message}` }, { status: statusCode });
+    console.error(`Error processing Hilow webhook: ${err.message}`);
+    const statusCode = err.message.includes('signature') ? 400 : 500;
+    return NextResponse.json({ error: `Webhook error: ${err.message}` }, { status: statusCode });
   }
 
   return NextResponse.json({ received: true });

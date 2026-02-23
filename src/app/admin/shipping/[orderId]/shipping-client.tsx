@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -10,12 +9,10 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, ArrowLeft, Loader2, Save, MapPin, Truck, Check, Edit, AlertCircle, Package } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Loader2, MapPin, Truck, Check, AlertCircle, Package } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,22 +35,17 @@ const getImageUrl = (url: string) => {
 };
 
 const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status) {
         case 'delivered':
-        case 'entregado':
             return 'default';
         case 'shipped':
-        case 'enviado':
-        case 'en reparto':
+        case 'out_for_delivery':
             return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
+        case 'order_received':
+        case 'pending_payment':
             return 'outline';
         case 'cancelled':
-        case 'cancelado':
-        case 'incidencia':
+        case 'issue':
             return 'destructive';
         default:
             return 'secondary';
@@ -110,11 +102,11 @@ export default function ShippingClient() {
   
   const clearSignature = () => sigCanvas.current?.clear();
 
-  const handleDeliveryConfirmation = async (status: 'Entregado' | 'Incidencia') => {
+  const handleDeliveryConfirmation = async (status: 'delivered' | 'issue') => {
     if (!order?.path) return;
     
-    if (status === 'Entregado' && (!dni.trim() || sigCanvas.current?.isEmpty())) {
-        toast({ title: 'Faltan datos', description: 'El DNI y la firma son obligatorios para confirmar la entrega.', variant: 'destructive'});
+    if (status === 'delivered' && (!dni.trim() || sigCanvas.current?.isEmpty())) {
+        toast({ title: 'Missing information', description: 'ID and Signature are required to confirm delivery.', variant: 'destructive'});
         return;
     }
 
@@ -123,7 +115,7 @@ export default function ShippingClient() {
         const orderDocRef = doc(db, order.path);
         
         let signatureDataUrl = order.deliverySignature || null;
-        if(status === 'Entregado' && sigCanvas.current && !sigCanvas.current.isEmpty()){
+        if(status === 'delivered' && sigCanvas.current && !sigCanvas.current.isEmpty()){
             signatureDataUrl = sigCanvas.current.toDataURL('image/png');
         }
 
@@ -135,11 +127,11 @@ export default function ShippingClient() {
         });
 
         setOrder(prev => prev ? { ...prev, status, deliveryDni: dni, deliverySignature: signatureDataUrl } : null);
-        toast({ title: 'Pedido actualizado', description: `El estado del pedido se ha marcado como "${status}".` });
+        toast({ title: 'Order updated', description: `Status changed to "${status}".` });
         
     } catch (error) {
         console.error("Error updating order:", error);
-        toast({ title: 'Error', description: 'No se pudo actualizar el estado del pedido.', variant: 'destructive'});
+        toast({ title: 'Error', description: 'Could not update order status.', variant: 'destructive'});
     } finally {
         setIsSaving(false);
     }
@@ -158,16 +150,16 @@ export default function ShippingClient() {
     <div className="space-y-6">
        <div className="flex items-center justify-between">
          <div>
-            <h1 className="text-3xl font-bold">Gestionar Entrega</h1>
-            <p className="text-muted-foreground">Pedido #{order.id.substring(order.id.length-7)}</p>
+            <h1 className="text-3xl font-bold">Manage Delivery</h1>
+            <p className="text-muted-foreground">Order #{order.id.substring(order.id.length-7)}</p>
          </div>
-        <Button asChild variant="outline"><Link href="/admin/shipping"><ArrowLeft className="mr-2" />Volver a Envíos</Link></Button>
+        <Button asChild variant="outline"><Link href="/admin/shipping"><ArrowLeft className="mr-2" />Back to Shipments</Link></Button>
       </div>
 
        <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
             <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Package/>Contenido del Paquete</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Package/>Package Content</CardTitle></CardHeader>
                 <CardContent>
                      <div className="space-y-4">
                         {order.items.map(item => (
@@ -188,16 +180,16 @@ export default function ShippingClient() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">Confirmación de Entrega</CardTitle>
-                    <CardDescription>Completa esta sección para registrar la entrega al cliente.</CardDescription>
+                    <CardTitle className="flex items-center gap-2">Delivery Confirmation</CardTitle>
+                    <CardDescription>Complete this section to register the delivery.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
-                        <label htmlFor="dni" className="font-medium text-sm">DNI del Receptor</label>
-                        <Input id="dni" placeholder="Introduce el DNI de quien recibe" value={dni} onChange={(e) => setDni(e.target.value)} className="mt-1"/>
+                        <label htmlFor="dni" className="font-medium text-sm">Recipient ID (DNI/Passport)</label>
+                        <Input id="dni" placeholder="Enter ID of person receiving" value={dni} onChange={(e) => setDni(e.target.value)} className="mt-1"/>
                     </div>
                      <div>
-                        <label className="font-medium text-sm">Firma del Receptor</label>
+                        <label className="font-medium text-sm">Recipient Signature</label>
                          <div className="mt-1 border rounded-md bg-background">
                             <SignatureCanvas 
                                 ref={sigCanvas} 
@@ -205,42 +197,42 @@ export default function ShippingClient() {
                                 canvasProps={{ className: 'w-full h-40' }}
                             />
                         </div>
-                        <Button variant="ghost" size="sm" onClick={clearSignature} className="mt-1">Limpiar firma</Button>
+                        <Button variant="ghost" size="sm" onClick={clearSignature} className="mt-1">Clear signature</Button>
                     </div>
                 </CardContent>
                  <CardFooter className="flex justify-end gap-2">
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive" disabled={isSaving}><AlertCircle className="mr-2"/>Marcar Incidencia</Button>
+                            <Button variant="destructive" disabled={isSaving}><AlertCircle className="mr-2"/>Mark Issue</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>¿Confirmar Incidencia?</AlertDialogTitle>
+                                <AlertDialogTitle>Confirm Issue?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Esto marcará el pedido con estado "Incidencia". Úsalo si el cliente rechaza el paquete, la dirección es incorrecta, etc.
+                                    This will mark the order as "Issue". Use if the address is wrong, delivery refused, etc.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeliveryConfirmation('Incidencia')}>Confirmar</AlertDialogAction>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeliveryConfirmation('issue')}>Confirm</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                     
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button disabled={isSaving}><Check className="mr-2"/>Marcar como Entregado</Button>
+                            <Button disabled={isSaving}><Check className="mr-2"/>Mark Delivered</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>¿Confirmar Entrega?</AlertDialogTitle>
+                                <AlertDialogTitle>Confirm Delivery?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Asegúrate de haber recogido la firma y el DNI. Esta acción es definitiva.
+                                    Make sure you have collected ID and signature. This action is final.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeliveryConfirmation('Entregado')}>Confirmar Entrega</AlertDialogAction>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeliveryConfirmation('delivered')}>Confirm Delivery</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
@@ -251,15 +243,15 @@ export default function ShippingClient() {
         <div className="space-y-6">
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">Estado Actual</CardTitle>
+                    <CardTitle className="flex items-center gap-2">Current Status</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Badge variant={getStatusVariant(order.status)} className="text-base">{order.status}</Badge>
+                    <Badge variant={getStatusVariant(order.status)} className="text-base uppercase">{order.status.replace('_', ' ')}</Badge>
                 </CardContent>
              </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><MapPin/>Datos de Envío</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><MapPin/>Shipping Info</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                     <p className="font-medium text-base">{order.customerName}</p>
@@ -269,7 +261,7 @@ export default function ShippingClient() {
                             {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
                             <p>{order.shippingAddress.postal_code} {order.shippingAddress.city}</p>
                             <p>{order.shippingAddress.state}, {order.shippingAddress.country}</p>
-                            <p className="pt-2"><strong>Contacto:</strong> {order.shippingAddress.phone}</p>
+                            <p className="pt-2"><strong>Contact:</strong> {order.shippingAddress.phone}</p>
                         </>
                     )}
                 </CardContent>
@@ -277,12 +269,12 @@ export default function ShippingClient() {
              
               {order.deliverySignature && (
                  <Card>
-                    <CardHeader><CardTitle>Firma de Entrega</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Delivery Signature</CardTitle></CardHeader>
                     <CardContent>
                         <div className="border rounded-md p-2 bg-white">
-                            <Image src={order.deliverySignature} alt="Firma de entrega" width={300} height={150} style={{ width: '100%', height: 'auto' }}/>
+                            <Image src={order.deliverySignature} alt="Delivery signature" width={300} height={150} style={{ width: '100%', height: 'auto' }}/>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-2">DNI: {order.deliveryDni}</p>
+                        <p className="text-sm text-muted-foreground mt-2">ID: {order.deliveryDni}</p>
                     </CardContent>
                  </Card>
              )}
@@ -291,5 +283,3 @@ export default function ShippingClient() {
     </div>
   );
 }
-
-    

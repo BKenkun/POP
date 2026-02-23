@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -24,35 +23,34 @@ import RichTextEditor from '@/components/rich-text-editor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Define the schema outside the component
 const productSchema = z.object({
-  name: z.string().min(3, 'El nombre es requerido.'),
-  sku: z.string().min(1, 'El SKU es requerido.'),
+  name: z.string().min(3, 'Name is required.'),
+  sku: z.string().min(1, 'SKU is required.'),
   active: z.boolean().default(true),
-  price: z.coerce.number().int().min(0, 'El precio debe ser un número positivo.'),
+  price: z.coerce.number().int().min(0, 'Price must be positive.'),
   originalPrice: z.coerce.number().int().min(0).optional(),
-  stock: z.coerce.number().int().min(0, 'El stock no puede ser negativo.'),
+  stock: z.coerce.number().int().min(0, 'Stock cannot be negative.'),
   description: z.string().optional(),
   longDescription: z.string().optional(),
   productDetails: z.string().optional(),
   brand: z.string().optional(),
   size: z.string().optional(),
   composition: z.string().optional(),
-  imageUrl: z.string().url('Debe ser una URL válida.'),
+  imageUrl: z.string().url('Must be a valid URL.'),
   imageHint: z.string().optional(),
   galleryImages: z.string().optional(),
   tags: z.string().optional(),
   internalTags: z.string().optional(),
   web: z.string().optional(),
-  url: z.string().url('Debe ser una URL válida.').optional().or(z.literal('')),
-  cost: z.coerce.number().int().min(0, 'El coste no puede ser negativo.').optional(),
+  url: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
+  cost: z.coerce.number().int().min(0, 'Cost cannot be negative.').optional(),
   includesVat: z.boolean().default(true),
-  vatPercentage: z.coerce.number().min(0, 'El IVA no puede ser negativo.').max(100, 'El IVA no puede ser mayor que 100.').optional(),
+  vatPercentage: z.coerce.number().min(0).max(100).optional(),
   offerStartDate: z.date().optional().nullable(),
   offerEndDate: z.date().optional().nullable(),
 });
@@ -103,7 +101,6 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
   const savingsPercentage = originalPrice && savings > 0 ? (savings / originalPrice) * 100 : 0;
 
   const handleSubmit = (values: ProductFormValues) => {
-    // Convert comma-separated strings back to arrays for the final object
     const finalData: Product = {
       id: product?.id || `prod_${Date.now()}`,
       ...values,
@@ -125,13 +122,10 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
     const currentOriginalPrice = form.getValues('originalPrice');
 
     if (salePrice > 0 && !currentOriginalPrice) {
-      // If setting a sale price and there's no original price,
-      // move the current standard price to originalPrice
       form.setValue('originalPrice', currentPrice);
     }
     form.setValue('price', salePrice);
     if (salePrice <= 0 && currentOriginalPrice) {
-      // If clearing the sale price, restore the original price
       form.setValue('price', currentOriginalPrice);
       form.setValue('originalPrice', undefined);
     }
@@ -141,19 +135,19 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="space-y-6">
-            <Card className="border-primary/50">
-              <CardHeader><CardTitle>Información Principal</CardTitle></CardHeader>
+            <Card>
+              <CardHeader><CardTitle>Main Information</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
-                  <FormItem><FormLabel>Nombre del Producto</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Product Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="description" render={({ field }) => (
-                  <FormItem><FormLabel>Descripción Corta</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Short Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="longDescription" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descripción Larga</FormLabel>
-                    <FormDescription>Editor de texto enriquecido para descripciones detalladas de productos.</FormDescription>
+                    <FormLabel>Long Description</FormLabel>
+                    <FormDescription>Rich text editor for detailed descriptions.</FormDescription>
                     <FormControl>
                         <RichTextEditor
                             value={field.value || ''}
@@ -166,139 +160,95 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                 <FormField
                     control={form.control} name="productDetails" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Detalles del Producto</FormLabel>
-                            <FormDescription>Muestra una lista de características. Cada detalle en una nueva línea (Clave: Valor). Ej: "Aroma: Frutal".</FormDescription>
+                            <FormLabel>Technical Details</FormLabel>
+                            <FormDescription>One detail per line (Key: Value). E.g.: "Aroma: Fruity".</FormDescription>
                             <FormControl><Textarea rows={5} {...field} /></FormControl><FormMessage /></FormItem>
                     )} 
                 />
               </CardContent>
             </Card>
-             <Card className="border-primary/50">
-                <CardHeader><CardTitle>Imágenes</CardTitle></CardHeader>
+             <Card>
+                <CardHeader><CardTitle>Images</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                      <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                        <FormItem><FormLabel>URL de la Imagen Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Main Image URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="imageHint" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Pista de la Imagen (para IA)</FormLabel>
-                            <FormDescription>Una o dos palabras que describan la imagen. Ej: "yellow bottle", "black bottle".</FormDescription>
+                            <FormLabel>Image Hint (for AI)</FormLabel>
+                            <FormDescription>One or two descriptive words. E.g.: "yellow bottle".</FormDescription>
                             <FormControl><Input {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )} />
                      <FormField control={form.control} name="galleryImages" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>URLs de la Galería</FormLabel>
-                            <FormDescription>Añade más imágenes a la vista detallada del producto, separadas por comas.</FormDescription>
+                            <FormLabel>Gallery Image URLs</FormLabel>
+                            <FormDescription>Separated by commas.</FormDescription>
                             <FormControl><Textarea {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )} />
                 </CardContent>
             </Card>
-            <Card className="border-primary/50">
-                <CardHeader>
-                    <CardTitle>Estado del Producto</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <FormField control={form.control} name="active" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                                <FormLabel>Producto Activo</FormLabel>
-                                <FormDescription>Si está inactivo, se considerará "Archivado" y no se mostrará en la tienda.</FormDescription>
-                            </div>
-                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                    )} />
-                </CardContent>
-            </Card>
-            <Card className="border-primary/50">
-              <CardHeader><CardTitle>Inventario y Precios</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
+            <Card>
+                <CardHeader><CardTitle>Inventory & Pricing</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
                  <FormField control={form.control} name="sku" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SKU (Número de Referencia)</FormLabel>
+                    <FormLabel>SKU</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
-                    <FormDescription>Debe ser único para cada producto. Usa 'P' para Poppers y 'C' para CBD.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name={originalPrice ? 'originalPrice' : 'price'} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Precio Estándar (en céntimos)</FormLabel>
+                      <FormLabel>Standard Price (in cents)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          onChange={(e) => {
-                            const value = e.target.valueAsNumber || 0;
-                            if (originalPrice) {
-                              form.setValue('originalPrice', value);
-                            } else {
-                              form.setValue('price', value);
-                            }
-                          }}
-                        />
+                        <Input type="number" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="price" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Precio de Oferta (en céntimos)</FormLabel>
+                      <FormLabel>Sale Price (in cents)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="Opcional"
-                          value={originalPrice ? field.value : ''}
-                          onChange={handleOfferPriceChange} 
-                        />
+                        <Input type="number" placeholder="Optional" value={originalPrice ? field.value : ''} onChange={handleOfferPriceChange} />
                       </FormControl>
-                      <FormDescription>Si se establece, el precio estándar se mostrará tachado.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
                 </div>
                  {savings > 0 && (
-                  <Alert variant="default" className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+                  <Alert variant="default" className="bg-green-50 border-green-200">
                       <AlertCircle className="h-4 w-4 !text-green-600" />
-                      <AlertDescription className="text-green-700 dark:text-green-300">
-                          Ahorro del cliente: <span className="font-bold">{(savings / 100).toFixed(2)}€</span> ({savingsPercentage.toFixed(0)}%)
+                      <AlertDescription className="text-green-700">
+                          Customer savings: <span className="font-bold">{(savings / 100).toFixed(2)}€</span> ({savingsPercentage.toFixed(0)}%)
                       </AlertDescription>
                   </Alert>
                 )}
                 <FormField control={form.control} name="stock" render={({ field }) => (
-                    <FormItem><FormLabel>Stock Disponible</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Si es 0, se mostrará como "Agotado".</FormDescription><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Available Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </CardContent>
             </Card>
             
-            <Card className="border-primary/50">
-              <CardHeader><CardTitle>Gestión de Ofertas</CardTitle></CardHeader>
+            <Card>
+              <CardHeader><CardTitle>Offer Management</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <FormField control={form.control} name="offerStartDate" render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Duración de la Oferta</FormLabel>
+                    <FormLabel>Offer Duration</FormLabel>
                     <Popover>
                         <PopoverTrigger asChild>
                             <FormControl>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                                >
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {field.value && form.getValues('offerEndDate') ? (
-                                        <>
-                                            {format(field.value, "LLL dd, y", { locale: es })} -{" "}
-                                            {format(form.getValues('offerEndDate')!, "LLL dd, y", { locale: es })}
-                                        </>
-                                    ) : field.value ? (
-                                        format(field.value, "LLL dd, y", { locale: es })
-                                    ) : (
-                                        <span>Selecciona un rango de fechas</span>
-                                    )}
+                                        <>{format(field.value, "LLL dd, y", { locale: enUS })} - {format(form.getValues('offerEndDate')!, "LLL dd, y", { locale: enUS })}</>
+                                    ) : <span>Select a date range</span>}
                                 </Button>
                             </FormControl>
                         </PopoverTrigger>
@@ -313,86 +263,41 @@ export default function ProductForm({ product, onSave, isSaving }: ProductFormPr
                                     form.setValue('offerEndDate', range?.to)
                                 }}
                                 numberOfMonths={2}
-                                locale={es}
+                                locale={enUS}
                             />
                         </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Opcional. Si se establece, la oferta solo será válida durante este período.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
               </CardContent>
             </Card>
 
-            <Card className="border-primary/50">
-              <CardHeader><CardTitle>Datos Económicos y Contabilidad</CardTitle></CardHeader>
+            <Card>
+              <CardHeader><CardTitle>Categorization & Filters</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                 <FormField control={form.control} name="cost" render={({ field }) => (
-                    <FormItem><FormLabel>Coste (en céntimos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>El coste de adquisición del producto.</FormDescription><FormMessage /></FormItem>
-                )} />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="vatPercentage" render={({ field }) => (
-                        <FormItem><FormLabel>Porcentaje de IVA (%)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="includesVat" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
-                            <div className="space-y-0.5">
-                                <FormLabel>¿Precio incluye IVA?</FormLabel>
-                            </div>
-                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                    )} />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-primary/50">
-              <CardHeader><CardTitle>Organización y Filtros</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                 <FormField control={form.control} name="web" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Portal Web</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
-                      <FormDescription>Define en qué portal aparecerá. Usar 'popper' para esta tienda o 'CBD' para la otra.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
                  <FormField control={form.control} name="brand" render={({ field }) => (
-                    <FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Agrupa productos por marca. Ejemplo: Rush</FormDescription><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Brand</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="size" render={({ field }) => (
-                    <FormItem><FormLabel>Tamaño</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Agrupa productos por volumen. Ejemplo: 10ml, 25ml</FormDescription><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Size</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="composition" render={({ field }) => (
-                    <FormItem><FormLabel>Composición</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Agrupa productos por composición química. Ejemplo: Amilo, Pentilo</FormDescription><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Composition</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="tags" render={({ field }) => (
+                    <FormItem><FormLabel>Visible Labels</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Comma separated. E.g.: New, Limited Edition</FormDescription><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="internalTags" render={({ field }) => (
+                    <FormItem><FormLabel>Internal Categories</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Comma separated. E.g.: novelty, bestseller, offer</FormDescription><FormMessage /></FormItem>
                 )} />
               </CardContent>
-            </Card>
-            <Card className="border-primary/50">
-                <CardHeader><CardTitle>Etiquetas y Detalles Adicionales</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <FormField control={form.control} name="tags" render={({ field }) => (
-                        <FormItem><FormLabel>Etiquetas Visibles</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Muestra insignias visuales en el producto. Separadas por comas. Ej: Nuevo, Edición Limitada</FormDescription><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="internalTags" render={({ field }) => (
-                        <FormItem><FormLabel>Categorías Internas</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Controla dónde aparece el producto. Separadas por comas. Ej: novedad, mas-vendido, oferta, pack, accesorio, juguete</FormDescription><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="url" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>URL de Origen</FormLabel>
-                            <FormControl><Input type="url" {...field} /></FormControl>
-                            <FormDescription>Enlace al producto original en otra web (proveedor, etc.) para referencia interna.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                </CardContent>
             </Card>
         </div>
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Guardando...' : 'Guardar Producto'}
+            {isSaving ? 'Saving...' : 'Save Product'}
           </Button>
         </div>
       </form>
