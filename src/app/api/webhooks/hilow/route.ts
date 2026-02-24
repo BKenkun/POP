@@ -30,12 +30,13 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
     try {
         const orderSnap = await orderRef.get();
         if (!orderSnap.exists) {
-            console.error(`❌ ERROR: Document ${internalOrderId} DOES NOT exist in Firestore.`);
+            console.error(`❌ ERROR: Document ${internalOrderId} DOES NOT exist in Firestore. Path: ${orderRef.path}`);
             return;
         }
         
         const localOrderData = orderSnap.data() as Order;
         
+        // Use consistent English keys
         if (localOrderData.status !== 'pending_payment') {
           console.log(`Order ${internalOrderId} already processed. Current status: ${localOrderData.status}`);
           return;
@@ -66,7 +67,7 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         }
         
         await batch.commit();
-        console.log(`Order ${internalOrderId} updated to "${newStatus}"`);
+        console.log(`✅ Order ${internalOrderId} updated to "${newStatus}"`);
         
         await trackOrderStatusUpdate({...localOrderData, id: internalOrderId, status: newStatus}, newStatus);
 
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
   const signature = headerStore.get('hilow-signature');
   const body = await req.text();
 
-  console.log("Received Hilow Webhook Body:", body);
+  console.log("Incoming Hilow Webhook:", body);
 
   if (!signature) {
     return NextResponse.json({ error: 'Unauthorized request. Missing hilow-signature header.' }, { status: 401 });

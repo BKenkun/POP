@@ -9,13 +9,14 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
 // Dynamically import the form component with SSR turned off.
-// Using a relative path for dynamic imports is often more reliable.
-const LoginForm = dynamic(() => import('./login-form'), { 
+// Using absolute path alias to prevent ChunkLoadError in this environment.
+const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
   ssr: false,
-  loading: () => <div className="p-6">Cargando...</div> 
+  loading: () => <div className="p-6 text-center">Loading...</div> 
 });
 
 function RedirectAlert() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
 
@@ -27,9 +28,9 @@ function RedirectAlert() {
     <div className="px-6 pb-4">
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Acceso Restringido</AlertTitle>
+        <AlertTitle>Access Restricted</AlertTitle>
         <AlertDescription>
-          Debes iniciar sesión para acceder a esta página.
+          You must log in to access this page.
         </AlertDescription>
       </Alert>
     </div>
