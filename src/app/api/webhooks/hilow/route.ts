@@ -18,7 +18,7 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
     
     const parts = internalOrderId.split('_');
     if (parts.length < 3) {
-        console.error(`Invalid order ID, could not extract user ID: ${internalOrderId}`);
+        console.error(`Invalid order ID format: ${internalOrderId}`);
         return;
     }
     const userId = parts[1];
@@ -36,7 +36,7 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         
         const localOrderData = orderSnap.data() as Order;
         
-        // Use consistent English keys
+        // Ensure we are working with the correct status key
         if (localOrderData.status !== 'pending_payment') {
           console.log(`Order ${internalOrderId} already processed. Current status: ${localOrderData.status}`);
           return;
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   console.log("Incoming Hilow Webhook:", body);
 
   if (!signature) {
-    return NextResponse.json({ error: 'Unauthorized request. Missing hilow-signature header.' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized request. Missing signature.' }, { status: 401 });
   }
 
   try {
@@ -114,8 +114,8 @@ export async function POST(req: NextRequest) {
     const { eventType, internalOrderId } = payload;
 
     if (!internalOrderId || !eventType) {
-        console.error('Invalid webhook payload: missing internalOrderId or eventType.', payload);
-        return NextResponse.json({ error: 'Invalid webhook payload.' }, { status: 400 });
+        console.error('Invalid webhook payload.', payload);
+        return NextResponse.json({ error: 'Invalid payload.' }, { status: 400 });
     }
 
     switch (eventType) {
@@ -125,13 +125,13 @@ export async function POST(req: NextRequest) {
         await updateLocalOrder(internalOrderId, eventType, payload);
         break;
       default:
-        console.warn(`Unhandled webhook event from Hilow: ${eventType}`);
+        console.warn(`Unhandled event: ${eventType}`);
     }
 
   } catch (err: any) {
-    console.error(`Error processing Hilow webhook: ${err.message}`);
+    console.error(`Webhook error: ${err.message}`);
     const statusCode = err.message.includes('signature') ? 400 : 500;
-    return NextResponse.json({ error: `Webhook error: ${err.message}` }, { status: statusCode });
+    return NextResponse.json({ error: err.message }, { status: statusCode });
   }
 
   return NextResponse.json({ received: true });

@@ -1,29 +1,34 @@
-# Dependencias
+# dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# Carpeta de compilación de Next.js
+# testing
+/coverage
+
+# next.js
 /.next/
 /out/
 
-# Producción
+# production
 /build
 
-# Archivos de entorno (Contienen claves secretas)
-.env*.local
-.env
-.env.production
-
-# Logs de Firebase
-.firebase/
-**/*.log
-firebase-debug.log*
-firestore-debug.log*
-
-# Otros
+# misc
 .DS_Store
 *.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

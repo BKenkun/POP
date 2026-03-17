@@ -9,8 +9,8 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
 // Dynamically import the form component with SSR turned off.
-// Using absolute path alias to prevent ChunkLoadError in this environment.
-const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
+// Using a relative path for dynamic imports is often more reliable to prevent ChunkLoadError.
+const LoginForm = dynamic(() => import('./login-form'), { 
   ssr: false,
   loading: () => <div className="p-6 text-center">Loading...</div> 
 });
