@@ -405,15 +405,16 @@ const translations: Record<Language, Translations> = {
   en: enTranslations,
 };
 
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en');
 
   const setLanguageCallback = useCallback((lang: Language) => {
-    // Strict English only
+    // Strictly English for now as requested
     setLanguage('en');
   }, []);
 
   const t = useCallback((key: string, replacements: Record<string, string | number> = {}): string => {
+    // Always use English translations
     const selectedLanguageTranslations = translations.en;
     
     let translation = getNestedTranslation(selectedLanguageTranslations, key);

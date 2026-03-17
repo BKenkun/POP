@@ -30,7 +30,7 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
     try {
         const orderSnap = await orderRef.get();
         if (!orderSnap.exists) {
-            console.error(`❌ ERROR: Document ${internalOrderId} DOES NOT exist in Firestore. Path: ${orderRef.path}`);
+            console.error(`❌ ERROR: Document ${internalOrderId} DOES NOT exist in Firestore. Path: ${orderRef.path}. Ensure it was created before payment.`);
             return;
         }
         
@@ -67,12 +67,12 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
         }
         
         await batch.commit();
-        console.log(`✅ Order ${internalOrderId} updated to "${newStatus}"`);
+        console.log(`✅ Order ${internalOrderId} updated successfully to "${newStatus}"`);
         
         await trackOrderStatusUpdate({...localOrderData, id: internalOrderId, status: newStatus}, newStatus);
 
     } catch (error) {
-        console.error("❌ FIREBASE ERROR:", error);
+        console.error("❌ FIREBASE WEBHOOK ERROR:", error);
     }
 }
 
@@ -125,11 +125,11 @@ export async function POST(req: NextRequest) {
         await updateLocalOrder(internalOrderId, eventType, payload);
         break;
       default:
-        console.warn(`Unhandled event: ${eventType}`);
+        console.warn(`Unhandled event type: ${eventType}`);
     }
 
   } catch (err: any) {
-    console.error(`Webhook error: ${err.message}`);
+    console.error(`Webhook processing error: ${err.message}`);
     const statusCode = err.message.includes('signature') ? 400 : 500;
     return NextResponse.json({ error: err.message }, { status: statusCode });
   }
