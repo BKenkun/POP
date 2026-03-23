@@ -8,15 +8,14 @@ import { AlertTriangle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
-// Dynamically import the form component with SSR turned off.
-// Using an absolute path alias to fix potential ChunkLoadErrors.
+// Dynamically import the form component with SSR turned off to prevent hydration issues.
+// Using an absolute path alias for robustness.
 const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
   ssr: false,
-  loading: () => <div className="p-6 text-center">Loading security module...</div> 
+  loading: () => <div className="p-12 text-center text-muted-foreground">Initializing security module...</div> 
 });
 
 function RedirectAlert() {
-  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
 

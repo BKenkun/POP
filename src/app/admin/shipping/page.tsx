@@ -10,7 +10,7 @@ import {
   TableHead,
   TableBody,
   TableCell,
-} from '@/table';
+} from '@/components/ui/table';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
