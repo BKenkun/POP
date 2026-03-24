@@ -9,7 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
 // Dynamically import the form component with SSR turned off.
-// Using an absolute path alias to fix ChunkLoadError.
+// Using a robust absolute path alias.
 const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
   ssr: false,
   loading: () => <div className="p-12 text-center text-muted-foreground">Initializing security module...</div> 

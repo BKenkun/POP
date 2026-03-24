@@ -25,7 +25,7 @@ async function updateLocalOrder(internalOrderId: string, eventType: string, payl
     console.log("👤 USER ID EXTRACTED:", userId);
 
     const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(internalOrderId);
-    console.log("📍 SEARCHING IN PATH:", orderRef.path);
+    console.log("📍 SEARCHING AT PATH:", orderRef.path);
     
     try {
         const orderSnap = await orderRef.get();

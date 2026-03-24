@@ -53,7 +53,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 import { QuantitySelector } from '@/components/quantity-selector';
-import { createHilowOrder } from '@/app/actions/hilow';
+import { createHilowApiOrder } from '@/app/actions/hilow';
 
 interface Address {
   id: string;
@@ -93,9 +93,9 @@ const getImageUrl = (url: string) => {
 
 const Stepper = ({ currentStep, t }: { currentStep: number; t: (key: string) => string; }) => {
   const steps = [
-    { number: 1, name: t('checkout.stepper.cart') || 'Cart' },
-    { number: 2, name: t('checkout.stepper.details') || 'Details' },
-    { number: 3, name: t('checkout.stepper.review') || 'Review' },
+    { number: 1, name: t('checkout.stepper.cart') },
+    { number: 2, name: t('checkout.stepper.details') },
+    { number: 3, name: t('checkout.stepper.review') },
   ];
   return (
     <div className="flex items-center justify-center mb-12">
@@ -135,8 +135,6 @@ export default function CheckoutClientPage() {
     resolver: zodResolver(getCheckoutSchema(t)),
     defaultValues: { name: '', email: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'Spain', saveAddress: false },
   });
-
-  const formValues = form.watch();
 
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
@@ -218,7 +216,14 @@ export default function CheckoutClientPage() {
         };
         await setDoc(localOrderRef, localOrderData);
 
-        const hilowResult = await createHilowOrder(uniqueId, finalTotals.priceInCents, cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '), false);
+        const hilowResult = await createHilowApiOrder(
+            uniqueId, 
+            finalTotals.priceInCents, 
+            cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '), 
+            false,
+            window.location.hostname
+        );
+
         if (!hilowResult.success || !hilowResult.checkoutUrl) throw new Error(hilowResult.message || 'Could not start payment.');
         window.location.href = hilowResult.checkoutUrl;
     } catch (e: any) {
@@ -267,15 +272,13 @@ export default function CheckoutClientPage() {
                 {!user ? (
                   <Alert variant="destructive"><Lock className="h-4 w-4" /><AlertTitle>Login Required</AlertTitle><AlertDescription>Please log in to continue.</AlertDescription></Alert>
                 ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t('checkout.fullname_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('checkout.phone_label')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>{t('checkout.street_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('checkout.city_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>{t('checkout.zip_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
-                  </>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t('checkout.fullname_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('checkout.phone_label')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>{t('checkout.street_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('checkout.city_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>{t('checkout.zip_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
                 )}
               </CardContent>
             </Card>
