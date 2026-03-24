@@ -112,6 +112,11 @@ const enTranslations: Translations = {
       next_button: "Continue",
       previous_button: "Back",
       continue_shopping: "Continue Shopping",
+      stepper: {
+        cart: "Cart",
+        details: "Details",
+        review: "Review",
+      },
       form_errors: {
         name_required: "Name is required.",
         email_invalid: "Invalid email.",

@@ -36,7 +36,7 @@ export default function AdminShippingPage() {
                 const data = doc.data() as Order;
                 const createdAtISO = data.createdAt instanceof Timestamp 
                     ? data.createdAt.toDate().toISOString() 
-                    : new Date().toISOString();
+                    : new Date(data.createdAt).toISOString();
 
                 return {
                     ...data,
