@@ -16,21 +16,20 @@ interface HilowApiResponse {
 
 /**
  * Creates an order through Hilow's secure API endpoint.
- * This is the authorized method to start a payment session.
  *
- * @param internalOrderId The unique ID of the order in our database.
+ * @param yourInternalOrderId The unique ID of the order in our database.
  * @param amountInCents The total amount in cents (must be a positive integer).
  * @param productName A summary of the products being purchased.
  * @param isSubscription Boolean indicating if this is a recurring payment.
- * @param storeHostname The hostname of the store (e.g., "comprarpopperonline.com").
+ * @param yourStoreHostname The hostname of the store (e.g., "comprarpopperonline.com").
  * @returns Object with success status and the checkout URL for redirection.
  */
 export async function createHilowApiOrder(
-    internalOrderId: string, 
+    yourInternalOrderId: string, 
     amountInCents: number, 
     productName: string,
     isSubscription: boolean,
-    storeHostname: string
+    yourStoreHostname: string
 ): Promise<{ success: boolean; checkoutUrl?: string; message?: string }> {
     
     if (amountInCents < 0 || !Number.isInteger(amountInCents)) {
@@ -44,14 +43,14 @@ export async function createHilowApiOrder(
             throw new Error('HILOW_API_KEY is not configured on the server.');
         }
 
-        // Final URLs where the customer returns after payment
-        const storeUrl = `https://${storeHostname}`;
-        const successUrl = `${storeUrl}/checkout/success?order_id=${internalOrderId}`;
-        const cancelUrl = `${storeUrl}/checkout`;
+        // --- URLs generated based on store hostname ---
+        const yourStoreUrl = `https://${yourStoreHostname}`;
+        const successUrl = `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`;
+        const cancelUrl = `${yourStoreUrl}/checkout`;
 
         const payload = {
-            storeId: storeHostname,
-            internalOrderId: internalOrderId,
+            storeId: yourStoreHostname,
+            internalOrderId: yourInternalOrderId,
             amountInCents: amountInCents,
             productName: productName,
             isSubscription: isSubscription,
@@ -76,7 +75,7 @@ export async function createHilowApiOrder(
         }
         
         if (responseData && responseData.hilowOrderId) {
-            // Build the full URL to the Hilow payment gateway
+            // Full URL to the Hilow payment gateway
             const checkoutUrl = `${HILOW_PLATFORM_URL}/pay/${responseData.hilowOrderId}`;
             return { success: true, checkoutUrl: checkoutUrl };
         } else {
