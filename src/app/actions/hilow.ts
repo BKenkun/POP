@@ -2,9 +2,6 @@
 
 /**
  * @fileoverview Backend logic to create an order in Hilow via the secure API.
- *
- * Purpose: Initiate the payment process.
- * Action: Sends a secure POST request to the Hilow API.
  */
 
 const HILOW_PLATFORM_URL = 'https://hilowglobal.com'; 
@@ -43,7 +40,6 @@ export async function createHilowApiOrder(
             throw new Error('HILOW_API_KEY is not configured on the server.');
         }
 
-        // URL construction following the standardized template
         const yourStoreUrl = `https://${yourStoreHostname}`;
         const successUrl = `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`;
         const cancelUrl = `${yourStoreUrl}/checkout`;
@@ -74,7 +70,6 @@ export async function createHilowApiOrder(
         }
         
         if (responseData && responseData.hilowOrderId) {
-            // Full URL to the Hilow payment gateway
             const checkoutUrl = `${HILOW_PLATFORM_URL}/pay/${responseData.hilowOrderId}`;
             return { success: true, checkoutUrl: checkoutUrl };
         } else {
