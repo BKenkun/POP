@@ -4,15 +4,20 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
 // Dynamically import the form component with SSR turned off.
-// Using a robust absolute path alias.
+// Using an absolute path alias for robustness.
 const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
   ssr: false,
-  loading: () => <div className="p-12 text-center text-muted-foreground">Initializing security module...</div> 
+  loading: () => (
+    <div className="p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p>Initializing security module...</p>
+    </div>
+  )
 });
 
 function RedirectAlert() {

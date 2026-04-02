@@ -43,7 +43,7 @@ export async function createHilowApiOrder(
             throw new Error('HILOW_API_KEY is not configured on the server.');
         }
 
-        // --- URLs generated based on store hostname ---
+        // --- Project Specific URLs ---
         const yourStoreUrl = `https://${yourStoreHostname}`;
         const successUrl = `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`;
         const cancelUrl = `${yourStoreUrl}/checkout`;
