@@ -8,13 +8,13 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
-// Using a stable relative path for dynamic import to prevent ChunkLoadError
-const LoginForm = dynamic(() => import('./login-form'), { 
+// Using a stable absolute path alias for dynamic import to prevent ChunkLoadError
+const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
   ssr: false,
   loading: () => (
-    <div className="p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p>Loading security module...</p>
+    <div className="p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p>Loading secure login...</p>
     </div>
   )
 });

@@ -43,7 +43,7 @@ export async function createHilowApiOrder(
             throw new Error('HILOW_API_KEY is not configured on the server.');
         }
 
-        // --- Project Specific URLs ---
+        // Standardized URLs based on your integration template
         const yourStoreUrl = `https://${yourStoreHostname}`;
         const successUrl = `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`;
         const cancelUrl = `${yourStoreUrl}/checkout`;
@@ -58,7 +58,7 @@ export async function createHilowApiOrder(
             cancelUrl: cancelUrl,
         };
 
-        // Secure call to Hilow platform
+        // Secure call to Hilow platform API
         const response = await fetch(`${HILOW_PLATFORM_URL}/api/orders`, {
             method: 'POST',
             headers: {
