@@ -36,7 +36,7 @@ export default function ShippingClient() {
                 const data = doc.data() as Order;
                 const createdAtISO = data.createdAt instanceof Timestamp 
                     ? data.createdAt.toDate().toISOString() 
-                    : new Date().toISOString();
+                    : (data.createdAt instanceof Date ? data.createdAt.toISOString() : new Date().toISOString());
 
                 return {
                     ...data,
@@ -108,9 +108,11 @@ export default function ShippingClient() {
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
                         <TableCell>{new Date(order.createdAt).toLocaleDateString('en-US')}</TableCell>
                         <TableCell>{order.customerName}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground flex items-center gap-2">
-                             <Phone className="h-4 w-4" />
-                            {order.shippingAddress?.phone || 'N/A'}
+                        <TableCell className="text-sm text-muted-foreground">
+                             <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4" />
+                                {order.shippingAddress?.phone || 'N/A'}
+                             </div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                             {order.shippingAddress ? `${order.shippingAddress.line1}, ${order.shippingAddress.city}` : 'Not available'}

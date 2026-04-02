@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileoverview Secure backend actions for Hilow payment integration.
+ * @fileoverview Backend logic to create an order in Hilow via the secure API.
  *
- * This file handles server-to-server communication with the Hilow platform
- * to initiate payment sessions for single orders and subscriptions.
+ * Purpose: Initiate the payment process.
+ * Action: Sends a secure POST request to the Hilow API.
  */
 
 const HILOW_PLATFORM_URL = 'https://hilowglobal.com'; 
@@ -18,9 +18,9 @@ interface HilowApiResponse {
  * Creates an order through Hilow's secure API endpoint.
  *
  * @param yourInternalOrderId The unique ID of the order in our database.
- * @param amountInCents The total amount in cents (must be a positive integer).
- * @param productName A summary of the products being purchased.
- * @param isSubscription Boolean indicating if this is a recurring payment.
+ * @param amountInCents Total amount in cents.
+ * @param productName Summary of products.
+ * @param isSubscription Boolean for recurring payments.
  * @param yourStoreHostname The hostname of the store (e.g., "comprarpopperonline.com").
  * @returns Object with success status and the checkout URL for redirection.
  */
@@ -43,7 +43,7 @@ export async function createHilowApiOrder(
             throw new Error('HILOW_API_KEY is not configured on the server.');
         }
 
-        // Standardized URLs based on your integration template
+        // URL construction following the standardized template
         const yourStoreUrl = `https://${yourStoreHostname}`;
         const successUrl = `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`;
         const cancelUrl = `${yourStoreUrl}/checkout`;
@@ -58,7 +58,6 @@ export async function createHilowApiOrder(
             cancelUrl: cancelUrl,
         };
 
-        // Secure call to Hilow platform API
         const response = await fetch(`${HILOW_PLATFORM_URL}/api/orders`, {
             method: 'POST',
             headers: {

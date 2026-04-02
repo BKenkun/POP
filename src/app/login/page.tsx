@@ -8,7 +8,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
-// Using a stable absolute path alias for dynamic import to prevent ChunkLoadError
+// Use absolute alias for dynamic import to prevent runtime chunk load errors
 const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
   ssr: false,
   loading: () => (
