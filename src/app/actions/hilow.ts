@@ -42,8 +42,8 @@ export async function createHilowApiOrder(
             amountInCents: amountInCents,
             productName: productName,
             isSubscription: isSubscription,
-            successUrl: `${yourStoreUrl}/shop/checkout/success?order_id=${yourInternalOrderId}`,
-            cancelUrl: `${yourStoreUrl}/shop/cart`,
+            successUrl: `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`,
+            cancelUrl: `${yourStoreUrl}/checkout`,
         };
 
         // La API Key debe estar en tus variables de entorno (.env)
