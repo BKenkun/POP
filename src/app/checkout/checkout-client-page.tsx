@@ -14,21 +14,12 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
-  ShoppingBag,
   Loader2,
-  Home,
-  User,
-  Mail,
-  Phone,
-  ArrowLeft,
   Lock,
-  UserPlus,
   CreditCard,
-  Ticket,
-  Trash2,
+  ArrowLeft,
 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
@@ -45,10 +36,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Order } from '@/lib/types';
-import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
@@ -118,14 +105,13 @@ const Stepper = ({ currentStep, t }: { currentStep: number; t: (key: string) => 
 
 export default function CheckoutClientPage() {
   const { t } = useTranslation();
-  const { cartItems, cartTotal, cartCount, removeFromCart, updateQuantity, volumeDiscount } = useCart();
+  const { cartItems, cartTotal, cartCount, updateQuantity, volumeDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -147,32 +133,20 @@ export default function CheckoutClientPage() {
     if (user && userDoc) {
       const userAddresses: Address[] = userDoc.addresses || [];
       const defaultAddress = userAddresses.find((addr) => addr.isDefault);
-      if (defaultAddress) handleAddressSelection(defaultAddress.id, userAddresses);
-      else if (userAddresses.length > 0) handleAddressSelection(userAddresses[0].id, userAddresses);
-      else form.setValue('email', user.email || '');
+      if (defaultAddress) {
+          form.setValue('name', defaultAddress.name);
+          form.setValue('phone', defaultAddress.phone);
+          form.setValue('street', defaultAddress.street);
+          form.setValue('city', defaultAddress.city);
+          form.setValue('state', defaultAddress.state || defaultAddress.city);
+          form.setValue('postalCode', defaultAddress.postalCode);
+          form.setValue('country', defaultAddress.country);
+      }
+      form.setValue('email', user.email || '');
     } else if (user) {
       form.setValue('email', user.email || '');
     }
-  }, [user, userDoc]);
-
-  const handleAddressSelection = (addressId: string, currentAddresses: Address[] = userDoc?.addresses || []) => {
-    setSelectedAddressId(addressId);
-    if (addressId === 'new') {
-      form.reset({ ...form.getValues(), email: user?.email || '', name: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'Spain' });
-    } else {
-      const addr = currentAddresses.find((a) => a.id === addressId);
-      if (addr) {
-        form.setValue('name', addr.name);
-        form.setValue('phone', addr.phone);
-        form.setValue('street', addr.street);
-        form.setValue('city', addr.city);
-        form.setValue('state', addr.state || addr.city);
-        form.setValue('postalCode', addr.postalCode);
-        form.setValue('country', addr.country);
-        form.setValue('email', user?.email || '');
-      }
-    }
-  };
+  }, [user, userDoc, form]);
 
   const handleApplyCoupon = useCallback(async () => {
     if (!couponCode.trim() || !user) return;
@@ -202,7 +176,7 @@ export default function CheckoutClientPage() {
     
     try {
         const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
-        const localOrderData: Omit<Order, 'id'> = {
+        const localOrderData: any = {
             userId: user.uid,
             items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
             total: finalTotals.total,
@@ -211,7 +185,7 @@ export default function CheckoutClientPage() {
             shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
             status: 'pending_payment',
             paymentMethod: 'hilow',
-            createdAt: serverTimestamp() as any,
+            createdAt: serverTimestamp(),
             ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount }})
         };
         await setDoc(localOrderRef, localOrderData);
@@ -221,7 +195,7 @@ export default function CheckoutClientPage() {
             finalTotals.priceInCents, 
             cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '), 
             false,
-            window.location.hostname
+            window.location.origin
         );
 
         if (!hilowResult.success || !hilowResult.checkoutUrl) throw new Error(hilowResult.message || 'Could not start payment.');
