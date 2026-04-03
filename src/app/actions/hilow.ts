@@ -1,9 +1,12 @@
 'use server';
 
 /**
- * @fileoverview Standardized backend logic to create a payment session in Hilow.
+ * @fileoverview PLANTILLA: Contiene la lógica del backend de un cliente para crear un pedido en Hilow a través de la API segura.
  *
- * This function handles the secure communication with the Hilow API to initiate a payment flow.
+ * Propósito: Iniciar el proceso de pago.
+ * ¿Qué hace?: Esta función se ejecuta en el servidor del cliente. Envía una petición POST segura a la API de Hilow.
+ * Le dice a Hilow: "Hola, un cliente quiere pagar esta cantidad por este producto. Prepara una sesión de pago".
+ * Este es el punto de partida de toda la transacción.
  */
 
 interface HilowApiResponse {
@@ -12,14 +15,14 @@ interface HilowApiResponse {
 }
 
 /**
- * Creates an order via the secure Hilow API endpoint.
+ * Crea un pedido a través del endpoint de API seguro de Hilow.
  * 
- * @param yourInternalOrderId The unique ID of the order in your own database.
- * @param amountInCents Total order amount in cents.
- * @param productName Summary of products being purchased.
- * @param isSubscription Boolean to enable recurring payments.
- * @param yourStoreHostname Domain of your store (e.g., "purorush.com").
- * @returns Success status and the checkout redirect URL.
+ * @param yourInternalOrderId El ID del pedido en la base de datos propia de tu tienda.
+ * @param amountInCents El importe total del pedido en céntimos (ej: 2500 para 25.00€).
+ * @param productName Un resumen del producto.
+ * @param isSubscription Booleano para activar pagos recurrentes.
+ * @param yourStoreHostname El dominio de tu tienda (ej: "bukkakery.com").
+ * @returns Un objeto con el estado de éxito y la URL de checkout.
  */
 export async function createHilowApiOrder(
     yourInternalOrderId: string, 
@@ -29,17 +32,9 @@ export async function createHilowApiOrder(
     yourStoreHostname: string 
 ): Promise<{ success: boolean; checkoutUrl?: string; message?: string }> {
     
-    if (amountInCents < 0 || !Number.isInteger(amountInCents)) {
-        return { success: false, message: 'Amount must be a positive integer in cents.' };
-    }
-
     try {
-        // Production endpoint for Hilow Global
+        // En producción, usa la URL absoluta de Hilow Global: https://hilowglobal.app/api/orders
         const HILOW_API_ENDPOINT = 'https://hilowglobal.app/api/orders';
-
-        // Correct URLs for redirection based on app structure
-        const successUrl = `https://${yourStoreHostname}/checkout/success?order_id=${yourInternalOrderId}`;
-        const cancelUrl = `https://${yourStoreHostname}/checkout`;
 
         const payload = {
             storeId: yourStoreHostname,
@@ -47,15 +42,15 @@ export async function createHilowApiOrder(
             amountInCents: amountInCents,
             productName: productName,
             isSubscription: isSubscription,
-            successUrl: successUrl,
-            cancelUrl: cancelUrl,
+            successUrl: `https://${yourStoreHostname}/checkout/success?order_id=${yourInternalOrderId}`,
+            cancelUrl: `https://${yourStoreHostname}/checkout`,
         };
 
-        // API Key from server environment variables
+        // La API Key DEBE ser una variable de entorno SECRETA en tu servidor.
         const HILOW_API_KEY = process.env.HILOW_API_KEY; 
         
         if (!HILOW_API_KEY) {
-            throw new Error('HILOW_API_KEY is not configured in the server environment.');
+            throw new Error('HILOW_API_KEY no configurada.');
         }
 
         const response = await fetch(HILOW_API_ENDPOINT, {
@@ -70,15 +65,15 @@ export async function createHilowApiOrder(
         const responseData: HilowApiResponse = await response.json();
 
         if (!response.ok) {
-            throw new Error(responseData.message || `Hilow API Error: ${response.status}`);
+            throw new Error(responseData.message || `API Error: ${response.status}`);
         }
         
         if (responseData && responseData.hilowOrderId) {
-            // Final URL to redirect the buyer to the payment gateway
+            // URL a la que redirigir al comprador
             const checkoutUrl = `https://hilowglobal.app/pay/${responseData.hilowOrderId}`;
             return { success: true, checkoutUrl: checkoutUrl };
         } else {
-            throw new Error('Invalid response from Hilow (missing order ID).');
+            throw new Error('Respuesta inválida de Hilow (falta ID).');
         }
 
     } catch (error) {
