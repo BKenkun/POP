@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
 type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: Date, path: string };

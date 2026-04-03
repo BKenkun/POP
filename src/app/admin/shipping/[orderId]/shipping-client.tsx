@@ -14,6 +14,14 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2, MapPin, Truck, Check, AlertCircle, Package } from 'lucide-react';
 import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -82,7 +90,6 @@ export default function ShippingClient() {
         const docSnap = await getDoc(orderDocRef);
         if (docSnap.exists()) {
           const orderData = docSnap.data() as Omit<Order, 'id'>;
-          // Handle complex timestamp object from Firebase if necessary
           let createdAtDate: Date;
           if (orderData.createdAt && (orderData.createdAt as any).toDate) {
               createdAtDate = (orderData.createdAt as any).toDate();
