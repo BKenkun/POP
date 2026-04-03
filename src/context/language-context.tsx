@@ -862,7 +862,7 @@ const translations: Record<Language, Translations> = {
   en: enTranslations,
 };
 
-export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en');
 
   const setLanguageCallback = useCallback((lang: Language) => {
