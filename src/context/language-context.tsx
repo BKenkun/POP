@@ -137,7 +137,31 @@ const enTranslations: Translations = {
         order_error_title: "Payment Error",
         order_error_desc: "Could not process order. Please try again.",
         login_required_desc: "Login required to complete purchase.",
-      }
+      },
+      hilow_gateway_info_title: "Secure payment (Hilow)",
+      hilow_gateway_info_desc:
+        "When you confirm, your order is saved and you are redirected to Hilow’s secure payment page. Card details are never entered on this site.",
+      payment_error_banner_title: "Could not start payment",
+      payment_error_banner_hint:
+        "Check the message below. You can go back and try again. Error 403 often means the store domain does not match Hilow settings.",
+      payment_error_dismiss: "Dismiss",
+      payment_error_local_order_title: "Could not save your order",
+      payment_error_local_order_hint:
+        "The order was not saved before payment. Check your connection and Firestore rules, then try again.",
+    },
+    checkout_success: {
+      verifying_alert_title: "Confirming payment",
+      verifying_alert_desc:
+        "We are waiting for confirmation from our system. This usually takes a few seconds after you pay on Hilow.",
+      verifying_keep_open: "Please do not close this window.",
+      login_alert_title: "Sign in required",
+      login_alert_desc: "Sign in with the same account you used for purchase to see the order status.",
+      timeout_alert_title: "Confirmation delayed",
+      timeout_alert_desc:
+        "We could not confirm in real time. If you already paid, the order will appear in My orders within minutes.",
+      firestore_error_title: "Could not load order",
+      firestore_error_desc: "Connection or permissions error. Check that you are logged in with the correct account.",
+      contact_link: "Contact",
     },
     account: {
         layout_title: "My Account",

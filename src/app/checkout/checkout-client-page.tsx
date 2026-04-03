@@ -18,6 +18,8 @@ import {
   Lock,
   CreditCard,
   ArrowLeft,
+  ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -116,6 +118,8 @@ export default function CheckoutClientPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentErrorKind, setPaymentErrorKind] = useState<'hilow' | 'local' | null>(null);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(getCheckoutSchema(t)),
@@ -172,38 +176,78 @@ export default function CheckoutClientPage() {
   const onFinalSubmit = async (data: CheckoutFormValues) => {
     if (!user) return;
     setLoading(true);
+    setPaymentError(null);
+    setPaymentErrorKind(null);
     const uniqueId = `CPO_${user.uid}_${Date.now()}`;
-    
+
     try {
-        const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
-        const localOrderData: any = {
-            userId: user.uid,
-            items: cartItems.map(item => ({ productId: item.id, name: item.name, price: item.price, quantity: item.quantity, imageUrl: item.imageUrl })),
-            total: finalTotals.total,
-            customerName: data.name,
-            customerEmail: data.email,
-            shippingAddress: { line1: data.street, line2: null, city: data.city, state: data.state, postal_code: data.postalCode, country: data.country, phone: data.phone },
-            status: 'pending_payment',
-            paymentMethod: 'hilow',
-            createdAt: serverTimestamp(),
-            ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount }})
-        };
-        await setDoc(localOrderRef, localOrderData);
-
-        const hilowResult = await createHilowApiOrder(
-            uniqueId, 
-            finalTotals.priceInCents, 
-            cartItems.map(item => `${item.quantity}x ${item.name}`).join(', '), 
-            false,
-            window.location.origin
-        );
-
-        if (!hilowResult.success || !hilowResult.checkoutUrl) throw new Error(hilowResult.message || 'Could not start payment.');
-        window.location.href = hilowResult.checkoutUrl;
+      const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
+      const localOrderData: any = {
+        userId: user.uid,
+        items: cartItems.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          imageUrl: item.imageUrl,
+        })),
+        total: finalTotals.total,
+        customerName: data.name,
+        customerEmail: data.email,
+        shippingAddress: {
+          line1: data.street,
+          line2: null,
+          city: data.city,
+          state: data.state,
+          postal_code: data.postalCode,
+          country: data.country,
+          phone: data.phone,
+        },
+        status: 'pending_payment',
+        paymentMethod: 'hilow',
+        createdAt: serverTimestamp(),
+        ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount } }),
+      };
+      await setDoc(localOrderRef, localOrderData);
     } catch (e: any) {
-        toast({ title: t('checkout.toasts.order_error_title'), description: e.message, variant: 'destructive' });
-        setLoading(false);
+      const msg = e?.message || String(e);
+      setPaymentErrorKind('local');
+      setPaymentError(msg);
+      toast({
+        title: t('checkout.payment_error_local_order_title'),
+        description: msg,
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
     }
+
+    try {
+      const hilowResult = await createHilowApiOrder(
+        uniqueId,
+        finalTotals.priceInCents,
+        cartItems.map((item) => `${item.quantity}x ${item.name}`).join(', '),
+        false,
+        window.location.origin
+      );
+
+      if (!hilowResult.success || !hilowResult.checkoutUrl) {
+        throw new Error(hilowResult.message || 'Could not start payment.');
+      }
+      window.location.href = hilowResult.checkoutUrl;
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      setPaymentErrorKind('hilow');
+      setPaymentError(msg);
+      toast({ title: t('checkout.toasts.order_error_title'), description: msg, variant: 'destructive' });
+      setLoading(false);
+    }
+  };
+
+  const goToStep = (next: number) => {
+    setPaymentError(null);
+    setPaymentErrorKind(null);
+    setStep(next);
   };
 
   if (isUserLoading && !user) return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>;
@@ -212,6 +256,37 @@ export default function CheckoutClientPage() {
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-headline text-primary mb-8 text-center font-bold">{t('checkout.title')}</h1>
       <Stepper currentStep={step} t={t} />
+
+      {paymentError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>
+            {paymentErrorKind === 'local'
+              ? t('checkout.payment_error_local_order_title')
+              : t('checkout.payment_error_banner_title')}
+          </AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p className="font-medium break-words">{paymentError}</p>
+            <p className="text-sm opacity-90">
+              {paymentErrorKind === 'local'
+                ? t('checkout.payment_error_local_order_hint')
+                : t('checkout.payment_error_banner_hint')}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2 border-destructive-foreground/30 text-destructive-foreground"
+              onClick={() => {
+                setPaymentError(null);
+                setPaymentErrorKind(null);
+              }}
+            >
+              {t('checkout.payment_error_dismiss')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onFinalSubmit)}>
@@ -262,6 +337,11 @@ export default function CheckoutClientPage() {
             <Card>
               <CardHeader><CardTitle>{t('checkout.review_title')}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
+                <Alert className="border-primary/30 bg-primary/5">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <AlertTitle>{t('checkout.hilow_gateway_info_title')}</AlertTitle>
+                  <AlertDescription>{t('checkout.hilow_gateway_info_desc')}</AlertDescription>
+                </Alert>
                 <div className="flex gap-2">
                     <Input placeholder="Coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
                     <Button type="button" onClick={handleApplyCoupon} disabled={couponLoading}>{couponLoading ? <Loader2 className="animate-spin" /> : 'Apply'}</Button>
@@ -281,8 +361,16 @@ export default function CheckoutClientPage() {
           )}
 
           <div className="mt-8 flex justify-between">
-            {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)}><ArrowLeft className="mr-2" /> Back</Button>}
-            {step < 3 && <Button type="button" onClick={() => setStep(step + 1)}>Continue</Button>}
+            {step > 1 && (
+              <Button type="button" variant="outline" onClick={() => goToStep(step - 1)}>
+                <ArrowLeft className="mr-2" /> Back
+              </Button>
+            )}
+            {step < 3 && (
+              <Button type="button" onClick={() => goToStep(step + 1)}>
+                Continue
+              </Button>
+            )}
           </div>
         </form>
       </Form>
