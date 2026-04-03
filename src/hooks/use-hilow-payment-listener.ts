@@ -1,14 +1,8 @@
 'use client';
 /**
- * @fileoverview Hook de React para escuchar notificaciones de pago de Hilow en tiempo real DESDE EL FRONTEND.
- *
- * Propósito: Dar feedback visual inmediato al usuario (ej. un "tick" de confirmación en la página de éxito).
- * ¿Qué hace?: Este hook establece una conexión segura y de solo lectura con la base de datos de Hilow
- * para "escuchar" cuándo un pedido se marca como 'completed' o 'renewal_succeeded'. Cuando lo detecta, puede ejecutar
- * una acción en la UI, como mostrar una notificación "toast".
- * 
- * IMPORTANTE: Este hook es OPCIONAL y solo debe usarse para mejorar la experiencia de usuario.
- * NO debe usarse para lógica de negocio crítica (activar envíos, etc.). Para eso, se debe usar el Webhook de servidor.
+ * Escucha el estado del pedido en Firestore de Hilow (opcional, UX).
+ * La página /checkout/success confirma el pago con onSnapshot en Firestore local (users/.../orders).
+ * Configura credenciales públicas de Hilow vía NEXT_PUBLIC_* si vuelves a usar este hook.
  */
 
 import { useEffect } from 'react';
@@ -18,29 +12,26 @@ import { getFirestore, collectionGroup, query, where, onSnapshot } from 'firebas
 // Import our app's toast system
 import { useToast } from '@/hooks/use-toast'; 
 
-// --- Configuración de Conexión a Hilow (Segura para el frontend) ---
-const HILOW_API_KEY = "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8";
-
-const hilowFirebaseConfig = {
-  apiKey: HILOW_API_KEY,
-  authDomain: "studio-953389996-b1a64.firebaseapp.com",
-  projectId: "studio-953389996-b1a64",
-};
-
 const HILOW_APP_NAME = 'hilowListener';
 
-/**
- * Inicializa y devuelve una instancia de la aplicación de Firebase para Hilow.
- * Evita inicializaciones múltiples.
- * @returns La instancia de la app de Firebase para Hilow.
- */
-const getHilowApp = (): FirebaseApp => {
-  const existingApp = getApps().find(app => app.name === HILOW_APP_NAME);
+function getHilowFirebaseConfig() {
+  const apiKey = process.env.NEXT_PUBLIC_HILOW_FIREBASE_API_KEY;
+  const authDomain = process.env.NEXT_PUBLIC_HILOW_FIREBASE_AUTH_DOMAIN;
+  const projectId = process.env.NEXT_PUBLIC_HILOW_FIREBASE_PROJECT_ID;
+  if (!apiKey || !authDomain || !projectId) {
+    return null;
+  }
+  return { apiKey, authDomain, projectId };
+}
+
+const getHilowApp = (): FirebaseApp | null => {
+  const config = getHilowFirebaseConfig();
+  if (!config) return null;
+  const existingApp = getApps().find((app) => app.name === HILOW_APP_NAME);
   if (existingApp) {
     return existingApp;
   }
-  // Crea una instancia con un nombre único para no interferir con la app principal del cliente.
-  return initializeApp(hilowFirebaseConfig, HILOW_APP_NAME);
+  return initializeApp(config, HILOW_APP_NAME);
 };
 
 
@@ -63,6 +54,9 @@ export const useHilowPaymentListener = (yourInternalOrderId: string | null, onPa
 
     try {
       const hilowApp = getHilowApp();
+      if (!hilowApp) {
+        return;
+      }
       const hilowDb = getFirestore(hilowApp);
       
       const ordersCollectionGroup = collectionGroup(hilowDb, 'orders');
