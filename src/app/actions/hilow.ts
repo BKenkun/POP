@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileoverview Secure backend action to create a payment session in Hilow.
+ * @fileoverview Standardized backend logic to create a payment session in Hilow.
  *
- * This function communicates with the Hilow API to initiate a payment flow.
+ * This function handles the secure communication with the Hilow API to initiate a payment flow.
  */
 
 interface HilowApiResponse {
@@ -29,11 +29,15 @@ export async function createHilowApiOrder(
     yourStoreHostname: string 
 ): Promise<{ success: boolean; checkoutUrl?: string; message?: string }> {
     
+    if (amountInCents < 0 || !Number.isInteger(amountInCents)) {
+        return { success: false, message: 'Amount must be a positive integer in cents.' };
+    }
+
     try {
         // Production endpoint for Hilow Global
         const HILOW_API_ENDPOINT = 'https://hilowglobal.app/api/orders';
 
-        // URLs for customer redirection after payment
+        // Correct URLs for redirection based on app structure
         const successUrl = `https://${yourStoreHostname}/checkout/success?order_id=${yourInternalOrderId}`;
         const cancelUrl = `https://${yourStoreHostname}/checkout`;
 
