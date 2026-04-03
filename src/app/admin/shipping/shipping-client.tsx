@@ -15,10 +15,10 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collectionGroup, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 
-type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: string, path: string };
+type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: Date, path: string };
 
 export default function ShippingClient() {
   const [shippingOrders, setShippingOrders] = useState<AdminDisplayOrder[]>([]);
@@ -26,42 +26,43 @@ export default function ShippingClient() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchAndFilterOrders = async () => {
-        setLoading(true);
-        try {
-            const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-            const querySnapshot = await getDocs(ordersQuery);
-
-            const allFetchedOrders: AdminDisplayOrder[] = querySnapshot.docs.map(doc => {
+    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+        const fetchedOrders: AdminDisplayOrder[] = snapshot.docs
+            .map(doc => {
                 const data = doc.data() as Order;
-                const createdAtISO = data.createdAt instanceof Timestamp 
-                    ? data.createdAt.toDate().toISOString() 
-                    : (data.createdAt instanceof Date ? data.createdAt.toISOString() : new Date().toISOString());
+                let createdAtDate: Date;
+                if (data.createdAt && (data.createdAt as any).toDate) {
+                    createdAtDate = (data.createdAt as any).toDate();
+                } else if (data.createdAt instanceof Date) {
+                    createdAtDate = data.createdAt;
+                } else {
+                    createdAtDate = new Date(data.createdAt as any);
+                }
 
                 return {
                     ...data,
                     id: doc.id,
                     path: doc.ref.path,
-                    createdAt: createdAtISO,
+                    createdAt: createdAtDate,
                 };
-            });
+            })
+            .filter(order => order.status === 'out_for_delivery');
             
-            const filtered = allFetchedOrders.filter(order => order.status === 'out_for_delivery');
-            setShippingOrders(filtered);
+        setShippingOrders(fetchedOrders);
+        setLoading(false);
+    }, (error: any) => {
+        console.error("Error fetching shipping orders:", error);
+        toast({ 
+          title: 'Error loading shipments', 
+          description: error.message || 'Could not fetch orders out for delivery.',
+          variant: 'destructive' 
+        });
+        setLoading(false);
+    });
 
-        } catch (error: any) {
-            console.error("Error fetching shipping orders:", error);
-            toast({ 
-              title: 'Error loading shipments', 
-              description: error.message || 'Could not fetch orders out for delivery.',
-              variant: 'destructive' 
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    fetchAndFilterOrders();
+    return () => unsubscribe();
   }, [toast]);
 
   return (
@@ -106,7 +107,7 @@ export default function ShippingClient() {
                     {shippingOrders.map((order) => (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(order.id.length - 7).toUpperCase()}</TableCell>
-                        <TableCell>{new Date(order.createdAt).toLocaleDateString('en-US')}</TableCell>
+                        <TableCell>{order.createdAt.toLocaleDateString('en-US')}</TableCell>
                         <TableCell>{order.customerName}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                              <div className="flex items-center gap-2">

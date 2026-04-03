@@ -82,10 +82,17 @@ export default function ShippingClient() {
         const docSnap = await getDoc(orderDocRef);
         if (docSnap.exists()) {
           const orderData = docSnap.data() as Omit<Order, 'id'>;
-          const createdAt = orderData.createdAt && (orderData.createdAt as any).toDate 
-            ? (orderData.createdAt as any).toDate().toISOString()
-            : new Date().toISOString();
-          setOrder({ ...orderData, id: docSnap.id, path: docSnap.ref.path, createdAt } as Order);
+          // Handle complex timestamp object from Firebase if necessary
+          let createdAtDate: Date;
+          if (orderData.createdAt && (orderData.createdAt as any).toDate) {
+              createdAtDate = (orderData.createdAt as any).toDate();
+          } else if (orderData.createdAt instanceof Date) {
+              createdAtDate = orderData.createdAt;
+          } else {
+              createdAtDate = new Date(orderData.createdAt as any);
+          }
+          
+          setOrder({ ...orderData, id: docSnap.id, path: docSnap.ref.path, createdAt: createdAtDate } as Order);
           setDni(orderData.deliveryDni || '');
         } else {
           setOrder(null);
@@ -151,7 +158,7 @@ export default function ShippingClient() {
        <div className="flex items-center justify-between">
          <div>
             <h1 className="text-3xl font-bold">Manage Delivery</h1>
-            <p className="text-muted-foreground">Order #{order.id.substring(order.id.length-7)}</p>
+            <p className="text-muted-foreground">Order #{order.id.substring(order.id.length-7).toUpperCase()}</p>
          </div>
         <Button asChild variant="outline"><Link href="/admin/shipping"><ArrowLeft className="mr-2" />Back to Shipments</Link></Button>
       </div>
