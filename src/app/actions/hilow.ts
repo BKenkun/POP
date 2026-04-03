@@ -1,12 +1,9 @@
 'use server';
 
 /**
- * @fileoverview PLANTILLA: Contiene la lógica del backend de un cliente para crear un pedido en Hilow a través de la API segura.
+ * @fileoverview Secure backend action to create a payment session in Hilow.
  *
- * Propósito: Iniciar el proceso de pago.
- * ¿Qué hace?: Esta función se ejecuta en el servidor del cliente. Envía una petición POST segura a la API de Hilow.
- * Le dice a Hilow: "Hola, un cliente quiere pagar esta cantidad por este producto. Prepara una sesión de pago".
- * Este es el punto de partida de toda la transacción.
+ * This function communicates with the Hilow API to initiate a payment flow.
  */
 
 interface HilowApiResponse {
@@ -15,14 +12,14 @@ interface HilowApiResponse {
 }
 
 /**
- * Crea un pedido a través del endpoint de API seguro de Hilow.
+ * Creates an order via the secure Hilow API endpoint.
  * 
- * @param yourInternalOrderId El ID del pedido en la base de datos propia de tu tienda.
- * @param amountInCents El importe total del pedido en céntimos (ej: 2500 para 25.00€).
- * @param productName Un resumen del producto.
- * @param isSubscription Booleano para activar pagos recurrentes.
- * @param yourStoreHostname El dominio de tu tienda (ej: "comprarpopperonline.com").
- * @returns Un objeto con el estado de éxito y la URL de checkout.
+ * @param yourInternalOrderId The unique ID of the order in your own database.
+ * @param amountInCents Total order amount in cents.
+ * @param productName Summary of products being purchased.
+ * @param isSubscription Boolean to enable recurring payments.
+ * @param yourStoreHostname Domain of your store (e.g., "purorush.com").
+ * @returns Success status and the checkout redirect URL.
  */
 export async function createHilowApiOrder(
     yourInternalOrderId: string, 
@@ -33,10 +30,10 @@ export async function createHilowApiOrder(
 ): Promise<{ success: boolean; checkoutUrl?: string; message?: string }> {
     
     try {
-        // En producción, usa la URL absoluta de Hilow Global
+        // Production endpoint for Hilow Global
         const HILOW_API_ENDPOINT = 'https://hilowglobal.app/api/orders';
 
-        // Adaptamos las URLs de éxito y cancelación a las rutas de nuestra aplicación
+        // URLs for customer redirection after payment
         const successUrl = `https://${yourStoreHostname}/checkout/success?order_id=${yourInternalOrderId}`;
         const cancelUrl = `https://${yourStoreHostname}/checkout`;
 
@@ -50,11 +47,11 @@ export async function createHilowApiOrder(
             cancelUrl: cancelUrl,
         };
 
-        // La API Key DEBE ser una variable de entorno SECRETA en tu servidor.
+        // API Key from server environment variables
         const HILOW_API_KEY = process.env.HILOW_API_KEY; 
         
         if (!HILOW_API_KEY) {
-            throw new Error('La clave de API de Hilow (HILOW_API_KEY) no está configurada.');
+            throw new Error('HILOW_API_KEY is not configured in the server environment.');
         }
 
         const response = await fetch(HILOW_API_ENDPOINT, {
@@ -69,19 +66,19 @@ export async function createHilowApiOrder(
         const responseData: HilowApiResponse = await response.json();
 
         if (!response.ok) {
-            throw new Error(responseData.message || `Error de API de Hilow: ${response.status}`);
+            throw new Error(responseData.message || `Hilow API Error: ${response.status}`);
         }
         
         if (responseData && responseData.hilowOrderId) {
-            // URL a la que redirigir al comprador
+            // Final URL to redirect the buyer to the payment gateway
             const checkoutUrl = `https://hilowglobal.app/pay/${responseData.hilowOrderId}`;
             return { success: true, checkoutUrl: checkoutUrl };
         } else {
-            throw new Error('Respuesta inválida de Hilow (falta ID de pedido).');
+            throw new Error('Invalid response from Hilow (missing order ID).');
         }
 
     } catch (error) {
-        console.error('Error de integración con Hilow:', error);
+        console.error('Hilow Integration Error:', error);
         return { success: false, message: (error as Error).message };
     }
 }
