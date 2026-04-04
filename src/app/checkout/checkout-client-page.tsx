@@ -22,11 +22,10 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -110,8 +109,6 @@ export default function CheckoutClientPage() {
   const { cartItems, cartTotal, cartCount, updateQuantity, volumeDiscount } = useCart();
   const { user, loading: isUserLoading, userDoc } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
-
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState('');
@@ -124,6 +121,7 @@ export default function CheckoutClientPage() {
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(getCheckoutSchema(t)),
     defaultValues: { name: '', email: '', phone: '', street: '', city: '', state: '', postalCode: '', country: 'Spain', saveAddress: false },
+    shouldUnregister: false,
   });
 
   const finalTotals = useMemo(() => {
@@ -173,13 +171,33 @@ export default function CheckoutClientPage() {
     }
   }, [couponCode, user, cartTotal, t, toast]);
 
-  const onSubmitValidationError = () => {
+  const goToStep = (next: number) => {
+    setPaymentError(null);
+    setPaymentErrorKind(null);
+    setStep(next);
+  };
+
+  const firstFieldErrorMessage = (errors: FieldErrors<CheckoutFormValues>): string | undefined => {
+    for (const v of Object.values(errors)) {
+      if (v && typeof v === 'object' && 'message' in v && typeof (v as { message?: unknown }).message === 'string') {
+        return (v as { message: string }).message;
+      }
+    }
+    return undefined;
+  };
+
+  const onSubmitValidationError = (errors: FieldErrors<CheckoutFormValues>) => {
+    const detail = firstFieldErrorMessage(errors);
     toast({
       title: t('checkout.toasts.validation_error_title'),
-      description: t('checkout.toasts.validation_error_desc'),
+      description: detail ?? t('checkout.toasts.validation_error_desc'),
       variant: 'destructive',
     });
     goToStep(2);
+  };
+
+  const submitCheckout = () => {
+    void form.handleSubmit(onFinalSubmit, onSubmitValidationError)();
   };
 
   const onFinalSubmit = async (data: CheckoutFormValues) => {
@@ -187,6 +205,14 @@ export default function CheckoutClientPage() {
       toast({
         title: t('checkout.login_required_alert_title'),
         description: t('checkout.toasts.login_required_desc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (finalTotals.total <= 0 || cartCount === 0) {
+      toast({
+        title: t('checkout.toasts.validation_error_title'),
+        description: t('cart.empty_subtitle'),
         variant: 'destructive',
       });
       return;
@@ -258,12 +284,6 @@ export default function CheckoutClientPage() {
       toast({ title: t('checkout.toasts.order_error_title'), description: msg, variant: 'destructive' });
       setLoading(false);
     }
-  };
-
-  const goToStep = (next: number) => {
-    setPaymentError(null);
-    setPaymentErrorKind(null);
-    setStep(next);
   };
 
   const handleContinueFromStep1 = () => {
@@ -338,7 +358,12 @@ export default function CheckoutClientPage() {
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onFinalSubmit, onSubmitValidationError)}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitCheckout();
+          }}
+        >
           {step === 1 && (
             <Card>
               <CardHeader><CardTitle>{t('checkout.confirm_cart_title')}</CardTitle></CardHeader>
@@ -408,7 +433,13 @@ export default function CheckoutClientPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button size="lg" className="w-full" type="submit" disabled={loading}>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => submitCheckout()}
+                >
                   {loading ? <Loader2 className="animate-spin mr-2" /> : <CreditCard className="mr-2" />}
                   Pay Securely by Card
                 </Button>
