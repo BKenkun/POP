@@ -150,6 +150,11 @@ const enTranslations: Translations = {
       payment_error_local_order_title: "Could not save your order",
       payment_error_local_order_hint:
         "The order was not saved before payment. Check your connection and Firestore rules, then try again.",
+      pay_error_panel_title: "Cannot continue to payment",
+      pay_error_validation_title: "Invalid or missing data",
+      pay_error_validation_hint: "Tap “Back” to edit your shipping details and fix the issues listed above.",
+      pay_error_technical_prefix: "Technical detail:",
+      pay_error_clear: "Clear message",
     },
     checkout_success: {
       verifying_alert_title: "Confirming payment",

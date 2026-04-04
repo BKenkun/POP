@@ -71,6 +71,47 @@ const getCheckoutSchema = (t: (key: string) => string) =>
 
 type CheckoutFormValues = z.infer<ReturnType<typeof getCheckoutSchema>>;
 
+function checkoutFieldLabels(t: (key: string) => string): Record<keyof CheckoutFormValues, string> {
+  return {
+    name: t('checkout.fullname_label'),
+    email: t('checkout.email_label'),
+    phone: t('checkout.phone_label'),
+    street: t('checkout.street_label'),
+    city: t('checkout.city_label'),
+    state: t('checkout.state_label'),
+    postalCode: t('checkout.zip_label'),
+    country: t('checkout.country_label'),
+    saveAddress: t('checkout.save_address_label'),
+  };
+}
+
+function fieldErrorsToLines(
+  errors: FieldErrors<CheckoutFormValues>,
+  t: (key: string) => string
+): string[] {
+  const labels = checkoutFieldLabels(t);
+  const lines: string[] = [];
+  for (const key of Object.keys(errors) as (keyof CheckoutFormValues)[]) {
+    const err = errors[key];
+    if (err && typeof err === 'object' && 'message' in err && err.message) {
+      lines.push(`${labels[key]}: ${String(err.message)}`);
+    }
+  }
+  return lines;
+}
+
+function zodIssuesToLines(
+  issues: z.ZodIssue[],
+  t: (key: string) => string
+): string[] {
+  const labels = checkoutFieldLabels(t);
+  return issues.map((issue) => {
+    const path = issue.path[0] as keyof CheckoutFormValues | undefined;
+    const label = path && path in labels ? labels[path] : String(path ?? 'field');
+    return `${label}: ${issue.message}`;
+  });
+}
+
 const getImageUrl = (url: string) => {
   if (!url) return '';
   if (url.includes('firebasestorage.googleapis.com')) {
@@ -117,6 +158,14 @@ export default function CheckoutClientPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentErrorKind, setPaymentErrorKind] = useState<'hilow' | 'local' | null>(null);
+  /** Errores mostrados junto al botón de pago (paso 3) */
+  const [payStepDetail, setPayStepDetail] = useState<{
+    title: string;
+    items: string[];
+    hint?: string;
+  } | null>(null);
+  /** Errores al pulsar Continuar en el paso 2 */
+  const [step2ValidationLines, setStep2ValidationLines] = useState<string[] | null>(null);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(getCheckoutSchema(t)),
@@ -174,26 +223,25 @@ export default function CheckoutClientPage() {
   const goToStep = (next: number) => {
     setPaymentError(null);
     setPaymentErrorKind(null);
+    setPayStepDetail(null);
+    setStep2ValidationLines(null);
     setStep(next);
   };
 
-  const firstFieldErrorMessage = (errors: FieldErrors<CheckoutFormValues>): string | undefined => {
-    for (const v of Object.values(errors)) {
-      if (v && typeof v === 'object' && 'message' in v && typeof (v as { message?: unknown }).message === 'string') {
-        return (v as { message: string }).message;
-      }
-    }
-    return undefined;
-  };
-
   const onSubmitValidationError = (errors: FieldErrors<CheckoutFormValues>) => {
-    const detail = firstFieldErrorMessage(errors);
+    const lines = fieldErrorsToLines(errors, t);
+    setPaymentError(null);
+    setPaymentErrorKind(null);
+    setPayStepDetail({
+      title: t('checkout.pay_error_validation_title'),
+      items: lines.length > 0 ? lines : [t('checkout.toasts.validation_error_desc')],
+      hint: t('checkout.pay_error_validation_hint'),
+    });
     toast({
       title: t('checkout.toasts.validation_error_title'),
-      description: detail ?? t('checkout.toasts.validation_error_desc'),
+      description: lines[0] ?? t('checkout.toasts.validation_error_desc'),
       variant: 'destructive',
     });
-    goToStep(2);
   };
 
   const submitCheckout = () => {
@@ -202,6 +250,10 @@ export default function CheckoutClientPage() {
 
   const onFinalSubmit = async (data: CheckoutFormValues) => {
     if (!user) {
+      setPayStepDetail({
+        title: t('checkout.login_required_alert_title'),
+        items: [t('checkout.toasts.login_required_desc')],
+      });
       toast({
         title: t('checkout.login_required_alert_title'),
         description: t('checkout.toasts.login_required_desc'),
@@ -210,6 +262,10 @@ export default function CheckoutClientPage() {
       return;
     }
     if (finalTotals.total <= 0 || cartCount === 0) {
+      setPayStepDetail({
+        title: t('checkout.pay_error_panel_title'),
+        items: [t('cart.empty_title'), t('cart.empty_subtitle')],
+      });
       toast({
         title: t('checkout.toasts.validation_error_title'),
         description: t('cart.empty_subtitle'),
@@ -220,6 +276,7 @@ export default function CheckoutClientPage() {
     setLoading(true);
     setPaymentError(null);
     setPaymentErrorKind(null);
+    setPayStepDetail(null);
     const uniqueId = `CPO_${user.uid}_${Date.now()}`;
 
     try {
@@ -255,6 +312,7 @@ export default function CheckoutClientPage() {
       const msg = e?.message || String(e);
       setPaymentErrorKind('local');
       setPaymentError(msg);
+      setPayStepDetail(null);
       toast({
         title: t('checkout.payment_error_local_order_title'),
         description: msg,
@@ -281,6 +339,7 @@ export default function CheckoutClientPage() {
       const msg = e?.message || String(e);
       setPaymentErrorKind('hilow');
       setPaymentError(msg);
+      setPayStepDetail(null);
       toast({ title: t('checkout.toasts.order_error_title'), description: msg, variant: 'destructive' });
       setLoading(false);
     }
@@ -299,6 +358,7 @@ export default function CheckoutClientPage() {
   };
 
   const handleContinueFromStep2 = async () => {
+    setStep2ValidationLines(null);
     if (!user) {
       toast({
         title: t('checkout.login_required_alert_title'),
@@ -309,9 +369,14 @@ export default function CheckoutClientPage() {
     }
     const ok = await form.trigger();
     if (!ok) {
+      const parsed = getCheckoutSchema(t).safeParse(form.getValues());
+      const lines = parsed.success
+        ? [t('checkout.toasts.validation_error_desc')]
+        : zodIssuesToLines(parsed.error.issues, t);
+      setStep2ValidationLines(lines);
       toast({
         title: t('checkout.toasts.validation_error_title'),
-        description: t('checkout.toasts.validation_error_desc'),
+        description: lines[0] ?? t('checkout.toasts.validation_error_desc'),
         variant: 'destructive',
       });
       return;
@@ -326,7 +391,7 @@ export default function CheckoutClientPage() {
       <h1 className="text-3xl font-headline text-primary mb-8 text-center font-bold">{t('checkout.title')}</h1>
       <Stepper currentStep={step} t={t} />
 
-      {paymentError && (
+      {paymentError && step !== 3 && (
         <Alert variant="destructive" className="mb-6">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>
@@ -399,6 +464,20 @@ export default function CheckoutClientPage() {
                     <AlertDescription>{t('checkout.login_required_alert_desc')}</AlertDescription>
                   </Alert>
                 ) : (
+                  <div className="space-y-4">
+                    {step2ValidationLines && step2ValidationLines.length > 0 && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        <AlertTitle>{t('checkout.pay_error_validation_title')}</AlertTitle>
+                        <AlertDescription>
+                          <ul className="mt-2 list-disc space-y-1 pl-4">
+                            {step2ValidationLines.map((line, i) => (
+                              <li key={i}>{line}</li>
+                            ))}
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t('checkout.fullname_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>{t('checkout.email_label')}</FormLabel><FormControl><Input type="email" autoComplete="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -408,6 +487,7 @@ export default function CheckoutClientPage() {
                     <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('checkout.state_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>{t('checkout.zip_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>{t('checkout.country_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
                   </div>
                 )}
               </CardContent>
@@ -432,7 +512,56 @@ export default function CheckoutClientPage() {
                     <div className="flex justify-between font-bold text-xl"><span>Total</span><span className="text-primary">{formatPrice(finalTotals.total)}</span></div>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex-col items-stretch gap-4">
+                {(payStepDetail || paymentError) && (
+                  <Alert variant="destructive" className="text-left">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <AlertTitle>
+                      {payStepDetail?.title ??
+                        (paymentErrorKind === 'local'
+                          ? t('checkout.payment_error_local_order_title')
+                          : t('checkout.payment_error_banner_title'))}
+                    </AlertTitle>
+                    <AlertDescription className="space-y-3">
+                      {payStepDetail && payStepDetail.items.length > 0 && (
+                        <ul className="list-disc space-y-1 pl-4 text-sm">
+                          {payStepDetail.items.map((line, i) => (
+                            <li key={i}>{line}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {paymentError && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium uppercase tracking-wide text-destructive-foreground/80">
+                            {t('checkout.pay_error_technical_prefix')}
+                          </p>
+                          <p className="break-words font-medium">{paymentError}</p>
+                          <p className="text-sm opacity-90">
+                            {paymentErrorKind === 'local'
+                              ? t('checkout.payment_error_local_order_hint')
+                              : t('checkout.payment_error_banner_hint')}
+                          </p>
+                        </div>
+                      )}
+                      {payStepDetail?.hint && (
+                        <p className="text-sm border-t border-destructive-foreground/20 pt-2">{payStepDetail.hint}</p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-destructive-foreground/30 text-destructive-foreground sm:w-auto"
+                        onClick={() => {
+                          setPayStepDetail(null);
+                          setPaymentError(null);
+                          setPaymentErrorKind(null);
+                        }}
+                      >
+                        {t('checkout.pay_error_clear')}
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <Button
                   size="lg"
                   className="w-full"
