@@ -1,132 +1,86 @@
 'use server';
 
 /**
- * Crea un pedido vía POST /api/orders de Hilow (servidor → Hilow).
- * `yourStoreUrl` suele ser `window.location.origin` en el cliente para success/cancel correctos en cada entorno.
+ * @fileoverview INTEGRACIÓN HILOW (VERSIÓN UNIFICADA)
+ * Lógica para crear pedidos de forma segura en la pasarela de pagos.
  */
 
-function normalizeBaseUrl(url: string): string {
-  return url.replace(/\/+$/, '');
-}
-
-function getHilowApiBaseUrl(): string {
-  const raw = process.env.HILOW_API_BASE_URL || 'https://hilowglobal.com';
-  return normalizeBaseUrl(raw);
-}
-
-function getHilowPayOrigin(): string {
-  const raw = process.env.HILOW_PAY_ORIGIN || getHilowApiBaseUrl();
-  return normalizeBaseUrl(raw);
-}
-
 interface HilowApiResponse {
-  hilowOrderId?: string;
-  message?: string;
+    hilowOrderId: string;
+    message?: string;
 }
 
-function errorMessageFromBody(status: number, bodyText: string): string {
-  if (!bodyText.trim()) {
-    return `La API de Hilow falló con estado ${status}`;
-  }
-  try {
-    const data = JSON.parse(bodyText) as { message?: string };
-    return data.message || bodyText;
-  } catch {
-    return bodyText.length > 200 ? `${bodyText.slice(0, 200)}…` : bodyText;
-  }
-}
-
+/**
+ * Crea un pedido a través de la API de Hilow.
+ */
 export async function createHilowApiOrder(
-  yourInternalOrderId: string,
-  amountInCents: number,
-  productName: string,
-  isSubscription: boolean,
-  yourStoreUrl: string
+    yourInternalOrderId: string, 
+    amountInCents: number, 
+    productName: string,
+    isSubscription: boolean,
+    yourStoreUrl: string 
 ): Promise<{ success: boolean; checkoutUrl?: string; message?: string }> {
-  try {
-    const HILOW_API_KEY = process.env.HILOW_API_KEY;
-
-    if (!HILOW_API_KEY) {
-      throw new Error('La HILOW_API_KEY no está configurada en el servidor.');
-    }
-
-    const appBase = normalizeBaseUrl(yourStoreUrl);
-    let hostname: string;
+    
     try {
-      hostname = new URL(appBase).hostname;
-    } catch {
-      throw new Error('URL de tienda inválida (yourStoreUrl).');
+        // 1. Validaciones básicas
+        const sanitizedAmount = Math.round(amountInCents);
+        if (sanitizedAmount <= 0) {
+            throw new Error('El importe debe ser mayor a 0.');
+        }
+
+        // 2. Configuración desde variables de entorno
+        const HILOW_API_KEY = process.env.HILOW_API_KEY;
+        const HILOW_API_BASE_URL = process.env.HILOW_API_BASE_URL || 'https://hilowglobal.com';
+        const HILOW_STORE_ID = process.env.HILOW_STORE_ID || new URL(yourStoreUrl).hostname;
+
+        if (!HILOW_API_KEY) {
+            throw new Error('HILOW_API_KEY no configurada en el servidor.');
+        }
+
+        // 3. Preparación del Payload
+        const payload = {
+            storeId: HILOW_STORE_ID,
+            internalOrderId: yourInternalOrderId,
+            amountInCents: sanitizedAmount,
+            productName: productName,
+            isSubscription: isSubscription,
+            successUrl: `${yourStoreUrl}/checkout/success?order_id=${yourInternalOrderId}`,
+            cancelUrl: `${yourStoreUrl}/checkout`,
+        };
+
+        // Debug en desarrollo
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('[Hilow] Creando pedido:', payload);
+        }
+
+        // 4. Llamada a la API
+        const response = await fetch(`${HILOW_API_BASE_URL}/api/orders`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${HILOW_API_KEY}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const responseData: HilowApiResponse = await response.json();
+
+        if (!response.ok) {
+            throw new Error(responseData.message || `Error API: ${response.status}`);
+        }
+        
+        if (responseData && responseData.hilowOrderId) {
+            const checkoutUrl = `${HILOW_API_BASE_URL}/pay/${responseData.hilowOrderId}`;
+            return { success: true, checkoutUrl };
+        } else {
+            throw new Error('La API de Hilow no devolvió un ID de pedido válido.');
+        }
+
+    } catch (error) {
+        console.error('Hilow Integration Error:', error);
+        return { 
+            success: false, 
+            message: (error as Error).message || 'Error al conectar con la pasarela de pago.' 
+        };
     }
-
-    const storeId = process.env.HILOW_STORE_ID || hostname;
-
-    const sanitizedAmount = Math.round(amountInCents);
-    if (!Number.isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-      throw new Error(
-        `amountInCents debe ser un entero positivo (recibido: ${amountInCents}).`
-      );
-    }
-
-    if (!productName.trim()) {
-      throw new Error('productName no puede estar vacío.');
-    }
-
-    const successUrl = `${appBase}/checkout/success?order_id=${encodeURIComponent(yourInternalOrderId)}`;
-    const cancelUrl = `${appBase}/checkout`;
-
-    const payload = {
-      storeId,
-      internalOrderId: yourInternalOrderId,
-      amountInCents: sanitizedAmount,
-      productName,
-      isSubscription,
-      successUrl,
-      cancelUrl,
-    };
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[Hilow] Payload →', JSON.stringify(payload, null, 2));
-    }
-
-    const apiBase = getHilowApiBaseUrl();
-    const response = await fetch(`${apiBase}/api/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${HILOW_API_KEY}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const responseText = await response.text();
-
-    let responseData: HilowApiResponse;
-    try {
-      responseData = responseText ? (JSON.parse(responseText) as HilowApiResponse) : {};
-    } catch {
-      if (!response.ok) {
-        throw new Error(errorMessageFromBody(response.status, responseText));
-      }
-      throw new Error('Respuesta inválida de la API de Hilow.');
-    }
-
-    if (!response.ok) {
-      throw new Error(responseData.message || errorMessageFromBody(response.status, responseText));
-    }
-
-    if (!responseData.hilowOrderId) {
-      throw new Error('La API de Hilow no devolvió hilowOrderId.');
-    }
-
-    const payOrigin = getHilowPayOrigin();
-    const checkoutUrl = `${payOrigin}/pay/${responseData.hilowOrderId}`;
-
-    return { success: true, checkoutUrl };
-  } catch (error) {
-    console.error('Error al crear el pedido en la API de Hilow:', error);
-    return {
-      success: false,
-      message: (error as Error).message || 'Fallo al conectar con el servicio de pago.',
-    };
-  }
 }

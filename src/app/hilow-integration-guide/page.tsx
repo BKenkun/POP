@@ -6,7 +6,6 @@ import { Check, Clipboard, FileCode, Workflow, Info, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-
 const jsCode = `
 document.addEventListener('DOMContentLoaded', function() {
   const checkoutButton = document.getElementById('checkout_button');
@@ -70,12 +69,10 @@ function getYourStoresCurrentOrderId() {
   return 'ORDER_12345'; 
 }
 `;
-
 const htmlCode = `
 <input type="text" id="coupon_code_field" name="coupon_code" placeholder="Código de descuento">
 <button id="checkout_button">Finalizar Compra</button>
 `;
-
 const CodeSnippet = ({ code, language }: { code: string; language: string }) => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -101,7 +98,6 @@ const CodeSnippet = ({ code, language }: { code: string; language: string }) => 
     </div>
   );
 };
-
 export default function HilowIntegrationGuidePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
