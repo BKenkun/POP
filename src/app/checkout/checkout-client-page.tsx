@@ -173,8 +173,24 @@ export default function CheckoutClientPage() {
     }
   }, [couponCode, user, cartTotal, t, toast]);
 
+  const onSubmitValidationError = () => {
+    toast({
+      title: t('checkout.toasts.validation_error_title'),
+      description: t('checkout.toasts.validation_error_desc'),
+      variant: 'destructive',
+    });
+    goToStep(2);
+  };
+
   const onFinalSubmit = async (data: CheckoutFormValues) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: t('checkout.login_required_alert_title'),
+        description: t('checkout.toasts.login_required_desc'),
+        variant: 'destructive',
+      });
+      return;
+    }
     setLoading(true);
     setPaymentError(null);
     setPaymentErrorKind(null);
@@ -250,6 +266,39 @@ export default function CheckoutClientPage() {
     setStep(next);
   };
 
+  const handleContinueFromStep1 = () => {
+    if (cartCount === 0) {
+      toast({
+        title: t('cart.empty_title'),
+        description: t('cart.empty_subtitle'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    goToStep(2);
+  };
+
+  const handleContinueFromStep2 = async () => {
+    if (!user) {
+      toast({
+        title: t('checkout.login_required_alert_title'),
+        description: t('checkout.login_required_alert_desc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    const ok = await form.trigger();
+    if (!ok) {
+      toast({
+        title: t('checkout.toasts.validation_error_title'),
+        description: t('checkout.toasts.validation_error_desc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    goToStep(3);
+  };
+
   if (isUserLoading && !user) return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>;
 
   return (
@@ -289,7 +338,7 @@ export default function CheckoutClientPage() {
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onFinalSubmit)}>
+        <form onSubmit={form.handleSubmit(onFinalSubmit, onSubmitValidationError)}>
           {step === 1 && (
             <Card>
               <CardHeader><CardTitle>{t('checkout.confirm_cart_title')}</CardTitle></CardHeader>
@@ -319,14 +368,21 @@ export default function CheckoutClientPage() {
               <CardHeader><CardTitle>{t('checkout.user_details_title')}</CardTitle></CardHeader>
               <CardContent className="space-y-6">
                 {!user ? (
-                  <Alert variant="destructive"><Lock className="h-4 w-4" /><AlertTitle>Login Required</AlertTitle><AlertDescription>Please log in to continue.</AlertDescription></Alert>
+                  <Alert variant="destructive">
+                    <Lock className="h-4 w-4" />
+                    <AlertTitle>{t('checkout.login_required_alert_title')}</AlertTitle>
+                    <AlertDescription>{t('checkout.login_required_alert_desc')}</AlertDescription>
+                  </Alert>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t('checkout.fullname_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>{t('checkout.email_label')}</FormLabel><FormControl><Input type="email" autoComplete="email" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('checkout.phone_label')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>{t('checkout.street_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('checkout.city_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('checkout.state_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="postalCode" render={({ field }) => (<FormItem><FormLabel>{t('checkout.zip_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="country" render={({ field }) => (<FormItem><FormLabel>{t('checkout.country_label')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                 )}
               </CardContent>
@@ -366,9 +422,14 @@ export default function CheckoutClientPage() {
                 <ArrowLeft className="mr-2" /> Back
               </Button>
             )}
-            {step < 3 && (
-              <Button type="button" onClick={() => goToStep(step + 1)}>
-                Continue
+            {step === 1 && (
+              <Button type="button" onClick={handleContinueFromStep1}>
+                {t('checkout.next_button')}
+              </Button>
+            )}
+            {step === 2 && (
+              <Button type="button" onClick={handleContinueFromStep2}>
+                {t('checkout.next_button')}
               </Button>
             )}
           </div>

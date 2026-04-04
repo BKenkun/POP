@@ -137,6 +137,8 @@ const enTranslations: Translations = {
         order_error_title: "Payment Error",
         order_error_desc: "Could not process order. Please try again.",
         login_required_desc: "Login required to complete purchase.",
+        validation_error_title: "Check your details",
+        validation_error_desc: "Some required fields are missing or invalid. Go back to the previous step and complete them.",
       },
       hilow_gateway_info_title: "Secure payment (Hilow)",
       hilow_gateway_info_desc:
