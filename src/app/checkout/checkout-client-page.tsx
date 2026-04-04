@@ -25,7 +25,7 @@ import Image from 'next/image';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
-import { useForm, type FieldErrors } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -83,21 +83,6 @@ function checkoutFieldLabels(t: (key: string) => string): Record<keyof CheckoutF
     country: t('checkout.country_label'),
     saveAddress: t('checkout.save_address_label'),
   };
-}
-
-function fieldErrorsToLines(
-  errors: FieldErrors<CheckoutFormValues>,
-  t: (key: string) => string
-): string[] {
-  const labels = checkoutFieldLabels(t);
-  const lines: string[] = [];
-  for (const key of Object.keys(errors) as (keyof CheckoutFormValues)[]) {
-    const err = errors[key];
-    if (err && typeof err === 'object' && 'message' in err && err.message) {
-      lines.push(`${labels[key]}: ${String(err.message)}`);
-    }
-  }
-  return lines;
 }
 
 function zodIssuesToLines(
@@ -228,26 +213,6 @@ export default function CheckoutClientPage() {
     setStep(next);
   };
 
-  const onSubmitValidationError = (errors: FieldErrors<CheckoutFormValues>) => {
-    const lines = fieldErrorsToLines(errors, t);
-    setPaymentError(null);
-    setPaymentErrorKind(null);
-    setPayStepDetail({
-      title: t('checkout.pay_error_validation_title'),
-      items: lines.length > 0 ? lines : [t('checkout.toasts.validation_error_desc')],
-      hint: t('checkout.pay_error_validation_hint'),
-    });
-    toast({
-      title: t('checkout.toasts.validation_error_title'),
-      description: lines[0] ?? t('checkout.toasts.validation_error_desc'),
-      variant: 'destructive',
-    });
-  };
-
-  const submitCheckout = () => {
-    void form.handleSubmit(onFinalSubmit, onSubmitValidationError)();
-  };
-
   const onFinalSubmit = async (data: CheckoutFormValues) => {
     if (!user) {
       setPayStepDetail({
@@ -343,6 +308,47 @@ export default function CheckoutClientPage() {
       toast({ title: t('checkout.toasts.order_error_title'), description: msg, variant: 'destructive' });
       setLoading(false);
     }
+  };
+
+  /** Validación con Zod + await explícito (evita fallos silenciosos de handleSubmit con el orden de declaración). */
+  const submitCheckout = () => {
+    void (async () => {
+      try {
+        const values = form.getValues();
+        const parsed = getCheckoutSchema(t).safeParse(values);
+        if (!parsed.success) {
+          const lines = zodIssuesToLines(parsed.error.issues, t);
+          setPaymentError(null);
+          setPaymentErrorKind(null);
+          setPayStepDetail({
+            title: t('checkout.pay_error_validation_title'),
+            items: lines.length > 0 ? lines : [t('checkout.toasts.validation_error_desc')],
+            hint: t('checkout.pay_error_validation_hint'),
+          });
+          toast({
+            title: t('checkout.toasts.validation_error_title'),
+            description: lines[0] ?? t('checkout.toasts.validation_error_desc'),
+            variant: 'destructive',
+          });
+          return;
+        }
+        await onFinalSubmit(parsed.data);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setLoading(false);
+        setPaymentErrorKind('hilow');
+        setPaymentError(msg);
+        setPayStepDetail({
+          title: t('checkout.pay_error_panel_title'),
+          items: [`${t('checkout.pay_error_technical_prefix')} ${msg}`],
+        });
+        toast({
+          title: t('checkout.toasts.order_error_title'),
+          description: msg,
+          variant: 'destructive',
+        });
+      }
+    })();
   };
 
   const handleContinueFromStep1 = () => {
