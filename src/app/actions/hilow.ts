@@ -60,18 +60,33 @@ export async function createHilowApiOrder(
 
     const storeId = process.env.HILOW_STORE_ID || hostname;
 
+    const sanitizedAmount = Math.round(amountInCents);
+    if (!Number.isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
+      throw new Error(
+        `amountInCents debe ser un entero positivo (recibido: ${amountInCents}).`
+      );
+    }
+
+    if (!productName.trim()) {
+      throw new Error('productName no puede estar vacío.');
+    }
+
     const successUrl = `${appBase}/checkout/success?order_id=${encodeURIComponent(yourInternalOrderId)}`;
     const cancelUrl = `${appBase}/checkout`;
 
     const payload = {
       storeId,
       internalOrderId: yourInternalOrderId,
-      amountInCents,
+      amountInCents: sanitizedAmount,
       productName,
       isSubscription,
       successUrl,
       cancelUrl,
     };
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Hilow] Payload →', JSON.stringify(payload, null, 2));
+    }
 
     const apiBase = getHilowApiBaseUrl();
     const response = await fetch(`${apiBase}/api/orders`, {
