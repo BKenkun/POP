@@ -1,12 +1,9 @@
-import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   typescript: {
-    // Mantenemos tu regla de ignorar errores para que el deploy no se detenga
     ignoreBuildErrors: true,
   },
   eslint: {
-    // Lo mismo para el linter
     ignoreDuringBuilds: true,
   },
   images: {
