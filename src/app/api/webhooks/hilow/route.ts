@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Server Config Error' }, { status: 500 });
   }
 
-  const headerStore = headers();
+  const headerStore = await headers();
   const signature = headerStore.get('hilow-signature');
   const body = await req.text(); 
 

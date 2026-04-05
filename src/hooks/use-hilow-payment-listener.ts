@@ -37,6 +37,7 @@ export const useHilowPaymentListener = (internalOrderId: string | null, onConfir
     try {
       const db = getFirestore(getHilowApp());
       
+      // Consultamos en la base de datos de Hilow buscando tu ID interno
       const q = query(
         collectionGroup(db, 'orders'), 
         where('internalOrderId', '==', internalOrderId)
@@ -46,15 +47,13 @@ export const useHilowPaymentListener = (internalOrderId: string | null, onConfir
         snap.forEach((doc) => {
             const data = doc.data();
             // Verificamos si el estado indica éxito en Hilow
-            const isConfirmed = data.status === 'completed' || data.status === 'renewal_succeeded' || data.status === 'paid' || data.status === 'succeeded';
+            const isConfirmed = data.status === 'completed' || data.status === 'renewal_succeeded';
             
             if (isConfirmed && onConfirmed) {
                 onConfirmed();
-                unsubscribe(); 
+                unsubscribe(); // Dejamos de escuchar tras recibir la confirmación
             }
         });
-      }, (error) => {
-          console.error("Hilow Listener Snapshot error:", error);
       });
 
     } catch (e) {
