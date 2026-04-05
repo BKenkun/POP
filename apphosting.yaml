@@ -6,9 +6,39 @@ runConfig:
   memoryMiB: 512
 
 env:
-  # --- Variables Públicas (Se pueden leer en el navegador) ---
+  # --- Variables de Entorno (Valores directos) ---
   - variable: NEXT_PUBLIC_APP_URL
     value: "https://comprarpopperonline.com"
+  - variable: APP_BASE_URL
+    value: "https://comprarpopperonline.com"
+  - variable: HILOW_API_BASE_URL
+    value: "https://hilowglobal.com"
+  - variable: HILOW_PAY_ORIGIN
+    value: "https://hilowglobal.com"
+  - variable: HILOW_STORE_ID
+    value: "comprarpopperonline.com"
+  - variable: KLAVIYO_LIST_ID
+    value: "WdHvpw"
+  - variable: FIREBASE_PROJECT_ID
+    value: "purorush"
+  - variable: FIREBASE_STORAGE_BUCKET
+    value: "purorush.appspot.com"
+
+  # --- Secretos (Los que creaste en la consola de Firebase) ---
+  - variable: HILOW_API_KEY
+    secret: HILOW_API_KEY
+  - variable: HILOW_WEBHOOK_SECRET
+    secret: HILOW_WEBHOOK_SECRET
+  - variable: STRIPE_SECRET_KEY
+    secret: STRIPE_SECRET_KEY
+  - variable: STRIPE_WEBHOOK_SECRET
+    secret: STRIPE_WEBHOOK_SECRET
+  - variable: KLAVIYO_API_KEY
+    secret: KLAVIYO_API_KEY
+  - variable: FIREBASE_SERVICE_ACCOUNT_JSON
+    secret: FIREBASE_SERVICE_ACCOUNT_JSON
+
+  # --- Firebase Cliente (Públicas) ---
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: "purorush"
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
@@ -23,17 +53,7 @@ env:
     value: "1:870980470663:web:533824f7e6c462a8d0f522"
   - variable: NEXT_PUBLIC_HILOW_FIREBASE_API_KEY
     value: "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8"
-  
-  # --- Secretos (Referencia a Google Secret Manager) ---
-  - variable: HILOW_API_KEY
-    secret: HILOW_API_KEY
-  - variable: HILOW_WEBHOOK_SECRET
-    secret: HILOW_WEBHOOK_SECRET
-  - variable: STRIPE_SECRET_KEY
-    secret: STRIPE_SECRET_KEY
-  - variable: STRIPE_WEBHOOK_SECRET
-    secret: STRIPE_WEBHOOK_SECRET
-  - variable: KLAVIYO_API_KEY
-    secret: KLAVIYO_API_KEY
-  - variable: FIREBASE_SERVICE_ACCOUNT_JSON
-    secret: FIREBASE_SERVICE_ACCOUNT_JSON
+  - variable: NEXT_PUBLIC_HILOW_FIREBASE_AUTH_DOMAIN
+    value: "studio-953389996-b1a64.firebaseapp.com"
+  - variable: NEXT_PUBLIC_HILOW_FIREBASE_PROJECT_ID
+    value: "studio-953389996-b1a64"
