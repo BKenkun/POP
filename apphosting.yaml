@@ -1,7 +1,39 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
+kind: "bundle"
+schemaVersion: "v1"
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # --- Variables Públicas (Se pueden leer en el navegador) ---
+  - variable: NEXT_PUBLIC_APP_URL
+    value: "https://comprarpopperonline.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "purorush"
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDF062S49yLIQxxKSR-YUoHagNFAAeAjg4"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "purorush.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "purorush.appspot.com"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "870980470663"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:870980470663:web:533824f7e6c462a8d0f522"
+  - variable: NEXT_PUBLIC_HILOW_FIREBASE_API_KEY
+    value: "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8"
+  
+  # --- Secretos (Referencia a Google Secret Manager) ---
+  - variable: HILOW_API_KEY
+    secret: HILOW_API_KEY
+  - variable: HILOW_WEBHOOK_SECRET
+    secret: HILOW_WEBHOOK_SECRET
+  - variable: STRIPE_SECRET_KEY
+    secret: STRIPE_SECRET_KEY
+  - variable: STRIPE_WEBHOOK_SECRET
+    secret: STRIPE_WEBHOOK_SECRET
+  - variable: KLAVIYO_API_KEY
+    secret: KLAVIYO_API_KEY
+  - variable: FIREBASE_SERVICE_ACCOUNT_JSON
+    secret: FIREBASE_SERVICE_ACCOUNT_JSON
