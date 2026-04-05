@@ -1,43 +1,34 @@
-
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   typescript: {
+    // Mantenemos tu regla de ignorar errores para que el deploy no se detenga
     ignoreBuildErrors: true,
   },
   eslint: {
+    // Lo mismo para el linter
     ignoreDuringBuilds: true,
   },
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com'
-      },
-      // Ya no necesitamos firebasestorage aquí porque lo gestionará nuestro proxy.
-      // Dejamos los otros para las imágenes de relleno y ejemplos.
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.poppers-espana.es',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
+      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
+      { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
+      { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.poppers-espana.es', pathname: '/**' },
+      { protocol: 'https', hostname: 'files.stripe.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.euro-poppers.eu', pathname: '/**' },
+      { protocol: 'https', hostname: 'jointoyou.it', pathname: '/**' },
+      { protocol: 'https', hostname: 'mypoppers.eu', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.abcparty.nl', pathname: '/**' },
+      { protocol: 'https', hostname: 'http2.mlstatic.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'monpapier.fr', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.mistersmoke.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'poppers-discount.fr', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.svgrepo.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'storage.googleapis.com' },
     ],
   },
 };
 
 export default nextConfig;
-
-    

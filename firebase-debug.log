@@ -1,26 +1,158 @@
-[debug] [2025-10-17T14:11:04.229Z] ----------------------------------------------------------------------
-[debug] [2025-10-17T14:11:04.232Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/i78h9v2gl6qg2w9646hi06syn3hbv4kj-firebase-tools-14.19.1/lib/node_modules/firebase-tools/lib/bin/firebase.js login
-[debug] [2025-10-17T14:11:04.233Z] CLI Version:   14.19.1
-[debug] [2025-10-17T14:11:04.233Z] Platform:      linux
-[debug] [2025-10-17T14:11:04.233Z] Node Version:  v20.19.1
-[debug] [2025-10-17T14:11:04.233Z] Time:          Fri Oct 17 2025 14:11:04 GMT+0000 (Coordinated Universal Time)
-[debug] [2025-10-17T14:11:04.233Z] ----------------------------------------------------------------------
+[debug] [2026-04-04T22:24:57.434Z] ----------------------------------------------------------------------
+[debug] [2026-04-04T22:24:57.436Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting:github
+[debug] [2026-04-04T22:24:57.437Z] CLI Version:   15.1.0
+[debug] [2026-04-04T22:24:57.437Z] Platform:      linux
+[debug] [2026-04-04T22:24:57.437Z] Node Version:  v20.19.1
+[debug] [2026-04-04T22:24:57.438Z] Time:          Sat Apr 04 2026 22:24:57 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-04-04T22:24:57.438Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-10-17T14:11:04.833Z] No OAuth tokens found
-[debug] [2025-10-17T14:11:04.834Z] No OAuth tokens found
+[debug] [2026-04-04T22:24:59.373Z] No OAuth tokens found
+[debug] [2026-04-04T22:24:59.374Z] No OAuth tokens found
 [error] Failed to fetch Firebase Project from current Studio Workspace: Unable to refresh auth: not yet authenticated.
-[info] i  The Firebase CLI’s MCP server feature can optionally make use of Gemini in Firebase. Learn more about Gemini in Firebase and how it uses your data: https://firebase.google.com/docs/gemini-in-firebase#how-gemini-in-firebase-uses-your-data 
 [info] 
-[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you. 
-[debug] [2025-10-17T14:13:12.221Z] ----------------------------------------------------------------------
-[debug] [2025-10-17T14:13:12.224Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/i78h9v2gl6qg2w9646hi06syn3hbv4kj-firebase-tools-14.19.1/lib/node_modules/firebase-tools/lib/bin/firebase.js login
-[debug] [2025-10-17T14:13:12.225Z] CLI Version:   14.19.1
-[debug] [2025-10-17T14:13:12.225Z] Platform:      linux
-[debug] [2025-10-17T14:13:12.226Z] Node Version:  v20.19.1
-[debug] [2025-10-17T14:13:12.226Z] Time:          Fri Oct 17 2025 14:13:12 GMT+0000 (Coordinated Universal Time)
-[debug] [2025-10-17T14:13:12.226Z] ----------------------------------------------------------------------
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-04-04T22:24:59.383Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:24:59.385Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:24:59.386Z] No OAuth tokens found
+[debug] [2026-04-04T22:24:59.386Z] No OAuth tokens found
+[debug] [2026-04-04T22:24:59.387Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:24:59.387Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:24:59.391Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/purorush [none]
+[debug] [2026-04-04T22:24:59.762Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/purorush 200
+[debug] [2026-04-04T22:24:59.763Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/purorush {"projectId":"purorush","projectNumber":"870980470663","displayName":"PuroRush","name":"projects/purorush","resources":{"hostingSite":"purorush"},"state":"ACTIVE","etag":"1_89460aed-4d71-4326-9876-43089c7ca1b1"}
+[info] i  Using project purorush (PuroRush) . 
+[info] 
+=== Hosting:github Setup
+[info] 
+[info] i  Detected a .git folder at /home/user/studio 
+[info] i  Authorizing with GitHub to upload your service account to a GitHub repository's secrets store. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://github.com/login/oauth/authorize?client_id=89cf50f02ac6aaed3484&state=1056888305&redirect_uri=http%3A%2F%2Flocalhost%3A9005&scope=read%3Auser%20repo%20public_repo
+[info] 
+[info] Waiting for authentication...
+[debug] [2026-04-04T22:31:12.641Z] ----------------------------------------------------------------------
+[debug] [2026-04-04T22:31:12.643Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting:github
+[debug] [2026-04-04T22:31:12.644Z] CLI Version:   15.1.0
+[debug] [2026-04-04T22:31:12.645Z] Platform:      linux
+[debug] [2026-04-04T22:31:12.645Z] Node Version:  v20.19.1
+[debug] [2026-04-04T22:31:12.645Z] Time:          Sat Apr 04 2026 22:31:12 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-04-04T22:31:12.645Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-10-17T14:13:12.767Z] No OAuth tokens found
-[debug] [2025-10-17T14:13:12.768Z] No OAuth tokens found
+[debug] [2026-04-04T22:31:14.724Z] No OAuth tokens found
+[debug] [2026-04-04T22:31:14.724Z] No OAuth tokens found
 [error] Failed to fetch Firebase Project from current Studio Workspace: Unable to refresh auth: not yet authenticated.
-[info] i  The Firebase CLI’s MCP server feature can optionally make use of Gemini in Firebase. Learn more about Gemini in Firebase and how it uses your data: https://firebase.google.com/docs/gemini-in-firebase#how-gemini-in-firebase-uses-your-data 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-04-04T22:31:14.734Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:31:14.735Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:31:14.736Z] No OAuth tokens found
+[debug] [2026-04-04T22:31:14.736Z] No OAuth tokens found
+[debug] [2026-04-04T22:31:14.736Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:31:14.736Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:31:14.740Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/purorush [none]
+[debug] [2026-04-04T22:31:14.887Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/purorush 401
+[debug] [2026-04-04T22:31:14.887Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/purorush {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2026-04-04T22:31:14.888Z] Got a 401 Unauthenticated error for a call that required authentication. Refreshing tokens.
+[debug] [2026-04-04T22:31:14.888Z] No OAuth tokens found
+[debug] [2026-04-04T22:31:14.888Z] No OAuth tokens found
+[debug] [2026-04-04T22:31:14.888Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:31:14.889Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:31:14.890Z] Request to https://firebase.googleapis.com/v1beta1/projects/purorush had HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-04-04T22:31:14.892Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/purorush had HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/apiv2.js:322:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project purorush. Please make sure the project exists and your account has permission to access it.
+[debug] [2026-04-04T22:34:26.421Z] ----------------------------------------------------------------------
+[debug] [2026-04-04T22:34:26.424Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting:github
+[debug] [2026-04-04T22:34:26.425Z] CLI Version:   15.1.0
+[debug] [2026-04-04T22:34:26.425Z] Platform:      linux
+[debug] [2026-04-04T22:34:26.425Z] Node Version:  v20.19.1
+[debug] [2026-04-04T22:34:26.425Z] Time:          Sat Apr 04 2026 22:34:26 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-04-04T22:34:26.426Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-04T22:34:28.219Z] No OAuth tokens found
+[debug] [2026-04-04T22:34:28.219Z] No OAuth tokens found
+[error] Failed to fetch Firebase Project from current Studio Workspace: Unable to refresh auth: not yet authenticated.
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/studio
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-04-04T22:34:28.230Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:34:28.231Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:34:28.233Z] No OAuth tokens found
+[debug] [2026-04-04T22:34:28.233Z] No OAuth tokens found
+[debug] [2026-04-04T22:34:28.233Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:34:28.233Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:34:28.237Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/purorush [none]
+[debug] [2026-04-04T22:34:28.414Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/purorush 401
+[debug] [2026-04-04T22:34:28.420Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/purorush {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2026-04-04T22:34:28.420Z] Got a 401 Unauthenticated error for a call that required authentication. Refreshing tokens.
+[debug] [2026-04-04T22:34:28.420Z] No OAuth tokens found
+[debug] [2026-04-04T22:34:28.421Z] No OAuth tokens found
+[debug] [2026-04-04T22:34:28.421Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-04-04T22:34:28.421Z] > authorizing via signed-in user (enriqueespincosme@gmail.com)
+[debug] [2026-04-04T22:34:28.427Z] Request to https://firebase.googleapis.com/v1beta1/projects/purorush had HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-04-04T22:34:28.430Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/purorush had HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/nix/store/gm9mcvzb17vv8cla08khrg29vxn3sq4r-firebase-tools-15.1.0/lib/node_modules/firebase-tools/lib/apiv2.js:322:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project purorush. Please make sure the project exists and your account has permission to access it.
