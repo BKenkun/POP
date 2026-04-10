@@ -29,8 +29,8 @@ type KlaviyoEventName =
  */
 export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEmail: string, properties: { [key: string]: any }) {
     if (!KLAVIYO_API_KEY) {
-        console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail}.`);
-        return { success: true, message: 'Simulated event tracking.' };
+        console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail}. Properties:`, JSON.stringify(properties, null, 2));
+        return { success: true, message: 'Simulated event tracking (KLAVIYO_API_KEY not set).' };
     }
     
     const payload = {
@@ -43,6 +43,8 @@ export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEma
             }
         }
     };
+
+    console.log(`[Klaviyo] Sending event '${eventName}' for ${customerEmail}...`);
 
     try {
         const response = await fetch('https://a.klaviyo.com/api/events/', {
@@ -57,13 +59,9 @@ export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEma
         });
         
         if (response.status !== 202) {
-            const errorData = await response.json();
-            if (errorData.errors?.[0]?.detail.includes("does not exist")) {
-                console.warn(`Klaviyo metric '${eventName}' does not exist. Attempting to create it with a simple event.`);
-                await trackKlaviyoEvent(eventName, customerEmail, { note: "Metric creation trigger" });
-                return trackKlaviyoEvent(eventName, customerEmail, properties);
-            }
-            throw new Error(errorData.errors?.[0]?.detail || 'Could not track event.');
+            const errorBody = await response.text();
+            console.error(`[Klaviyo] API responded with status ${response.status}:`, errorBody);
+            throw new Error(`Klaviyo API error (${response.status}): ${errorBody}`);
         }
 
         console.log(`✅ Successfully tracked Klaviyo event '${eventName}' for ${customerEmail}.`);
