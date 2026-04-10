@@ -87,28 +87,30 @@ export async function trackOrderStatusUpdate(order: Order, newStatus: Order['sta
     let isAdminNotification = false;
 
     switch (newStatus) {
-        case 'Reserva Recibida':
+        case 'order_received':
             eventName = 'COMPRA REALIZADA';
             isAdminNotification = true;
             break;
-        case 'Enviado':
+        case 'shipped':
             eventName = 'Order Shipped';
             break;
-        case 'En Reparto':
+        case 'out_for_delivery':
             eventName = 'Order Out For Delivery';
             break;
-        case 'Entregado':
+        case 'delivered':
             eventName = 'Order Delivered';
             break;
-        case 'Cancelado':
+        case 'cancelled':
             eventName = 'Order Cancelled';
             break;
-        case 'Incidencia':
+        case 'issue':
             eventName = 'Order Issue';
             break;
+        case 'pending_payment':
+            console.log(`[Klaviyo] Estado '${newStatus}': aún no se envía evento al cliente.`);
+            return { success: true, message: 'No event for pending_payment.' };
         default:
-            // For statuses like 'Pago Pendiente de Verificación', we don't send a customer-facing email yet.
-            console.log(`No Klaviyo event mapped for status: ${newStatus}`);
+            console.log(`[Klaviyo] No hay evento mapeado para el estado: ${newStatus}`);
             return { success: true, message: 'No event mapped for this status.' };
     }
 
