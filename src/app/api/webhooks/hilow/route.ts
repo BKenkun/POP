@@ -16,9 +16,21 @@ import { Order } from '@/lib/types';
  * Lógica para procesar el pedido una vez confirmado el pago por Hilow.
  */
 const handlePaidOrder = async (payload: any) => {
-    const { internalOrderId, eventType, hilowOrderId } = payload;
+    const internalOrderId =
+        payload.internalOrderId ?? payload.internal_order_id ?? payload.orderId;
+    const eventType = payload.eventType ?? payload.event_type;
+    const hilowOrderId = payload.hilowOrderId ?? payload.hilow_order_id ?? payload.hilowOrderID;
+
     console.log(`[WEBHOOK] Procesando pedido: ${internalOrderId}. Evento: ${eventType}`);
-    
+
+    if (!internalOrderId || typeof internalOrderId !== 'string') {
+        console.error(
+            '[WEBHOOK] Falta internalOrderId en el payload. Claves recibidas:',
+            Object.keys(payload)
+        );
+        return;
+    }
+
     // El ID tiene el formato CPO_uid_timestamp
     const parts = internalOrderId.split('_');
     if (parts.length < 3) {
@@ -84,10 +96,20 @@ export async function POST(req: NextRequest) {
   }
 
   const headerStore = headers();
-  const signature = headerStore.get('hilow-signature');
-  const body = await req.text(); 
+  const signature =
+    headerStore.get('hilow-signature') ??
+    headerStore.get('Hilow-Signature') ??
+    headerStore.get('x-hilow-signature');
+
+  const body = await req.text();
 
   if (!signature) {
+    console.error(
+      '[WEBHOOK] Firma ausente. Cabeceras con "hilow" o "signature":',
+      [...headerStore.keys()].filter(
+        (k) => /hilow|signature/i.test(k)
+      )
+    );
     return NextResponse.json({ error: 'Firma ausente' }, { status: 401 });
   }
 
@@ -106,16 +128,20 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = JSON.parse(body);
-    
+    const eventType = payload.eventType ?? payload.event_type;
+
     // Solo procesamos eventos de éxito de pago
-    switch (payload.eventType) {
+    switch (eventType) {
       case 'payment.completed':
       case 'payment.renewal_succeeded':
       case 'payment.succeeded':
         await handlePaidOrder(payload);
         break;
       default:
-        console.log(`[WEBHOOK] Evento recibido no procesable: ${payload.eventType}`);
+        console.log(
+          `[WEBHOOK] Evento no procesable (no dispara Klaviyo): ${String(eventType)}. Claves payload:`,
+          Object.keys(payload)
+        );
     }
 
     return NextResponse.json({ success: true });
