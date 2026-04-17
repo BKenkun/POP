@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const HILOW_API_URL = 'https://hilowglobal.com/api/create-subscription';
-
 /**
- * Endpoint para iniciar una sesión de suscripción con Hilow.
- * Se ha mejorado la robustez para evitar errores 500 al recibir respuestas no válidas.
+ * Endpoint actualizado según la guía oficial de Hilow Global.
+ * Usa el endpoint inteligente único para todo tipo de órdenes.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -17,27 +15,27 @@ export async function POST(req: NextRequest) {
 
     const HILOW_API_KEY = process.env.HILOW_API_KEY;
     const HILOW_STORE_ID = process.env.HILOW_STORE_ID || 'comprarpopperonline.com';
+    const HILOW_API_ENDPOINT = 'https://hilowglobal.com/api/orders';
 
     if (!HILOW_API_KEY) {
-      console.error('[SUBSCRIPTION] Error: HILOW_API_KEY no configurada en el servidor.');
+      console.error('[SUBSCRIPTION] Error: HILOW_API_KEY no configurada.');
       return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
 
+    // Esquema exacto solicitado por Hilow para suscripciones
     const payload = {
       storeId: HILOW_STORE_ID,
-      subscriptionDetails: {
-        amountInCents: 4400,
-        interval: 'month',
-        productName: 'Club Mensual Dosis Mensual',
-      },
-      orderId,
-      successUrl,
-      cancelUrl,
+      internalOrderId: orderId, // Ej: SUB_uid_timestamp
+      amountInCents: 4400, // Precio fijo de la Dosis Mensual
+      productName: "Club Dosis Mensual (Suscripción)",
+      isSubscription: true, // Flag crítico para activar Stripe Billing
+      successUrl: successUrl,
+      cancelUrl: cancelUrl,
     };
 
-    console.log(`[API] Llamando a Hilow para suscripción. Store: ${HILOW_STORE_ID}, Order: ${orderId}`);
+    console.log(`[API] Iniciando suscripción en Hilow. Order: ${orderId}`);
 
-    const apiResponse = await fetch(HILOW_API_URL, {
+    const apiResponse = await fetch(HILOW_API_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,47 +44,35 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(payload),
     });
 
-    // PASO CRÍTICO: Leemos primero como texto plano
     const responseText = await apiResponse.text();
     
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('[API] Hilow no devolvió un JSON. Respuesta recibida:', responseText);
+      console.error('[API] Respuesta no JSON de Hilow:', responseText);
       return NextResponse.json({ 
-        error: 'Hilow devolvió una respuesta no válida (no es JSON)', 
-        details: responseText.substring(0, 200), // Mostramos el principio del error (puede ser HTML)
-        status: apiResponse.status 
-      }, { status: 502 }); // Bad Gateway
+        error: 'Respuesta inválida del servidor de pagos', 
+        details: responseText.substring(0, 100) 
+      }, { status: 502 });
     }
 
     if (!apiResponse.ok) {
-      console.error('[API] Hilow respondió con error:', data);
-      return NextResponse.json({ 
-        error: data.error || data.message || 'Error en la API de Hilow',
-        status: apiResponse.status 
-      }, { status: apiResponse.status });
+      console.error('[API] Hilow denegó la petición:', data);
+      return NextResponse.json({ error: data.message || 'Error en la API de Hilow' }, { status: apiResponse.status });
     }
 
-    // Buscamos el link de pago en los formatos conocidos
-    const checkoutUrl = data.checkoutUrl || data.url || (data.hilowOrderId ? `https://hilowglobal.com/pay/${data.hilowOrderId}` : null);
-
-    if (!checkoutUrl) {
-      console.error('[API] No se encontró URL de pago en la respuesta:', data);
-      return NextResponse.json({ 
-        error: 'No se recibió un enlace de pago válido de Hilow', 
-        rawResponse: data 
-      }, { status: 500 });
+    // Hilow devuelve hilowOrderId, nosotros construimos la URL de redirección
+    if (data.hilowOrderId) {
+      const checkoutUrl = `https://hilowglobal.com/pay/${data.hilowOrderId}`;
+      return NextResponse.json({ checkoutUrl });
+    } else {
+      console.error('[API] No se recibió hilowOrderId:', data);
+      return NextResponse.json({ error: 'No se generó el ID de pago correctamente' }, { status: 500 });
     }
-
-    return NextResponse.json({ checkoutUrl });
 
   } catch (error: any) {
-    console.error('[API FATAL ERROR]:', error.message || error);
-    return NextResponse.json({ 
-      error: 'Error interno al procesar la suscripción', 
-      details: error.message 
-    }, { status: 500 });
+    console.error('[API FATAL ERROR]:', error.message);
+    return NextResponse.json({ error: 'Error interno al procesar la suscripción' }, { status: 500 });
   }
 }
