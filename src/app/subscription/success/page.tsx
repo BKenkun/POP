@@ -11,13 +11,17 @@ import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
+/**
+ * Pantalla de éxito tras el pago de suscripción.
+ * Incluye un listener en tiempo real para detectar cuándo el Webhook activa la cuenta.
+ */
 export default function SubscriptionSuccessPage() {
-    const { user, isSubscribed } = useAuth();
+    const { user } = useAuth();
     const { t } = useTranslation();
-    const router = useRouter();
     const [verifying, setVerifying] = useState(true);
+    const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false);
 
-    // Escuchamos el documento del usuario para detectar cuando el Webhook lo activa
+    // Escuchamos el documento del usuario para detectar cuando el Webhook lo activa en Firestore
     useEffect(() => {
         if (!user) return;
 
@@ -25,14 +29,19 @@ export default function SubscriptionSuccessPage() {
         const unsubscribe = onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
+                // En cuanto el flag sea true, dejamos de mostrar el cargador
                 if (data.isSubscribed === true) {
+                    console.log("[SUCCESS PAGE] Suscripción activada detectada!");
                     setVerifying(false);
+                    setIsAlreadySubscribed(true);
                 }
             }
         });
 
-        // Timeout de seguridad por si el webhook falla o tarda demasiado
-        const timer = setTimeout(() => setVerifying(false), 10000);
+        // Timeout de seguridad por si el webhook falla o tarda demasiado (15 segundos)
+        const timer = setTimeout(() => {
+            setVerifying(false);
+        }, 15000);
 
         return () => {
             unsubscribe();
@@ -58,17 +67,19 @@ export default function SubscriptionSuccessPage() {
                 </CardHeader>
                 <CardContent className="space-y-6 pb-8">
                     <p className="text-muted-foreground text-base">
-                        Estamos sincronizando tu perfil. En unos segundos podrás elegir los productos de tu primera caja mensual.
+                        {isAlreadySubscribed 
+                            ? "Tu perfil ha sido actualizado. ¡Ya puedes elegir tus aromas!" 
+                            : "Estamos sincronizando tu perfil en tiempo real. Un momento, por favor..."}
                     </p>
 
                     <div className="flex flex-col gap-4 pt-2">
-                        {verifying ? (
-                            <div className="flex flex-col items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                        {verifying && !isAlreadySubscribed ? (
+                            <div className="flex flex-col items-center gap-3 p-4 bg-muted/50 rounded-lg border border-dashed">
                                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                                <span className="text-sm font-medium animate-pulse">Sincronizando suscripción...</span>
+                                <span className="text-sm font-medium animate-pulse text-primary">Sincronizando con el servidor...</span>
                             </div>
                         ) : (
-                            <Button asChild size="lg" className="w-full text-lg h-14 shadow-lg hover:scale-105 transition-transform">
+                            <Button asChild size="lg" className="w-full text-lg h-14 shadow-lg hover:scale-105 transition-transform bg-primary text-primary-foreground">
                                 <Link href="/account/subscription">
                                     <Package className="mr-2 h-6 w-6" />
                                     Personalizar mi Caja Ahora
@@ -87,7 +98,7 @@ export default function SubscriptionSuccessPage() {
             </Card>
             
             <p className="text-xs text-muted-foreground">
-                Recibirás un correo electrónico de confirmación con los detalles de tu suscripción y el recibo de pago.
+                Recibirás un correo electrónico de confirmación con los detalles y el recibo de pago.
             </p>
         </div>
     );
