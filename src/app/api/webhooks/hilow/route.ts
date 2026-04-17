@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileoverview MANEJADOR DE WEBHOOK HILOW (V1.3 - ESPECIFICACIONES HILOW CONFIRMADAS)
- * Procesa la activación de suscripciones y pedidos basándose en internalOrderId persistente.
+ * @fileoverview MANEJADOR DE WEBHOOK HILOW (V1.5 - CICLO DE VIDA DE SUSCRIPCIÓN)
+ * Implementa la lógica oficial de Hilow para activar, renovar y cancelar suscripciones.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,153 +12,141 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { Order } from '@/lib/types';
 
-/**
- * Procesa la lógica de negocio una vez validada la autenticidad de la petición.
- */
-const handlePaidOrder = async (payload: any) => {
-    // Hilow confirma que el campo es exactamente 'internalOrderId'
-    const internalOrderId = payload.internalOrderId;
-    const hilowOrderId = payload.hilowOrderId;
-    const eventType = payload.eventType;
-
-    console.log(`[WEBHOOK] Procesando pago: ${internalOrderId} (Evento: ${eventType})`);
-
-    if (!internalOrderId || typeof internalOrderId !== 'string') {
-        console.error('[WEBHOOK] Error: internalOrderId no encontrado o inválido.');
-        return;
-    }
-
-    // El ID tiene el formato SUB_uid_timestamp o CPO_uid_timestamp
-    const parts = internalOrderId.split('_');
-    if (parts.length < 2) {
-        console.error(`[WEBHOOK] Error: Formato de ID inválido: ${internalOrderId}`);
-        return;
-    }
-
-    const prefix = parts[0];
-    const userId = parts[1];
-    const isSubscription = prefix === 'SUB';
-
-    const userRef = adminFirestore.collection('users').doc(userId);
-    const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(internalOrderId);
-    
-    try {
-        const batch = adminFirestore.batch();
-        let shouldCommit = false;
-
-        // 1. LÓGICA DE SUSCRIPCIÓN (SIEMPRE QUE SEA PREFIJO SUB_)
-        // Hilow confirma que tanto payment.completed como payment.renewal_succeeded son válidos.
-        if (isSubscription) {
-          console.log(`[WEBHOOK] Activando/Renovando Club para el usuario: ${userId}`);
-          batch.set(userRef, { 
-            isSubscribed: true,
-            subscriptionStatus: 'active',
-            lastSubscriptionPayment: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp()
-          }, { merge: true });
-          shouldCommit = true;
-        }
-
-        // 2. LÓGICA DE ACTUALIZACIÓN DE PEDIDO
-        const orderSnap = await orderRef.get();
-        if (orderSnap.exists) {
-            const orderData = orderSnap.data() as Order;
-            // Solo actualizamos si el estado actual permite transición a pagado
-            if (orderData.status === 'pending_payment' || orderData.status === 'order_received') {
-                batch.update(orderRef, { 
-                    status: 'order_received',
-                    paidAt: FieldValue.serverTimestamp(),
-                    hilowPaymentId: hilowOrderId,
-                    lastEventType: eventType
-                });
-                
-                // Sumar puntos de fidelidad (1 punto por cada 10€)
-                const totalAmount = orderData.total || payload.amountInCents || 0;
-                const pointsToAdd = Math.floor(totalAmount / 1000);
-                if (pointsToAdd > 0) {
-                  batch.update(userRef, { 
-                      loyaltyPoints: FieldValue.increment(pointsToAdd) 
-                  });
-                }
-                shouldCommit = true;
-            }
-        } else if (isSubscription) {
-            // Caso especial: El webhook llega antes de que el frontend cree el pedido
-            // o es una renovación automática mensual.
-            console.log(`[WEBHOOK] Creando registro de pedido para suscripción/renovación.`);
-            batch.set(orderRef, {
-                userId,
-                id: internalOrderId,
-                total: 4400,
-                status: 'order_received',
-                paymentMethod: 'hilow',
-                createdAt: FieldValue.serverTimestamp(),
-                paidAt: FieldValue.serverTimestamp(),
-                isSubscription: true,
-                customerEmail: payload.email || 'customer@hilow.com' // Si Hilow lo envía en el futuro
-            });
-            shouldCommit = true;
-        }
-
-        if (shouldCommit) {
-            await batch.commit();
-            console.log(`✅ Base de datos actualizada con éxito para ${internalOrderId}`);
-            
-            // Notificar a Klaviyo (Solo si el pedido existe para tener los datos de items)
-            if (orderSnap.exists) {
-                const updatedData = (await orderRef.get()).data() as Order;
-                await trackOrderStatusUpdate({...updatedData, id: internalOrderId}, 'order_received');
-            }
-        } else {
-            console.log(`[WEBHOOK] No se realizaron cambios (Pedido ya procesado o condiciones no cumplidas).`);
-        }
-
-    } catch (error) {
-        console.error("❌ Error fatal procesando webhook:", error);
-    }
-};
-
 export async function POST(req: NextRequest) {
-  const webhookSecret = process.env.HILOW_WEBHOOK_SECRET;
-  
-  if (!webhookSecret) {
-      console.error('[WEBHOOK ERROR] HILOW_WEBHOOK_SECRET no configurado.');
-      return NextResponse.json({ error: 'Config Error' }, { status: 500 });
-  }
+    const WEBHOOK_SECRET = process.env.HILOW_WEBHOOK_SECRET;
+    const headerStore = headers();
+    const signature = headerStore.get('hilow-signature') || headerStore.get('x-hilow-signature');
+    const body = await req.text();
 
-  const headerStore = headers();
-  const signature = headerStore.get('hilow-signature') ?? headerStore.get('x-hilow-signature');
-  const body = await req.text();
-
-  if (!signature) {
-      console.error('[WEBHOOK ERROR] Firma ausente en la petición.');
-      return NextResponse.json({ error: 'Firma ausente' }, { status: 401 });
-  }
-
-  try {
-    const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(body).digest('hex');
-    
-    if (signature !== expectedSignature) {
-        console.error('[WEBHOOK ERROR] Firma inválida. Posible intento de suplantación.');
-        return NextResponse.json({ error: 'Firma inválida' }, { status: 401 });
+    if (!signature || !WEBHOOK_SECRET) {
+        console.error("[WEBHOOK] Falta configuración o firma.");
+        return NextResponse.json({ error: 'Configuración o firma ausente' }, { status: 401 });
     }
 
-    const payload = JSON.parse(body);
-    const eventType = payload.eventType || payload.event_type;
+    try {
+        // 1. VALIDACIÓN DE SEGURIDAD (HMAC-SHA256)
+        const expectedSignature = crypto
+            .createHmac('sha256', WEBHOOK_SECRET)
+            .update(body)
+            .digest('hex');
 
-    // Hilow confirma estos eventos para pagos exitosos
-    const VALID_EVENTS = ['payment.completed', 'payment.renewal_succeeded', 'payment.succeeded'];
+        if (signature !== expectedSignature) {
+            console.error("🚨 FIRMA INVÁLIDA: El webhook no proviene de Hilow.");
+            return NextResponse.json({ error: 'Firma inválida' }, { status: 403 });
+        }
 
-    if (VALID_EVENTS.includes(eventType)) {
-      await handlePaidOrder(payload);
-    } else {
-      console.log(`[WEBHOOK] Ignorando evento no relevante: ${eventType}`);
+        // 2. PROCESAMIENTO DEL EVENTO
+        const payload = JSON.parse(body);
+        const { internalOrderId, eventType, hilowOrderId } = payload;
+
+        if (!internalOrderId || typeof internalOrderId !== 'string') {
+            console.error("[WEBHOOK] internalOrderId no válido.");
+            return NextResponse.json({ error: 'ID no válido' }, { status: 400 });
+        }
+
+        // Formato esperado: "SUB_uid_timestamp" o "CPO_uid_timestamp"
+        const parts = internalOrderId.split('_');
+        if (parts.length < 2) {
+            console.error(`[WEBHOOK] Formato de ID inválido: ${internalOrderId}`);
+            return NextResponse.json({ error: 'Formato ID inválido' }, { status: 400 });
+        }
+
+        const userId = parts[1];
+        const userRef = adminFirestore.collection('users').doc(userId);
+        const orderRef = userRef.collection('orders').doc(internalOrderId);
+        
+        console.log(`[WEBHOOK] Evento: ${eventType} | Usuario: ${userId} | Orden: ${hilowOrderId}`);
+
+        const batch = adminFirestore.batch();
+
+        switch (eventType) {
+            case 'payment.completed':
+            case 'payment.renewal_succeeded':
+            case 'payment.succeeded':
+                // ÉXITO: ACTIVAR O RENOVAR
+                console.log(`✅ Activando/Renovando acceso para: ${userId}`);
+                
+                // Actualizar perfil de usuario
+                batch.set(userRef, { 
+                    isSubscribed: true,
+                    subscriptionStatus: 'active',
+                    lastSubscriptionPayment: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                // Actualizar o crear registro de pedido
+                const orderSnap = await orderRef.get();
+                if (orderSnap.exists) {
+                    batch.update(orderRef, { 
+                        status: 'order_received',
+                        paidAt: FieldValue.serverTimestamp(),
+                        hilowPaymentId: hilowOrderId,
+                        lastEventType: eventType
+                    });
+                } else {
+                    // Si es una renovación automática, el pedido no existe previamente en nuestra DB
+                    batch.set(orderRef, {
+                        userId,
+                        id: internalOrderId,
+                        total: payload.amountInCents || 4400,
+                        status: 'order_received',
+                        paymentMethod: 'hilow',
+                        createdAt: FieldValue.serverTimestamp(),
+                        paidAt: FieldValue.serverTimestamp(),
+                        isSubscription: true,
+                        customerEmail: payload.email || 'customer@hilow.com'
+                    });
+                }
+
+                // Sumar puntos de fidelidad (1 punto por cada 10€)
+                const amount = payload.amountInCents || 4400;
+                const points = Math.floor(amount / 1000);
+                if (points > 0) {
+                    batch.update(userRef, { loyaltyPoints: FieldValue.increment(points) });
+                }
+                break;
+
+            case 'payment.failed':
+                // FALLO: SUSPENDER ACCESO
+                console.log(`⚠️ Fallo de pago para: ${userId}`);
+                batch.update(userRef, { 
+                    subscriptionStatus: 'past_due',
+                    isSubscribed: false, // Opcional: podrías dejarlo en true con un periodo de gracia
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+                break;
+
+            case 'subscription.cancelled':
+                // CANCELACIÓN: QUITAR ACCESO
+                console.log(`🚫 Cancelando acceso definitivo para: ${userId}`);
+                batch.update(userRef, { 
+                    isSubscribed: false,
+                    subscriptionStatus: 'cancelled',
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+                break;
+
+            default:
+                console.log(`ℹ️ Evento no gestionado por lógica de negocio: ${eventType}`);
+        }
+
+        // Ejecutar todos los cambios en la base de datos de forma atómica
+        await batch.commit();
+        console.log(`✅ Base de datos sincronizada correctamente para ${internalOrderId}`);
+
+        // Notificar a Klaviyo si fue un éxito (y tenemos datos de la orden)
+        if (eventType.includes('payment') && !eventType.includes('failed')) {
+            const finalOrderSnap = await orderRef.get();
+            if (finalOrderSnap.exists) {
+                const orderData = { ...finalOrderSnap.data(), id: internalOrderId } as Order;
+                await trackOrderStatusUpdate(orderData, 'order_received');
+            }
+        }
+
+        return NextResponse.json({ received: true }, { status: 200 });
+
+    } catch (err: any) {
+        console.error("❌ Webhook Error Fatal:", err.message);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
-
-    return NextResponse.json({ success: true });
-    
-  } catch (err: any) {
-    console.error(`[WEBHOOK FATAL ERROR] ${err.message}`);
-    return NextResponse.json({ error: err.message }, { status: 400 });
-  }
 }
