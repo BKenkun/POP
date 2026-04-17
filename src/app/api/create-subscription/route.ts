@@ -4,37 +4,38 @@ const HILOW_API_URL = 'https://hilowglobal.com/api/create-subscription';
 
 /**
  * Endpoint para iniciar una sesión de suscripción con Hilow.
- * Se ha añadido el storeId necesario para que Hilow reconozca el portal.
+ * Se ha mejorado la robustez para evitar errores 500 al recibir respuestas no válidas.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { orderId, successUrl, cancelUrl } = await req.json();
+    const body = await req.json();
+    const { orderId, successUrl, cancelUrl } = body;
 
     if (!orderId || !successUrl || !cancelUrl) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
     }
 
     const HILOW_API_KEY = process.env.HILOW_API_KEY;
     const HILOW_STORE_ID = process.env.HILOW_STORE_ID || 'comprarpopperonline.com';
 
     if (!HILOW_API_KEY) {
-      console.error('[SUBSCRIPTION] Error: HILOW_API_KEY not configured.');
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+      console.error('[SUBSCRIPTION] Error: HILOW_API_KEY no configurada en el servidor.');
+      return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
 
     const payload = {
-      storeId: HILOW_STORE_ID, // CRÍTICO: Hilow necesita el ID del portal
+      storeId: HILOW_STORE_ID,
       subscriptionDetails: {
         amountInCents: 4400,
         interval: 'month',
-        productName: 'Club mensual',
+        productName: 'Club Mensual Dosis Mensual',
       },
-      orderId, // Prefijo SUB_
+      orderId,
       successUrl,
       cancelUrl,
     };
 
-    console.log(`[API] Iniciando suscripción para: ${HILOW_STORE_ID}, Pedido: ${orderId}`);
+    console.log(`[API] Llamando a Hilow para suscripción. Store: ${HILOW_STORE_ID}, Order: ${orderId}`);
 
     const apiResponse = await fetch(HILOW_API_URL, {
       method: 'POST',
@@ -45,27 +46,46 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(payload),
     });
 
-    // Leemos el texto primero para evitar errores si no es JSON (ej. errores 403 de red)
+    // PASO CRÍTICO: Leemos primero como texto plano
     const responseText = await apiResponse.text();
+    
     let data;
     try {
       data = JSON.parse(responseText);
-    } catch (e) {
-      console.error('[API] La respuesta no es un JSON válido:', responseText);
-      throw new Error(`Hilow returned non-JSON response: ${apiResponse.status}`);
+    } catch (parseError) {
+      console.error('[API] Hilow no devolvió un JSON. Respuesta recibida:', responseText);
+      return NextResponse.json({ 
+        error: 'Hilow devolvió una respuesta no válida (no es JSON)', 
+        details: responseText.substring(0, 200), // Mostramos el principio del error (puede ser HTML)
+        status: apiResponse.status 
+      }, { status: 502 }); // Bad Gateway
     }
 
     if (!apiResponse.ok) {
-      console.error('[API] Error de Hilow:', data);
-      return NextResponse.json({ error: data.error || data.message || 'Failed to create subscription' }, { status: apiResponse.status });
+      console.error('[API] Hilow respondió con error:', data);
+      return NextResponse.json({ 
+        error: data.error || data.message || 'Error en la API de Hilow',
+        status: apiResponse.status 
+      }, { status: apiResponse.status });
     }
 
-    return NextResponse.json(data);
+    // Buscamos el link de pago en los formatos conocidos
+    const checkoutUrl = data.checkoutUrl || data.url || (data.hilowOrderId ? `https://hilowglobal.com/pay/${data.hilowOrderId}` : null);
+
+    if (!checkoutUrl) {
+      console.error('[API] No se encontró URL de pago en la respuesta:', data);
+      return NextResponse.json({ 
+        error: 'No se recibió un enlace de pago válido de Hilow', 
+        rawResponse: data 
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ checkoutUrl });
 
   } catch (error: any) {
-    console.error('API Route Error:', error.message || error);
+    console.error('[API FATAL ERROR]:', error.message || error);
     return NextResponse.json({ 
-      error: 'Internal Server Error', 
+      error: 'Error interno al procesar la suscripción', 
       details: error.message 
     }, { status: 500 });
   }
