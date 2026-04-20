@@ -3,14 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * Endpoint para iniciar el flujo de suscripción en Hilow.
  * Genera un ID estructurado con "ADN de Pedido" para que el Webhook sea infalible.
+ * Formato: SUB_<userId>_<uniqueOrderId>_<timestamp>
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { orderId: clientProvidedId, successUrl, cancelUrl } = body;
 
-    // Aunque el cliente envíe un orderId, nosotros construimos uno vitaminado
-    // Formato: SUB_userId_uniqueOrderId_timestamp
     if (!clientProvidedId || !successUrl || !cancelUrl) {
       return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
     }
@@ -24,15 +23,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
 
-    // Extraemos el UID (asumiendo que viene en el orderId del cliente como SUB_uid_...)
-    // o lo obtenemos directamente.
+    // El clientProvidedId suele venir como SUB_uid_timestamp desde el frontend.
+    // Lo desembalamos para reconstruirlo con el ID de pedido (BOX-ID).
     const parts = clientProvidedId.split('_');
     const userId = parts[1] || 'unknown';
     
-    // Generamos un ID de pedido único para esta suscripción (ej: BOX-1741590000)
+    // Generamos un ID de documento único para el registro de este pedido en Firestore
     const uniqueOrderId = `BOX-${Date.now()}`;
     
-    // ADN Final: SUB_uid_orderId_timestamp
+    // ADN FINAL: SUB_<userId>_<orderId>_<timestamp>
+    // Este ID viajará a Hilow y volverá al Webhook intacto.
     const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
 
     const payload = {
@@ -40,12 +40,12 @@ export async function POST(req: NextRequest) {
       internalOrderId: structuredInternalOrderId,
       amountInCents: 4400, // Precio fijo de la Dosis Mensual
       productName: "Club Dosis Mensual",
-      isSubscription: true, // Crítico para activar recurrencia
+      isSubscription: true, // Crítico para activar recurrencia automática en Stripe
       successUrl: successUrl,
       cancelUrl: cancelUrl,
     };
 
-    console.log(`[API] Creando pedido de suscripción estructurado: ${structuredInternalOrderId}`);
+    console.log(`[API] Creando pedido de suscripción con ADN: ${structuredInternalOrderId}`);
 
     const apiResponse = await fetch(HILOW_API_ENDPOINT, {
       method: 'POST',

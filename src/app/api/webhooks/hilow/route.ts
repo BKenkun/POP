@@ -1,7 +1,8 @@
 'use server';
 /**
- * @fileoverview MANEJADOR DE WEBHOOK HILOW (V3.0 - ARQUITECTURA UNIFICADA)
- * Implementa la lógica de "ADN de Pedido" para gestionar compras únicas y suscripciones.
+ * @fileoverview MANEJADOR DE WEBHOOK HILOW (V4.0 - ADN DE PEDIDO)
+ * Procesa notificaciones de pagos únicos y suscripciones de forma unificada.
+ * Utiliza el prefijo SUB/CPO para identificar la lógica de negocio.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -19,8 +20,8 @@ export async function POST(req: NextRequest) {
     const body = await req.text();
 
     if (!signature || !WEBHOOK_SECRET) {
-        console.error("[WEBHOOK] Falta configuración o firma.");
-        return NextResponse.json({ error: 'Configuración o firma ausente' }, { status: 401 });
+        console.error("[WEBHOOK] Falta configuración o firma de seguridad.");
+        return NextResponse.json({ error: 'Firma ausente' }, { status: 401 });
     }
 
     try {
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
             .digest('hex');
 
         if (signature !== expectedSignature) {
-            console.error("🚨 FIRMA INVÁLIDA: El webhook no coincide con el secreto.");
+            console.error("🚨 FIRMA INVÁLIDA: El webhook no coincide con el secreto configurado.");
             return NextResponse.json({ error: 'Firma inválida' }, { status: 403 });
         }
 
@@ -45,31 +46,29 @@ export async function POST(req: NextRequest) {
 
         /**
          * DESEMBALAJE DEL ID (Lógica de ADN)
-         * Formatos soportados: 
+         * Formatos: 
          * - Suscripción: SUB_<userId>_<orderId>_<timestamp>
          * - Pedido Único: CPO_<userId>_<timestamp>
          */
         const parts = internalOrderId.split('_');
         const prefix = parts[0];
-        
-        // El timestamp siempre es el último
-        // El orderId en suscripciones es el penúltimo. En CPO, el ID entero es el orderId.
         const isSubscription = prefix === 'SUB';
         
         let userId = 'unknown';
-        let orderDocId = internalOrderId; // Por defecto para CPO
+        let orderDocId = internalOrderId; // Por defecto para CPO, el ID completo es el documento
 
         if (isSubscription) {
-            // Estructura: SUB [0], UID [1...n-2], ORDERID [n-2], TIMESTAMP [n-1]
-            // Esto permite que el UID contenga guiones bajos de forma segura.
-            orderDocId = parts[parts.length - 2];
+            // Estructura SUB: [SUB, ...userIdSegs, orderId, timestamp]
+            // Extraemos el penúltimo segmento como ID de pedido
+            orderDocId = parts[parts.length - 2]; 
+            // Todo lo que hay entre el prefijo y el ID de pedido es el UID
             userId = parts.slice(1, parts.length - 2).join('_');
         } else {
-            // Estructura CPO: CPO [0], UID [1...n-1], TIMESTAMP [n-1]
+            // Estructura CPO: [CPO, ...userIdSegs, timestamp]
             userId = parts.slice(1, parts.length - 1).join('_');
         }
 
-        console.log(`[WEBHOOK] Procesando ${eventType} (${prefix}) para Usuario: ${userId} | Pedido: ${orderDocId}`);
+        console.log(`[WEBHOOK] Procesando ${eventType} (${prefix}) | Usuario: ${userId} | Pedido: ${orderDocId}`);
 
         const userRef = adminFirestore.collection('users').doc(userId);
         const batch = adminFirestore.batch();
@@ -77,7 +76,7 @@ export async function POST(req: NextRequest) {
         switch (eventType) {
             case 'payment.completed':
             case 'payment.renewal_succeeded':
-                // --- CAPA 1: ACTIVACIÓN DE SUSCRIPCIÓN ---
+                // --- CAPA 1: GESTIÓN DE ACCESO AL CLUB ---
                 if (isSubscription) {
                     batch.set(userRef, { 
                         isSubscribed: true,
@@ -87,49 +86,42 @@ export async function POST(req: NextRequest) {
                     }, { merge: true });
                 }
 
-                // --- CAPA 2: REGISTRO DE PEDIDO (Historial) ---
-                // Para renovaciones, generamos un ID de documento único añadiendo el timestamp de Hilow
+                // --- CAPA 2: REGISTRO CONTABLE (PEDIDO) ---
+                // Para renovaciones generamos un ID nuevo basado en el original + fecha
                 const finalOrderDocId = eventType === 'payment.renewal_succeeded' 
                     ? `${orderDocId}_${Date.now()}` 
                     : orderDocId;
 
                 const orderRef = userRef.collection('orders').doc(finalOrderDocId);
                 
-                // Si es un pedido único (CPO), el documento ya existe, solo actualizamos estado.
-                // Si es suscripción (SUB), creamos los detalles desde el ID.
-                if (isSubscription) {
-                    batch.set(orderRef, {
+                // Si es SUB o renovación, creamos/actualizamos el registro completo
+                // Si es CPO, actualizamos el documento que ya existe con los datos de pago
+                batch.set(orderRef, {
+                    status: 'order_received',
+                    paidAt: FieldValue.serverTimestamp(),
+                    hilowPaymentId: hilowOrderId,
+                    updatedAt: FieldValue.serverTimestamp(),
+                    // Si es nuevo (renovación/primera vez sub), inyectamos datos básicos
+                    ...(isSubscription && {
                         userId,
                         id: finalOrderDocId,
                         total: amountInCents || 4400,
-                        status: 'order_received',
                         paymentMethod: 'hilow',
                         createdAt: FieldValue.serverTimestamp(),
-                        paidAt: FieldValue.serverTimestamp(),
                         isSubscription: true,
-                        hilowPaymentId: hilowOrderId,
                         customerEmail: payload.email || 'member@comprarpopperonline.com',
                         customerName: payload.customerName || 'Miembro del Club',
-                        items: [
-                            {
-                                productId: 'subscription_club',
-                                name: 'Club Dosis Mensual',
-                                price: amountInCents || 4400,
-                                quantity: 1,
-                                imageUrl: 'https://picsum.photos/seed/sub/200/200'
-                            }
-                        ]
-                    }, { merge: true });
-                } else {
-                    batch.set(orderRef, {
-                        status: 'order_received',
-                        paidAt: FieldValue.serverTimestamp(),
-                        hilowPaymentId: hilowOrderId,
-                        updatedAt: FieldValue.serverTimestamp()
-                    }, { merge: true });
-                }
+                        items: [{
+                            productId: 'subscription_club',
+                            name: 'Club Dosis Mensual',
+                            price: amountInCents || 4400,
+                            quantity: 1,
+                            imageUrl: 'https://picsum.photos/seed/sub/200/200'
+                        }]
+                    })
+                }, { merge: true });
 
-                // --- CAPA 3: PUNTOS DE FIDELIDAD ---
+                // --- CAPA 3: PROGRAMA DE PUNTOS ---
                 const points = Math.floor((amountInCents || 0) / 1000);
                 if (points > 0) {
                     batch.update(userRef, { loyaltyPoints: FieldValue.increment(points) });
@@ -137,7 +129,7 @@ export async function POST(req: NextRequest) {
                 break;
 
             case 'payment.failed':
-                // Suspensión de acceso por impago (Sigue suscrito pero en aviso)
+                // Marcamos el problema de pago pero no revocamos el acceso inmediatamente
                 if (isSubscription) {
                     batch.update(userRef, { 
                         subscriptionStatus: 'past_due',
@@ -147,7 +139,7 @@ export async function POST(req: NextRequest) {
                 break;
 
             case 'subscription.cancelled':
-                // Revocación definitiva de acceso
+                // Revocación definitiva de beneficios
                 if (isSubscription) {
                     batch.update(userRef, { 
                         isSubscribed: false,
@@ -158,16 +150,17 @@ export async function POST(req: NextRequest) {
                 break;
 
             default:
-                console.log(`ℹ️ Evento informativo recibido: ${eventType}`);
+                console.log(`ℹ️ Evento informativo sin acción requerida: ${eventType}`);
         }
 
-        // Ejecutar cambios
+        // Ejecutar todas las operaciones de base de datos en un solo lote atómico
         await batch.commit();
 
-        // Notificar a Klaviyo (Opcional, basado en el estado final)
+        // 3. NOTIFICACIÓN EXTERNA (Klaviyo)
         if (eventType.includes('payment') && status === 'success') {
             const finalDoc = await userRef.collection('orders').doc(orderDocId).get();
             if (finalDoc.exists) {
+                // Notificamos a Klaviyo que la compra se ha procesado con éxito
                 await trackOrderStatusUpdate({ ...finalDoc.data(), id: orderDocId } as Order, 'order_received');
             }
         }
@@ -175,7 +168,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true }, { status: 200 });
 
     } catch (err: any) {
-        console.error("❌ Error Crítico en el Webhook:", err.message);
+        console.error("❌ Error Crítico en el Webhook de Hilow:", err.message);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
