@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileoverview MANEJADOR DE WEBHOOK HILOW (V2.0 - CICLO DE VIDA COMPLETO)
- * Implementa la lógica oficial confirmada por Hilow para gestionar suscripciones.
+ * @fileoverview MANEJADOR DE WEBHOOK HILOW (V3.0 - ARQUITECTURA UNIFICADA)
+ * Implementa la lógica de "ADN de Pedido" para gestionar compras únicas y suscripciones.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,7 +15,6 @@ import { Order } from '@/lib/types';
 export async function POST(req: NextRequest) {
     const WEBHOOK_SECRET = process.env.HILOW_WEBHOOK_SECRET;
     const headerStore = headers();
-    // Hilow envía la firma en 'hilow-signature'
     const signature = headerStore.get('hilow-signature') || headerStore.get('x-hilow-signature');
     const body = await req.text();
 
@@ -32,113 +31,144 @@ export async function POST(req: NextRequest) {
             .digest('hex');
 
         if (signature !== expectedSignature) {
-            console.error("🚨 FIRMA INVÁLIDA: El webhook no coincide con el secreto configurado.");
+            console.error("🚨 FIRMA INVÁLIDA: El webhook no coincide con el secreto.");
             return NextResponse.json({ error: 'Firma inválida' }, { status: 403 });
         }
 
         // 2. PROCESAMIENTO DEL EVENTO
         const payload = JSON.parse(body);
-        const { internalOrderId, eventType, hilowOrderId, amountInCents } = payload;
+        const { internalOrderId, eventType, hilowOrderId, amountInCents, status } = payload;
 
         if (!internalOrderId || typeof internalOrderId !== 'string') {
             return NextResponse.json({ error: 'internalOrderId no válido' }, { status: 400 });
         }
 
         /**
-         * Mapeo de Usuario: "SUB_uid_timestamp"
-         * Extraemos el UID que está en la segunda posición (índice 1)
+         * DESEMBALAJE DEL ID (Lógica de ADN)
+         * Formatos soportados: 
+         * - Suscripción: SUB_<userId>_<orderId>_<timestamp>
+         * - Pedido Único: CPO_<userId>_<timestamp>
          */
         const parts = internalOrderId.split('_');
-        if (parts.length < 2) {
-            return NextResponse.json({ error: 'Formato de ID incompatible' }, { status: 400 });
+        const prefix = parts[0];
+        
+        // El timestamp siempre es el último
+        // El orderId en suscripciones es el penúltimo. En CPO, el ID entero es el orderId.
+        const isSubscription = prefix === 'SUB';
+        
+        let userId = 'unknown';
+        let orderDocId = internalOrderId; // Por defecto para CPO
+
+        if (isSubscription) {
+            // Estructura: SUB [0], UID [1...n-2], ORDERID [n-2], TIMESTAMP [n-1]
+            // Esto permite que el UID contenga guiones bajos de forma segura.
+            orderDocId = parts[parts.length - 2];
+            userId = parts.slice(1, parts.length - 2).join('_');
+        } else {
+            // Estructura CPO: CPO [0], UID [1...n-1], TIMESTAMP [n-1]
+            userId = parts.slice(1, parts.length - 1).join('_');
         }
 
-        const userId = parts[1];
-        const userRef = adminFirestore.collection('users').doc(userId);
-        
-        // Generamos un ID de documento único para el pedido. 
-        // Si es una renovación, usamos el timestamp para no sobreescribir el pedido anterior en la lista del usuario.
-        const uniqueOrderIdForDb = eventType === 'payment.completed' ? internalOrderId : `${internalOrderId}_${Date.now()}`;
-        const orderRef = userRef.collection('orders').doc(uniqueOrderIdForDb);
-        
-        console.log(`[WEBHOOK] Procesando ${eventType} para el usuario: ${userId}`);
+        console.log(`[WEBHOOK] Procesando ${eventType} (${prefix}) para Usuario: ${userId} | Pedido: ${orderDocId}`);
 
+        const userRef = adminFirestore.collection('users').doc(userId);
         const batch = adminFirestore.batch();
 
         switch (eventType) {
             case 'payment.completed':
             case 'payment.renewal_succeeded':
-                // ÉXITO: ACTIVAR O RENOVAR ACCESO
-                batch.set(userRef, { 
-                    isSubscribed: true,
-                    subscriptionStatus: 'active',
-                    lastSubscriptionPayment: FieldValue.serverTimestamp(),
-                    updatedAt: FieldValue.serverTimestamp()
-                }, { merge: true });
+                // --- CAPA 1: ACTIVACIÓN DE SUSCRIPCIÓN ---
+                if (isSubscription) {
+                    batch.set(userRef, { 
+                        isSubscribed: true,
+                        subscriptionStatus: 'active',
+                        lastSubscriptionPayment: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
 
-                // Registrar el pedido en el historial del usuario
-                // Nota: items[] es un placeholder para que el perfil de usuario se vea bien
-                batch.set(orderRef, {
-                    userId,
-                    id: uniqueOrderIdForDb,
-                    total: amountInCents || 4400,
-                    status: 'order_received',
-                    paymentMethod: 'hilow',
-                    createdAt: FieldValue.serverTimestamp(),
-                    paidAt: FieldValue.serverTimestamp(),
-                    isSubscription: true,
-                    hilowPaymentId: hilowOrderId,
-                    customerEmail: payload.email || 'member@comprarpopperonline.com',
-                    customerName: payload.customerName || 'Miembro del Club',
-                    items: [
-                        {
-                            productId: 'subscription_club',
-                            name: 'Club Dosis Mensual',
-                            price: amountInCents || 4400,
-                            quantity: 1,
-                            imageUrl: 'https://picsum.photos/seed/sub/200/200'
-                        }
-                    ]
-                });
+                // --- CAPA 2: REGISTRO DE PEDIDO (Historial) ---
+                // Para renovaciones, generamos un ID de documento único añadiendo el timestamp de Hilow
+                const finalOrderDocId = eventType === 'payment.renewal_succeeded' 
+                    ? `${orderDocId}_${Date.now()}` 
+                    : orderDocId;
 
-                // Sumar puntos de fidelidad (1 punto por cada 10€)
-                const points = Math.floor((amountInCents || 4400) / 1000);
+                const orderRef = userRef.collection('orders').doc(finalOrderDocId);
+                
+                // Si es un pedido único (CPO), el documento ya existe, solo actualizamos estado.
+                // Si es suscripción (SUB), creamos los detalles desde el ID.
+                if (isSubscription) {
+                    batch.set(orderRef, {
+                        userId,
+                        id: finalOrderDocId,
+                        total: amountInCents || 4400,
+                        status: 'order_received',
+                        paymentMethod: 'hilow',
+                        createdAt: FieldValue.serverTimestamp(),
+                        paidAt: FieldValue.serverTimestamp(),
+                        isSubscription: true,
+                        hilowPaymentId: hilowOrderId,
+                        customerEmail: payload.email || 'member@comprarpopperonline.com',
+                        customerName: payload.customerName || 'Miembro del Club',
+                        items: [
+                            {
+                                productId: 'subscription_club',
+                                name: 'Club Dosis Mensual',
+                                price: amountInCents || 4400,
+                                quantity: 1,
+                                imageUrl: 'https://picsum.photos/seed/sub/200/200'
+                            }
+                        ]
+                    }, { merge: true });
+                } else {
+                    batch.set(orderRef, {
+                        status: 'order_received',
+                        paidAt: FieldValue.serverTimestamp(),
+                        hilowPaymentId: hilowOrderId,
+                        updatedAt: FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+
+                // --- CAPA 3: PUNTOS DE FIDELIDAD ---
+                const points = Math.floor((amountInCents || 0) / 1000);
                 if (points > 0) {
                     batch.update(userRef, { loyaltyPoints: FieldValue.increment(points) });
                 }
                 break;
 
             case 'payment.failed':
-                // FALLO: SUSPENDER ACCESO POR IMPAGO
-                console.log(`⚠️ Pago fallido para usuario ${userId}. Marcando como past_due.`);
-                batch.update(userRef, { 
-                    subscriptionStatus: 'past_due',
-                    updatedAt: FieldValue.serverTimestamp()
-                });
+                // Suspensión de acceso por impago (Sigue suscrito pero en aviso)
+                if (isSubscription) {
+                    batch.update(userRef, { 
+                        subscriptionStatus: 'past_due',
+                        updatedAt: FieldValue.serverTimestamp()
+                    });
+                }
                 break;
 
             case 'subscription.cancelled':
-                // CANCELACIÓN: QUITAR ACCESO DEFINITIVAMENTE
-                console.log(`🚫 Suscripción cancelada para usuario ${userId}.`);
-                batch.update(userRef, { 
-                    isSubscribed: false,
-                    subscriptionStatus: 'cancelled',
-                    updatedAt: FieldValue.serverTimestamp()
-                });
+                // Revocación definitiva de acceso
+                if (isSubscription) {
+                    batch.update(userRef, { 
+                        isSubscribed: false,
+                        subscriptionStatus: 'cancelled',
+                        updatedAt: FieldValue.serverTimestamp()
+                    });
+                }
                 break;
 
             default:
                 console.log(`ℹ️ Evento informativo recibido: ${eventType}`);
         }
 
-        // Ejecutar todos los cambios de forma atómica
+        // Ejecutar cambios
         await batch.commit();
 
-        // Notificar a Klaviyo tras el éxito (opcional, si hay datos de orden)
-        if (eventType.includes('payment') && !eventType.includes('failed')) {
-            const finalDoc = await orderRef.get();
+        // Notificar a Klaviyo (Opcional, basado en el estado final)
+        if (eventType.includes('payment') && status === 'success') {
+            const finalDoc = await userRef.collection('orders').doc(orderDocId).get();
             if (finalDoc.exists) {
-                await trackOrderStatusUpdate({ ...finalDoc.data(), id: uniqueOrderIdForDb } as Order, 'order_received');
+                await trackOrderStatusUpdate({ ...finalDoc.data(), id: orderDocId } as Order, 'order_received');
             }
         }
 

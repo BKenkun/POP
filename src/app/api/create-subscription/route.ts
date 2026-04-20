@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Endpoint actualizado según la guía oficial de Hilow Global.
- * Usa el endpoint inteligente único para todo tipo de órdenes.
+ * Endpoint para iniciar el flujo de suscripción en Hilow.
+ * Genera un ID estructurado con "ADN de Pedido" para que el Webhook sea infalible.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { orderId, successUrl, cancelUrl } = body;
+    const { orderId: clientProvidedId, successUrl, cancelUrl } = body;
 
-    if (!orderId || !successUrl || !cancelUrl) {
+    // Aunque el cliente envíe un orderId, nosotros construimos uno vitaminado
+    // Formato: SUB_userId_uniqueOrderId_timestamp
+    if (!clientProvidedId || !successUrl || !cancelUrl) {
       return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
     }
 
@@ -22,18 +24,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
 
-    // Esquema exacto solicitado por Hilow para suscripciones
+    // Extraemos el UID (asumiendo que viene en el orderId del cliente como SUB_uid_...)
+    // o lo obtenemos directamente.
+    const parts = clientProvidedId.split('_');
+    const userId = parts[1] || 'unknown';
+    
+    // Generamos un ID de pedido único para esta suscripción (ej: BOX-1741590000)
+    const uniqueOrderId = `BOX-${Date.now()}`;
+    
+    // ADN Final: SUB_uid_orderId_timestamp
+    const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
+
     const payload = {
       storeId: HILOW_STORE_ID,
-      internalOrderId: orderId, // Ej: SUB_uid_timestamp
+      internalOrderId: structuredInternalOrderId,
       amountInCents: 4400, // Precio fijo de la Dosis Mensual
-      productName: "Club Dosis Mensual (Suscripción)",
-      isSubscription: true, // Flag crítico para activar Stripe Billing
+      productName: "Club Dosis Mensual",
+      isSubscription: true, // Crítico para activar recurrencia
       successUrl: successUrl,
       cancelUrl: cancelUrl,
     };
 
-    console.log(`[API] Iniciando suscripción en Hilow. Order: ${orderId}`);
+    console.log(`[API] Creando pedido de suscripción estructurado: ${structuredInternalOrderId}`);
 
     const apiResponse = await fetch(HILOW_API_ENDPOINT, {
       method: 'POST',
@@ -62,12 +74,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: data.message || 'Error en la API de Hilow' }, { status: apiResponse.status });
     }
 
-    // Hilow devuelve hilowOrderId, nosotros construimos la URL de redirección
     if (data.hilowOrderId) {
       const checkoutUrl = `https://hilowglobal.com/pay/${data.hilowOrderId}`;
       return NextResponse.json({ checkoutUrl });
     } else {
-      console.error('[API] No se recibió hilowOrderId:', data);
       return NextResponse.json({ error: 'No se generó el ID de pago correctamente' }, { status: 500 });
     }
 
