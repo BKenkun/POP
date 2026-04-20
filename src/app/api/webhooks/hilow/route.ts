@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileoverview MANEJADOR DE WEBHOOK HILOW (V4.0 - ADN DE PEDIDO)
+ * @fileoverview MANEJADOR DE WEBHOOK HILOW (V4.1 - ARQUITECTURA UNIFICADA)
  * Procesa notificaciones de pagos únicos y suscripciones de forma unificada.
- * Utiliza el prefijo SUB/CPO para identificar la lógica de negocio.
+ * Utiliza el prefijo SUB/CPO para identificar la lógica de negocio y desembalar el ADN del ID.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -55,13 +55,11 @@ export async function POST(req: NextRequest) {
         const isSubscription = prefix === 'SUB';
         
         let userId = 'unknown';
-        let orderDocId = internalOrderId; // Por defecto para CPO, el ID completo es el documento
+        let orderDocId = internalOrderId; 
 
         if (isSubscription) {
             // Estructura SUB: [SUB, ...userIdSegs, orderId, timestamp]
-            // Extraemos el penúltimo segmento como ID de pedido
             orderDocId = parts[parts.length - 2]; 
-            // Todo lo que hay entre el prefijo y el ID de pedido es el UID
             userId = parts.slice(1, parts.length - 2).join('_');
         } else {
             // Estructura CPO: [CPO, ...userIdSegs, timestamp]
@@ -72,6 +70,11 @@ export async function POST(req: NextRequest) {
 
         const userRef = adminFirestore.collection('users').doc(userId);
         const batch = adminFirestore.batch();
+
+        // Identificador final para el documento de pedido (evita colisiones en renovaciones)
+        const finalOrderDocId = eventType === 'payment.renewal_succeeded' 
+            ? `${orderDocId}_${Date.now()}` 
+            : orderDocId;
 
         switch (eventType) {
             case 'payment.completed':
@@ -87,21 +90,15 @@ export async function POST(req: NextRequest) {
                 }
 
                 // --- CAPA 2: REGISTRO CONTABLE (PEDIDO) ---
-                // Para renovaciones generamos un ID nuevo basado en el original + fecha
-                const finalOrderDocId = eventType === 'payment.renewal_succeeded' 
-                    ? `${orderDocId}_${Date.now()}` 
-                    : orderDocId;
-
                 const orderRef = userRef.collection('orders').doc(finalOrderDocId);
                 
-                // Si es SUB o renovación, creamos/actualizamos el registro completo
-                // Si es CPO, actualizamos el documento que ya existe con los datos de pago
                 batch.set(orderRef, {
                     status: 'order_received',
                     paidAt: FieldValue.serverTimestamp(),
                     hilowPaymentId: hilowOrderId,
                     updatedAt: FieldValue.serverTimestamp(),
-                    // Si es nuevo (renovación/primera vez sub), inyectamos datos básicos
+                    // Si es nuevo (renovación o primera suscripción), inyectamos datos básicos
+                    // Si es CPO, mergeamos con el pedido que el frontend ya creó
                     ...(isSubscription && {
                         userId,
                         id: finalOrderDocId,
@@ -129,7 +126,6 @@ export async function POST(req: NextRequest) {
                 break;
 
             case 'payment.failed':
-                // Marcamos el problema de pago pero no revocamos el acceso inmediatamente
                 if (isSubscription) {
                     batch.update(userRef, { 
                         subscriptionStatus: 'past_due',
@@ -139,7 +135,6 @@ export async function POST(req: NextRequest) {
                 break;
 
             case 'subscription.cancelled':
-                // Revocación definitiva de beneficios
                 if (isSubscription) {
                     batch.update(userRef, { 
                         isSubscribed: false,
@@ -153,15 +148,13 @@ export async function POST(req: NextRequest) {
                 console.log(`ℹ️ Evento informativo sin acción requerida: ${eventType}`);
         }
 
-        // Ejecutar todas las operaciones de base de datos en un solo lote atómico
         await batch.commit();
 
         // 3. NOTIFICACIÓN EXTERNA (Klaviyo)
         if (eventType.includes('payment') && status === 'success') {
-            const finalDoc = await userRef.collection('orders').doc(orderDocId).get();
+            const finalDoc = await userRef.collection('orders').doc(finalOrderDocId).get();
             if (finalDoc.exists) {
-                // Notificamos a Klaviyo que la compra se ha procesado con éxito
-                await trackOrderStatusUpdate({ ...finalDoc.data(), id: orderDocId } as Order, 'order_received');
+                await trackOrderStatusUpdate({ ...finalDoc.data(), id: finalOrderDocId } as Order, 'order_received');
             }
         }
 
