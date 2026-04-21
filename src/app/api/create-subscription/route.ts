@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { firestore as adminFirestore } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 /**
- * Endpoint para iniciar el flujo de suscripción en Hilow.
- * Genera un ID estructurado con "ADN de Pedido" para que el Webhook sea infalible.
- * Formato: SUB_<userId>_<uniqueOrderId>_<timestamp>
+ * Endpoint para iniciar el flujo de suscripción en Hilow con pre-registro en Firestore.
+ * 1. Crea un pedido con estado 'pending_payment' en la DB local.
+ * 2. Genera el ADN del ID para Hilow.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -23,29 +25,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
 
-    // El clientProvidedId suele venir como SUB_uid_timestamp desde el frontend.
-    // Lo desembalamos para reconstruirlo con el ID de pedido (BOX-ID).
+    // El clientProvidedId viene como SUB_uid_timestamp
     const parts = clientProvidedId.split('_');
     const userId = parts[1] || 'unknown';
     
-    // Generamos un ID de documento único para el registro de este pedido en Firestore
+    // 1. OBTENER DATOS DEL USUARIO
+    const userRef = adminFirestore.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+
+    if (!userData) {
+        throw new Error('Usuario no encontrado en la base de datos.');
+    }
+
+    // 2. PRE-REGISTRO DEL PEDIDO (BOX)
     const uniqueOrderId = `BOX-${Date.now()}`;
-    
-    // ADN FINAL: SUB_<userId>_<orderId>_<timestamp>
-    // Este ID viajará a Hilow y volverá al Webhook intacto.
+    const orderRef = userRef.collection('orders').doc(uniqueOrderId);
+
+    const pendingOrderData = {
+        id: uniqueOrderId,
+        userId: userId,
+        status: 'pending_payment',
+        total: 4400, // Precio fijo suscripción
+        paymentMethod: 'hilow',
+        createdAt: FieldValue.serverTimestamp(),
+        isSubscription: true,
+        customerEmail: userData.email || 'member@comprarpopperonline.com',
+        customerName: userData.displayName || 'Miembro del Club',
+        items: [{
+            productId: 'subscription_club',
+            name: 'Club Dosis Mensual',
+            price: 4400,
+            quantity: 1,
+            imageUrl: 'https://picsum.photos/seed/sub/200/200'
+        }]
+    };
+
+    await orderRef.set(pendingOrderData);
+    console.log(`[SUBSCRIPTION] Pedido pendiente creado: ${uniqueOrderId} para usuario: ${userId}`);
+
+    // 3. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
     const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
 
     const payload = {
       storeId: HILOW_STORE_ID,
       internalOrderId: structuredInternalOrderId,
-      amountInCents: 4400, // Precio fijo de la Dosis Mensual
+      amountInCents: 4400,
       productName: "Club Dosis Mensual",
-      isSubscription: true, // Crítico para activar recurrencia automática en Stripe
+      isSubscription: true,
       successUrl: successUrl,
       cancelUrl: cancelUrl,
     };
-
-    console.log(`[API] Creando pedido de suscripción con ADN: ${structuredInternalOrderId}`);
 
     const apiResponse = await fetch(HILOW_API_ENDPOINT, {
       method: 'POST',
@@ -57,20 +87,14 @@ export async function POST(req: NextRequest) {
     });
 
     const responseText = await apiResponse.text();
-    
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('[API] Respuesta no JSON de Hilow:', responseText);
-      return NextResponse.json({ 
-        error: 'Respuesta inválida del servidor de pagos', 
-        details: responseText.substring(0, 100) 
-      }, { status: 502 });
+      return NextResponse.json({ error: 'Respuesta inválida del servidor de pagos' }, { status: 502 });
     }
 
     if (!apiResponse.ok) {
-      console.error('[API] Hilow denegó la petición:', data);
       return NextResponse.json({ error: data.message || 'Error en la API de Hilow' }, { status: apiResponse.status });
     }
 
@@ -83,6 +107,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('[API FATAL ERROR]:', error.message);
-    return NextResponse.json({ error: 'Error interno al procesar la suscripción' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Error interno al procesar la suscripción' }, { status: 500 });
   }
 }
