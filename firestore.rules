@@ -16,7 +16,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.email == 'maryandpopper@gmail.com';
+      return isSignedIn() && request.auth.token.email == 'maryandpopper@gmail.com'; //FIXME - Cambiar
     }
 
     // Products are publicly readable by anyone.

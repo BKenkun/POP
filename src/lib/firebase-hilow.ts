@@ -5,10 +5,9 @@ import { getFirestore, Firestore } from "firebase/firestore";
 
 // --- Configuración de Conexión a Hilow ---
 const hilowFirebaseConfig = {
-  projectId: "studio-953389996-b1a64",
-  appId: "1:272897992610:web:b39d784458a79edf2274fb",
-  apiKey: "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8",
-  authDomain: "studio-953389996-b1a64.firebaseapp.com",
+  apiKey: process.env.NEXT_PUBLIC_HILOW_FIREBASE_API_KEY!,
+  authDomain: process.env.NEXT_PUBLIC_HILOW_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_HILOW_FIREBASE_PROJECT_ID!,
 };
 
 // --- Inicialización de Firebase (con nombre para evitar conflictos) ---

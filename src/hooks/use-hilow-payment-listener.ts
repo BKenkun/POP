@@ -12,9 +12,9 @@ import { getFirestore, collectionGroup, query, where, onSnapshot } from 'firebas
 
 // Configuración pública de Hilow Global Services
 const hilowFirebaseConfig = {
-  apiKey: "AIzaSyA27KSQo4tgrVNMurwrYO_B59-1njW3Qz8",
-  authDomain: "studio-953389996-b1a64.firebaseapp.com",
-  projectId: "studio-953389996-b1a64",
+  apiKey: process.env.NEXT_PUBLIC_HILOW_FIREBASE_API_KEY!,
+  authDomain: process.env.NEXT_PUBLIC_HILOW_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_HILOW_FIREBASE_PROJECT_ID!,
 };
 
 const getHilowApp = () => {
