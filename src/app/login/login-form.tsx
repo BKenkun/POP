@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/firebase/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
 

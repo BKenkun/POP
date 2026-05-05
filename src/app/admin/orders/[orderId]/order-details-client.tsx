@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Order, OrderStatus } from '@/lib/types';
-import { formatPrice } from '@/lib/utils';
+import { Order, OrderStatus } from '@/types/types';
+import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, ArrowLeft, Loader2, Save, MapPin, Truck, History, MessageSquare, Phone, User as UserIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';

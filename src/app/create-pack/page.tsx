@@ -1,12 +1,12 @@
 
 'use client';
 
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import CustomPackBuilder from './custom-pack-builder';
-import { getUniqueValues } from '@/lib/utils';
+import { getUniqueValues } from '@/utils/utils';
 import { Loader2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useTranslation } from '@/context/language-context';
 

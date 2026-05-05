@@ -1,81 +1,26 @@
-
-
 'use client';
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useAuth, useTranslation } from "@/context";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Switch,
+    Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, AlertDialog,
+    AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, 
+    AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, } from "@/components"
 import { PlusCircle, Edit, Trash2, Loader2, Home, Briefcase, User, Phone } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks";
 import { updateUser } from "@/app/actions/user-data";
-import { useTranslation } from "@/context/language-context";
+import { Address } from "@/entities";
+import { AddressFormData } from "@/schemas";
 
-interface Address {
-    id: string;
-    alias: string;
-    name: string;
-    phone: string;
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    isDefault: boolean;
-}
-
-const addressSchema = z.object({
-  alias: z.string().min(2, "El alias debe tener al menos 2 caracteres (ej. Casa, Trabajo)."),
-  name: z.string().min(3, "El nombre del destinatario es requerido."),
-  phone: z.string().min(9, "El teléfono es requerido."),
-  street: z.string().min(5, "La calle debe tener al menos 5 caracteres."),
-  city: z.string().min(2, "La ciudad debe tener al menos 2 caracteres."),
-  state: z.string().min(2, "El estado/provincia es requerido."),
-  postalCode: z.string().regex(/^\d{5}$/, "El código postal debe tener 5 dígitos."),
-  country: z.string().min(2, "El país debe tener al menos 2 caracteres."),
-  isDefault: z.boolean().default(false),
-});
-
-type AddressFormData = z.infer<typeof addressSchema>;
-
-const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Partial<Address>, action: 'add-address' | 'update-address') => void }) => {
+//FIXME - Address form should be in another file
+const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Partial<Address>, action: 'add-address' | 'update-address') => void }) => { //FIXME - Address actions
     const [isOpen, setIsOpen] = useState(false);
     const { t } = useTranslation();
     const form = useForm<AddressFormData>({
-        resolver: zodResolver(addressSchema),
+        resolver: zodResolver(addressSchema), //FIXME - default values is constructor
         defaultValues: address || {
             alias: "",
             name: "",
@@ -90,7 +35,7 @@ const AddressForm = ({ address, onSave }: { address?: Address, onSave: (data: Pa
     });
 
     const onSubmit = (data: AddressFormData) => {
-        const action = address ? 'update-address' : 'add-address';
+        const action = address ? 'update-address' : 'add-address'; //FIXME - ActionEnum
         const payload = address ? { ...data, id: address.id } : data;
         onSave(payload, action);
         setIsOpen(false);
@@ -247,7 +192,6 @@ export default function AddressesPage() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-
                         </div>
                     </CardContent>
                 </Card>

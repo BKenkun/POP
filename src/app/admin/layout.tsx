@@ -14,7 +14,7 @@ import {
   SheetTrigger,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {

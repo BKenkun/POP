@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { posts } from '@/lib/posts';
+import { posts } from '@/mock/posts';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';

@@ -1,12 +1,12 @@
 
 'use client';
 
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import ProductFilters from './filters';
-import { getUniqueValues } from '@/lib/utils';
+import { getUniqueValues } from '@/utils/utils';
 import { Suspense, useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useTranslation } from '@/context/language-context';
 

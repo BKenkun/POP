@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase-admin';
+import { auth } from '@/firebase/firebase-admin';
 
 // Duration of the session cookie in milliseconds. 5 days.
 const expiresIn = 60 * 60 * 24 * 5 * 1000;

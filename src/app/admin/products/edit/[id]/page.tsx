@@ -3,10 +3,10 @@
 
 import ProductForm from '../../_components/product-form';
 import { useToast } from '@/hooks/use-toast';
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { doc, updateDoc, onSnapshot, deleteField } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';

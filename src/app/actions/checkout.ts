@@ -7,7 +7,8 @@
 // operations are executed under the client's authenticated context,
 // resolving conflicts between Firebase Client and Admin SDKs.
 
-import { CartItem, Order, ShippingAddress } from '@/lib/types';
+import { CartItem } from '@/entities';
+import { Order, ShippingAddress } from '@/schemas';
 
 interface CreateOrderParams {
     userId: string;

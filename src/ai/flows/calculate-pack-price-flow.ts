@@ -9,31 +9,11 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-
-const PackItemSchema = z.object({
-  id: z.string(),
-  price: z.number(), // Price in cents
-  quantity: z.number(),
-  size: z.string().optional(),
-});
-
-const PackCalculationInputSchema = z.array(PackItemSchema);
-export type PackCalculationInput = z.infer<typeof PackCalculationInputSchema>;
-
-
-const PackCalculationOutputSchema = z.object({
-  originalTotal: z.number(),
-  discountedTotal: z.number(),
-  savings: z.number(),
-});
-export type PackCalculationOutput = z.infer<typeof PackCalculationOutputSchema>;
-
+import { PackCalculationInput, PackCalculationInputSchema, PackCalculationOutput, PackCalculationOutputSchema } from '@/schemas';
 
 export async function calculatePackPrice(input: PackCalculationInput): Promise<PackCalculationOutput> {
   return calculatePackPriceFlow(input);
 }
-
 
 const calculatePackPriceFlow = ai.defineFlow(
   {
@@ -41,7 +21,7 @@ const calculatePackPriceFlow = ai.defineFlow(
     inputSchema: PackCalculationInputSchema,
     outputSchema: PackCalculationOutputSchema,
   },
-  async (items) => {
+  async (items: PackCalculationInput) => {
     const originalTotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
     const totalQuantity = items.reduce((total, item) => total + item.quantity, 0);
     

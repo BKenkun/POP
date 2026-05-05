@@ -12,11 +12,11 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Package, Eye, Loader2 } from "lucide-react";
-import { Order } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
+import { Order } from "@/types/types";
+import { formatPrice } from "@/utils/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 

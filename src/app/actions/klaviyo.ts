@@ -1,7 +1,8 @@
 
 'use server';
 
-import { Order, OrderItem, Product } from "@/lib/types";
+import { Product } from "@/entities";
+import { Order, OrderItem } from "@/schemas";
 
 const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
 const KLAVIYO_API_REVISION = '2024-02-15';

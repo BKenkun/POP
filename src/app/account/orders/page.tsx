@@ -1,24 +1,14 @@
 'use client';
 
-import { useAuth } from "@/context/auth-context";
+import { useAuth, useTranslation } from "@/context";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, where, onSnapshot, Timestamp } from "firebase/firestore";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, Button } from "@/components"
 import { Loader2, ShoppingBag, Eye } from "lucide-react";
-import { Order } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
+import { Order } from "@/schemas";
+import { formatPrice } from "@/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useTranslation } from "@/context/language-context";
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -48,7 +38,7 @@ export default function OrdersPage() {
     return () => unsubscribe();
   }, [user]);
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string) => { //FIXME - Enum
     switch (status.toLowerCase()) {
         case 'delivered':
         case 'entregado':
@@ -113,6 +103,7 @@ export default function OrdersPage() {
                     <TableCell className="text-right">
                         <Button asChild variant="outline" size="sm">
                             <Link href={`/account/orders/${order.id}`}>
+                             {/* FIXME - esto tiene pinta de un navigation o algo parecido */}
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t('account.orders_view_details_button')}
                             </Link>

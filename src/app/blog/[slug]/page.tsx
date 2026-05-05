@@ -1,4 +1,4 @@
-import { posts } from '@/lib/posts';
+import { posts } from '@/mock/posts';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';

@@ -1,17 +1,14 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/utils';
+import { Button, Card } from '@/components';
 import { LayoutDashboard, Package, MapPin, LogOut, HeartPulse, Shield } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, useTranslation } from '@/context';
 import { useEffect, useState } from 'react';
 import { getSiteSettings } from '@/app/actions/site-settings';
 import type { SiteSettings } from '@/app/actions/site-settings';
-import { useTranslation } from '@/context/language-context';
 
 export default function AccountSidebar() {
   const pathname = usePathname();
@@ -27,13 +24,12 @@ export default function AccountSidebar() {
     fetchSettings();
   }, []);
 
-
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       logout();
   }
 
-  const navLinks = [
+  const navLinks = [ //FIXME - Optimizar, hacer useMemo y ponerlo en un config aparte
     ...(isAdmin ? [{ href: '/admin', label: t('account.sidebar_admin_panel'), icon: Shield }] : []),
     { href: '/account', label: t('account.sidebar_dashboard'), icon: LayoutDashboard },
     { href: '/account/orders', label: t('account.sidebar_orders'), icon: Package },
@@ -60,7 +56,7 @@ export default function AccountSidebar() {
                     <Button
                     variant={isActive ? 'default' : 'ghost'}
                     className={cn(
-                        "w-full justify-start",
+                        "w-full justify-start", //FIXME - css with variables, not hardcoded
                         isExternalAdminLink && "bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900"
                     )}
                     >

@@ -10,16 +10,16 @@ import {
 } from "@/components/ui/card"
 import { Users, Package, ShoppingCart, DollarSign, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { useState, useEffect, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/utils/utils";
 import { Loader2 } from "lucide-react";
-import { cbdProducts } from "@/lib/cbd-products";
-import type { Order, OrderItem, Product } from "@/lib/types";
-import { db } from "@/lib/firebase";
+import { cbdProducts } from "@/mock/cbd-products";
+import type { Order, OrderItem, Product } from "@/types/types";
+import { db } from "@/firebase/firebase";
 import { collection, collectionGroup, query, where, orderBy, limit, Timestamp, onSnapshot } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { addDays, startOfMonth, format as formatDate, subDays } from "date-fns";

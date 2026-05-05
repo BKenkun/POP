@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2, Ticket } from 'lucide-react';
 

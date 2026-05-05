@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Order } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { Order } from '@/types/types';
+import { db } from '@/firebase/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 

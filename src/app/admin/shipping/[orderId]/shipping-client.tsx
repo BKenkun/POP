@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound, useSearchParams } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { Order, OrderStatus } from '@/lib/types';
-import { formatPrice } from '@/lib/utils';
+import { Order, OrderStatus } from '@/types/types';
+import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

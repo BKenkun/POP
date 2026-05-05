@@ -6,8 +6,9 @@
 // Data fetching for the admin panel will be handled directly in the client components
 // using onSnapshot, secured by Firestore rules.
 
-import { auth, firestore } from '@/lib/firebase-admin';
-import type { Order, Customer } from '@/lib/types';
+import { auth, firestore } from '@/firebase/firebase-admin';
+import type { Order } from '@/schemas';
+import type { Customer } from '@/entities';
 import { Timestamp } from 'firebase-admin/firestore';
 import { cookies } from 'next/headers';
 

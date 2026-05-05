@@ -1,24 +1,6 @@
+import { Post } from "@/entities";
 
-export interface Comment {
-    id: string;
-    author: string;
-    content: string;
-    date: string;
-  }
-  
-  export interface Post {
-    id: string;
-    slug: string;
-    title: string;
-    excerpt: string;
-    content: string;
-    imageUrl: string;
-    author: string;
-    date: string;
-    comments: Comment[];
-  }
-  
-  export const posts: Post[] = [
+export const posts: Post[] = [
     {
       id: 'post_001',
       slug: 'guia-definitiva-poppers',

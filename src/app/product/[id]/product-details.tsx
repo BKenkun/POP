@@ -2,7 +2,7 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/context/language-context';
 

@@ -7,10 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
-import { firestore as adminFirestore } from '@/lib/firebase-admin';
+import { firestore as adminFirestore } from '@/firebase/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
-import { Order } from '@/lib/types';
+import { Order } from '@/types/types';
 
 export async function POST(req: NextRequest) {
     const WEBHOOK_SECRET = process.env.HILOW_WEBHOOK_SECRET;

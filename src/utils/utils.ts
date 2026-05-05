@@ -1,5 +1,4 @@
-
-import { type Product } from "@/lib/types"
+import { Product } from "@/entities";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -13,7 +12,6 @@ export function formatPrice(price: number) {
     currency: "EUR",
   }).format(price / 100); // Assuming price is in cents
 }
-
 
 export const getUniqueValues = (products: Product[], key: keyof Product): string[] => {
     const allValues = new Set<string>();

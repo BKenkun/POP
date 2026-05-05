@@ -3,8 +3,8 @@
 
 import { useState } from 'react';
 import { useCart } from '@/context/cart-context';
-import { Product } from '@/lib/types';
-import { formatPrice } from '@/lib/utils';
+import { Product } from '@/types/types';
+import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, ShieldCheck, Truck, Box, Bell } from 'lucide-react';

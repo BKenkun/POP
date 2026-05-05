@@ -2,22 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, useTranslation } from '@/context';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { Order } from '@/lib/types';
-import { Loader2, Package, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { formatPrice } from '@/lib/utils';
+import { Order } from '@/schemas';
+import { Loader2, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Badge, Button } from '@/components';
+import { formatPrice } from '@/utils';
 import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useTranslation } from '@/context/language-context';
 
 const getImageUrl = (url: string) => {
     if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`; //FIXME - esta api tiene que estar en un config, no aquí
     }
     return url;
 };
@@ -34,7 +31,7 @@ export default function UserOrderDetailPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-        router.push('/login');
+        router.push('/login'); //FIXME - NO, MAL
         return;
     }
     if (user && orderId) {
@@ -53,7 +50,7 @@ export default function UserOrderDetailPage() {
     }
   }, [user, orderId, authLoading, router]);
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string) => { //FIXME - Un enum como una casa de grande
     switch (status.toLowerCase()) {
         case 'delivered':
         case 'entregado':
@@ -84,7 +81,8 @@ export default function UserOrderDetailPage() {
              <h2 className="text-2xl font-bold">{t('account.order_details_not_found_title')}</h2>
              <p className="text-muted-foreground">{t('account.order_details_not_found_subtitle')}</p>
              <Button asChild variant="outline">
-                <Link href="/account/orders">
+                <Link href="/account/orders"> 
+                {/* FIXME - esto tiene pinta de un navigation o algo parecido */}
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {t('account.order_details_back_button')}
                 </Link>
@@ -104,6 +102,7 @@ export default function UserOrderDetailPage() {
         </div>
         <Button asChild variant="outline" size="sm">
           <Link href="/account/orders">
+           {/* FIXME - esto tiene pinta de un navigation o algo parecido */}
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('account.order_details_back_button')}
           </Link>

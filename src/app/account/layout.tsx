@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ReactNode, useEffect } from 'react';
@@ -17,7 +16,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Wait until the loading is complete before checking for the user
     if (!loading && !user) {
-      router.push('/');
+      router.push('/'); {/* Link a piñon, modificar */}
     }
   }, [user, loading, router]);
 

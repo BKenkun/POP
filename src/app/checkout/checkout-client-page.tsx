@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/context/cart-context';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,7 +22,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from 'react-hook-form';

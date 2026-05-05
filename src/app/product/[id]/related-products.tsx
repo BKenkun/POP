@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import { ProductCard } from '@/components/product-card';
 import {
   Carousel,

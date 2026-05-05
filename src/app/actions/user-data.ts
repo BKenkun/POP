@@ -1,7 +1,7 @@
 
 'use server';
 
-import { auth, firestore as db } from '@/lib/firebase-admin';
+import { auth, firestore as db } from '@/lib';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';

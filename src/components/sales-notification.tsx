@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import type { Order, Product } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import type { Order, Product } from '@/types/types';
+import { db } from '@/firebase/firebase';
 import { collection, query, where, onSnapshot, collectionGroup, orderBy, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';

@@ -8,7 +8,7 @@ import { CheckCircle, Package, User, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 /**

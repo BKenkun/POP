@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/context/auth-context';
-import { useTranslation } from '@/context/language-context';
+import { useAuth, useTranslation } from '@/context';
 
 export function Footer() {
   const { isAdmin } = useAuth();

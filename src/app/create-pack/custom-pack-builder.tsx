@@ -2,16 +2,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Product, PackItemBrief } from '@/lib/types';
+import { Product, PackItemBrief } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import Image from 'next/image';
 import { Plus, Minus, Package, Trash2, X, Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { ProductCard } from '@/components/product-card';
 import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
 import { useRouter } from 'next/navigation';

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import {
   Select,

@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Product } from '@/lib/types';
+import { Product } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { DateRange } from 'react-day-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 

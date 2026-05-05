@@ -3,7 +3,7 @@
 
 import { ProductCard } from '@/components/product-card';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
-import { Product } from '@/lib/types';
+import { Product } from '@/entities';
 import SubscriptionForm from '@/components/subscription-form';
 import WelcomePopupLoader from '@/components/welcome-popup-loader';
 import { db } from '@/lib/firebase';

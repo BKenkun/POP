@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/toast"
 import { useCookieConsent } from "@/context/cookie-context"
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { usePathname } from "next/navigation";
 
 export function Toaster() {

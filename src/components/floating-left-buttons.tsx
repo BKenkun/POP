@@ -3,7 +3,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useCookieConsent } from '@/context/cookie-context';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MinimizedWelcomeButton } from './welcome-popup-loader';
