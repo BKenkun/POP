@@ -4,26 +4,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/context/cart-context';
-import { formatPrice } from '@/utils';
+import { formatPrice, getImageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, ShoppingBag, Box, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { QuantitySelector } from './quantity-selector';
+import { QuantitySelector } from '@/components';
 
 interface CartSheetProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
 
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€
 

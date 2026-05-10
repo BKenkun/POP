@@ -26,6 +26,7 @@ import { addDays, startOfMonth, format as formatDate, subDays } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
+import { getImageUrl } from "@/utils";
 
 // Define a type for the user data we expect
 export interface Customer {
@@ -35,13 +36,6 @@ export interface Customer {
     photoURL?: string;
     creationTime?: string | Timestamp; // Can be string or Timestamp
 }
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
 
 const StatCard = ({ 
     title, 

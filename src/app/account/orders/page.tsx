@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuth, useTranslation } from "@/context";
-import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, Button } from "@/components"
 import { Loader2, ShoppingBag, Eye } from "lucide-react";
@@ -9,6 +8,8 @@ import { Order } from "@/schemas";
 import { formatPrice } from "@/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { db } from "@/firebase";
+import { getStatusVariant } from "@/types";
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -37,27 +38,6 @@ export default function OrdersPage() {
 
     return () => unsubscribe();
   }, [user]);
-
-  const getStatusVariant = (status: string) => { //FIXME - Enum
-    switch (status.toLowerCase()) {
-        case 'delivered':
-        case 'entregado':
-            return 'default';
-        case 'shipped':
-        case 'enviado':
-            return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
-            return 'outline';
-        case 'cancelled':
-        case 'cancelado':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-  }
 
   if (loading) {
     return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;

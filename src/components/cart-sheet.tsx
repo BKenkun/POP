@@ -13,18 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 import { QuantitySelector } from './quantity-selector';
 import { useTranslation } from '@/context/language-context';
 import { useRouter } from 'next/navigation';
+import { getImageUrl } from '@/utils';
 
 interface CartSheetProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
 
 const FREE_SHIPPING_THRESHOLD = 4000; // 40€
 

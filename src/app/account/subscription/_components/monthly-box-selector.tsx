@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, 
     ProductCard, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components";
 import { CheckCircle, Gift, Loader2, Package, Send } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/utils";
+import { cn, getImageUrl } from "@/utils";
 import { useToast } from "@/hooks";
 import { getUserSelection, saveUserSelection } from "@/lib";
 import { useTranslation } from "@/context";
@@ -27,13 +27,6 @@ interface SelectionCardProps {
     selectionType: 'popper' | 'accessory'; //FIXME - Enum
     popperIndex?: number;
 }
-
-const getImageUrl = (url: string) => { //utils, está repetido
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`; //Link
-    }
-    return url;
-};
 
 //Esto hay que separarlo
 const SelectionCard = ({ title, description, icon: Icon, products, selectedProductId, onSelectProduct, selectionType, popperIndex }: SelectionCardProps) => {

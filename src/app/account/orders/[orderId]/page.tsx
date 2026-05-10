@@ -3,21 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth, useTranslation } from '@/context';
-import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Order } from '@/schemas';
 import { Loader2, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, Badge, Button } from '@/components';
-import { formatPrice } from '@/utils';
+import { formatPrice, getImageUrl } from '@/utils';
 import Image from 'next/image';
 import Link from 'next/link';
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`; //FIXME - esta api tiene que estar en un config, no aquí
-    }
-    return url;
-};
+import { db } from '@/firebase';
+import { getStatusVariant } from '@/types';
 
 export default function UserOrderDetailPage() {
   const params = useParams();
@@ -31,7 +25,7 @@ export default function UserOrderDetailPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-        router.push('/login'); //FIXME - NO, MAL
+        router.push('/login');
         return;
     }
     if (user && orderId) {
@@ -49,27 +43,6 @@ export default function UserOrderDetailPage() {
         return () => unsubscribe();
     }
   }, [user, orderId, authLoading, router]);
-
-  const getStatusVariant = (status: string) => { //FIXME - Un enum como una casa de grande
-    switch (status.toLowerCase()) {
-        case 'delivered':
-        case 'entregado':
-            return 'default';
-        case 'shipped':
-        case 'enviado':
-            return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
-            return 'outline';
-        case 'cancelled':
-        case 'cancelado':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-  };
 
   if (isLoading || authLoading) {
     return <div className="flex justify-center items-center h-60"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;

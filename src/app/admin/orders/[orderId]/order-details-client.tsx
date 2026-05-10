@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Order, OrderStatus } from '@/types/types';
+import { getStatusVariant, Order, OrderStatus } from '@/types/types';
 import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,36 +13,11 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, ArrowLeft, Loader2, Save, MapPin, Truck, History, MessageSquare, Phone, User as UserIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { db } from '@/firebase/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
-
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
-
-const getStatusVariant = (status: string) => {
-    switch (status) {
-        case 'delivered':
-            return 'default';
-        case 'shipped':
-        case 'out_for_delivery':
-            return 'secondary';
-        case 'order_received':
-        case 'pending_payment':
-            return 'outline';
-        case 'cancelled':
-        case 'issue':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-}
+import { getImageUrl } from '@/utils';
+import { db } from '@/firebase';
 
 
 export default function OrderDetailsClient({ initialOrder }: { initialOrder: Order }) {

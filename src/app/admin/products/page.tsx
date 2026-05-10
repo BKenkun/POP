@@ -35,14 +35,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/firebase/firebase';
 import { collection, doc, updateDoc, deleteDoc, onSnapshot, query } from 'firebase/firestore';
-
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
+import { getImageUrl } from '@/utils';
 
 export default function AdminProductsPage() {
   const { toast } = useToast();

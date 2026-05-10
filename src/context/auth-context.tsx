@@ -4,9 +4,9 @@ import React, { createContext, useContext, ReactNode, useMemo, useState, useEffe
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '@/firebase/firebase';
 import { Loader2 } from 'lucide-react';
 import { UserSubscription } from '@/entities';
+import { auth, db } from '@/firebase';
 
 const ADMIN_VIEW_AS_CUSTOMER_KEY = 'admin_view_as_customer';
 
