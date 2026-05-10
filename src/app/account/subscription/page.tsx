@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Product } from '@/entities';
 import { Loader2 } from 'lucide-react';

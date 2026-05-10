@@ -7,10 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
-import { firestore as adminFirestore } from '@/firebase/firebase-admin';
+import { firestore as adminFirestore } from '@/firebase';
 import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
-import { Order } from '@/types/types';
+import { Order, OrderSchemaStatus } from '@/schemas';
 
 export async function POST(req: NextRequest) {
     const WEBHOOK_SECRET = process.env.HILOW_WEBHOOK_SECRET;
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
         if (eventType.includes('payment') && status === 'success') {
             const finalDoc = await userRef.collection('orders').doc(finalOrderDocId).get();
             if (finalDoc.exists) {
-                await trackOrderStatusUpdate({ ...finalDoc.data(), id: finalOrderDocId } as Order, 'order_received');
+                await trackOrderStatusUpdate({ ...finalDoc.data(), id: finalOrderDocId } as Order, OrderSchemaStatus.OrderReceived);
             }
         }
 

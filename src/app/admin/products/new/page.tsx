@@ -3,11 +3,11 @@
 
 import ProductForm from '../_components/product-form';
 import { useToast } from '@/hooks/use-toast';
-import { Product } from '@/types/types';
+import { Product } from '@/entities';
 import { useRouter } from 'next/navigation';
 import { generateSKU } from '@/utils/utils';
 import { useState } from 'react';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { syncKlaviyoProduct } from '@/app/actions/klaviyo';

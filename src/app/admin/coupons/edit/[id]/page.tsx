@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import CouponForm from '../../_components/coupon-form';

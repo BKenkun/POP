@@ -1,7 +1,5 @@
-
-import { NextResponse } from 'next/server';
-import { firestore } from '@/firebase/firebase-admin';
-import { Product } from '@/types/types';
+import { firestore } from '@/firebase';
+import { Product } from '@/entities';
 
 export const revalidate = 3600; // Revalidate at most every hour
 

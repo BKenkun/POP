@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 const PAYMENT_CONFIRM_TIMEOUT_MS = 3 * 60 * 1000;

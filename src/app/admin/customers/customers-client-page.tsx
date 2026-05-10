@@ -22,9 +22,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Customer } from '@/types/types';
-import { db } from '@/firebase/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { db } from '@/firebase';
+import { Customer } from '@/entities';
 
 
 export default function AdminCustomersClientPage() {

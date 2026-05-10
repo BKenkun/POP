@@ -2,13 +2,13 @@
 'use client';
 
 import { useParams, notFound } from 'next/navigation';
-import { Product } from '@/types/types';
+import { Product } from '@/entities';
 import { ProductGallery } from './product-gallery';
 import { ProductInfo } from './product-info';
 import { ProductDetails } from './product-details';
 import { Separator } from '@/components/ui/separator';
 import { RelatedProducts } from './related-products';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';

@@ -12,12 +12,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Package, Eye, Loader2 } from "lucide-react";
-import { getStatusVariant, Order } from "@/types/types";
+import { getStatusVariant } from "@/types/types";
 import { formatPrice } from "@/utils/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { Order } from '@/schemas'
 
 const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {

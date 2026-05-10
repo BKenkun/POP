@@ -6,7 +6,7 @@ import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { Product } from '@/entities';
 import SubscriptionForm from '@/components/subscription-form';
 import WelcomePopupLoader from '@/components/welcome-popup-loader';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState, useEffect } from 'react';

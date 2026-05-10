@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound, useSearchParams } from 'next/navigation';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { getStatusVariant, Order, OrderStatus } from '@/types';
+import { getStatusVariant } from '@/types';
+import { Order } from '@/schemas'
 import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -12,15 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, MapPin, Truck, Check, AlertCircle, Package } from 'lucide-react';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
+import { ArrowLeft, Loader2, MapPin, Check, AlertCircle, Package } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,

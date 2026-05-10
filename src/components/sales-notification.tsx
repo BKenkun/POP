@@ -5,11 +5,12 @@ import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/utils/utils';
 import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import type { Order, Product } from '@/types/types';
-import { db } from '@/firebase/firebase';
 import { collection, query, where, onSnapshot, collectionGroup, orderBy, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
+import { Product } from '@/entities';
+import { db } from '@/firebase';
+import { Order } from '@/schemas';
 
 const internationalData = {
   "Spain": {

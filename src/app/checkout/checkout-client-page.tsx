@@ -22,7 +22,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import Image from 'next/image';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from 'react-hook-form';

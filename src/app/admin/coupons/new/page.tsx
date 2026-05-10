@@ -3,7 +3,7 @@
 import CouponForm from '../_components/coupon-form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { db } from '@/firebase/firebase';
+import { db } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import type { Coupon } from '../page';

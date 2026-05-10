@@ -1,6 +1,6 @@
 'use client';
 
-import { auth, db } from '../firebase/firebase';
+import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export interface MonthlySelectionData {
