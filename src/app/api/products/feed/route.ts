@@ -11,7 +11,8 @@ export const revalidate = 3600; // Revalidate at most every hour
  */
 export async function GET() {
   try {
-    const productsRef = firestore.collection('products');
+    const db = firestore();
+    const productsRef = db.collection('products');
     const snapshot = await productsRef.where('active', '!=', false).get();
 
     if (snapshot.empty) {

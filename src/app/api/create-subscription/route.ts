@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore as adminFirestore } from '@/firebase/admin';
+import { firestore } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 /**
@@ -10,6 +10,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const db = firestore();
     const { orderId: clientProvidedId, successUrl, cancelUrl } = body;
 
     if (!clientProvidedId || !successUrl || !cancelUrl) {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     const userId = parts[1] || 'unknown';
     
     // 1. OBTENER DATOS DEL USUARIO
-    const userRef = adminFirestore.collection('users').doc(userId);
+    const userRef = db.collection('users').doc(userId);
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() : null;
 

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
-import { firestore as adminFirestore } from '@/firebase/admin';
+import { firestore } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { Order, OrderSchemaStatus } from '@/schemas';
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     const headerStore = headers();
     const signature = headerStore.get('hilow-signature') || headerStore.get('x-hilow-signature');
     const body = await req.text();
+    const adminFirestore = firestore();
 
     if (!signature || !WEBHOOK_SECRET) {
         console.error("[WEBHOOK] Falta configuración o firma de seguridad.");

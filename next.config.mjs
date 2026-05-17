@@ -26,6 +26,13 @@ const nextConfig = {
       { protocol: 'https', hostname: 'storage.googleapis.com' },
     ],
   },
+  webpack: (config) => {
+    config.ignoreWarnings = [
+      /Critical dependency: the request of a dependency is an expression/,
+    ];
+
+    return config;
+  },
 };
 
 export default nextConfig;
