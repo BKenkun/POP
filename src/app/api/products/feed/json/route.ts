@@ -1,4 +1,4 @@
-import { firestore } from '@/firebase';
+import { firestore } from '@/firebase/admin';
 import { Product } from '@/entities';
 
 export const revalidate = 3600; // Revalidate at most every hour

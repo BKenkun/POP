@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
-import { firestore as adminFirestore } from '@/firebase';
+import { firestore as adminFirestore } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { Order, OrderSchemaStatus } from '@/schemas';

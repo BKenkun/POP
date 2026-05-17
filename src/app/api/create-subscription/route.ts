@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore as adminFirestore } from '@/firebase';
+import { firestore as adminFirestore } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 /**

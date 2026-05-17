@@ -1,10 +1,10 @@
 
 'use server';
 
-import { auth, firestore as db } from '@/lib';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { db, auth } from '@/firebase';
 
 interface Address {
     id: string;
