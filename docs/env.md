@@ -6,7 +6,7 @@ Estos archivos contienen datos críticos necesarios para la ejecución de la apl
 
 Se gestionan dos archivos diferenciados según el entorno de trabajo:
 
-- `.env.dev` → Configuración específica para desarrollo.
-- `.env.prod` → Configuración específica para producción.
+- `.env.local` → Configuración específica para desarrollo.
+- `.env.production` → Configuración específica para producción.
 
 Esta separación permite mantener configuraciones independientes y adaptadas a cada entorno, facilitando tanto el desarrollo como el despliegue seguro de la aplicación.
