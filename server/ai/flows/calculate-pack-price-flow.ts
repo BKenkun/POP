@@ -8,7 +8,7 @@
  * - PackCalculationOutput - The return type for the calculatePackPrice function.
  */
 
-import { ai } from '@/app/api/ai/genkit';
+import { ai } from '../genkit';
 import { PackCalculationInput, PackCalculationInputSchema, PackCalculationOutput, PackCalculationOutputSchema } from '@/schemas';
 
 export async function calculatePackPrice(input: PackCalculationInput): Promise<PackCalculationOutput> {

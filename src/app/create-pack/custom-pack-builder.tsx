@@ -13,7 +13,7 @@ import { Plus, Minus, Package, Trash2, X, Loader2, CreditCard } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/utils/utils';
 import { ProductCard } from '@/components/product-card';
-import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/app/api/ai/flows/calculate-pack-price-flow';
+import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '../../../server/ai/flows/calculate-pack-price-flow';
 import { useRouter } from 'next/navigation';
 import ProductFilters from '@/app/products/filters';
 import { useTranslation } from '@/context/language-context';
