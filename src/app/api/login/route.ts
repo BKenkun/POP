@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
       maxAge: expiresIn / 1000, // maxAge is in seconds
       httpOnly: true,
       secure: true,
+      sameSite: 'lax',
       path: '/',
     };
 

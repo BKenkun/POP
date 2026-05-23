@@ -1,9 +1,7 @@
-import admin from 'firebase-admin';
+'use server';
+import admin from "firebase-admin";
 
 let firebaseAdminApp: admin.app.App | null = null;
-
-console.log('API KEY:', process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-console.log('PROJECT ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
 
 export function getFirebaseAdminApp() {
   if (firebaseAdminApp) {

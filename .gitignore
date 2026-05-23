@@ -36,3 +36,5 @@ next-env.d.ts
 # Secretos de Firebase (¡CRÍTICO!)
 src/lib/firebase-admin.ts
 serviceAccountKey.json
+
+bfg.jar

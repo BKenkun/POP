@@ -15,6 +15,10 @@ env:
     value: "purorush"
   - variable: FIREBASE_STORAGE_BUCKET
     value: "purorush.appspot.com"
+  - variable: IMAGE_PROXY_MAX_SIZE_MB
+    value: "5"
+  - variable: ADMIN_EMAIL
+    value: maryandpopper@gmail.com
 
   # --- Configuración de Hilow ---
   - variable: HILOW_API_BASE_URL

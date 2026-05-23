@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isActualAdmin = useMemo(() => {
-    return !!user && user.email === 'maryandpopper@gmail.com';
+    return !!user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
   }, [user]);
 
   const isAdmin = useMemo(() => {

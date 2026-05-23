@@ -46,7 +46,6 @@ export default function SubscriptionLandingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId,
           successUrl: `${baseUrl}/subscription/success`,
           cancelUrl: `${baseUrl}/subscription`,
         }),

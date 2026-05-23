@@ -27,13 +27,12 @@ export default function AccountDashboardPage() {
   }, []);
 
   const userName = isAdmin ? "Administrador" : (user?.displayName || user?.email?.split('@')[0] || "Usuario");
-// Roles a piñon
+
   const userEmail = user?.email || "No email provided";
   
   const pointsValue = (loyaltyPoints / 100) * 200; //Calculo en utils mejor
 
-  // O "isAdmin" aqui refere-se ao estado real, não ao modo de visualização.
-  const isActualAdmin = !!user && user.email === 'maryandpopper@gmail.com'; //a piñon todo, peor
+  const isActualAdmin = !!user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   return (
     <div className="space-y-6">

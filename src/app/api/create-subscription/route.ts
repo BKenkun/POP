@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore } from '@/firebase/admin';
+import { cookies } from 'next/headers';
+import { firestore, adminAuth } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 /**
@@ -11,10 +12,26 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const db = firestore();
-    const { orderId: clientProvidedId, successUrl, cancelUrl } = body;
+    const { successUrl, cancelUrl } = body
 
-    if (!clientProvidedId || !successUrl || !cancelUrl) {
+    if (!successUrl || !cancelUrl) {
       return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
+    }
+
+    // 1. VERIFICAR SESIÓN — el userId viene del servidor, nunca del cliente
+    const sessionCookie = cookies().get('session')?.value;
+
+    if (!sessionCookie) {
+      return NextResponse.json({ error: 'No autenticado'}, { status: 401 });
+    }
+
+    let userId: string;
+
+    try {
+      const claims = await adminAuth().verifySessionCookie(sessionCookie, true);
+      userId = claims.uuid;
+    } catch {
+      return NextResponse.json({ error: 'Sesión inválida o expirada'}, { status: 401 });
     }
 
     const HILOW_API_KEY = process.env.HILOW_API_KEY;
@@ -25,12 +42,8 @@ export async function POST(req: NextRequest) {
       console.error('[SUBSCRIPTION] Error: HILOW_API_KEY no configurada.');
       return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
-
-    // El clientProvidedId viene como SUB_uid_timestamp
-    const parts = clientProvidedId.split('_');
-    const userId = parts[1] || 'unknown';
     
-    // 1. OBTENER DATOS DEL USUARIO
+    // 2. OBTENER DATOS DEL USUARIO
     const userRef = db.collection('users').doc(userId);
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() : null;
@@ -39,7 +52,7 @@ export async function POST(req: NextRequest) {
         throw new Error('Usuario no encontrado en la base de datos.');
     }
 
-    // 2. PRE-REGISTRO DEL PEDIDO (BOX)
+    // 3. PRE-REGISTRO DEL PEDIDO (BOX)
     const uniqueOrderId = `BOX-${Date.now()}`;
     const orderRef = userRef.collection('orders').doc(uniqueOrderId);
 
@@ -65,7 +78,7 @@ export async function POST(req: NextRequest) {
     await orderRef.set(pendingOrderData);
     console.log(`[SUBSCRIPTION] Pedido pendiente creado: ${uniqueOrderId} para usuario: ${userId}`);
 
-    // 3. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
+    // 4. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
     const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
 
     const payload = {
