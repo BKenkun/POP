@@ -179,8 +179,17 @@ export async function POST(req: NextRequest) {
  
             case 'payment.failed':
                 if (isSubscription) {
-                    batch.update(userRef, {
-                        subscriptionStatus: 'past_due',
+                batch.update(userRef, {
+                    subscriptionStatus: 'past_due',
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+                }
+                
+                const failedOrderRef = userRef.collection('orders').doc(orderDocId);
+                const failedSnap = await failedOrderRef.get();
+                if (failedSnap.exists) {
+                    batch.update(failedOrderRef, {
+                        status: 'payment_failed',
                         updatedAt: FieldValue.serverTimestamp()
                     });
                 }
@@ -202,7 +211,7 @@ export async function POST(req: NextRequest) {
  
         await batch.commit();
  
-        if (eventType.includes('payment') && status === 'success') {
+        if (eventType === 'payment.completed' || eventType === 'payment.renewal_succeeded') {
             const finalDoc = await userRef.collection('orders').doc(finalOrderDocId).get();
             if (finalDoc.exists) {
                 await trackOrderStatusUpdateInternal(
