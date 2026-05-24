@@ -1,9 +1,7 @@
 'use server';
 
-import fs from 'fs/promises';
 import path from 'path';
-import { cookies } from 'next/headers'
-import { adminAuth, firestore } from '@/firebase/admin'
+import { firestore } from '@/firebase/admin'
 import { assertAdmin } from '@/lib/assert-admin';
 
 const DEFAULT_SETTINGS: SiteSettings = {

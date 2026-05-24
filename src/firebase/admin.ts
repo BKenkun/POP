@@ -1,4 +1,3 @@
-'use server';
 import admin from "firebase-admin";
 
 let firebaseAdminApp: admin.app.App | null = null;
