@@ -21,8 +21,6 @@ import { QuantitySelector } from '@/components/quantity-selector';
 import { createHilowApiOrder } from '@/app/actions/hilow';
 import { validateCoupon } from '@/app/actions/coupon';
 import type { CouponValidationResult } from '@/app/actions/coupon';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db } from '@/firebase';
 
 interface Address {
   id: string;
@@ -221,24 +219,15 @@ export default function CheckoutClientPage() {
     setPaymentError(null);
     setPaymentErrorKind(null);
     setPayStepDetail(null);
-    const uniqueId = `CPO_${user.uid}_${Date.now()}`;
 
     try {
-      const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
-      const localOrderData: any = {
-        userId: user.uid,
+      // Prices are calculated and verified server-side in createHilowApiOrder.
+      // We only send product IDs + quantities — never client-computed prices.
+      const hilowResult = await createHilowApiOrder({
         items: cartItems.map((item) => ({
           productId: item.id,
-          name: item.name,
-          price: item.price,
           quantity: item.quantity,
-          imageUrl: item.imageUrl,
         })),
-        total: cartTotal - volumeDiscount - (appliedCoupon?.discountAmount ?? 0),
-        ...(appliedCoupon && { 
-          coupon: { code: appliedCoupon.code, couponId: appliedCoupon.couponId, discount: appliedCoupon.discountAmount, }}),
-        customerName: data.name,
-        customerEmail: data.email,
         shippingAddress: {
           line1: data.street,
           line2: null,
@@ -248,33 +237,13 @@ export default function CheckoutClientPage() {
           country: data.country,
           phone: data.phone,
         },
-        status: 'pending_payment',
-        paymentMethod: 'hilow',
-        createdAt: serverTimestamp(),
-      };
-      await setDoc(localOrderRef, localOrderData);
-    } catch (e: any) {
-      const msg = e?.message || String(e);
-      setPaymentErrorKind('local');
-      setPaymentError(msg);
-      setPayStepDetail(null);
-      toast({
-        title: t('checkout.payment_error_local_order_title'),
-        description: msg,
-        variant: 'destructive',
+        customerName: data.name,
+        customerEmail: data.email,
+        ...(appliedCoupon && {
+          couponId: appliedCoupon.couponId,
+          couponCode: appliedCoupon.code,
+        }),
       });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const hilowResult = await createHilowApiOrder(
-        uniqueId,
-        finalTotals.priceInCents,
-        cartItems.map((item) => `${item.quantity}x ${item.name}`).join(', '),
-        false,
-        window.location.origin
-      );
 
       if (!hilowResult.success || !hilowResult.checkoutUrl) {
         throw new Error(hilowResult.message || 'Could not start payment.');

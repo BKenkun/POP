@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { firestore, adminAuth } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
+SUBSCRIPTION_PRICE = Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400');
 /**
  * Endpoint para iniciar el flujo de suscripción en Hilow con pre-registro en Firestore.
  * 1. Crea un pedido con estado 'pending_payment' en la DB local.
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const claims = await adminAuth().verifySessionCookie(sessionCookie, true);
-      userId = claims.uuid;
+      userId = claims.uid;
     } catch {
       return NextResponse.json({ error: 'Sesión inválida o expirada'}, { status: 401 });
     }
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
         id: uniqueOrderId,
         userId: userId,
         status: 'pending_payment',
-        total: 4400, // Precio fijo suscripción
+        total: SUBSCRIPTION_PRICE, // Precio fijo suscripción
         paymentMethod: 'hilow',
         createdAt: FieldValue.serverTimestamp(),
         isSubscription: true,
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
         items: [{
             productId: 'subscription_club',
             name: 'Club Dosis Mensual',
-            price: 4400,
+            price: SUBSCRIPTION_PRICE,
             quantity: 1,
             imageUrl: 'https://picsum.photos/seed/sub/200/200'
         }]
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
     const payload = {
       storeId: HILOW_STORE_ID,
       internalOrderId: structuredInternalOrderId,
-      amountInCents: 4400,
+      amountInCents: SUBSCRIPTION_PRICE,
       productName: "Club Dosis Mensual",
       isSubscription: true,
       successUrl: successUrl,

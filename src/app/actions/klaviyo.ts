@@ -3,9 +3,11 @@
 
 import { Product } from "@/entities";
 import { Order, OrderItem } from "@/schemas";
+import { assertAdmin } from '@/lib/assert-admin';
 
 const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
 const KLAVIYO_API_REVISION = '2024-02-15';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 if (!KLAVIYO_API_KEY) {
     console.warn("Klaviyo API Key is not set. Marketing and transactional emails will be simulated.");
@@ -82,6 +84,7 @@ export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEma
  * @param newStatus The new status of the order.
  */
 export async function trackOrderStatusUpdate(order: Order, newStatus: Order['status']) {
+    await assertAdmin();
     let eventName: KlaviyoEventName | null = null;
     let isAdminNotification = false;
 
@@ -124,8 +127,8 @@ export async function trackOrderStatusUpdate(order: Order, newStatus: Order['sta
         await trackKlaviyoEvent(eventName, order.customerEmail, klaviyoOrderData);
         
         // Also send a notification to the admin for new orders
-        if (isAdminNotification) {
-            await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
+        if (isAdminNotification && ADMIN_EMAIL) {
+            await trackKlaviyoEvent('Admin New Order Notification', ADMIN_EMAIL, klaviyoOrderData);
         }
 
         return { success: true, message: `Event '${eventName}' tracked successfully.` };
@@ -142,6 +145,7 @@ export async function trackOrderStatusUpdate(order: Order, newStatus: Order['sta
  * @param product The product data from the store.
  */
 export async function syncKlaviyoProduct(product: Product) {
+    await assertAdmin();
     if (!KLAVIYO_API_KEY) {
         console.log(`[SIMULATION] Klaviyo product sync for '${product.name}'.`);
         return { success: true, message: 'Simulated product sync.' };

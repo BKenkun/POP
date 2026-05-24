@@ -16,7 +16,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.email == 'maryandpopper@gmail.com'; //FIXME - Cambiar
+      return isSignedIn() && request.auth.token.admin == true;
     }
 
     // Products are publicly readable by anyone.
@@ -27,12 +27,12 @@ service cloud.firestore {
     }
     
     // Coupons are readable by signed-in users.
-    // Coupon creation and deletion is restricted to admins.
-    // Users can UPDATE a coupon, but ONLY the 'usageCount' field.
+    // Only admins can create, update or delete coupons.
+    // usageCount increments happen exclusively from the server webhook
+    // via Admin SDK, which bypasses these rules entirely.
     match /coupons/{couponId} {
       allow read: if isSignedIn();
-      allow create, delete: if isAdmin();
-      allow update: if isSignedIn() && request.resource.data.keys().hasOnly(['usageCount']);
+      allow create, update, delete: if isAdmin();
     }
 
     // User-specific data.
@@ -68,6 +68,12 @@ service cloud.firestore {
     // It's essential for the admin panel dashboard and order list.
     match /{path=**}/orders/{orderId} {
        allow get, list: if isAdmin();
+    }
+
+    // Site settings document — only readable/writable by admins.
+    match /config/siteSettings {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

@@ -17,7 +17,7 @@ export async function validateCoupon(code: string, cartTotalCents: number): Prom
     let userId: string;
     try {
         const claims = await adminAuth().verifySessionCookie(sessionCookie, true);
-        userId = claims.uuid;
+        userId = claims.uid;
     } catch {
         return { success: false, error: 'Sesión inválida' };
     }

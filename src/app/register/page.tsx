@@ -100,7 +100,8 @@ export default function RegisterPage() {
       });
       
       // --- Klaviyo Event Tracking for Admin ---
-      await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', {
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      if (adminEmail) await trackKlaviyoEvent('Admin New User Notification', adminEmail, {
           'NewUserEmail': newUser.email,
           'NewUserName': displayName,
           'RegistrationDate': new Date().toISOString()
