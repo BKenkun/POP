@@ -76,15 +76,11 @@ export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEma
     }
 }
 
-
 /**
  * Tracks order status updates in Klaviyo.
- * This central function maps your internal order status to specific Klaviyo events.
- * @param order The full order object.
- * @param newStatus The new status of the order.
+ * Internal version — NO admin guard. Safe to call from webhooks and server-to-server contexts.
  */
-export async function trackOrderStatusUpdate(order: Order, newStatus: Order['status']) {
-    await assertAdmin();
+export async function trackOrderStatusUpdateInternal(order: Order, newStatus: Order['status']) {
     let eventName: KlaviyoEventName | null = null;
     let isAdminNotification = false;
 
@@ -122,23 +118,25 @@ export async function trackOrderStatusUpdate(order: Order, newStatus: Order['sta
 
     try {
         const klaviyoOrderData = await formatOrderForKlaviyo(order, order.id);
-        
-        // Send notification to the customer
         await trackKlaviyoEvent(eventName, order.customerEmail, klaviyoOrderData);
-        
-        // Also send a notification to the admin for new orders
         if (isAdminNotification && ADMIN_EMAIL) {
             await trackKlaviyoEvent('Admin New Order Notification', ADMIN_EMAIL, klaviyoOrderData);
         }
-
         return { success: true, message: `Event '${eventName}' tracked successfully.` };
-
     } catch (error: any) {
         console.error(`Error in trackOrderStatusUpdate for order ${order.id}:`, error);
         return { success: false, message: error.message };
     }
 }
 
+/**
+ * Tracks order status updates in Klaviyo.
+ * Admin-guarded version — use this from the admin panel only.
+ */
+export async function trackOrderStatusUpdate(order: Order, newStatus: Order['status']) {
+    await assertAdmin();
+    return trackOrderStatusUpdateInternal(order, newStatus);
+}
 
 /**
  * Creates or updates a product in the Klaviyo Catalog.

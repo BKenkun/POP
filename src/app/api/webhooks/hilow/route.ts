@@ -9,7 +9,7 @@ import { headers } from 'next/headers';
 import crypto from 'crypto';
 import { firestore } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
+import { trackOrderStatusUpdateInternal } from '@/app/actions/klaviyo';
 import { Order, OrderSchemaStatus } from '@/schemas';
 
 export async function POST(req: NextRequest) {
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
                     ...(eventType === 'payment.renewal_succeeded' && {
                         userId,
                         id: finalOrderDocId,
-                        total: amountInCents || 4400,
+                        total: amountInCents || Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400'),
                         paymentMethod: 'hilow',
                         createdAt: FieldValue.serverTimestamp(),
                         isSubscription: true,
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
                         items: [{
                             productId: 'subscription_club',
                             name: 'Club Dosis Mensual',
-                            price: amountInCents || 4400,
+                            price: amountInCents || Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400'),
                             quantity: 1,
                             imageUrl: 'https://picsum.photos/seed/sub/200/200'
                         }]
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
         if (eventType.includes('payment') && status === 'success') {
             const finalDoc = await userRef.collection('orders').doc(finalOrderDocId).get();
             if (finalDoc.exists) {
-                await trackOrderStatusUpdate(
+                await trackOrderStatusUpdateInternal(
                     { ...finalDoc.data(), id: finalOrderDocId } as Order,
                     OrderSchemaStatus.OrderReceived
                 );

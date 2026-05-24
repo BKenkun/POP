@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { firestore, adminAuth } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
-SUBSCRIPTION_PRICE = Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400');
+const SUBSCRIPTION_PRICE = Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400');
 /**
  * Endpoint para iniciar el flujo de suscripción en Hilow con pre-registro en Firestore.
  * 1. Crea un pedido con estado 'pending_payment' en la DB local.
@@ -16,7 +16,11 @@ export async function POST(req: NextRequest) {
     const { successUrl, cancelUrl } = body
 
     if (!successUrl || !cancelUrl) {
-      return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+    }
+    const baseUrl = process.env.APP_BASE_URL!;
+    if (!successUrl.startsWith(baseUrl) || !cancelUrl.startsWith(baseUrl)) {
+      return NextResponse.json({ error: 'URL no permitida' }, { status: 400 });
     }
 
     // 1. VERIFICAR SESIÓN — el userId viene del servidor, nunca del cliente

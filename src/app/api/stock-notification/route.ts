@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { publicRatelimit } from '@/lib/rate-limit';
+import { stockNotificationSchema } from '@/schemas/stock-notification.schema';
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
