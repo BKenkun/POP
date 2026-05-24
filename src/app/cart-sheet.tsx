@@ -56,6 +56,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                       <Image
                         src={getImageUrl(item.imageUrl)}
                         alt={item.name}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         fill
                         className="object-cover"
                         data-ai-hint={item.imageHint}

@@ -40,9 +40,20 @@ export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEma
         data: {
             type: "event",
             attributes: {
-                profile: { email: customerEmail },
-                metric: { name: eventName },
+                profile: {
+                    data: {
+                        type: "profile",
+                        attributes: { email: customerEmail }
+                    }
+                },
+                metric: {
+                    data: {
+                        type: "metric",
+                        attributes: { name: eventName }
+                    }
+                },
                 properties: properties,
+                time: new Date().toISOString(),
             }
         }
     };

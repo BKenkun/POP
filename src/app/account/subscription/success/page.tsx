@@ -10,6 +10,17 @@ import { useTranslation } from '@/context/language-context';
 export default function SubscriptionSuccessPage() {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const [confirmed, setConfirmed] = useState(false);
+
+    useEffect(() => {
+        if (!user) return;
+        const unsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+            if (snap.data()?.isSubscribed === true) {
+                setConfirmed(true);
+            }
+        });
+        return unsub;
+    }, [user]);
 
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8 py-12">

@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
                 }
  
                 // 2. Actualizar pedido de pending → received
+                const userDoc = await userRef.get();
                 const orderRef = userRef.collection('orders').doc(finalOrderDocId);
                 batch.set(orderRef, {
                     status: 'order_received',
@@ -140,7 +141,7 @@ export async function POST(req: NextRequest) {
                         paymentMethod: 'hilow',
                         createdAt: FieldValue.serverTimestamp(),
                         isSubscription: true,
-                        customerEmail: payload.email || 'member@comprarpopperonline.com',
+                        customerEmail: userDoc.data()?.email || payload.email || 'member@comprarpopperonline.com',
                         customerName: payload.customerName || 'Miembro del Club',
                         items: [{
                             productId: 'subscription_club',

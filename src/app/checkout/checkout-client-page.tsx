@@ -390,7 +390,7 @@ export default function CheckoutClientPage() {
               <CardContent className="divide-y">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 py-4">
-                    <div className="relative h-16 w-16 rounded border overflow-hidden"><Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" /></div>
+                    <div className="relative h-16 w-16 rounded border overflow-hidden"><Image src={getImageUrl(item.imageUrl)} alt={item.name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" fill className="object-cover" /></div>
                     <div className="flex-1">
                       <p className="font-semibold">{item.name}</p>
                       <QuantitySelector quantity={item.quantity} onQuantityChange={(q) => updateQuantity(item.id, q)} maxStock={item.stock} />

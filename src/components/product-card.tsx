@@ -90,6 +90,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                                 src={getImageUrl(product.imageUrl)}
                                 alt={product.name}
                                 width={250}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                 height={250}
                                 className="object-contain"
                                 data-ai-hint={product.imageHint}
@@ -106,6 +107,7 @@ export function ProductCard({ product, className, children, onImageClick }: Prod
                                 src={getImageUrl(product.imageUrl)}
                                 alt={product.name}
                                 width={250}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                 height={250}
                                 className="object-contain"
                                 data-ai-hint={product.imageHint}
