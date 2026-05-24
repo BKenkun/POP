@@ -1,10 +1,8 @@
-
-
 'use client';
 
 import { useAuth } from "@/context/auth-context";
 import { CardTitle, CardDescription, CardHeader, CardContent, Card, CardFooter } from "@/components/ui/card"
-import { formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/utils";
 import { Gift, PackagePlus, Settings, Shield, KeyRound, Eye } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -29,12 +27,12 @@ export default function AccountDashboardPage() {
   }, []);
 
   const userName = isAdmin ? "Administrador" : (user?.displayName || user?.email?.split('@')[0] || "Usuario");
+
   const userEmail = user?.email || "No email provided";
   
-  const pointsValue = (loyaltyPoints / 100) * 200;
+  const pointsValue = (loyaltyPoints / 100) * 200; //Calculo en utils mejor
 
-  // O "isAdmin" aqui refere-se ao estado real, não ao modo de visualização.
-  const isActualAdmin = !!user && user.email === 'maryandpopper@gmail.com';
+  const isActualAdmin = !!user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   return (
     <div className="space-y-6">
@@ -44,7 +42,7 @@ export default function AccountDashboardPage() {
                 {t('account.dashboard_welcome', { name: userName })}
             </p>
         </div>
-
+        {/* Separar en un componente diferente */}
         {isActualAdmin && (
              <Card className="border-amber-500 border-2 bg-amber-500/5">
                 <CardHeader>
@@ -70,6 +68,7 @@ export default function AccountDashboardPage() {
                 <CardFooter>
                     <Button asChild>
                         <Link href="/admin" target="_blank">
+                        {/* Link a piñon */}
                             <Shield className="mr-2" />
                             Ir al Panel de Administración
                         </Link>
@@ -77,7 +76,7 @@ export default function AccountDashboardPage() {
                 </CardFooter>
             </Card>
         )}
-
+    {/* Separar en un componente diferente */}
         {isSubscribed && !isAdmin && settings?.showSubscriptionFeature && (
             <Card className="border-primary border-2">
                 <CardHeader>

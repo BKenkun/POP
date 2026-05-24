@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { posts as initialPosts } from '@/lib/posts';
+import { posts as initialPosts } from '@/mock/posts';
 import {
   Card,
   CardHeader,

@@ -1,11 +1,8 @@
 
 'use client';
 
-import { Order } from '@/lib/types';
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
-
-// Define the shape of the payment-related data
-export type PaymentMethod = 'cod_cash' | 'cod_card' | 'cod_bizum' | 'prepaid_bizum' | 'prepaid_transfer';
+import { Order } from '@/schemas';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
 interface CheckoutData {
   orderId: string | null;

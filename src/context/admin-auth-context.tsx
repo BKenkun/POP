@@ -1,6 +1,5 @@
 
 'use client';
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 
@@ -22,7 +21,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   // CRITICAL: This now runs inside useEffect to ensure it only executes on the client.
   useEffect(() => {
     try {
-      const storedState = localStorage.getItem(ADMIN_STORAGE_KEY);
+      const storedState = sessionStorage.getItem(ADMIN_STORAGE_KEY);
       if (storedState === 'true') {
         setAdminState(true);
       }
@@ -36,10 +35,10 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const handleSetIsAdminAsCustomer = (isViewing: boolean) => {
      try {
         if (isViewing) {
-            localStorage.setItem(ADMIN_STORAGE_KEY, 'true');
+            sessionStorage.setItem(ADMIN_STORAGE_KEY, 'true');
             setAdminState(true);
         } else {
-            localStorage.removeItem(ADMIN_STORAGE_KEY);
+            sessionStorage.removeItem(ADMIN_STORAGE_KEY);
             setAdminState(false);
         }
     } catch(e) {

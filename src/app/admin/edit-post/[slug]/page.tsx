@@ -18,7 +18,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
-import { posts } from '@/lib/posts';
+import { posts } from '@/mock/posts';
 import { notFound, useParams } from 'next/navigation';
 import RichTextEditor from '@/components/rich-text-editor';
 

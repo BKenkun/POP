@@ -25,7 +25,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from '@/components/ui/chart';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import type { ChartConfig } from '@/components/ui/chart';
 
 interface OverviewChartProps {

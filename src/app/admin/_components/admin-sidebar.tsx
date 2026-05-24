@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { useAuth } from '@/context/auth-context';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { useState } from 'react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';

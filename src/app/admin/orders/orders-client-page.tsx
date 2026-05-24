@@ -12,31 +12,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Package, Eye, Loader2 } from "lucide-react";
-import { Order } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
+import { getStatusVariant } from "@/types/types";
+import { formatPrice } from "@/utils/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
-
-
-const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-        case 'delivered':
-            return 'default';
-        case 'shipped':
-        case 'out_for_delivery':
-            return 'secondary';
-        case 'pending_payment':
-        case 'order_received':
-            return 'outline';
-        case 'cancelled':
-        case 'issue':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-}
+import { Order } from '@/schemas'
 
 const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {

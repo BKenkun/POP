@@ -1,13 +1,12 @@
-
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { UserSubscription } from '@/lib/types';
+import { UserSubscription } from '@/entities';
+import { auth, db } from '@/firebase';
 
 const ADMIN_VIEW_AS_CUSTOMER_KEY = 'admin_view_as_customer';
 
@@ -64,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isActualAdmin = useMemo(() => {
-    return !!user && user.email === 'maryandpopper@gmail.com';
+    return !!user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
   }, [user]);
 
   const isAdmin = useMemo(() => {

@@ -1,14 +1,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-
-const stockNotificationSchema = z.object({
-  email: z.string().email({ message: 'Por favor, introduce un email válido.' }),
-  // Changed from priceId to productId
-  productId: z.string().min(1, { message: 'El ID del producto es requerido.' }),
-});
+import { publicRatelimit } from '@/lib/rate-limit';
+import { stockNotificationSchema } from '@/schemas/stock-notification.schema';
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
+  const { success } = await publicRatelimit.limit(ip);
+
+  if (!success) {
+    return NextResponse.json({ message: 'Demasiadas peticiones. Inténtalo más tarde.' }, { status: 429 });
+  }
+
   const body = await req.json();
   const validation = stockNotificationSchema.safeParse(body);
 
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    const response = await fetch('https://a.klaviyo.com/api/back-in-stock-subscriptions/', {
+    const response = await fetch('https://a.klaviyo.com/api/back-in-stock-subscriptions/', { //Mal, link a piñon y response que podría ser un service
       method: 'POST',
       headers: {
         'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,

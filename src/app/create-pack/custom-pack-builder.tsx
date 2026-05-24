@@ -2,21 +2,22 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Product, PackItemBrief } from '@/lib/types';
+import { Product, PackItemBrief } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import Image from 'next/image';
 import { Plus, Minus, Package, Trash2, X, Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { ProductCard } from '@/components/product-card';
-import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '@/ai/flows/calculate-pack-price-flow';
+import { calculatePackPrice, PackCalculationInput, PackCalculationOutput } from '../../../server/ai/flows/calculate-pack-price-flow';
 import { useRouter } from 'next/navigation';
 import ProductFilters from '@/app/products/filters';
 import { useTranslation } from '@/context/language-context';
+import { getImageUrl } from '@/utils';
 
 interface PackItem {
     id: string;
@@ -34,13 +35,6 @@ interface CustomPackBuilderProps {
 
 const MAX_PACK_ITEMS = 18;
 const MAX_UNITS_PER_PRODUCT = 6;
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
 
 export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes, uniqueCompositions }: CustomPackBuilderProps) {
   const [packItems, setPackItems] = useState<PackItem[]>([]);

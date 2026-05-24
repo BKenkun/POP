@@ -24,7 +24,7 @@ import {
   AlignRight,
   AlignJustify,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { Separator } from './ui/separator';
 
 interface ToolbarProps {

@@ -14,7 +14,7 @@ import { Logo } from '../logo';
 import NavigationMenuComponent from "./navigation-menu";
 import { getSiteSettings } from "@/app/actions/site-settings";
 import type { SiteSettings } from "@/app/actions/site-settings";
-import { useTranslation } from "@/context/language-context";
+import { useTranslation } from "@/context";
 
 export function Header() {
   const pathname = usePathname();

@@ -7,8 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users, Star, HelpCircle, Package, ShieldCheck, Truck, Phone, Mail, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Product } from '@/lib/types';
-import { cbdProducts } from '@/lib/cbd-products';
+import { Product } from '@/types/types';
+import { cbdProducts } from '@/mock/cbd-products';
 import { useTranslation } from '@/context/language-context';
 
 // Function to shuffle an array and take the first N items

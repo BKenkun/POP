@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Product } from '@/lib/types';
+import { Product } from '@/entities';
 import {
   Dialog,
   DialogContent,

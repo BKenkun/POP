@@ -18,13 +18,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { SearchForm } from './search-form';
 import { Separator } from '../ui/separator';
 import type { SiteSettings } from '@/app/actions/site-settings';
-import { useTranslation } from '@/context/language-context';
+import { useTranslation } from '@/context';
 
 interface NavigationMenuComponentProps {
   onNavigate?: () => void;

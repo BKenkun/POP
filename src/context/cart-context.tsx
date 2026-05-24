@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { CartItem, Product } from '@/lib/types';
+import type { CartItem, Product } from '@/entities';
 import { useToast } from "@/hooks/use-toast";
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { useTranslation } from './language-context';

@@ -1,0 +1,55 @@
+import { Product } from "@/entities";
+
+export const products: Product[] = [
+  {
+    id: 'fallback_prod_001',
+    name: 'Rush Winter 10ml',
+    price: 1299,
+    imageUrl: 'https://picsum.photos/400/400?random=1',
+    imageHint: 'bottle liquid',
+    tag: 'Limited Edition',
+  },
+  {
+    id: 'fallback_prod_002',
+    name: 'Gold Rush 10ml',
+    price: 1499,
+    imageUrl: 'https://picsum.photos/400/400?random=2',
+    imageHint: 'gold bottle',
+  },
+  {
+    id: 'fallback_prod_003',
+    name: 'Rush Amarillo 10ml',
+    price: 1099,
+    imageUrl: 'https://picsum.photos/400/400?random=3',
+    imageHint: 'yellow bottle',
+  },
+  {
+    id: 'fallback_prod_004',
+    name: 'Rush Butanol 10ml',
+    price: 958,
+    imageUrl: 'https://picsum.photos/400/400?random=4',
+    imageHint: 'blue bottle',
+  },
+  {
+    id: 'fallback_prod_005',
+    name: 'Rush Zero 10ml',
+    price: 1399,
+    imageUrl: 'https://picsum.photos/400/400?random=5',
+    imageHint: 'white bottle',
+  },
+  {
+    id: 'fallback_prod_006',
+    name: 'Super Rush 10ml',
+    price: 1450,
+    imageUrl: 'https://picsum.photos/400/400?random=6',
+    imageHint: 'red bottle',
+  },
+  {
+    id: 'fallback_prod_007',
+    name: 'Super Rush Black Label 10ml',
+    price: 1500,
+    imageUrl: 'https://picsum.photos/400/400?random=7',
+    imageHint: 'black bottle',
+    tag: 'Best Seller',
+  },
+];

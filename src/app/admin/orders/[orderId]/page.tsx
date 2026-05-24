@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useParams, notFound, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import OrderDetailsClient from './order-details-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Order } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { Order } from '@/schemas';
+import { db } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 

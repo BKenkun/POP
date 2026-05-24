@@ -27,6 +27,7 @@ export default function SubscriptionPartialPaymentPage() {
                     <div className="flex justify-center pt-2">
                         <Button asChild size="lg" variant="default">
                              <Link href="/contacto">
+                             {/* Link a piñon, modificar */}
                                 <Phone className="mr-2" />
                                 {t('account.subscription.contact_support_button')}
                             </Link>

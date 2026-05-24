@@ -2,46 +2,25 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/context/cart-context';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Loader2,
-  Lock,
-  CreditCard,
-  ArrowLeft,
-  ShieldCheck,
-  AlertTriangle,
-} from 'lucide-react';
+import { Loader2, Lock, CreditCard, ArrowLeft, ShieldCheck, AlertTriangle, } from 'lucide-react';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { createHilowApiOrder } from '@/app/actions/hilow';
+import { validateCoupon } from '@/app/actions/coupon';
+import type { CouponValidationResult } from '@/app/actions/coupon';
 
 interface Address {
   id: string;
@@ -138,9 +117,9 @@ export default function CheckoutClientPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResult | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentErrorKind, setPaymentErrorKind] = useState<'hilow' | 'local' | null>(null);
   /** Errores mostrados junto al botón de pago (paso 3) */
@@ -185,25 +164,23 @@ export default function CheckoutClientPage() {
   }, [user, userDoc, form]);
 
   const handleApplyCoupon = useCallback(async () => {
-    if (!couponCode.trim() || !user) return;
+    if (!couponCode.trim()) return;
     setCouponLoading(true);
     try {
-      const q = query(collection(db, 'coupons'), where('code', '==', couponCode.toUpperCase()));
-      const snap = await getDocs(q);
-      if (snap.empty) throw new Error(t('checkout.toasts.coupon_error_invalid'));
-      const coupon = { id: snap.docs[0].id, ...snap.docs[0].data() } as Coupon;
-      if (!coupon.isActive) throw new Error(t('checkout.toasts.coupon_error_inactive'));
-      
-      let discount = coupon.discountType === 'percentage' ? (cartTotal * coupon.discountValue) / 100 : coupon.discountValue;
-      setAppliedCoupon(coupon);
-      setCouponDiscount(Math.round(discount));
-      toast({ title: t('checkout.toasts.coupon_applied_title'), description: t('checkout.toasts.coupon_applied_desc', { discount: formatPrice(discount) }) });
-    } catch (e: any) {
-      toast({ title: t('checkout.toasts.coupon_error_title'), description: e.message, variant: 'destructive' });
+      const result = await validateCoupon(couponCode, cartTotal);
+
+      if (!result.success) {
+        toast({ title: 'Cupón inválido', description: result.error, variant: 'destructive' });
+        return;
+      }
+
+      setAppliedCoupon(result);
+      setCouponDiscount(result.discountAmount!);
+      toast({ title: 'Cupón aplicado', description: `-${formatPrice(result.discountAmount!)}` });
     } finally {
-      setCouponLoading(false);
+      setCouponLoading(false)
     }
-  }, [couponCode, user, cartTotal, t, toast]);
+  }, [couponCode, cartTotal, toast])
 
   const goToStep = (next: number) => {
     setPaymentError(null);
@@ -242,22 +219,15 @@ export default function CheckoutClientPage() {
     setPaymentError(null);
     setPaymentErrorKind(null);
     setPayStepDetail(null);
-    const uniqueId = `CPO_${user.uid}_${Date.now()}`;
 
     try {
-      const localOrderRef = doc(db, 'users', user.uid, 'orders', uniqueId);
-      const localOrderData: any = {
-        userId: user.uid,
+      // Prices are calculated and verified server-side in createHilowApiOrder.
+      // We only send product IDs + quantities — never client-computed prices.
+      const hilowResult = await createHilowApiOrder({
         items: cartItems.map((item) => ({
           productId: item.id,
-          name: item.name,
-          price: item.price,
           quantity: item.quantity,
-          imageUrl: item.imageUrl,
         })),
-        total: finalTotals.total,
-        customerName: data.name,
-        customerEmail: data.email,
         shippingAddress: {
           line1: data.street,
           line2: null,
@@ -267,34 +237,13 @@ export default function CheckoutClientPage() {
           country: data.country,
           phone: data.phone,
         },
-        status: 'pending_payment',
-        paymentMethod: 'hilow',
-        createdAt: serverTimestamp(),
-        ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount } }),
-      };
-      await setDoc(localOrderRef, localOrderData);
-    } catch (e: any) {
-      const msg = e?.message || String(e);
-      setPaymentErrorKind('local');
-      setPaymentError(msg);
-      setPayStepDetail(null);
-      toast({
-        title: t('checkout.payment_error_local_order_title'),
-        description: msg,
-        variant: 'destructive',
+        customerName: data.name,
+        customerEmail: data.email,
+        ...(appliedCoupon && {
+          couponId: appliedCoupon.couponId,
+          couponCode: appliedCoupon.code,
+        }),
       });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const hilowResult = await createHilowApiOrder(
-        uniqueId,
-        finalTotals.priceInCents,
-        cartItems.map((item) => `${item.quantity}x ${item.name}`).join(', '),
-        false,
-        window.location.origin
-      );
 
       if (!hilowResult.success || !hilowResult.checkoutUrl) {
         throw new Error(hilowResult.message || 'Could not start payment.');

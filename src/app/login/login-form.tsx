@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
 
@@ -19,7 +19,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isAdmin } = useAuth(); // We can get isAdmin from context now
+  const { isAdmin } = useAuth();
   const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
@@ -38,46 +38,60 @@ export default function LoginForm() {
       const idToken = await userCredential.user.getIdToken();
 
       // Create session cookie
-      await fetch('/api/login', {
+      let loginRes = await fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
-      
-      const loggedInIsAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
-      
+
+      const loginData = await loginRes.json();
+
+      if (loginData.status === 'refresh_required') {
+        const freshToken = await userCredential.user.getIdToken(true);
+        loginRes = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: freshToken }),
+        });
+      }
+
+      const loggedInIsAdmin =
+        userCredential.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
       toast({
-          title: "Inicio de sesión exitoso",
-          description: loggedInIsAdmin ? "¡Bienvenido, Administrador!" : "¡Bienvenido de nuevo!",
+        title: "Inicio de sesión exitoso",
+        description: loggedInIsAdmin ? "¡Bienvenido, Administrador!" : "¡Bienvenido de nuevo!",
       });
 
       const redirectUrl = searchParams.get('redirect');
 
       if (loggedInIsAdmin) {
-          router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
+        router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
       } else if (redirectUrl) {
-          router.push(redirectUrl);
+        router.push(redirectUrl);
       } else {
-          router.push('/account');
+        router.push('/account');
       }
-      
-      router.refresh(); 
+
+      router.refresh();
 
     } catch (err: any) {
-        let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-             friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-        } else {
-            console.error("Firebase Auth Error:", err);
-        }
-        setError(friendlyError);
-        toast({
-            title: 'Error al iniciar sesión',
-            description: friendlyError,
-            variant: 'destructive',
-        });
+      let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/invalid-credential'
+      ) {
+        friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      } else {
+        console.error("Firebase Auth Error:", err);
+      }
+      setError(friendlyError);
+      toast({
+        title: 'Error al iniciar sesión',
+        description: friendlyError,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -100,14 +114,14 @@ export default function LoginForm() {
           />
         </div>
         <div className="space-y-2">
-            <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t('auth.password_label')}</Label>
-                <Link href="/forgot-password" passHref tabIndex={-1}>
-                    <Button variant="link" className="px-0 h-auto text-xs">
-                        {t('auth.forgot_password_link')}
-                    </Button>
-                </Link>
-            </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">{t('auth.password_label')}</Label>
+            <Link href="/forgot-password" passHref tabIndex={-1}>
+              <Button variant="link" className="px-0 h-auto text-xs">
+                {t('auth.forgot_password_link')}
+              </Button>
+            </Link>
+          </div>
           <div className="relative">
             <Input
               id="password"

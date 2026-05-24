@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore as adminFirestore } from '@/lib/firebase-admin';
+import { cookies } from 'next/headers';
+import { firestore, adminAuth } from '@/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
+const SUBSCRIPTION_PRICE = Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400');
 /**
  * Endpoint para iniciar el flujo de suscripción en Hilow con pre-registro en Firestore.
  * 1. Crea un pedido con estado 'pending_payment' en la DB local.
@@ -10,10 +12,31 @@ import { FieldValue } from 'firebase-admin/firestore';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { orderId: clientProvidedId, successUrl, cancelUrl } = body;
+    const db = firestore();
+    const { successUrl, cancelUrl } = body
 
-    if (!clientProvidedId || !successUrl || !cancelUrl) {
-      return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
+    if (!successUrl || !cancelUrl) {
+      return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+    }
+    const baseUrl = process.env.APP_BASE_URL!;
+    if (!successUrl.startsWith(baseUrl) || !cancelUrl.startsWith(baseUrl)) {
+      return NextResponse.json({ error: 'URL no permitida' }, { status: 400 });
+    }
+
+    // 1. VERIFICAR SESIÓN — el userId viene del servidor, nunca del cliente
+    const sessionCookie = cookies().get('session')?.value;
+
+    if (!sessionCookie) {
+      return NextResponse.json({ error: 'No autenticado'}, { status: 401 });
+    }
+
+    let userId: string;
+
+    try {
+      const claims = await adminAuth().verifySessionCookie(sessionCookie, true);
+      userId = claims.uid;
+    } catch {
+      return NextResponse.json({ error: 'Sesión inválida o expirada'}, { status: 401 });
     }
 
     const HILOW_API_KEY = process.env.HILOW_API_KEY;
@@ -24,13 +47,9 @@ export async function POST(req: NextRequest) {
       console.error('[SUBSCRIPTION] Error: HILOW_API_KEY no configurada.');
       return NextResponse.json({ error: 'Configuración de servidor incompleta (HILOW_API_KEY)' }, { status: 500 });
     }
-
-    // El clientProvidedId viene como SUB_uid_timestamp
-    const parts = clientProvidedId.split('_');
-    const userId = parts[1] || 'unknown';
     
-    // 1. OBTENER DATOS DEL USUARIO
-    const userRef = adminFirestore.collection('users').doc(userId);
+    // 2. OBTENER DATOS DEL USUARIO
+    const userRef = db.collection('users').doc(userId);
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() : null;
 
@@ -38,7 +57,7 @@ export async function POST(req: NextRequest) {
         throw new Error('Usuario no encontrado en la base de datos.');
     }
 
-    // 2. PRE-REGISTRO DEL PEDIDO (BOX)
+    // 3. PRE-REGISTRO DEL PEDIDO (BOX)
     const uniqueOrderId = `BOX-${Date.now()}`;
     const orderRef = userRef.collection('orders').doc(uniqueOrderId);
 
@@ -46,7 +65,7 @@ export async function POST(req: NextRequest) {
         id: uniqueOrderId,
         userId: userId,
         status: 'pending_payment',
-        total: 4400, // Precio fijo suscripción
+        total: SUBSCRIPTION_PRICE, // Precio fijo suscripción
         paymentMethod: 'hilow',
         createdAt: FieldValue.serverTimestamp(),
         isSubscription: true,
@@ -55,7 +74,7 @@ export async function POST(req: NextRequest) {
         items: [{
             productId: 'subscription_club',
             name: 'Club Dosis Mensual',
-            price: 4400,
+            price: SUBSCRIPTION_PRICE,
             quantity: 1,
             imageUrl: 'https://picsum.photos/seed/sub/200/200'
         }]
@@ -64,13 +83,13 @@ export async function POST(req: NextRequest) {
     await orderRef.set(pendingOrderData);
     console.log(`[SUBSCRIPTION] Pedido pendiente creado: ${uniqueOrderId} para usuario: ${userId}`);
 
-    // 3. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
+    // 4. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
     const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
 
     const payload = {
       storeId: HILOW_STORE_ID,
       internalOrderId: structuredInternalOrderId,
-      amountInCents: 4400,
+      amountInCents: SUBSCRIPTION_PRICE,
       productName: "Club Dosis Mensual",
       isSubscription: true,
       successUrl: successUrl,

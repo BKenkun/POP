@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth, db } from '@/firebase';
 import { useAuth } from '@/context/auth-context';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { trackKlaviyoEvent } from '@/app/actions/klaviyo';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { useTranslation } from '@/context/language-context';
 
 // Password strength indicator component
@@ -100,7 +100,8 @@ export default function RegisterPage() {
       });
       
       // --- Klaviyo Event Tracking for Admin ---
-      await trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', {
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      if (adminEmail) await trackKlaviyoEvent('Admin New User Notification', adminEmail, {
           'NewUserEmail': newUser.email,
           'NewUserName': displayName,
           'RegistrationDate': new Date().toISOString()

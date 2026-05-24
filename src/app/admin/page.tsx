@@ -4,28 +4,26 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { Users, Package, ShoppingCart, DollarSign, ArrowUp, ArrowDown } from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { useState, useEffect, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "./_components/date-range-picker";
-import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/utils/utils";
 import { Loader2 } from "lucide-react";
-import { cbdProducts } from "@/lib/cbd-products";
-import type { Order, OrderItem, Product } from "@/lib/types";
-import { db } from "@/lib/firebase";
+import { Product } from "@/entities";
+import { db } from "@/firebase";
 import { collection, collectionGroup, query, where, orderBy, limit, Timestamp, onSnapshot } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { addDays, startOfMonth, format as formatDate, subDays } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
+import { getImageUrl } from "@/utils";
+import { Order, OrderItem, OrderSchemaStatus } from "@/schemas";
 
 // Define a type for the user data we expect
 export interface Customer {
@@ -35,13 +33,6 @@ export interface Customer {
     photoURL?: string;
     creationTime?: string | Timestamp; // Can be string or Timestamp
 }
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
 
 const StatCard = ({ 
     title, 
@@ -178,7 +169,7 @@ export default function AdminDashboardPage() {
 
       const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
       const collectedRevenue = filteredOrders
-        .filter(order => order.status === 'Entregado')
+        .filter(order => order.status === OrderSchemaStatus.Delivered)
         .reduce((sum, order) => sum + order.total, 0);
 
       return { filteredOrders, filteredUsers, totalRevenue, collectedRevenue };
@@ -218,7 +209,7 @@ export default function AdminDashboardPage() {
                 acc[date] = { date, proyectados: 0, recogidos: 0 };
             }
             acc[date].proyectados += order.total / 100;
-            if (order.status === 'Entregado') {
+            if (order.status === OrderSchemaStatus.Delivered) {
                 acc[date].recogidos += order.total / 100;
             }
             return acc;

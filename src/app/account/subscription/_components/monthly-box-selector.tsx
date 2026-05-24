@@ -1,18 +1,15 @@
-
 'use client';
 
-import { Product } from "@/lib/types";
+import { Product } from "@/entities";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Button, 
+    ProductCard, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components";
 import { CheckCircle, Gift, Loader2, Package, Send } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { getUserSelection, saveUserSelection } from "@/lib/subscription";
-import { useTranslation } from "@/context/language-context";
+import { cn, getImageUrl } from "@/utils";
+import { useToast } from "@/hooks";
+import { getUserSelection, saveUserSelection } from "@/lib";
+import { useTranslation } from "@/context";
 
 interface MonthlyBoxSelectorProps {
     isSelectionWindowOpen: boolean;
@@ -27,17 +24,11 @@ interface SelectionCardProps {
     products: Product[];
     selectedProductId: string | null;
     onSelectProduct: (productId: string) => void;
-    selectionType: 'popper' | 'accessory';
+    selectionType: 'popper' | 'accessory'; //FIXME - Enum
     popperIndex?: number;
 }
 
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
-
+//Esto hay que separarlo
 const SelectionCard = ({ title, description, icon: Icon, products, selectedProductId, onSelectProduct, selectionType, popperIndex }: SelectionCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const { t } = useTranslation();
@@ -82,7 +73,9 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
                         <DialogHeader>
-                            <DialogTitle>{t('account.subscription.select_dialog_title', { type: selectionType === 'popper' ? t('account.subscription.popper') : t('account.subscription.accessory') })}</DialogTitle>
+                            <DialogTitle>{t('account.subscription.select_dialog_title', 
+                                //Enum
+                                { type: selectionType === 'popper' ? t('account.subscription.popper') : t('account.subscription.accessory') })}</DialogTitle>
                         </DialogHeader>
                         <div className="overflow-y-auto pr-2 -mr-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -104,6 +97,7 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
     )
 }
 
+//Esto hay que separarlo
 export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, accessories }: MonthlyBoxSelectorProps) {
     const { toast } = useToast();
     const { t } = useTranslation();
@@ -178,7 +172,7 @@ export default function MonthlyBoxSelector({ isSelectionWindowOpen, poppers, acc
         );
     }
 
-    if (loading) {
+    if (loading) { //Un componente global?
         return (
             <div className="flex justify-center items-center h-60">
                 <Loader2 className="h-8 w-8 animate-spin" />

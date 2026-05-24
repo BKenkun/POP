@@ -3,20 +3,14 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { getImageUrl } from '@/utils';
 
 interface ProductGalleryProps {
   images: string[];
   productName: string;
 }
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(images[0]);

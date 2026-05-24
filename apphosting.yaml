@@ -15,6 +15,14 @@ env:
     value: "purorush"
   - variable: FIREBASE_STORAGE_BUCKET
     value: "purorush.appspot.com"
+  - variable: IMAGE_PROXY_MAX_SIZE_MB
+    value: "5"
+  - variable: ADMIN_EMAIL
+    value: maryandpopper@gmail.com
+  - variable: NEXT_PUBLIC_ADMIN_EMAIL
+    value: maryandpopper@gmail.com
+  - variable: SUBSCRIPTION_PRICE_CENTS
+    value: "4400"
 
   # --- Configuración de Hilow ---
   - variable: HILOW_API_BASE_URL
@@ -61,3 +69,8 @@ env:
     value: "870980470663"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:870980470663:web:533824f7e6c462a8d0f522"
+
+  - variable: UPSTASH_REDIS_REST_URL
+    secret: UPSTASH_REDIS_REST_URL
+  - variable: UPSTASH_REDIS_REST_TOKEN
+    secret: UPSTASH_REDIS_REST_TOKEN

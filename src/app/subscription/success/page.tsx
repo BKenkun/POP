@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
 import { CheckCircle, Package, User, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 /**
  * Pantalla de éxito tras el pago de suscripción.

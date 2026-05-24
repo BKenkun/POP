@@ -2,25 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound, useSearchParams } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { Order, OrderStatus } from '@/lib/types';
-import { formatPrice } from '@/lib/utils';
+import { getStatusVariant } from '@/types';
+import { Order } from '@/schemas'
+import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, MapPin, Truck, Check, AlertCircle, Package } from 'lucide-react';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
+import { ArrowLeft, Loader2, MapPin, Check, AlertCircle, Package } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,31 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import SignatureCanvas from 'react-signature-canvas';
 import { Input } from '@/components/ui/input';
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
-
-const getStatusVariant = (status: string) => {
-    switch (status) {
-        case 'delivered':
-            return 'default';
-        case 'shipped':
-        case 'out_for_delivery':
-            return 'secondary';
-        case 'order_received':
-        case 'pending_payment':
-            return 'outline';
-        case 'cancelled':
-        case 'issue':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-}
+import { getImageUrl } from '@/utils';
 
 export default function ShippingClient() {
   const params = useParams();

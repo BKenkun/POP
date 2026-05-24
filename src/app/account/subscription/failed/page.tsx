@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
-import { AlertTriangle, Home, Phone } from 'lucide-react';
+import { AlertTriangle, Phone } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
 
@@ -30,11 +30,13 @@ export default function SubscriptionFailedPage() {
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg" variant="default">
                             <Link href="/subscription">
+                            {/* Link a piñon, modificar */}
                                 {t('account.subscription.retry_button')}
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
                              <Link href="/contacto">
+                             {/* Link a piñon, modificar */}
                                 <Phone className="mr-2" />
                                 {t('account.subscription.contact_support_button')}
                             </Link>

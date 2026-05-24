@@ -26,7 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/firebase';
 import Link from 'next/link';
 import { useTranslation } from '@/context/language-context';
 

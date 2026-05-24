@@ -2,15 +2,15 @@
 "use client";
 
 import Image from 'next/image';
-import type { Product } from '@/lib/types';
+import type { Product } from '@/types/types';
 import { useCart } from '@/context/cart-context';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Eye, Bell } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { StockNotificationDialog } from '@/components/stock-notification-dialog';
 import { useState } from 'react';
 import { QuantitySelector } from './quantity-selector';

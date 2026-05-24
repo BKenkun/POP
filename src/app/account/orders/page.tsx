@@ -1,24 +1,15 @@
 'use client';
 
-import { useAuth } from "@/context/auth-context";
-import { db } from "@/lib/firebase";
-import { collection, query, orderBy, where, onSnapshot, Timestamp } from "firebase/firestore";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { useAuth, useTranslation } from "@/context";
+import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, Button } from "@/components"
 import { Loader2, ShoppingBag, Eye } from "lucide-react";
-import { Order } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
+import { Order } from "@/schemas";
+import { formatPrice } from "@/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useTranslation } from "@/context/language-context";
+import { db } from "@/firebase";
+import { getStatusVariant } from "@/types";
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -47,27 +38,6 @@ export default function OrdersPage() {
 
     return () => unsubscribe();
   }, [user]);
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-        case 'delivered':
-        case 'entregado':
-            return 'default';
-        case 'shipped':
-        case 'enviado':
-            return 'secondary';
-        case 'pending':
-        case 'pendiente':
-        case 'reserva recibida':
-        case 'pago pendiente de verificación':
-            return 'outline';
-        case 'cancelled':
-        case 'cancelado':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-  }
 
   if (loading) {
     return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -113,6 +83,7 @@ export default function OrdersPage() {
                     <TableCell className="text-right">
                         <Button asChild variant="outline" size="sm">
                             <Link href={`/account/orders/${order.id}`}>
+                             {/* FIXME - esto tiene pinta de un navigation o algo parecido */}
                                 <Eye className="mr-2 h-4 w-4" />
                                 {t('account.orders_view_details_button')}
                             </Link>

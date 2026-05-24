@@ -36,7 +36,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { Switch } from '@/components/ui/switch';
 import { Save, CalendarIcon } from 'lucide-react';
 import type { Coupon } from '../page';

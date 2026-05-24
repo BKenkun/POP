@@ -30,12 +30,14 @@ export default function SubscriptionSuccessPage() {
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
                         <Button asChild size="lg">
                             <Link href="/account/subscription">
+                            {/* Link a piñon, modificar */}
                                 <Package className="mr-2" />
                                 {t('account.subscription.customize_box_button')}
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
                              <Link href="/account">
+                             {/* Link a piñon, modificar */}
                                 <User className="mr-2" />
                                 {t('auth.go_to_account_button')}
                             </Link>

@@ -4,12 +4,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ShoppingCart, Loader2, Edit, Archive, ArchiveRestore, MoreHorizontal, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PlusCircle, Loader2, Edit, Archive, ArchiveRestore, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
-import { Product } from '@/lib/types';
+import { Product } from '@/entities';
 import { useState, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -33,16 +33,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { collection, doc, updateDoc, deleteDoc, onSnapshot, query } from 'firebase/firestore';
-
-
-const getImageUrl = (url: string) => {
-    if (url.includes('firebasestorage.googleapis.com')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-};
+import { getImageUrl } from '@/utils';
 
 export default function AdminProductsPage() {
   const { toast } = useToast();

@@ -1,10 +1,10 @@
 
 'use server';
 
-import { auth, firestore as db } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { adminAuth  } from '@/firebase/admin';
 
 interface Address {
     id: string;
@@ -30,7 +30,7 @@ export async function getUserIdFromSession(): Promise<string> {
         throw new Error('Authentication required: No session cookie found.');
     }
     try {
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+        const decodedClaims = await adminAuth().verifySessionCookie(sessionCookie, true);
         return decodedClaims.uid;
     } catch (error) {
         console.error('Error verifying session cookie in server action:', error);

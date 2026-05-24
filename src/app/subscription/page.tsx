@@ -19,8 +19,13 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-const SUBSCRIPTION_PRICE_CENTS = 4400;
-const SUBSCRIPTION_PRICE_DISPLAY = '44,00 €';
+const SUBSCRIPTION_PRICE_CENTS =
+  Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? 4400);
+
+const SUBSCRIPTION_PRICE_DISPLAY = new Intl.NumberFormat('es-ES', {
+  style: 'currency',
+  currency: 'EUR',
+}).format(SUBSCRIPTION_PRICE_CENTS / 100);
 
 export default function SubscriptionLandingPage() {
   const { t } = useTranslation();
@@ -46,7 +51,6 @@ export default function SubscriptionLandingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId,
           successUrl: `${baseUrl}/subscription/success`,
           cancelUrl: `${baseUrl}/subscription`,
         }),

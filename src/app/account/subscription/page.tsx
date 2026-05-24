@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { Product } from '@/lib/types';
+import { Product } from '@/entities';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export default function AccountSubscriptionPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login?redirect=/account/subscription');
+      router.push('/login?redirect=/account/subscription'); {/* Link a piñon, modificar */}
     }
   }, [user, authLoading, router]);
 
@@ -38,7 +38,7 @@ export default function AccountSubscriptionPage() {
       try {
         const productsRef = collection(db, 'products');
         const snap = await getDocs(query(productsRef, where('active', '==', true)));
-        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Product);
+        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Product); //Service?
 
         setPoppers(
           all.filter(
@@ -74,7 +74,7 @@ export default function AccountSubscriptionPage() {
           <AlertDescription>{t('subscription_landing.not_subscribed_desc')}</AlertDescription>
         </Alert>
         <Button asChild size="lg">
-          <Link href="/subscription">{t('subscription_landing.hero_cta')}</Link>
+          <Link href="/subscription">{t('subscription_landing.hero_cta')}</Link> {/* Link a piñon, modificar */}
         </Button>
       </div>
     );

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { posts as initialPosts, type Comment } from '@/lib/posts';
+import { posts as initialPosts, type Comment } from '@/mock/posts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
