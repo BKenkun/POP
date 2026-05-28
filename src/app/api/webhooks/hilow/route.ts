@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
         const batch = adminFirestore.batch();
  
         const finalOrderDocId = eventType === 'payment.renewal_succeeded'
-            ? `${orderDocId}_${Date.now()}`
+            ? `RENEWAL-${hilowOrderId}`   // hilowOrderId es único por cada pago real en Hilow
             : orderDocId;
  
         switch (eventType) {
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
                         isSubscribed: true,
                         subscriptionStatus: 'active',
                         lastSubscriptionPayment: FieldValue.serverTimestamp(),
-                        updatedAt: FieldValue.serverTimestamp()
+                        updatedAt: FieldValue.serverTimestamp(),
                     }, { merge: true });
                 }
  
@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
                     paidAt: FieldValue.serverTimestamp(),
                     hilowPaymentId: hilowOrderId,
                     updatedAt: FieldValue.serverTimestamp(),
+                    webhookProcessed: true,
                     ...(eventType === 'payment.renewal_succeeded' && {
                         userId,
                         id: finalOrderDocId,
@@ -166,8 +167,7 @@ export async function POST(req: NextRequest) {
  
                 // 4. Incrementar usageCount del cupón (solo pedidos normales, no renovaciones)
                 if (!isSubscription && eventType === 'payment.completed') {
-                    const couponOrderSnap = await orderRef.get();
-                    if (couponOrderSnap.exists) {
+                    if (orderSnap.exists) {
                         const orderData = orderSnap.data();
                         const couponId: string | undefined = orderData?.coupon?.couponId;
                         if (couponId) {

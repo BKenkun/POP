@@ -124,7 +124,7 @@ export default function UserOrderDetailPage() {
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('account.order_details_summary_subtotal')}</span>
-                    <span>{formatPrice(order.total)}</span>
+                    <span>{formatPrice((order as any).subtotal ?? order.total)}</span>
                 </div>
                  <div className="flex justify-between font-bold text-lg">
                     <span>{t('account.order_details_summary_total')}</span>

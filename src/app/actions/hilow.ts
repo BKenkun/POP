@@ -186,7 +186,7 @@ export async function createHilowApiOrder(
             amountInCents: finalTotal,
             productName: verifiedItems.map(i => `${i.quantity}x ${i.name}`).join(', '),
             isSubscription: false,
-            successUrl: `${APP_BASE_URL}/checkout/success?order_id=${uniqueId}`,
+            successUrl: `${APP_BASE_URL}/checkout/success?order_id=${uniqueId}`, //encodeURIComponent
             cancelUrl: `${APP_BASE_URL}/products`,
         };
 
