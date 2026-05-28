@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { adminAuth  } from '@/firebase/admin';
+import { db } from '@/firebase';
 
 interface Address {
     id: string;

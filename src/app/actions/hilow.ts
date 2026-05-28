@@ -149,7 +149,7 @@ export async function createHilowApiOrder(
         const finalTotal = Math.max(0, subtotal - volumeDiscount - couponDiscountCents);
 
         // --- 5. Pre-register pending order in Firestore ---
-        const uniqueId = `CPO_${userId}_${Date.now()}`;
+        const uniqueId = `CPO::${userId}::${Date.now()}`;
         const userRef = db.collection('users').doc(userId);
         const orderRef = userRef.collection('orders').doc(uniqueId);
 

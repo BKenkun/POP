@@ -2,7 +2,6 @@
 "use client";
 
 import Image from 'next/image';
-import type { Product } from '@/types/types';
 import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import { useState } from 'react';
 import { QuantitySelector } from './quantity-selector';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/context/language-context';
+import { Product } from '@/entities';
 
 interface ProductCardProps {
   product: Product;

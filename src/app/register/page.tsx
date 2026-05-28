@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { trackKlaviyoEvent } from '@/app/actions/klaviyo';
+import { notifyAdminNewUser } from '@/app/actions/klaviyo';
 import { cn } from '@/utils/utils';
 import { useTranslation } from '@/context/language-context';
 
@@ -99,14 +99,11 @@ export default function RegisterPage() {
           addresses: [], // Initialize with an empty array of addresses
       });
       
-      // --- Klaviyo Event Tracking for Admin ---
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      if (adminEmail) await trackKlaviyoEvent('Admin New User Notification', adminEmail, {
-          'NewUserEmail': newUser.email,
-          'NewUserName': displayName,
-          'RegistrationDate': new Date().toISOString()
-      });
-      // ------------------------------------
+      try {
+          await notifyAdminNewUser(newUser.email!, displayName);
+      } catch (klaviyoError) {
+          console.error('[Register] Klaviyo admin notification failed (non-blocking):', klaviyoError);
+      }
 
       toast({
           title: "¡Revisa tu correo!",

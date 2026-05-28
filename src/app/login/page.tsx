@@ -9,7 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
 // Use absolute alias for dynamic import to prevent runtime chunk load errors
-const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
+const LoginForm = dynamic(() => import('./login-form'), { 
   ssr: false,
   loading: () => (
     <div className="p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground text-center">

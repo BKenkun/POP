@@ -6,7 +6,7 @@ import { Order, OrderItem } from "@/schemas";
 import { assertAdmin } from '@/lib/assert-admin';
 
 const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
-const KLAVIYO_API_REVISION = '2024-02-15';
+const KLAVIYO_API_REVISION = '2026-04-15';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 if (!KLAVIYO_API_KEY) {
@@ -160,7 +160,8 @@ export async function syncKlaviyoProduct(product: Product) {
         return { success: true, message: 'Simulated product sync.' };
     }
 
-    const itemId = product.id;
+    const itemId = `$custom:::$default:::${product.id}`;
+
     const payload = {
         data: {
             type: 'catalog-item',
@@ -182,7 +183,7 @@ export async function syncKlaviyoProduct(product: Product) {
         }
     };
     
-    const url = `https://a.klaviyo.com/api/catalog-items/${itemId}/`;
+    const url = `https://a.klaviyo.com/api/catalog-items/${encodeURIComponent(itemId)}/`;
 
     try {
         const response = await fetch(url, {
@@ -214,9 +215,14 @@ export async function syncKlaviyoProduct(product: Product) {
 // --- Helper Functions to format data for Klaviyo ---
 
 export async function formatOrderForKlaviyo(order: Order, orderId: string) {
-    const orderDate = order.createdAt instanceof Date 
-        ? order.createdAt.toISOString() 
-        : new Date().toISOString();
+    let orderDate: string;
+    if (order.createdAt instanceof Date) {
+        orderDate = order.createdAt.toISOString();
+    } else if (order.createdAt && typeof (order.createdAt as any).toDate === 'function') {
+        orderDate = (order.createdAt as any).toDate().toISOString();
+    } else {
+        orderDate = new Date().toISOString();
+    }
     
     return {
       '$event_id': orderId,
@@ -245,4 +251,21 @@ function formatOrderItemForKlaviyo(item: OrderItem) {
         'Categories': [],
         'Brand': '',
     };
+}
+
+/**
+ * Server Action para notificar al admin sobre un nuevo usuario registrado.
+ * Lee ADMIN_EMAIL en el servidor — el cliente nunca ve este valor.
+ */
+export async function notifyAdminNewUser(newUserEmail: string, newUserName: string) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+        console.warn('[Klaviyo] ADMIN_EMAIL no configurado. Saltando notificación de admin.');
+        return;
+    }
+    await trackKlaviyoEvent('Admin New User Notification', adminEmail, {
+        'NewUserEmail': newUserEmail,
+        'NewUserName': newUserName,
+        'RegistrationDate': new Date().toISOString(),
+    });
 }

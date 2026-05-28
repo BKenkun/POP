@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
     await orderRef.set(pendingOrderData);
     console.log(`[SUBSCRIPTION] Pedido pendiente creado: ${uniqueOrderId} para usuario: ${userId}`);
 
-    // 4. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
-    const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
+    // 4. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp> - Cambiado testeo
+    const structuredInternalOrderId = `SUB::${userId}::${uniqueOrderId}::${Date.now()}`;
 
     const payload = {
       storeId: HILOW_STORE_ID,

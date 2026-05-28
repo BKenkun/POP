@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { CheckCircle, Package, User } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
+import { useEffect, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/firebase';
 
 export default function SubscriptionSuccessPage() {
     const { user } = useAuth();

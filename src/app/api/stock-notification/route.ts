@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'La configuración del servicio de notificaciones no está disponible.' }, { status: 500 });
   }
 
-  // Klaviyo requires a specific variant ID format.
+    // Klaviyo requires a specific variant ID format.
   // We are creating a mock variant ID based on the product ID.
   // In a real multi-variant system, you'd fetch the actual variant ID.
   const variantId = `$custom:::$default:::${productId}`;
@@ -41,29 +41,35 @@ export async function POST(req: NextRequest) {
     data: {
       type: 'back-in-stock-subscription',
       attributes: {
+        channels: ['EMAIL'],
         profile: {
-          email: email
-        }
+          data: {
+            type: 'profile',
+            attributes: {
+              email: email,
+            },
+          },
+        },
       },
       relationships: {
         variant: {
           data: {
             type: 'catalog-variant',
             id: variantId,
-          }
-        }
-      }
-    }
+          },
+        },
+      },
+    },
   };
 
   try {
-    const response = await fetch('https://a.klaviyo.com/api/back-in-stock-subscriptions/', { //Mal, link a piñon y response que podría ser un service
+    const response = await fetch('https://a.klaviyo.com/api/back-in-stock-subscriptions/', {
       method: 'POST',
       headers: {
         'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
         'accept': 'application/json',
         'content-type': 'application/json',
-        'revision': '2024-02-15',
+        'revision': '2026-04-15',
       },
       body: JSON.stringify(payload)
     });

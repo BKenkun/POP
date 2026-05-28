@@ -41,7 +41,7 @@ export default function SubscriptionSuccessPage() {
         // Timeout de seguridad por si el webhook falla o tarda demasiado (20 segundos)
         const timer = setTimeout(() => {
             setVerifying(false);
-        }, 3 * 60 * 1000);
+        }, 20 * 1000);
 
         return () => {
             unsubscribe();
