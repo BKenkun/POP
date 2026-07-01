@@ -74,6 +74,7 @@
     "zod-to-json-schema": "^3.23.2"
   },
   "devDependencies": {
+    "@next/swc-win32-x64-msvc": "^16.2.6",
     "@types/node": "^20.19.39",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",

@@ -148,7 +148,7 @@ export default function ShippingClient() {
                         {order.items.map(item => (
                             <div key={item.productId} className="flex items-center gap-4">
                                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                    <Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
+                                    <Image src={getImageUrl(item.imageUrl)} alt={item.name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" fill className="object-cover" />
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.name}</p>
@@ -255,7 +255,7 @@ export default function ShippingClient() {
                     <CardHeader><CardTitle>Delivery Signature</CardTitle></CardHeader>
                     <CardContent>
                         <div className="border rounded-md p-2 bg-white">
-                            <Image src={order.deliverySignature} alt="Delivery signature" width={300} height={150} style={{ width: '100%', height: 'auto' }}/>
+                            <Image src={order.deliverySignature} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" alt="Delivery signature" width={300} height={150} style={{ width: '100%', height: 'auto' }}/>
                         </div>
                         <p className="text-sm text-muted-foreground mt-2">ID: {order.deliveryDni}</p>
                     </CardContent>

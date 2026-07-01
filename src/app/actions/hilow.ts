@@ -149,7 +149,7 @@ export async function createHilowApiOrder(
         const finalTotal = Math.max(0, subtotal - volumeDiscount - couponDiscountCents);
 
         // --- 5. Pre-register pending order in Firestore ---
-        const uniqueId = `CPO_${userId}_${Date.now()}`;
+        const uniqueId = `CPO::${userId}::${Date.now()}`;
         const userRef = db.collection('users').doc(userId);
         const orderRef = userRef.collection('orders').doc(uniqueId);
 
@@ -186,7 +186,7 @@ export async function createHilowApiOrder(
             amountInCents: finalTotal,
             productName: verifiedItems.map(i => `${i.quantity}x ${i.name}`).join(', '),
             isSubscription: false,
-            successUrl: `${APP_BASE_URL}/checkout/success?order_id=${uniqueId}`,
+            successUrl: `${APP_BASE_URL}/checkout/success?order_id=${uniqueId}`, //encodeURIComponent
             cancelUrl: `${APP_BASE_URL}/products`,
         };
 

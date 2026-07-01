@@ -28,6 +28,7 @@ export default function BlogPage() {
                 <div className="relative h-60 w-full">
                     <Image 
                         src={post.imageUrl}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         alt={post.title}
                         fill
                         className="object-cover"

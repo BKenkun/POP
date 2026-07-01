@@ -94,7 +94,7 @@ export default function UserOrderDetailPage() {
                         {order.items.map(item => (
                             <div key={item.productId} className="flex items-center gap-4">
                                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                    <Image src={getImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
+                                    <Image src={getImageUrl(item.imageUrl)} alt={item.name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" fill className="object-cover" />
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.name}</p>
@@ -124,7 +124,7 @@ export default function UserOrderDetailPage() {
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('account.order_details_summary_subtotal')}</span>
-                    <span>{formatPrice(order.total)}</span>
+                    <span>{formatPrice((order as any).subtotal ?? order.total)}</span>
                 </div>
                  <div className="flex justify-between font-bold text-lg">
                     <span>{t('account.order_details_summary_total')}</span>

@@ -6,6 +6,7 @@ import { dateSchema } from '@/utils';
 
 export enum OrderSchemaStatus {
   PendingPayment = 'pending_payment',
+  PaymentFailed = 'payment_failed',
   OrderReceived = 'order_received',
   Shipped = 'shipped',
   OutForDelivery = 'out_for_delivery',

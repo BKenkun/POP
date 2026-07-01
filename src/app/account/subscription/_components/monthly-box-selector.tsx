@@ -54,7 +54,7 @@ const SelectionCard = ({ title, description, icon: Icon, products, selectedProdu
                 {selectedProduct ? (
                      <div className="text-center space-y-2">
                         <div className="relative h-24 w-24 mx-auto">
-                            <Image src={getImageUrl(selectedProduct.imageUrl)} alt={selectedProduct.name} fill className="object-contain" />
+                            <Image src={getImageUrl(selectedProduct.imageUrl)} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" alt={selectedProduct.name} fill className="object-contain" />
                         </div>
                         <p className="font-semibold">{selectedProduct.name}</p>
                         <p className="text-sm text-green-600 font-bold flex items-center justify-center gap-1">

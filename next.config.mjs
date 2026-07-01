@@ -52,7 +52,7 @@ const securityHeaders = [
         https://images.unsplash.com
         https://storage.googleapis.com;
 
-      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.clarity.ms;
       style-src 'self' 'unsafe-inline';
       connect-src 'self' https:;
       font-src 'self' data: https:;

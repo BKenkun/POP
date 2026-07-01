@@ -34,7 +34,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       </header>
 
       <div className="relative h-80 w-full mb-8 rounded-lg overflow-hidden">
-        <Image src={post.imageUrl} alt={post.title} fill className="object-cover" data-ai-hint="blog post header"/>
+        <Image src={post.imageUrl} alt={post.title} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" fill className="object-cover" data-ai-hint="blog post header"/>
       </div>
       
       <div className="prose prose-lg dark:prose-invert max-w-none text-foreground/90 text-lg"

@@ -7,7 +7,7 @@ import { useTranslation } from '@/context/language-context';
 import { db } from '@/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Product } from '@/entities';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Package } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -74,7 +74,12 @@ export default function AccountSubscriptionPage() {
           <AlertDescription>{t('subscription_landing.not_subscribed_desc')}</AlertDescription>
         </Alert>
         <Button asChild size="lg">
-          <Link href="/subscription">{t('subscription_landing.hero_cta')}</Link> {/* Link a piñon, modificar */}
+          <Link href="/subscription">
+            <span className="flex items-center">
+              <Package className="mr-2 h-4 w-4" />
+              {t('subscription_landing.hero_cta')}
+            </span>
+          </Link>
         </Button>
       </div>
     );

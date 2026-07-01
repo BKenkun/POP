@@ -253,7 +253,7 @@ export default function CustomPackBuilder({ products, uniqueBrands, uniqueSizes,
                                 return (
                                     <div key={item.id} className="flex items-center gap-4">
                                         <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border">
-                                            <Image src={getImageUrl(productInfo.imageUrl)} alt={productInfo.name} fill className="object-cover" />
+                                            <Image src={getImageUrl(productInfo.imageUrl)} alt={productInfo.name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" fill className="object-cover" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-sm font-medium">{productInfo.name}</p>

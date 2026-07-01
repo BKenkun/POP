@@ -63,40 +63,39 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'internalOrderId no válido' }, { status: 400 });
         }
  
-        /**
-         * Desempaquetado del ID estructurado:
-         * - Suscripción: SUB_<userId>_<orderId>_<timestamp>
-         * - Pedido normal: CPO_<userId>_<timestamp>
-         */
-        const parts = internalOrderId.split('_');
+        const SEP = '::';
+        const parts = internalOrderId.split(SEP);
         const prefix = parts[0];
         const isSubscription = prefix === 'SUB';
         const isOrder = prefix === 'CPO';
- 
+
         if (!isSubscription && !isOrder) {
             console.error(`[WEBHOOK] Prefijo desconocido en internalOrderId: ${internalOrderId}`);
             return NextResponse.json({ error: 'internalOrderId con formato inválido' }, { status: 400 });
         }
- 
+
         let userId: string;
         let orderDocId: string = internalOrderId;
- 
+
         if (isSubscription) {
-            // SUB_<userId>_<orderId>_<timestamp>  → parts has at least 4 elements
-            if (parts.length < 4) {
+            // Formato esperado: SUB::<userId>::<uniqueOrderId>::<timestamp>  → 4 partes exactas
+            if (parts.length !== 4) {
                 console.error(`[WEBHOOK] internalOrderId SUB malformado: ${internalOrderId}`);
                 return NextResponse.json({ error: 'internalOrderId malformado' }, { status: 400 });
             }
-            orderDocId = parts[parts.length - 2];
-            userId = parts.slice(1, parts.length - 2).join('_');
+            userId = parts[1];
+            orderDocId = parts[2];
+            // parts[3] es el timestamp, no se necesita
         } else {
-            // CPO_<userId>_<timestamp> → parts has at least 3 elements
-            if (parts.length < 3) {
+            // Formato esperado: CPO::<userId>::<timestamp>  → 3 partes exactas
+            if (parts.length !== 3) {
                 console.error(`[WEBHOOK] internalOrderId CPO malformado: ${internalOrderId}`);
                 return NextResponse.json({ error: 'internalOrderId malformado' }, { status: 400 });
             }
-            userId = parts.slice(1, parts.length - 1).join('_');
+            userId = parts[1];
+            // orderDocId queda como internalOrderId completo (comportamiento original para CPO)
         }
+
  
         // Safety check: never process with an empty/unknown userId
         if (!userId || userId === 'unknown') {
@@ -110,29 +109,37 @@ export async function POST(req: NextRequest) {
         const batch = adminFirestore.batch();
  
         const finalOrderDocId = eventType === 'payment.renewal_succeeded'
-            ? `${orderDocId}_${Date.now()}`
+            ? `RENEWAL-${hilowOrderId}`   // hilowOrderId es único por cada pago real en Hilow
             : orderDocId;
  
         switch (eventType) {
             case 'payment.completed':
             case 'payment.renewal_succeeded': {
+                const orderRef = userRef.collection('orders').doc(finalOrderDocId);
+                const orderSnap = await orderRef.get();
+                if (orderSnap.exists && orderSnap.data()?.webhookProcessed === true) {
+                    console.log(`[WEBHOOK] Evento ya procesado, ignorando: ${finalOrderDocId}`);
+                    return NextResponse.json({ received: true, message: 'Already processed' });
+                }
+
                 // 1. Activar suscripción (solo si es SUB)
                 if (isSubscription) {
                     batch.set(userRef, {
                         isSubscribed: true,
                         subscriptionStatus: 'active',
                         lastSubscriptionPayment: FieldValue.serverTimestamp(),
-                        updatedAt: FieldValue.serverTimestamp()
+                        updatedAt: FieldValue.serverTimestamp(),
                     }, { merge: true });
                 }
  
                 // 2. Actualizar pedido de pending → received
-                const orderRef = userRef.collection('orders').doc(finalOrderDocId);
+                const userDoc = await userRef.get();
                 batch.set(orderRef, {
                     status: 'order_received',
                     paidAt: FieldValue.serverTimestamp(),
                     hilowPaymentId: hilowOrderId,
                     updatedAt: FieldValue.serverTimestamp(),
+                    webhookProcessed: true,
                     ...(eventType === 'payment.renewal_succeeded' && {
                         userId,
                         id: finalOrderDocId,
@@ -140,7 +147,7 @@ export async function POST(req: NextRequest) {
                         paymentMethod: 'hilow',
                         createdAt: FieldValue.serverTimestamp(),
                         isSubscription: true,
-                        customerEmail: payload.email || 'member@comprarpopperonline.com',
+                        customerEmail: userDoc.data()?.email || payload.email || 'member@comprarpopperonline.com',
                         customerName: payload.customerName || 'Miembro del Club',
                         items: [{
                             productId: 'subscription_club',
@@ -160,7 +167,6 @@ export async function POST(req: NextRequest) {
  
                 // 4. Incrementar usageCount del cupón (solo pedidos normales, no renovaciones)
                 if (!isSubscription && eventType === 'payment.completed') {
-                    const orderSnap = await orderRef.get();
                     if (orderSnap.exists) {
                         const orderData = orderSnap.data();
                         const couponId: string | undefined = orderData?.coupon?.couponId;
@@ -179,8 +185,17 @@ export async function POST(req: NextRequest) {
  
             case 'payment.failed':
                 if (isSubscription) {
-                    batch.update(userRef, {
-                        subscriptionStatus: 'past_due',
+                batch.update(userRef, {
+                    subscriptionStatus: 'past_due',
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+                }
+                
+                const failedOrderRef = userRef.collection('orders').doc(orderDocId);
+                const failedSnap = await failedOrderRef.get();
+                if (failedSnap.exists) {
+                    batch.update(failedOrderRef, {
+                        status: 'payment_failed',
                         updatedAt: FieldValue.serverTimestamp()
                     });
                 }
@@ -202,7 +217,7 @@ export async function POST(req: NextRequest) {
  
         await batch.commit();
  
-        if (eventType.includes('payment') && status === 'success') {
+        if (eventType === 'payment.completed' || eventType === 'payment.renewal_succeeded') {
             const finalDoc = await userRef.collection('orders').doc(finalOrderDocId).get();
             if (finalDoc.exists) {
                 await trackOrderStatusUpdateInternal(

@@ -19,8 +19,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-const SUBSCRIPTION_PRICE_CENTS =
-  Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? 4400);
+const SUBSCRIPTION_PRICE_CENTS = Number(process.env.NEXT_PUBLIC_SUBSCRIPTION_PRICE_CENTS ?? 4400);
 
 const SUBSCRIPTION_PRICE_DISPLAY = new Intl.NumberFormat('es-ES', {
   style: 'currency',

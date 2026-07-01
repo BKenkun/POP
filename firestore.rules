@@ -62,6 +62,10 @@ service cloud.firestore {
         allow create: if isOwner(userId) || isAdmin();
         allow update, delete: if isExistingOwner(userId) || isAdmin();
       }
+
+      match /subscriptions/{selectionId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // This allows an admin to perform a collectionGroup query on all 'orders'.
