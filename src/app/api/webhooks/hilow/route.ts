@@ -8,8 +8,6 @@ import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
 import { Order } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
-
 function normalizeSignature(value: string) {
   return value.trim().replace(/^sha256=/i, '').trim();
 }
