@@ -14,31 +14,69 @@ interface SendMailjetEmailParams {
   htmlPart: string;
 }
 
+interface MailjetResult {
+  success: boolean;
+  simulated: boolean;
+  error?: string;
+  status?: number;
+}
+
 /**
  * Envío transaccional por Mailjet.
- * Si las variables no están configuradas, simula el envío y no rompe el pedido.
+ *
+ * IMPORTANTE:
+ * Si Mailjet no está configurado, NO se simula un envío exitoso.
+ * Se devuelve success: false para poder detectar el problema.
  */
 export async function sendMailjetEmail({
   to,
   subject,
   textPart,
   htmlPart,
-}: SendMailjetEmailParams) {
+}: SendMailjetEmailParams): Promise<MailjetResult> {
   const apiKey = process.env.MAILJET_API_KEY;
   const secretKey = process.env.MAILJET_SECRET_KEY;
   const fromEmail = process.env.MAILJET_FROM_EMAIL;
-  const fromName = process.env.MAILJET_FROM_NAME || 'Comprar Popper Online';
+  const fromName =
+    process.env.MAILJET_FROM_NAME || 'Comprar Popper Online';
+
+  // ---------------------------------------------------------
+  // VALIDACIÓN DE CONFIGURACIÓN
+  // ---------------------------------------------------------
 
   if (!apiKey || !secretKey || !fromEmail) {
-    console.warn('[MAILJET] Configuración incompleta. Envío simulado.', {
+    console.error('[MAILJET] Configuración incompleta.', {
       to: to.email,
       subject,
-      hasApiKey: !!apiKey,
-      hasSecretKey: !!secretKey,
-      hasFromEmail: !!fromEmail,
+      hasApiKey: Boolean(apiKey),
+      hasSecretKey: Boolean(secretKey),
+      hasFromEmail: Boolean(fromEmail),
     });
-    return { success: true, simulated: true };
+
+    return {
+      success: false,
+      simulated: false,
+      error: 'Mailjet no está configurado completamente.',
+    };
   }
+
+  // ---------------------------------------------------------
+  // VALIDACIÓN DEL DESTINATARIO
+  // ---------------------------------------------------------
+
+  if (!to.email || !to.email.includes('@')) {
+    console.error('[MAILJET] Email del destinatario inválido:', to.email);
+
+    return {
+      success: false,
+      simulated: false,
+      error: 'El email del destinatario no es válido.',
+    };
+  }
+
+  // ---------------------------------------------------------
+  // AUTENTICACIÓN MAILJET
+  // ---------------------------------------------------------
 
   const auth = Buffer.from(`${apiKey}:${secretKey}`).toString('base64');
 
@@ -52,8 +90,16 @@ export async function sendMailjetEmail({
       body: JSON.stringify({
         Messages: [
           {
-            From: { Email: fromEmail, Name: fromName },
-            To: [{ Email: to.email, Name: to.name || to.email }],
+            From: {
+              Email: fromEmail,
+              Name: fromName,
+            },
+            To: [
+              {
+                Email: to.email,
+                Name: to.name || to.email,
+              },
+            ],
             Subject: subject,
             TextPart: textPart,
             HTMLPart: htmlPart,
@@ -64,49 +110,147 @@ export async function sendMailjetEmail({
 
     const responseText = await response.text();
 
+    // -------------------------------------------------------
+    // ERROR MAILJET
+    // -------------------------------------------------------
+
     if (!response.ok) {
-      console.error('[MAILJET] Error HTTP', response.status, responseText);
-      return { success: false, simulated: false, error: `Mailjet ${response.status}` };
+      console.error('[MAILJET] Error HTTP:', {
+        status: response.status,
+        response: responseText,
+        to: to.email,
+        subject,
+      });
+
+      return {
+        success: false,
+        simulated: false,
+        status: response.status,
+        error: `Mailjet respondió con HTTP ${response.status}.`,
+      };
     }
 
-    console.log('[MAILJET] Email enviado correctamente a', to.email);
-    return { success: true, simulated: false };
-  } catch (error: any) {
-    console.error('[MAILJET] Error de red:', error?.message || error);
-    return { success: false, simulated: false, error: error?.message || 'Mailjet error' };
+    // -------------------------------------------------------
+    // ÉXITO
+    // -------------------------------------------------------
+
+    console.log('[MAILJET] Email enviado correctamente:', {
+      to: to.email,
+      subject,
+      status: response.status,
+    });
+
+    return {
+      success: true,
+      simulated: false,
+      status: response.status,
+    };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Error desconocido de Mailjet';
+
+    console.error('[MAILJET] Error de red:', message);
+
+    return {
+      success: false,
+      simulated: false,
+      error: message,
+    };
   }
 }
 
-export async function sendOrderReceivedEmail(order: Order) {
+/**
+ * Email de confirmación de compra.
+ */
+export async function sendOrderReceivedEmail(
+  order: Order
+): Promise<MailjetResult> {
   const orderId = order.id;
-  const amount = (order.total / 100).toFixed(2).replace('.', ',');
+
+  const amount = (order.total / 100)
+    .toFixed(2)
+    .replace('.', ',');
+
   const items = order.items
-    .map((item) => `${item.quantity} x ${item.name}`)
+    .map(
+      (item) =>
+        `${item.quantity} x ${item.name}`
+    )
     .join('\n');
 
   return sendMailjetEmail({
-    to: { email: order.customerEmail, name: order.customerName },
+    to: {
+      email: order.customerEmail,
+      name: order.customerName,
+    },
+
     subject: `Compra confirmada #${orderId}`,
-    textPart: `Hola ${order.customerName},\n\nHemos confirmado tu compra #${orderId}.\n\nTotal: ${amount} €\n\n${items}\n\nGracias por tu compra.`,
+
+    textPart: `Hola ${order.customerName},
+
+Hemos confirmado tu compra #${orderId}.
+
+Total: ${amount} €
+
+${items}
+
+Gracias por tu compra.`,
+
     htmlPart: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6">
+      <div
+        style="
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #222;
+        "
+      >
         <h2>Compra confirmada</h2>
-        <p>Hola ${escapeHtml(order.customerName)},</p>
-        <p>Hemos confirmado tu compra <strong>#${escapeHtml(orderId)}</strong>.</p>
-        <p><strong>Total:</strong> ${amount} €</p>
-        <ul>${order.items
-          .map((item) => `<li>${item.quantity} x ${escapeHtml(item.name)}</li>`)
-          .join('')}</ul>
-        <p>Gracias por tu compra.</p>
+
+        <p>
+          Hola ${escapeHtml(order.customerName)},
+        </p>
+
+        <p>
+          Hemos confirmado tu compra
+          <strong>#${escapeHtml(orderId)}</strong>.
+        </p>
+
+        <p>
+          <strong>Total:</strong>
+          ${amount} €
+        </p>
+
+        <h3>Productos</h3>
+
+        <ul>
+          ${order.items
+            .map(
+              (item) =>
+                `<li>
+                  ${item.quantity} x
+                  ${escapeHtml(item.name)}
+                </li>`
+            )
+            .join('')}
+        </ul>
+
+        <p>
+          Gracias por tu compra.
+        </p>
       </div>
     `,
   });
 }
 
+/**
+ * Email relacionado con el estado de una suscripción.
+ */
 export async function sendSubscriptionStatusEmail(
   order: Order,
   status: 'active' | 'past_due' | 'cancelled'
-) {
+): Promise<MailjetResult> {
   const subjects = {
     active: 'Suscripción Club Dosis activada',
     past_due: 'Problema con el pago de tu suscripción',
@@ -114,27 +258,62 @@ export async function sendSubscriptionStatusEmail(
   } as const;
 
   const messages = {
-    active: 'Tu suscripción está activa y el pago ha sido confirmado.',
-    past_due: 'No hemos podido confirmar el último pago de tu suscripción. Revisa el método de pago.',
-    cancelled: 'Tu suscripción ha sido cancelada.',
+    active:
+      'Tu suscripción está activa y el pago ha sido confirmado.',
+
+    past_due:
+      'No hemos podido confirmar el último pago de tu suscripción. Revisa el método de pago.',
+
+    cancelled:
+      'Tu suscripción ha sido cancelada.',
   } as const;
 
   return sendMailjetEmail({
-    to: { email: order.customerEmail, name: order.customerName },
+    to: {
+      email: order.customerEmail,
+      name: order.customerName,
+    },
+
     subject: subjects[status],
-    textPart: `Hola ${order.customerName},\n\n${messages[status]}\n\nPedido: ${order.id}`,
+
+    textPart: `Hola ${order.customerName},
+
+${messages[status]}
+
+Pedido: ${order.id}`,
+
     htmlPart: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6">
-        <h2>${subjects[status]}</h2>
-        <p>Hola ${escapeHtml(order.customerName)},</p>
-        <p>${messages[status]}</p>
-        <p>Pedido: <strong>#${escapeHtml(order.id)}</strong></p>
+      <div
+        style="
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #222;
+        "
+      >
+        <h2>${escapeHtml(subjects[status])}</h2>
+
+        <p>
+          Hola ${escapeHtml(order.customerName)},
+        </p>
+
+        <p>
+          ${escapeHtml(messages[status])}
+        </p>
+
+        <p>
+          Pedido:
+          <strong>#${escapeHtml(order.id)}</strong>
+        </p>
       </div>
     `,
   });
 }
 
-function escapeHtml(value: string) {
+/**
+ * Escapa caracteres HTML para evitar inyección
+ * en los emails generados.
+ */
+function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
