@@ -3,15 +3,26 @@ import admin from 'firebase-admin';
 /**
  * Server-only Firebase Admin SDK.
  *
- * In Google Cloud runtimes (Firebase App Hosting / Cloud Run), use Application
- * Default Credentials from the runtime service account. This avoids relying on
- * a manually stored service-account private key that may be invalid or revoked.
+ * Firebase App Hosting injects the Firebase configuration and provides
+ * Application Default Credentials for its runtime service account. Use the
+ * platform's default initialization there so the SDK obtains both its project
+ * configuration and credentials from the supported App Hosting integration.
  *
- * For local development or hosting outside Google Cloud, FIREBASE_SERVICE_ACCOUNT_JSON
- * remains available as a fallback.
+ * Outside Google Cloud, FIREBASE_SERVICE_ACCOUNT_JSON remains available as a
+ * fallback for local development or other hosting providers.
  */
 function initializeFirebaseAdmin() {
   if (admin.apps.length) {
+    return;
+  }
+
+  // App Hosting / Cloud Run supplies ADC and FIREBASE_CONFIG. The official
+  // no-argument initialization avoids overriding the platform's configuration
+  // with a potentially stale project ID or storage bucket from env variables.
+  const isGoogleCloudRuntime = Boolean(process.env.K_SERVICE || process.env.K_REVISION);
+
+  if (isGoogleCloudRuntime) {
+    admin.initializeApp();
     return;
   }
 
@@ -20,19 +31,6 @@ function initializeFirebaseAdmin() {
   const storageBucket =
     process.env.FIREBASE_STORAGE_BUCKET ||
     (projectId ? `${projectId}.appspot.com` : undefined);
-
-  // App Hosting runs on Cloud Run and provides K_SERVICE/K_REVISION.
-  // Prefer the runtime identity there; do not override it with a manual key.
-  const isGoogleCloudRuntime = Boolean(process.env.K_SERVICE || process.env.K_REVISION);
-
-  if (isGoogleCloudRuntime) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      ...(projectId && { projectId }),
-      storageBucket,
-    });
-    return;
-  }
 
   const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (json) {
