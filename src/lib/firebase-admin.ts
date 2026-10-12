@@ -3,24 +3,47 @@ import admin from 'firebase-admin';
 /**
  * Server-only Firebase Admin SDK.
  *
- * Credentials (choose one):
- * - FIREBASE_SERVICE_ACCOUNT_JSON: full JSON of the service account (recommended for Vercel/hosting).
- * - GOOGLE_APPLICATION_CREDENTIALS: path to the JSON file (local dev / GCP); uses application default credentials.
+ * In Google Cloud runtimes (Firebase App Hosting / Cloud Run), use Application
+ * Default Credentials from the runtime service account. This avoids relying on
+ * a manually stored service-account private key that may be invalid or revoked.
  *
- * If credentials were ever committed to git, rotate the key in Google Cloud Console.
+ * For local development or hosting outside Google Cloud, FIREBASE_SERVICE_ACCOUNT_JSON
+ * remains available as a fallback.
  */
 function initializeFirebaseAdmin() {
   if (admin.apps.length) {
     return;
   }
 
+  const projectId =
+    process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const storageBucket =
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    (projectId ? `${projectId}.appspot.com` : undefined);
+
+  // App Hosting runs on Cloud Run and provides K_SERVICE/K_REVISION.
+  // Prefer the runtime identity there; do not override it with a manual key.
+  const isGoogleCloudRuntime = Boolean(process.env.K_SERVICE || process.env.K_REVISION);
+
+  if (isGoogleCloudRuntime) {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      ...(projectId && { projectId }),
+      storageBucket,
+    });
+    return;
+  }
+
   const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (json) {
-    const raw = JSON.parse(json) as admin.ServiceAccount & { project_id?: string };
-    const credentials = raw as admin.ServiceAccount;
-    const projectIdFromKey = raw.project_id || raw.projectId;
+    const credentials = JSON.parse(json) as admin.ServiceAccount & {
+      project_id?: string;
+      projectId?: string;
+    };
+    const projectIdFromKey = credentials.project_id || credentials.projectId;
     admin.initializeApp({
       credential: admin.credential.cert(credentials),
+      ...(projectIdFromKey && !projectId && { projectId: projectIdFromKey }),
       storageBucket:
         process.env.FIREBASE_STORAGE_BUCKET ||
         (projectIdFromKey ? `${projectIdFromKey}.appspot.com` : undefined),
@@ -28,14 +51,10 @@ function initializeFirebaseAdmin() {
     return;
   }
 
-  const projectId =
-    process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   admin.initializeApp({
     credential: admin.credential.applicationDefault(),
     ...(projectId && { projectId }),
-    storageBucket:
-      process.env.FIREBASE_STORAGE_BUCKET ||
-      (projectId ? `${projectId}.appspot.com` : undefined),
+    storageBucket,
   });
 }
 
