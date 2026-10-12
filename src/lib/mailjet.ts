@@ -130,14 +130,68 @@ export async function sendMailjetEmail({
       };
     }
 
-    // -------------------------------------------------------
-    // ÉXITO
-    // -------------------------------------------------------
+    // Mailjet puede responder HTTP 200 aunque el mensaje tenga
+    // un error de validación. Comprobamos también el estado del mensaje.
+    let responseData: {
+      Messages?: Array<{
+        Status?: string;
+        Errors?: Array<{ ErrorMessage?: string; ErrorCode?: string }>;
+        To?: Array<{ MessageID?: string; MessageUUID?: string; Message?: string }>;
+      }>;
+    } | null = null;
 
-    console.log('[MAILJET] Email enviado correctamente:', {
+    try {
+      responseData = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      console.error('[MAILJET] La respuesta no contiene JSON válido.', {
+        status: response.status,
+        to: to.email,
+        subject,
+      });
+      return {
+        success: false,
+        simulated: false,
+        status: response.status,
+        error: 'Mailjet devolvió una respuesta que no se pudo interpretar.',
+      };
+    }
+
+    const messages = responseData?.Messages;
+    const messageStatuses = messages?.map((message) => message.Status) ?? [];
+    const failedMessage = messages?.find(
+      (message) => message.Status?.toLowerCase() !== 'success'
+    );
+
+    if (!messages?.length || failedMessage) {
+      const providerError = failedMessage?.Errors
+        ?.map((item) => item.ErrorMessage || item.ErrorCode)
+        .filter(Boolean)
+        .join('; ');
+
+      console.error('[MAILJET] El mensaje no fue aceptado por Mailjet.', {
+        status: response.status,
+        messageStatuses,
+        providerError,
+        to: to.email,
+        subject,
+      });
+
+      return {
+        success: false,
+        simulated: false,
+        status: response.status,
+        error: providerError || 'Mailjet no confirmó el envío del mensaje.',
+      };
+    }
+
+    console.log('[MAILJET] Mailjet aceptó el email para procesamiento:', {
       to: to.email,
       subject,
       status: response.status,
+      messageStatuses,
+      messageIds: messages.flatMap((message) =>
+        (message.To ?? []).map((recipient) => recipient.MessageID).filter(Boolean)
+      ),
     });
 
     return {

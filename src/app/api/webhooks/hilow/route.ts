@@ -191,11 +191,43 @@ export async function POST(req: NextRequest) {
 
         // Estos envíos son secundarios: si Mailjet/Klaviyo falla, el webhook sigue
         // devolviendo 200 porque el pago ya quedó registrado en Firestore.
-        await Promise.allSettled([
+        const notificationResults = await Promise.allSettled([
           trackOrderStatusUpdate(finalOrder, 'order_received'),
           sendOrderReceivedEmail(finalOrder),
           ...(isSubscription ? [sendSubscriptionStatusEmail(finalOrder, 'active')] : []),
         ]);
+
+        notificationResults.forEach((result, index) => {
+          const notification = index === 0
+            ? 'klaviyo_order_status'
+            : index === 1
+              ? 'mailjet_order_confirmation'
+              : 'mailjet_subscription_status';
+
+          if (result.status === 'rejected') {
+            console.error('[HILOW WEBHOOK] Falló una notificación secundaria:', {
+              notification,
+              orderId: orderDocId,
+              error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+            });
+            return;
+          }
+
+          if (result.value && typeof result.value === 'object' && 'success' in result.value && result.value.success === false) {
+            console.error('[HILOW WEBHOOK] El proveedor no confirmó la notificación:', {
+              notification,
+              orderId: orderDocId,
+              error: 'error' in result.value ? result.value.error : 'Error no especificado',
+              status: 'status' in result.value ? result.value.status : undefined,
+            });
+          } else {
+            console.log('[HILOW WEBHOOK] Notificación procesada:', {
+              notification,
+              orderId: orderDocId,
+              result: result.status,
+            });
+          }
+        });
       }
 
       return NextResponse.json({ received: true, processed: 'payment_completed' }, { status: 200 });
