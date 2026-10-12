@@ -136,7 +136,8 @@ export default function AgeVerificationPopup() {
   };
 
   const handleDeny = () => {
-    window.location.href = 'https://www.google.com';
+    // Salir de la tienda usando el historial del navegador, sin forzar un buscador.
+    window.history.back();
   };
 
   return (
