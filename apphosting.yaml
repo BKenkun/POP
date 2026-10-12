@@ -62,12 +62,14 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:870980470663:web:533824f7e6c462a8d0f522"
 
-  # --- Secretos de Mailjet ---
+  # --- Mailjet: claves protegidas en Secret Manager ---
   - variable: MAILJET_API_KEY
-     secret: "1a444dc24e0d6bcb42d803b2e94aeaeb"
-  - variable: MAILJET_SECRET_KEY 
-     secret: "ef5996168b65d11bc34795416942e275"
+    secret: MAILJET_API_KEY
+  - variable: MAILJET_SECRET_KEY
+    secret: MAILJET_SECRET_KEY
+
+  # --- Mailjet: datos del remitente ---
   - variable: MAILJET_FROM_EMAIL
-    secret: "info@comprarpopperonline.com"
+    value: "info@comprarpopperonline.com"
   - variable: MAILJET_FROM_NAME
-     secret: "Comprar Popper Online"
+    value: "Comprar Popper Online"
