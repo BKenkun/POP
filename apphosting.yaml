@@ -61,3 +61,13 @@ env:
     value: "870980470663"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:870980470663:web:533824f7e6c462a8d0f522"
+
+    Configuración de Mailjet ---
+  - variable: MAILJET_API_KEY
+    value: "1a444dc24e0d6bcb42d803b2e94aeaeb"
+  - variable: MAILJET_SECRET_KEY 
+    value: "ef5996168b65d11bc34795416942e275"
+  - variable: MAILJET_FROM_EMAIL
+    value: "info@comprarpopperonline.com"
+  - variable: MAILJET_FROM_NAME
+    value: "Comprar Popper Online"
