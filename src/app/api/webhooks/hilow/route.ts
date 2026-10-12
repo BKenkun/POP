@@ -1,5 +1,4 @@
 // Modificado por: Webmaster Freddy Poleo
-'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
@@ -8,6 +7,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
 import { Order } from '@/lib/types';
+
+// Route handlers need Node.js for crypto and Firebase Admin.
+export const runtime = 'nodejs';
 
 function normalizeSignature(value: string) {
   return value.trim().replace(/^sha256=/i, '').trim();
@@ -141,6 +143,49 @@ export async function POST(req: NextRequest) {
       const orderSnap = await orderRef.get();
 
       const existingOrder = orderSnap.exists ? orderSnap.data() : null;
+
+      // No marcar como pagado un pedido normal que no existe en Firestore.
+      // Las renovaciones pueden crear un documento nuevo, según el flujo actual.
+      if (!orderSnap.exists && !(eventType.includes('renewal') && isSubscription)) {
+        console.error('[HILOW WEBHOOK] Pedido no encontrado para el pago confirmado:', {
+          internalOrderId,
+          userId,
+          orderDocId,
+        });
+        return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+      }
+
+      // Validar el importe cuando Hilow envía explícitamente amountInCents.
+      // El pedido local almacena el total en céntimos.
+      if (orderSnap.exists && payload.amountInCents !== undefined && payload.amountInCents !== null) {
+        const receivedAmount = Number(payload.amountInCents);
+        const expectedAmount = Number(existingOrder?.total);
+        if (
+          !Number.isFinite(receivedAmount) ||
+          !Number.isFinite(expectedAmount) ||
+          Math.round(receivedAmount) !== Math.round(expectedAmount)
+        ) {
+          console.error('[HILOW WEBHOOK] Importe no coincide con el pedido:', {
+            internalOrderId,
+            receivedAmount,
+            expectedAmount,
+          });
+          return NextResponse.json({ error: 'Importe del pago no coincide' }, { status: 400 });
+        }
+      }
+
+      // Evita repetir puntos y correos si Hilow reenvía la confirmación
+      // después de que el pedido ya haya sido pagado o enviado.
+      const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
+      if (existingOrder?.status && paidStatuses.includes(String(existingOrder.status))) {
+        console.log('[HILOW WEBHOOK] Confirmación duplicada ignorada:', {
+          internalOrderId,
+          orderDocId,
+          status: existingOrder.status,
+        });
+        return NextResponse.json({ received: true, processed: 'already_paid' }, { status: 200 });
+      }
+
       const customerEmail = payload.email || existingOrder?.customerEmail || '';
       const customerName = payload.customerName || existingOrder?.customerName || 'Cliente';
 
