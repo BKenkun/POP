@@ -11,6 +11,12 @@ env:
     value: "https://comprarpopperonline.com"
   - variable: APP_BASE_URL
     value: "https://comprarpopperonline.com"
+  - variable: NOWPAYMENTS_PRICE_CURRENCY
+    value: "eur"
+  - variable: NOWPAYMENTS_FIXED_RATE
+    value: "false"
+  - variable: NOWPAYMENTS_FEE_PAID_BY_USER
+    value: "false"
   - variable: FIREBASE_PROJECT_ID
     value: "purorush"
   - variable: FIREBASE_STORAGE_BUCKET
@@ -43,6 +49,10 @@ env:
     secret: STRIPE_SECRET_KEY
   - variable: STRIPE_WEBHOOK_SECRET
     secret: STRIPE_WEBHOOK_SECRET
+  - variable: NOWPAYMENTS_API_KEY
+    secret: NOWPAYMENTS_API_KEY
+  - variable: NOWPAYMENTS_IPN_SECRET
+    secret: NOWPAYMENTS_IPN_SECRET
   - variable: KLAVIYO_API_KEY
     secret: KLAVIYO_API_KEY
   - variable: FIREBASE_SERVICE_ACCOUNT_JSON
