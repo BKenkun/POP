@@ -7,7 +7,7 @@ export const products: Product[] = [
     price: 1299,
     imageUrl: 'https://picsum.photos/400/400?random=1',
     imageHint: 'bottle liquid',
-    tag: 'Limited Edition',
+    tags: ['Limited Edition'],
   },
   {
     id: 'fallback_prod_002',
@@ -50,6 +50,6 @@ export const products: Product[] = [
     price: 1500,
     imageUrl: 'https://picsum.photos/400/400?random=7',
     imageHint: 'black bottle',
-    tag: 'Best Seller',
+    tags: ['Best Seller'],
   },
 ];
