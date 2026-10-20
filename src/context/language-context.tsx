@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type Language = 'en';
+type Language = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt';
 
 type Translations = {
   [key: string]: string | Translations;
@@ -942,7 +942,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en');
 
   const setLanguageCallback = useCallback((lang: Language) => {
-    setLanguage('en');
+    setLanguage(lang);
   }, []);
 
   const t = useCallback((key: string, replacements: Record<string, string | number> = {}): string => {
