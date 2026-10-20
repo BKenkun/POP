@@ -17,11 +17,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (consent.analytics) {
-      (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "tc3cngb8to");
+      type ClarityFunction = ((...args: unknown[]) => void) & { q?: unknown[][] };
+      const clarityWindow = window as Window & { clarity?: ClarityFunction };
+      if (!clarityWindow.clarity) {
+        const clarity: ClarityFunction = (...args: unknown[]) => {
+          clarity.q = clarity.q ?? [];
+          clarity.q.push(args);
+        };
+        clarityWindow.clarity = clarity;
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.clarity.ms/tag/tc3cngb8to';
+        const firstScript = document.getElementsByTagName('script')[0];
+        firstScript?.parentNode?.insertBefore(script, firstScript);
+      }
     }
   }, [consent.analytics]);
 
