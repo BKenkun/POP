@@ -4,7 +4,7 @@
 import { auth, firestore as db } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 
 interface Address {
     id: string;
@@ -45,8 +45,8 @@ export async function getUserIdFromSession(): Promise<string> {
 export async function getCurrentUser() {
     try {
         const userId = await getUserIdFromSession();
-        const userDocRef = doc(db, 'users', userId);
-        const docSnap = await getDoc(userDocRef);
+        const userDocRef = db.collection('users').doc(userId);
+        const docSnap = await userDocRef.get();
 
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() };
@@ -67,10 +67,10 @@ export async function getCurrentUser() {
 export async function updateUser(action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number; id?: string }>) {
     const userId = await getUserIdFromSession();
     
-    const userDocRef = doc(db, 'users', userId);
+    const userDocRef = db.collection('users').doc(userId);
 
     try {
-        const userDoc = await getDoc(userDocRef);
+        const userDoc = await userDocRef.get();
         if (!userDoc.exists()) {
             throw new Error("User document not found.");
         }
@@ -109,7 +109,7 @@ export async function updateUser(action: 'add-address' | 'update-address' | 'del
             case 'update-points':
                  if (typeof data.pointsToAdd !== 'number' || data.pointsToAdd < 0) throw new Error("Invalid points value.");
                  // Use Firestore's atomic increment operation for safety
-                 updatePayload.loyaltyPoints = increment(data.pointsToAdd);
+                 updatePayload.loyaltyPoints = FieldValue.increment(data.pointsToAdd);
                  break;
 
             default:
@@ -131,10 +131,10 @@ export async function updateUser(action: 'add-address' | 'update-address' | 'del
         }
 
 
-        await updateDoc(userDocRef, updatePayload);
+        await userDocRef.update(updatePayload);
         
         // Fetch and return the updated user document
-        const updatedDoc = await getDoc(userDocRef);
+        const updatedDoc = await userDocRef.get();
         
         return { success: true, message: `User data updated successfully.`, user: updatedDoc.data() };
 
