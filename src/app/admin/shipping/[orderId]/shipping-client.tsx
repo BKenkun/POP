@@ -140,7 +140,7 @@ export default function ShippingClient() {
             updatedAt: Timestamp.now(),
         });
 
-        setOrder(prev => prev ? { ...prev, status, deliveryDni: dni, deliverySignature: signatureDataUrl } : null);
+        setOrder(prev => prev ? { ...prev, status, deliveryDni: dni, deliverySignature: signatureDataUrl ?? undefined } : null);
         toast({ title: 'Order updated', description: `Status changed to "${status}".` });
         
     } catch (error) {
