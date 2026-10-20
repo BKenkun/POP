@@ -1,5 +1,7 @@
 'use client';
 
+// Modificado por: Webmaster Freddy Poleo
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
