@@ -178,7 +178,7 @@ export default function AdminDashboardPage() {
 
       const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
       const collectedRevenue = filteredOrders
-        .filter(order => order.status === 'Entregado')
+        .filter(order => order.status === 'delivered')
         .reduce((sum, order) => sum + order.total, 0);
 
       return { filteredOrders, filteredUsers, totalRevenue, collectedRevenue };
@@ -218,7 +218,7 @@ export default function AdminDashboardPage() {
                 acc[date] = { date, proyectados: 0, recogidos: 0 };
             }
             acc[date].proyectados += order.total / 100;
-            if (order.status === 'Entregado') {
+            if (order.status === 'delivered') {
                 acc[date].recogidos += order.total / 100;
             }
             return acc;
