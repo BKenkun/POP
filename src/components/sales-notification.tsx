@@ -3,7 +3,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
-import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { Order, Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
