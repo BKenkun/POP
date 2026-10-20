@@ -114,14 +114,27 @@ export async function POST(req: NextRequest) {
     }
 
     if (paymentStatus === 'finished') {
-      await orderRef.set({
-        status: 'order_received',
-        paymentMethod: 'nowpayments',
-        nowpaymentsPaymentId: paymentId || null,
-        nowpaymentsStatus: paymentStatus,
-        paidAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      // Reclamar la confirmación en una transacción evita enviar el correo dos veces
+      // si NOWPayments reintenta el mismo IPN simultáneamente.
+      const shouldNotify = await firestore.runTransaction(async (transaction) => {
+        const currentSnap = await transaction.get(orderRef);
+        if (!currentSnap.exists) throw new Error('Pedido desapareció durante la confirmación.');
+        const current = currentSnap.data()!;
+        if (paidStatuses.includes(String(current.status))) return false;
+        transaction.set(orderRef, {
+          status: 'order_received',
+          paymentMethod: 'nowpayments',
+          nowpaymentsPaymentId: paymentId || null,
+          nowpaymentsStatus: paymentStatus,
+          paidAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return true;
+      });
+
+      if (!shouldNotify) {
+        return NextResponse.json({ received: true, processed: 'already_paid' });
+      }
 
       const finalSnap = await orderRef.get();
       if (finalSnap.exists) {
