@@ -85,7 +85,8 @@ const paymentMethods = [
   'prepaid_bizum', 
   'prepaid_transfer', 
   'stripe', 
-  'hilow'
+  'hilow',
+  'nowpayments'
 ] as const;
 
 // Helper function to handle different date types (Timestamp, Date, string)

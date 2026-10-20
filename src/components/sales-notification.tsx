@@ -3,7 +3,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
-import { ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { Order, Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -59,18 +58,8 @@ export function SalesNotification() {
 
   const showToast = useCallback((title: string, description: string, total: number) => {
       toast({
-          title: (
-              <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                  <span className="font-bold">{title}</span>
-              </div>
-          ),
-          description: (
-              <div>
-                  <p>{description}</p>
-                  <p className="mt-1 font-medium">Total: {formatPrice(total)}</p>
-              </div>
-          )
+          title,
+          description: `${description} — Total: ${formatPrice(total)}`,
       });
   }, [toast]);
 

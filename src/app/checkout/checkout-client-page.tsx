@@ -1,5 +1,7 @@
 'use client';
 
+// Modificado por: Webmaster Freddy Poleo
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCart } from '@/context/cart-context';
 import { formatPrice, cn } from '@/lib/utils';
@@ -42,6 +44,7 @@ import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { createHilowApiOrder } from '@/app/actions/hilow';
+import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 
 interface Address {
   id: string;
@@ -142,7 +145,8 @@ export default function CheckoutClientPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentErrorKind, setPaymentErrorKind] = useState<'hilow' | 'local' | null>(null);
+  const [paymentErrorKind, setPaymentErrorKind] = useState<'hilow' | 'nowpayments' | 'local' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'hilow' | 'nowpayments'>('hilow');
   /** Errores mostrados junto al botón de pago (paso 3) */
   const [payStepDetail, setPayStepDetail] = useState<{
     title: string;
@@ -268,7 +272,7 @@ export default function CheckoutClientPage() {
           phone: data.phone,
         },
         status: 'pending_payment',
-        paymentMethod: 'hilow',
+        paymentMethod: selectedPaymentMethod,
         createdAt: serverTimestamp(),
         ...(appliedCoupon && { coupon: { code: appliedCoupon.code, discount: couponDiscount } }),
       };
@@ -288,6 +292,15 @@ export default function CheckoutClientPage() {
     }
 
     try {
+      if (selectedPaymentMethod === 'nowpayments') {
+        const result = await createNowPaymentsInvoice(uniqueId);
+        if (!result.success || !result.invoiceUrl) {
+          throw new Error(result.message || 'No se pudo iniciar el pago con NOWPayments.');
+        }
+        window.location.href = result.invoiceUrl;
+        return;
+      }
+
       const hilowResult = await createHilowApiOrder(
         uniqueId,
         finalTotals.priceInCents,
@@ -302,7 +315,7 @@ export default function CheckoutClientPage() {
       window.location.href = hilowResult.checkoutUrl;
     } catch (e: any) {
       const msg = e?.message || String(e);
-      setPaymentErrorKind('hilow');
+      setPaymentErrorKind(selectedPaymentMethod);
       setPaymentError(msg);
       setPayStepDetail(null);
       toast({ title: t('checkout.toasts.order_error_title'), description: msg, variant: 'destructive' });
@@ -506,9 +519,17 @@ export default function CheckoutClientPage() {
               <CardContent className="space-y-4">
                 <Alert className="border-primary/30 bg-primary/5">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  <AlertTitle>{t('checkout.hilow_gateway_info_title')}</AlertTitle>
-                  <AlertDescription>{t('checkout.hilow_gateway_info_desc')}</AlertDescription>
+                  <AlertTitle>Método de pago</AlertTitle>
+                  <AlertDescription>Selecciona cómo quieres completar tu pedido. La confirmación se realizará cuando la pasarela confirme el pago.</AlertDescription>
                 </Alert>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button type="button" variant={selectedPaymentMethod === 'hilow' ? 'default' : 'outline'} className="h-auto min-h-14 whitespace-normal" onClick={() => setSelectedPaymentMethod('hilow')}>
+                    <CreditCard className="mr-2 h-4 w-4 shrink-0" /> Tarjeta / HiLow
+                  </Button>
+                  <Button type="button" variant={selectedPaymentMethod === 'nowpayments' ? 'default' : 'outline'} className="h-auto min-h-14 whitespace-normal" onClick={() => setSelectedPaymentMethod('nowpayments')}>
+                    <ShieldCheck className="mr-2 h-4 w-4 shrink-0" /> Criptomonedas / NOWPayments
+                  </Button>
+                </div>
                 <div className="flex gap-2">
                     <Input placeholder="Coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
                     <Button type="button" onClick={handleApplyCoupon} disabled={couponLoading}>{couponLoading ? <Loader2 className="animate-spin" /> : 'Apply'}</Button>
@@ -576,7 +597,7 @@ export default function CheckoutClientPage() {
                   onClick={() => submitCheckout()}
                 >
                   {loading ? <Loader2 className="animate-spin mr-2" /> : <CreditCard className="mr-2" />}
-                  Pay Securely by Card
+                  {selectedPaymentMethod === 'nowpayments' ? 'Continuar con NOWPayments' : 'Pay Securely by Card'}
                 </Button>
               </CardFooter>
             </Card>
