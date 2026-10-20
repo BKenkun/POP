@@ -934,7 +934,7 @@ const getNestedTranslation = (obj: Translations, key: string): string | Translat
   }, obj);
 }
 
-const translations: Record<Language, Translations> = {
+const translations: Partial<Record<Language, Translations>> = {
   en: enTranslations,
 };
 
@@ -946,7 +946,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const t = useCallback((key: string, replacements: Record<string, string | number> = {}): string => {
-    const selectedLanguageTranslations = translations.en;
+    const selectedLanguageTranslations = translations.en ?? enTranslations;
     let translation = getNestedTranslation(selectedLanguageTranslations, key);
 
     if (typeof translation !== 'string') {
