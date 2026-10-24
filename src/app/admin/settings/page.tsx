@@ -27,13 +27,21 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     let active = true;
-    (user ? getPacklinkSettings(user.getIdToken()) : Promise.reject(new Error('Sesión de administrador requerida'))).then((result) => { if (active && result) setSettings({ ...defaults, ...result }); })
-      .catch((error) => {
+    async function loadSettings() {
+      try {
+        if (!user) throw new Error('Sesión de administrador requerida');
+        const result = await getPacklinkSettings(await user.getIdToken());
+        if (active && result) setSettings({ ...defaults, ...result });
+      } catch (error) {
         console.error('[PACKLINK_SETTINGS] No se pudo cargar la configuración', error);
         if (active) toast({ title: 'No se pudo cargar la configuración', description: 'Se muestran los valores iniciales. Comprueba los permisos y vuelve a intentarlo.', variant: 'destructive' });
-      }).finally(() => { if (active) setLoading(false); });
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void loadSettings();
     return () => { active = false; };
-  }, [toast]);
+  }, [toast, user]);
 
   const update = (key: keyof PacklinkAdminSettings, value: string) => setSettings(current => ({
     ...current, [key]: ['weightKg', 'lengthCm', 'widthCm', 'heightCm'].includes(key) ? Number(value) : value,
