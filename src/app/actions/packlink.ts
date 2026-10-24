@@ -125,6 +125,12 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
     return;
   }
 
+  // Validar el remitente antes de reclamar el envío. Así, una configuración incompleta
+  // no deja el pedido atascado en estado "creating" y permite corregirlo y reintentar.
+  if (!senderName || !senderStreet || !senderCity || !senderPhone || !senderEmail) {
+    throw new Error('Faltan datos de remitente PACKLINK_FROM_NAME/STREET/CITY/PHONE/EMAIL en App Hosting.');
+  }
+
   // Reclamar la creación dentro de una transacción para evitar borradores duplicados
   // si el proveedor de pagos reenvía el webhook simultáneamente.
   const claimed = await firestore.runTransaction(async (transaction) => {
@@ -145,9 +151,6 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
 
   const destination = order.shippingAddress || {};
   const senderState = senderCity;
-  if (!senderName || !senderStreet || !senderCity || !senderPhone || !senderEmail) {
-    throw new Error('Faltan datos de remitente PACKLINK_FROM_NAME/STREET/CITY/PHONE/EMAIL en App Hosting.');
-  }
 
   // Payload legacy compatible con el módulo oficial Packlink PRO para eCommerce.
   const draft = {
