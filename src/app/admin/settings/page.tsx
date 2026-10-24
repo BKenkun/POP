@@ -27,7 +27,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     let active = true;
-    getPacklinkSettings().then((result) => { if (active && result) setSettings({ ...defaults, ...result }); })
+    (user ? getPacklinkSettings(user.getIdToken()) : Promise.reject(new Error('Sesión de administrador requerida'))).then((result) => { if (active && result) setSettings({ ...defaults, ...result }); })
       .catch((error) => {
         console.error('[PACKLINK_SETTINGS] No se pudo cargar la configuración', error);
         if (active) toast({ title: 'No se pudo cargar la configuración', description: 'Se muestran los valores iniciales. Comprueba los permisos y vuelve a intentarlo.', variant: 'destructive' });
