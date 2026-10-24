@@ -23,7 +23,10 @@ const defaults: PacklinkAdminSettings = {
   heightCm: Number(process.env.PACKLINK_PACKAGE_HEIGHT_CM || 6),
 };
 
-export async function getPacklinkSettings(): Promise<PacklinkAdminSettings> {
+export async function getPacklinkSettings(idToken: string): Promise<PacklinkAdminSettings> {
+  if (!idToken) throw new Error('Inicia sesión como administrador para ver la configuración.');
+  const decoded = await auth.verifyIdToken(idToken);
+  if (decoded.email !== 'maryandpopper@gmail.com') throw new Error('No tienes permiso para ver la configuración de Packlink.');
   const snapshot = await firestore.collection('appSettings').doc('packlink').get();
   return { ...defaults, ...(snapshot.exists ? snapshot.data() as Partial<PacklinkAdminSettings> : {}) };
 }
