@@ -13,6 +13,18 @@ export type PacklinkQuote = {
   currency: string;
 };
 
+function normalizeCountryCode(value: unknown): string {
+  const text = String(value || '').trim().toUpperCase();
+  if (text.length === 2) return text;
+  const aliases: Record<string, string> = {
+    SPAIN: 'ES', ESPAÑA: 'ES', PORTUGAL: 'PT', FRANCE: 'FR', FRANCIA: 'FR',
+    GERMANY: 'DE', ALEMANIA: 'DE', ITALY: 'IT', ITALIA: 'IT', BELGIUM: 'BE',
+    BELGICA: 'BE', BELGIQUE: 'BE', NETHERLANDS: 'NL', HOLANDA: 'NL',
+    IRELAND: 'IE', IRLANDA: 'IE', UNITED KINGDOM: 'GB', REINO UNIDO: 'GB',
+  };
+  return aliases[text] || text;
+}
+
 function packlinkConfig() {
   const apiKey = process.env.PACKLINK_API_KEY;
   const fromPostalCode = process.env.PACKLINK_FROM_POSTAL_CODE;
@@ -59,7 +71,7 @@ export async function getPacklinkShippingQuotes(input: {
   try {
     const { fromPostalCode, fromCountry, source } = packlinkConfig();
     const postalCode = String(input.postalCode || '').trim();
-    const country = String(input.country || '').trim().toUpperCase();
+    const country = normalizeCountryCode(input.country);
     if (postalCode.length < 3 || country.length !== 2) {
       return { success: false, message: 'Introduce un código postal y país válidos para calcular el envío.' };
     }
@@ -160,7 +172,7 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
     to: {
       name: order.customerName, street: destination.line1 || '', city: destination.city || '',
       state: destination.state || destination.city || '', zip: destination.postal_code || '',
-      country: String(destination.country || 'ES').toUpperCase(), phone: destination.phone || '',
+      country: normalizeCountryCode(destination.country || 'ES'), phone: destination.phone || '',
       email: order.customerEmail || '',
     },
     service: order.packlink.serviceName,
