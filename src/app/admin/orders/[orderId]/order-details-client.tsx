@@ -186,6 +186,27 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
         <div className="space-y-6">
             <Card>
                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" />Packlink PRO Shipping</CardTitle>
+                    <CardDescription>Carrier, label and tracking details saved with this order.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                    {order.packlink ? (
+                      <>
+                        <div className="flex justify-between gap-3"><span className="text-muted-foreground">Status</span><Badge variant="outline">{order.packlink.status || 'Pending'}</Badge></div>
+                        {order.packlink.carrierName && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Carrier</span><span className="text-right">{order.packlink.carrierName}</span></div>}
+                        {order.packlink.serviceName && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Service</span><span className="text-right">{order.packlink.serviceName}</span></div>}
+                        {order.packlink.reference && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Packlink reference</span><span className="break-all text-right">{order.packlink.reference}</span></div>}
+                        {typeof order.packlink.quotedPrice === 'number' && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Quoted shipping</span><span>{formatPrice(Math.round(order.packlink.quotedPrice * 100))}</span></div>}
+                        {order.packlink.trackingUrl && <a className="block text-primary underline" href={order.packlink.trackingUrl} target="_blank" rel="noreferrer">Track shipment</a>}
+                        {order.packlink.labelUrl && <a className="block text-primary underline" href={order.packlink.labelUrl} target="_blank" rel="noreferrer">Open shipping label (PDF)</a>}
+                        {order.packlink.lastError && <p className="text-destructive">{order.packlink.lastError}</p>}
+                      </>
+                    ) : <p className="text-muted-foreground">Shipping details will appear here after payment confirmation.</p>}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Truck className="h-5 w-5" />
                         Order Status
