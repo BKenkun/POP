@@ -22,6 +22,21 @@ env:
   - variable: FIREBASE_STORAGE_BUCKET
     value: "purorush.appspot.com"
 
+  # --- Packlink PRO: la clave se guarda en Secret Manager ---
+  - variable: PACKLINK_API_KEY
+    secret: PACKLINK_API_KEY
+  - variable: PACKLINK_FROM_COUNTRY
+    value: "ES"
+  - variable: PACKLINK_PACKAGE_WEIGHT_KG
+    value: "1"
+  - variable: PACKLINK_PACKAGE_LENGTH_CM
+    value: "30"
+  - variable: PACKLINK_PACKAGE_WIDTH_CM
+    value: "20"
+  - variable: PACKLINK_PACKAGE_HEIGHT_CM
+    value: "15"
+  # Configurar también en App Hosting: PACKLINK_FROM_POSTAL_CODE,
+  # PACKLINK_SOURCE y datos PACKLINK_FROM_NAME/STREET/CITY/PHONE/EMAIL.
   # --- Configuración de Hilow ---
   - variable: HILOW_API_BASE_URL
     value: "https://hilowglobal.com"
