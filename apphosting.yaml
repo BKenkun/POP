@@ -35,7 +35,6 @@ env:
     value: "8"
   - variable: PACKLINK_PACKAGE_HEIGHT_CM
     value: "6"
-  # PACKLINK_SOURCE debe configurarse en App Hosting según la cuenta Packlink PRO.
   # --- Configuración de Hilow ---
   - variable: HILOW_API_BASE_URL
     value: "https://hilowglobal.com"
