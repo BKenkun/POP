@@ -7,6 +7,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
 import { Order } from '@/lib/types';
+import { createPacklinkShipmentDraft } from '@/app/actions/packlink';
 
 // Route handlers need Node.js for crypto and Firebase Admin.
 export const runtime = 'nodejs';
@@ -274,6 +275,18 @@ export async function POST(req: NextRequest) {
             });
           }
         });
+      }
+
+      if (!isSubscription && prefix === 'CPO') {
+        try {
+          await createPacklinkShipmentDraft(orderDocId);
+        } catch (error) {
+          // El pago ya está confirmado: registrar el fallo logístico sin devolver error al proveedor.
+          console.error('[PACKLINK] Pago confirmado; creación de envío pendiente:', {
+            orderId: orderDocId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
 
       return NextResponse.json({ received: true, processed: 'payment_completed' }, { status: 200 });
