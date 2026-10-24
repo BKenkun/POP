@@ -81,7 +81,7 @@ export async function getPacklinkShippingQuotes(input: {
       serviceId: String(row.service_id ?? row.serviceId ?? row.id ?? ''),
       serviceName: String(row.service_name ?? row.serviceName ?? row.name ?? 'Envío estándar'),
       carrierName: String(row.carrier_name ?? row.carrierName ?? row.carrier ?? 'Transportista'),
-      price: Number(row.price?.base_price ?? row.base_price ?? row.price ?? row.total_price),
+      price: Number(row.price?.total_price ?? row.total_price ?? row.price?.base_price ?? row.base_price ?? row.price),
       currency: String(row.currency ?? 'EUR'),
     })).filter((q: PacklinkQuote) => q.serviceId && Number.isFinite(q.price) && q.price >= 0)
       .sort((a: PacklinkQuote, b: PacklinkQuote) => a.price - b.price);
