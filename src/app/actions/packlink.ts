@@ -2,6 +2,7 @@
 'use server';
 
 import { firestore } from '@/lib/firebase-admin';
+import { readPacklinkSettings } from '@/lib/packlink-config';
 
 const API_BASE = 'https://api.packlink.com/v1';
 
@@ -69,7 +70,9 @@ export async function getPacklinkShippingQuotes(input: {
   heightCm?: number;
 }): Promise<{ success: boolean; quotes?: PacklinkQuote[]; message?: string }> {
   try {
-    const { fromPostalCode, fromCountry, source } = packlinkConfig();
+    const { postalCode: fromPostalCode, country: fromCountry, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
+    const source = process.env.PACKLINK_SOURCE;
+    if (!source) throw new Error('Falta configurar PACKLINK_SOURCE en Firebase App Hosting.');
     const postalCode = String(input.postalCode || '').trim();
     const country = normalizeCountryCode(input.country);
     if (postalCode.length < 3 || country.length !== 2) {
@@ -82,10 +85,10 @@ export async function getPacklinkShippingQuotes(input: {
       'to[country]': country,
       'to[zip]': postalCode,
       source,
-      'packages[0][height]': String(Math.ceil(input.heightCm || Number(process.env.PACKLINK_PACKAGE_HEIGHT_CM || 15))),
-      'packages[0][width]': String(Math.ceil(input.widthCm || Number(process.env.PACKLINK_PACKAGE_WIDTH_CM || 20))),
-      'packages[0][length]': String(Math.ceil(input.lengthCm || Number(process.env.PACKLINK_PACKAGE_LENGTH_CM || 30))),
-      'packages[0][weight]': String(input.weightKg || Number(process.env.PACKLINK_PACKAGE_WEIGHT_KG || 1)),
+      'packages[0][height]': String(Math.ceil(input.heightCm || heightCm)),
+      'packages[0][width]': String(Math.ceil(input.widthCm || widthCm)),
+      'packages[0][length]': String(Math.ceil(input.lengthCm || lengthCm)),
+      'packages[0][weight]': String(input.weightKg || weightKg),
     });
     const body = await packlinkRequest(`/services?${params.toString()}`, { method: 'GET' });
     const rows = Array.isArray(body) ? body : Array.isArray(body?.services) ? body.services : [];
@@ -111,7 +114,9 @@ export async function getPacklinkShippingQuotes(input: {
  * la etiqueta definitiva; en ese caso la orden queda marcada como pendiente de etiqueta.
  */
 export async function createPacklinkShipmentDraft(orderId: string): Promise<void> {
-  const { fromPostalCode, fromCountry, source } = packlinkConfig();
+  const { postalCode: fromPostalCode, country: fromCountry, senderName, street: senderStreet, city: senderCity, phone: senderPhone, email: senderEmail, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
+  const source = process.env.PACKLINK_SOURCE;
+  if (!source) throw new Error('Falta configurar PACKLINK_SOURCE en Firebase App Hosting.');
   const parts = orderId.split('_');
   if (parts.length < 3 || parts[0] !== 'CPO') throw new Error('ID de pedido POP no válido para Packlink.');
   const userId = parts.slice(1, -1).join('_');
@@ -150,12 +155,7 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
   if (!claimed) return;
 
   const destination = order.shippingAddress || {};
-  const senderName = process.env.PACKLINK_FROM_NAME;
-  const senderStreet = process.env.PACKLINK_FROM_STREET;
-  const senderCity = process.env.PACKLINK_FROM_CITY;
-  const senderState = process.env.PACKLINK_FROM_STATE || process.env.PACKLINK_FROM_CITY;
-  const senderPhone = process.env.PACKLINK_FROM_PHONE;
-  const senderEmail = process.env.PACKLINK_FROM_EMAIL;
+  const senderState = senderCity;
   if (!senderName || !senderStreet || !senderCity || !senderPhone || !senderEmail) {
     throw new Error('Faltan datos de remitente PACKLINK_FROM_NAME/STREET/CITY/PHONE/EMAIL en App Hosting.');
   }
@@ -179,10 +179,10 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
     carrier: order.packlink.carrierName,
     service_id: order.packlink.serviceId,
     packages: [{
-      height: Number(process.env.PACKLINK_PACKAGE_HEIGHT_CM || 15),
-      width: Number(process.env.PACKLINK_PACKAGE_WIDTH_CM || 20),
-      length: Number(process.env.PACKLINK_PACKAGE_LENGTH_CM || 30),
-      weight: Number(process.env.PACKLINK_PACKAGE_WEIGHT_KG || 1),
+      height: heightCm,
+      width: widthCm,
+      length: lengthCm,
+      weight: weightKg,
     }],
     content: (order.items || []).map((item: any) => String(item.name || 'Productos')).join(', ').slice(0, 60),
     contentvalue: Number(order.total || 0) / 100,
