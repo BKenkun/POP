@@ -45,6 +45,7 @@ import { useTranslation } from '@/context/language-context';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { createHilowApiOrder } from '@/app/actions/hilow';
 import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
+import { getPacklinkShippingQuotes, type PacklinkQuote } from '@/app/actions/packlink';
 
 interface Address {
   id: string;
@@ -139,6 +140,9 @@ export default function CheckoutClientPage() {
   const { user, loading: isUserLoading, userDoc } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [packlinkQuote, setPacklinkQuote] = useState<PacklinkQuote | null>(null);
+  const [packlinkLoading, setPacklinkLoading] = useState(false);
+  const FREE_SHIPPING_THRESHOLD = 4000; // 40 EUR; precios internos en céntimos
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
@@ -165,9 +169,10 @@ export default function CheckoutClientPage() {
   const finalTotals = useMemo(() => {
     const subtotal = cartTotal;
     const subtotalWithDiscounts = subtotal - volumeDiscount - couponDiscount;
-    const total = subtotalWithDiscounts;
-    return { subtotal, total, priceInCents: Math.round(total) };
-  }, [cartTotal, volumeDiscount, couponDiscount]);
+    const shippingCost = subtotalWithDiscounts >= FREE_SHIPPING_THRESHOLD ? 0 : Math.round((packlinkQuote?.price || 0) * 100);
+    const total = subtotalWithDiscounts + shippingCost;
+    return { subtotal, subtotalWithDiscounts, shippingCost, total, priceInCents: Math.round(total) };
+  }, [cartTotal, volumeDiscount, couponDiscount, packlinkQuote]);
 
   useEffect(() => {
     if (user && userDoc) {
@@ -242,6 +247,10 @@ export default function CheckoutClientPage() {
       });
       return;
     }
+    if (finalTotals.subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD && !packlinkQuote) {
+      setPayStepDetail({ title: 'Falta calcular el envío', items: ['Vuelve a los datos de entrega y calcula una tarifa real de Packlink PRO antes de pagar.'] });
+      return;
+    }
     setLoading(true);
     setPaymentError(null);
     setPaymentErrorKind(null);
@@ -260,6 +269,9 @@ export default function CheckoutClientPage() {
           imageUrl: item.imageUrl,
         })),
         total: finalTotals.total,
+        shippingCost: finalTotals.shippingCost,
+        shippingFree: finalTotals.subtotalWithDiscounts >= FREE_SHIPPING_THRESHOLD,
+        ...(packlinkQuote ? { packlink: { serviceId: packlinkQuote.serviceId, serviceName: packlinkQuote.serviceName, carrierName: packlinkQuote.carrierName, quotedPrice: packlinkQuote.price, currency: packlinkQuote.currency, status: 'quoted' } } : {}),
         customerName: data.name,
         customerEmail: data.email,
         shippingAddress: {
@@ -400,7 +412,31 @@ export default function CheckoutClientPage() {
       });
       return;
     }
-    goToStep(3);
+    const values = form.getValues();
+    const subtotalAfterDiscounts = cartTotal - volumeDiscount - couponDiscount;
+    // Siempre obtenemos el servicio de transporte para poder preparar la etiqueta;
+    // a partir de 40 € el coste repercutido al cliente será 0 €.
+    setPacklinkLoading(true);
+    try {
+      const countryNames: Record<string, string> = {
+        SPAIN: 'ES', ESPAÑA: 'ES', PORTUGAL: 'PT', FRANCE: 'FR', FRANCIA: 'FR',
+        GERMANY: 'DE', ALEMANIA: 'DE', ITALY: 'IT', ITALIA: 'IT', BELGIUM: 'BE',
+        BELGICA: 'BE', NETHERLANDS: 'NL', HOLANDA: 'NL', IRELAND: 'IE', IRLANDA: 'IE',
+      };
+      const countryText = String(values.country || '').trim().toUpperCase();
+      const countryCode = countryText.length === 2 ? countryText : countryNames[countryText];
+      if (!countryCode) throw new Error('Escribe el país de entrega con su nombre habitual o código ISO de dos letras.');
+      const result = await getPacklinkShippingQuotes({ postalCode: values.postalCode, country: countryCode });
+      if (!result.success || !result.quotes?.length) throw new Error(result.message || 'Packlink no devolvió tarifas para este destino.');
+      setPacklinkQuote(result.quotes[0]);
+      goToStep(3);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo calcular el envío.';
+      setStep2ValidationLines([message]);
+      toast({ title: 'No se pudo calcular el envío', description: message, variant: 'destructive' });
+    } finally {
+      setPacklinkLoading(false);
+    }
   };
 
   if (isUserLoading && !user) return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>;
@@ -536,6 +572,9 @@ export default function CheckoutClientPage() {
                 </div>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(finalTotals.subtotal)}</span></div>
+                    {volumeDiscount > 0 && <div className="flex justify-between text-destructive"><span>Descuento</span><span>-{formatPrice(volumeDiscount)}</span></div>}
+                    <div className="flex justify-between"><span>Envío</span><span>{finalTotals.subtotalWithDiscounts >= FREE_SHIPPING_THRESHOLD ? 'Gratis' : packlinkQuote ? formatPrice(finalTotals.shippingCost) : packlinkLoading ? 'Calculando…' : 'Pendiente de cálculo'}</span></div>
+                    {packlinkQuote && finalTotals.subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD && <div className="text-xs text-muted-foreground">Tarifa Packlink PRO: {packlinkQuote.carrierName} · {packlinkQuote.serviceName}</div>}
                     <div className="flex justify-between font-bold text-xl"><span>Total</span><span className="text-primary">{formatPrice(finalTotals.total)}</span></div>
                 </div>
               </CardContent>
@@ -615,8 +654,8 @@ export default function CheckoutClientPage() {
               </Button>
             )}
             {step === 2 && (
-              <Button type="button" onClick={handleContinueFromStep2}>
-                {t('checkout.next_button')}
+              <Button type="button" onClick={handleContinueFromStep2} disabled={packlinkLoading}>
+                {packlinkLoading ? <><Loader2 className="animate-spin mr-2" />Calculando envío…</> : t('checkout.next_button')}
               </Button>
             )}
           </div>

@@ -22,6 +22,19 @@ env:
   - variable: FIREBASE_STORAGE_BUCKET
     value: "purorush.appspot.com"
 
+  # --- Packlink PRO: clave protegida; el origen y paquete se editan en administración ---
+  - variable: PACKLINK_API_KEY
+    secret: PACKLINK_API_KEY
+  - variable: PACKLINK_FROM_COUNTRY
+    value: "ES"
+  - variable: PACKLINK_PACKAGE_WEIGHT_KG
+    value: "1"
+  - variable: PACKLINK_PACKAGE_LENGTH_CM
+    value: "15"
+  - variable: PACKLINK_PACKAGE_WIDTH_CM
+    value: "8"
+  - variable: PACKLINK_PACKAGE_HEIGHT_CM
+    value: "6"
   # --- Configuración de Hilow ---
   - variable: HILOW_API_BASE_URL
     value: "https://hilowglobal.com"
