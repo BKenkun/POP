@@ -422,6 +422,7 @@ export default function CheckoutClientPage() {
         SPAIN: 'ES', ESPAÑA: 'ES', PORTUGAL: 'PT', FRANCE: 'FR', FRANCIA: 'FR',
         GERMANY: 'DE', ALEMANIA: 'DE', ITALY: 'IT', ITALIA: 'IT', BELGIUM: 'BE',
         BELGICA: 'BE', NETHERLANDS: 'NL', HOLANDA: 'NL', IRELAND: 'IE', IRLANDA: 'IE',
+        'UNITED KINGDOM': 'GB', 'REINO UNIDO': 'GB',
       };
       const countryText = String(values.country || '').trim().toUpperCase();
       const countryCode = countryText.length === 2 ? countryText : countryNames[countryText];
