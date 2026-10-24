@@ -43,6 +43,7 @@ export default function AdminSidebar() {
     { href: '/admin/accounting', label: 'Accounting', icon: Calculator },
     { href: '/admin/coupons', label: 'Coupons', icon: Ticket },
     { href: '/admin/web', label: 'Web Settings', icon: Globe },
+    { href: '/admin/settings', label: 'Packlink PRO', icon: Settings },
     { href: '/admin/blog', label: 'Blog', icon: Newspaper },
   ];
 
