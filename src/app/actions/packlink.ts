@@ -127,10 +127,12 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
     const current = currentSnap.data()!;
     const status = String(current.packlink?.status || '');
     if (current.packlink?.reference || ['creating', 'draft_created', 'label_available'].includes(status)) return false;
-    transaction.set(orderRef, {
-      packlink: { status: 'creating', lastError: null, attemptAt: new Date() },
+    transaction.update(orderRef, {
+      'packlink.status': 'creating',
+      'packlink.lastError': null,
+      'packlink.attemptAt': new Date(),
       updatedAt: new Date(),
-    }, { merge: true });
+    });
     return true;
   });
   if (!claimed) return;
@@ -178,36 +180,44 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
     has_customs: false,
   };
 
-  const result = await packlinkRequest('/shipments', { method: 'POST', body: JSON.stringify(draft) });
+  let result: any;
+  try {
+    result = await packlinkRequest('/shipments', { method: 'POST', body: JSON.stringify(draft) });
+  } catch (error) {
+    await orderRef.update({
+      'packlink.status': 'creation_failed',
+      'packlink.lastError': error instanceof Error ? error.message : String(error),
+      updatedAt: new Date(),
+    });
+    throw error;
+  }
   const reference = String(result?.reference || '');
   if (!reference) {
-    await orderRef.set({ packlink: { status: 'creation_failed', lastError: 'Packlink no devolvió la referencia del envío.' }, updatedAt: new Date() }, { merge: true });
+    await orderRef.update({ 'packlink.status': 'creation_failed', 'packlink.lastError': 'Packlink no devolvió la referencia del envío.', updatedAt: new Date() });
     throw new Error('Packlink no devolvió la referencia del envío.');
   }
 
-  await orderRef.set({
-    packlink: {
-      reference,
-      serviceId: order.packlink.serviceId,
-      serviceName: order.packlink.serviceName,
-      carrierName: order.packlink.carrierName,
-      quotedPrice: order.packlink.quotedPrice ?? null,
-      status: 'draft_created',
-      labelUrl: null,
-      trackingUrl: null,
-      createdAt: new Date(),
-    },
+  await orderRef.update({
+    'packlink.reference': reference,
+    'packlink.serviceId': order.packlink.serviceId,
+    'packlink.serviceName': order.packlink.serviceName,
+    'packlink.carrierName': order.packlink.carrierName,
+    'packlink.quotedPrice': order.packlink.quotedPrice ?? null,
+    'packlink.status': 'draft_created',
+    'packlink.labelUrl': null,
+    'packlink.trackingUrl': null,
+    'packlink.createdAt': new Date(),
     updatedAt: new Date(),
-  }, { merge: true });
+  });
 
   // Intentar recuperar la etiqueta si el transportista/estado ya la ha generado.
   try {
     const labels = await packlinkRequest(`/shipments/${encodeURIComponent(reference)}/labels`, { method: 'GET' });
     const labelUrl = Array.isArray(labels) ? labels.find((v: unknown) => typeof v === 'string') : labels?.label_url || labels?.url || labels?.labels?.[0]?.url;
     if (typeof labelUrl === 'string' && labelUrl.startsWith('https://')) {
-      await orderRef.set({ packlink: { labelUrl, status: 'label_available' }, updatedAt: new Date() }, { merge: true });
+      await orderRef.update({ 'packlink.labelUrl': labelUrl, 'packlink.status': 'label_available', updatedAt: new Date() });
     } else {
-      await orderRef.set({ packlink: { status: 'draft_created_label_pending' }, updatedAt: new Date() }, { merge: true });
+      await orderRef.update({ 'packlink.status': 'draft_created_label_pending', updatedAt: new Date() });
     }
   } catch (error) {
     console.warn('[PACKLINK] El borrador se creó pero la etiqueta aún no está disponible.', {
