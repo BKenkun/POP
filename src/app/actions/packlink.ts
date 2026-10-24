@@ -28,14 +28,8 @@ function normalizeCountryCode(value: unknown): string {
 
 function packlinkConfig() {
   const apiKey = process.env.PACKLINK_API_KEY;
-  const fromPostalCode = process.env.PACKLINK_FROM_POSTAL_CODE;
-  const fromCountry = (process.env.PACKLINK_FROM_COUNTRY || 'ES').toUpperCase();
-  const source = process.env.PACKLINK_SOURCE;
   if (!apiKey) throw new Error('Falta configurar PACKLINK_API_KEY en Firebase Secret Manager.');
-  if (!fromPostalCode || !source) {
-    throw new Error('Faltan PACKLINK_FROM_POSTAL_CODE o PACKLINK_SOURCE en Firebase App Hosting.');
-  }
-  return { apiKey, fromPostalCode, fromCountry, source };
+  return { apiKey };
 }
 
 async function packlinkRequest(path: string, init: RequestInit = {}) {
