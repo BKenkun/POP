@@ -43,8 +43,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     onOpenChange(false);
   };
   
-  const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
-  const isFreeShipping = shippingCost === 0 && cartTotal > 0;
+  // La tarifa real se calcula en checkout mediante Packlink PRO; aquí solo mostramos la regla de portes gratis.
+  const isFreeShipping = totalWithDiscount >= FREE_SHIPPING_THRESHOLD && cartTotal > 0;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -126,12 +126,12 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>Envío gratis en pedidos superiores a {formatPrice(FREE_SHIPPING_THRESHOLD)}.</span>
+                           <span>Envío gratis en pedidos de 40 € o más. El resto se calcula en el checkout con Packlink PRO.</span>
                        </div>
                      )}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  El descuento por volumen y los gastos de envío finales se aplicarán en la pantalla de pago según el método elegido.
+                  El coste real del transporte se calculará en el checkout según el destino y el paquete.
                 </p>
                 <Button asChild size="lg" className="w-full" onClick={handleCheckout}>
                   <Link href="/checkout">Finalizar Reserva</Link>
