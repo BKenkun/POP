@@ -21,7 +21,7 @@ function normalizeCountryCode(value: unknown): string {
     SPAIN: 'ES', ESPAÑA: 'ES', PORTUGAL: 'PT', FRANCE: 'FR', FRANCIA: 'FR',
     GERMANY: 'DE', ALEMANIA: 'DE', ITALY: 'IT', ITALIA: 'IT', BELGIUM: 'BE',
     BELGICA: 'BE', BELGIQUE: 'BE', NETHERLANDS: 'NL', HOLANDA: 'NL',
-    IRELAND: 'IE', IRLANDA: 'IE', UNITED KINGDOM: 'GB', REINO UNIDO: 'GB',
+    IRELAND: 'IE', IRLANDA: 'IE', 'UNITED KINGDOM': 'GB', 'REINO UNIDO': 'GB',
   };
   return aliases[text] || text;
 }
