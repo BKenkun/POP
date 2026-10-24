@@ -247,7 +247,7 @@ export default function CheckoutClientPage() {
       });
       return;
     }
-    if (finalTotals.subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD && !packlinkQuote) {
+    if (finalTotals.subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD && (!packlinkQuote || !Number.isFinite(packlinkQuote.price) || packlinkQuote.price <= 0)) {
       setPayStepDetail({ title: 'Falta calcular el envío', items: ['Vuelve a los datos de entrega y calcula una tarifa real de Packlink PRO antes de pagar.'] });
       return;
     }
@@ -428,7 +428,15 @@ export default function CheckoutClientPage() {
       if (!countryCode) throw new Error('Escribe el país de entrega con su nombre habitual o código ISO de dos letras.');
       const result = await getPacklinkShippingQuotes({ postalCode: values.postalCode, country: countryCode });
       if (!result.success || !result.quotes?.length) throw new Error(result.message || 'Packlink no devolvió tarifas para este destino.');
-      setPacklinkQuote(result.quotes[0]);
+      // Por debajo de 40 €, nunca aceptar una tarifa de 0 €: impedir que la pasarela cobre solo los productos.
+      const validQuotes = result.quotes.filter((quote) => Number.isFinite(quote.price) && quote.price >= 0);
+      const payableQuotes = subtotalAfterDiscounts < FREE_SHIPPING_THRESHOLD
+        ? validQuotes.filter((quote) => quote.price > 0)
+        : validQuotes;
+      if (!payableQuotes.length) {
+        throw new Error('Packlink no devolvió una tarifa de envío de pago válida. No se puede continuar al pago hasta obtener el coste real del envío.');
+      }
+      setPacklinkQuote(payableQuotes[0]);
       goToStep(3);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo calcular el envío.';
