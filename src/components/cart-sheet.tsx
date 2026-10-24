@@ -48,8 +48,8 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
     onOpenChange(false);
   };
   
-  const shippingCost = cartTotal > 0 && cartTotal < FREE_SHIPPING_THRESHOLD ? 695 : 0;
-  const isFreeShipping = shippingCost === 0 && cartTotal > 0;
+  // La tarifa real se calcula en checkout mediante Packlink PRO; aquí solo mostramos la regla de portes gratis.
+  const isFreeShipping = totalWithDiscount >= FREE_SHIPPING_THRESHOLD && cartTotal > 0;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -131,7 +131,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>{t('cart.free_shipping_threshold', {price: formatPrice(FREE_SHIPPING_THRESHOLD)})}</span>
+                           <span>El coste del envío se calculará en el checkout con Packlink PRO.</span>
                        </div>
                      )}
                 </div>
