@@ -127,6 +127,20 @@ export const OrderSchema = z.object({
   path: z.string().optional(),
   deliveryDni: z.string().optional(),
   deliverySignature: z.string().optional(),
+  shippingCost: z.number().optional(),
+  shippingFree: z.boolean().optional(),
+  packlink: z.object({
+    serviceId: z.string().optional(),
+    serviceName: z.string().optional(),
+    carrierName: z.string().optional(),
+    quotedPrice: z.number().nullable().optional(),
+    currency: z.string().optional(),
+    reference: z.string().optional(),
+    status: z.string().optional(),
+    labelUrl: z.string().nullable().optional(),
+    trackingUrl: z.string().nullable().optional(),
+    lastError: z.string().optional(),
+  }).optional(),
 });
 
 
