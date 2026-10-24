@@ -16,11 +16,7 @@ Never expose the API key to browser code or commit its value to GitHub.
 
 1. Create/copy the API key in Packlink PRO → Configuración → Packlink PRO clave de API.
 2. Add a Secret Manager secret named `PACKLINK_API_KEY` and grant the Firebase App Hosting runtime service account access to it. The branch's `apphosting.yaml` references that secret.
-3. Configure these server environment variables in App Hosting:
-   - `PACKLINK_FROM_POSTAL_CODE`: the warehouse/dispatch postal code.
-   - `PACKLINK_SOURCE`: the source value required for this Packlink PRO account/integration.
-   - `PACKLINK_FROM_NAME`, `PACKLINK_FROM_STREET`, `PACKLINK_FROM_CITY`, `PACKLINK_FROM_PHONE`, `PACKLINK_FROM_EMAIL`: sender address/contact.
-   - Optional `PACKLINK_FROM_STATE`, `PACKLINK_PLATFORM`, and parcel defaults.
+3. Set the sender address and parcel defaults in the Packlink settings page in the store admin. Confirm the saved postal code, city, phone, email, weight, and dimensions before testing.
 4. Confirm package defaults (`1 kg`, `30 × 20 × 15 cm`) match the actual packaged products. These defaults are only a starting point; adjust them to avoid inaccurate rates.
 
 ## Important label limitation
