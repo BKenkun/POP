@@ -5,6 +5,7 @@ import { firestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendOrderReceivedEmail } from '@/lib/mailjet';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
+import { createPacklinkShipmentDraft } from '@/app/actions/packlink';
 import type { Order } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -110,6 +111,10 @@ export async function POST(req: NextRequest) {
 
     const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
     if (paidStatuses.includes(String(order.status))) {
+      if (paymentStatus === 'finished') {
+        try { await createPacklinkShipmentDraft(orderId); }
+        catch (error) { console.error('[PACKLINK] No se pudo completar/reintentar el envío:', { orderId, error: error instanceof Error ? error.message : String(error) }); }
+      }
       return NextResponse.json({ received: true, processed: 'already_paid' });
     }
 
@@ -158,6 +163,12 @@ export async function POST(req: NextRequest) {
             });
           }
         });
+      }
+      try {
+        await createPacklinkShipmentDraft(orderId);
+      } catch (error) {
+        // No revertir el pago ni provocar reintentos del IPN por un fallo logístico.
+        console.error('[PACKLINK] Pago confirmado; creación de envío pendiente:', { orderId, error: error instanceof Error ? error.message : String(error) });
       }
       return NextResponse.json({ received: true, processed: 'payment_finished' });
     }
