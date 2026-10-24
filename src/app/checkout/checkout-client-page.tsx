@@ -271,7 +271,7 @@ export default function CheckoutClientPage() {
         total: finalTotals.total,
         shippingCost: finalTotals.shippingCost,
         shippingFree: finalTotals.subtotalWithDiscounts >= FREE_SHIPPING_THRESHOLD,
-        ...(packlinkQuote && finalTotals.subtotalWithDiscounts < FREE_SHIPPING_THRESHOLD ? { packlink: { serviceId: packlinkQuote.serviceId, serviceName: packlinkQuote.serviceName, carrierName: packlinkQuote.carrierName, quotedPrice: packlinkQuote.price, currency: packlinkQuote.currency, status: 'quoted' } } : { packlink: { status: 'free_shipping' } }),
+        ...(packlinkQuote ? { packlink: { serviceId: packlinkQuote.serviceId, serviceName: packlinkQuote.serviceName, carrierName: packlinkQuote.carrierName, quotedPrice: packlinkQuote.price, currency: packlinkQuote.currency, status: 'quoted' } } : {}),
         customerName: data.name,
         customerEmail: data.email,
         shippingAddress: {
@@ -414,12 +414,8 @@ export default function CheckoutClientPage() {
     }
     const values = form.getValues();
     const subtotalAfterDiscounts = cartTotal - volumeDiscount - couponDiscount;
-    if (subtotalAfterDiscounts >= FREE_SHIPPING_THRESHOLD) {
-      setPacklinkQuote(null);
-      goToStep(3);
-      return;
-    }
-
+    // Siempre obtenemos el servicio de transporte para poder preparar la etiqueta;
+    // a partir de 40 € el coste repercutido al cliente será 0 €.
     setPacklinkLoading(true);
     try {
       const countryNames: Record<string, string> = {
