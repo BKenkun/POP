@@ -108,7 +108,6 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
   if (!snap.exists) throw new Error('Pedido no encontrado para crear el envío Packlink.');
   const order = snap.data()!;
 
-  if (order.packlink?.reference || order.packlink?.status === 'draft_created') return;
   if (!['order_received', 'shipped', 'out_for_delivery', 'delivered'].includes(String(order.status))) {
     throw new Error('No se crea el envío Packlink hasta confirmar el pago.');
   }
@@ -119,6 +118,22 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
     }, { merge: true });
     return;
   }
+
+  // Reclamar la creación dentro de una transacción para evitar borradores duplicados
+  // si el proveedor de pagos reenvía el webhook simultáneamente.
+  const claimed = await firestore.runTransaction(async (transaction) => {
+    const currentSnap = await transaction.get(orderRef);
+    if (!currentSnap.exists) return false;
+    const current = currentSnap.data()!;
+    const status = String(current.packlink?.status || '');
+    if (current.packlink?.reference || ['creating', 'draft_created', 'label_available'].includes(status)) return false;
+    transaction.set(orderRef, {
+      packlink: { status: 'creating', lastError: null, attemptAt: new Date() },
+      updatedAt: new Date(),
+    }, { merge: true });
+    return true;
+  });
+  if (!claimed) return;
 
   const destination = order.shippingAddress || {};
   const senderName = process.env.PACKLINK_FROM_NAME;
@@ -165,7 +180,10 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
 
   const result = await packlinkRequest('/shipments', { method: 'POST', body: JSON.stringify(draft) });
   const reference = String(result?.reference || '');
-  if (!reference) throw new Error('Packlink no devolvió la referencia del envío.');
+  if (!reference) {
+    await orderRef.set({ packlink: { status: 'creation_failed', lastError: 'Packlink no devolvió la referencia del envío.' }, updatedAt: new Date() }, { merge: true });
+    throw new Error('Packlink no devolvió la referencia del envío.');
+  }
 
   await orderRef.set({
     packlink: {
