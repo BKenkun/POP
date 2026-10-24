@@ -65,8 +65,6 @@ export async function getPacklinkShippingQuotes(input: {
 }): Promise<{ success: boolean; quotes?: PacklinkQuote[]; message?: string }> {
   try {
     const { postalCode: fromPostalCode, country: fromCountry, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
-    const source = process.env.PACKLINK_SOURCE;
-    if (!source) throw new Error('Falta configurar PACKLINK_SOURCE en Firebase App Hosting.');
     const postalCode = String(input.postalCode || '').trim();
     const country = normalizeCountryCode(input.country);
     if (postalCode.length < 3 || country.length !== 2) {
@@ -78,7 +76,6 @@ export async function getPacklinkShippingQuotes(input: {
       'from[zip]': fromPostalCode,
       'to[country]': country,
       'to[zip]': postalCode,
-      source,
       'packages[0][height]': String(Math.ceil(input.heightCm || heightCm)),
       'packages[0][width]': String(Math.ceil(input.widthCm || widthCm)),
       'packages[0][length]': String(Math.ceil(input.lengthCm || lengthCm)),
@@ -109,8 +106,6 @@ export async function getPacklinkShippingQuotes(input: {
  */
 export async function createPacklinkShipmentDraft(orderId: string): Promise<void> {
   const { postalCode: fromPostalCode, country: fromCountry, senderName, street: senderStreet, city: senderCity, phone: senderPhone, email: senderEmail, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
-  const source = process.env.PACKLINK_SOURCE;
-  if (!source) throw new Error('Falta configurar PACKLINK_SOURCE en Firebase App Hosting.');
   const parts = orderId.split('_');
   if (parts.length < 3 || parts[0] !== 'CPO') throw new Error('ID de pedido POP no válido para Packlink.');
   const userId = parts.slice(1, -1).join('_');
@@ -158,7 +153,6 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
   const draft = {
     platform: process.env.PACKLINK_PLATFORM || 'custom',
     platform_country: fromCountry,
-    source,
     from: {
       name: senderName, street: senderStreet, city: senderCity, state: senderState,
       zip: fromPostalCode, country: fromCountry, phone: senderPhone, email: senderEmail,
