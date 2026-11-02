@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase-admin';
 import { Product } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Revalidate at most every hour
 
 /**

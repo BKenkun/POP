@@ -16,7 +16,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.email == 'maryandpopper@gmail.com';
+      return isSignedIn() && (
+        request.auth.token.email == 'maryandpopper@gmail.com' ||
+        request.auth.token.email == 'EnriqueEspinCosme@gmail.com' ||
+        request.auth.token.email == 'enriqueespincosme@gmail.com'
+      );
     }
 
     // Products are publicly readable by anyone.

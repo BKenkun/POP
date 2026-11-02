@@ -64,7 +64,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isActualAdmin = useMemo(() => {
-    return !!user && user.email === 'maryandpopper@gmail.com';
+    if (!user || !user.email) return false;
+    const email = user.email.toLowerCase();
+    return email === 'maryandpopper@gmail.com' || email === 'enriqueespincosme@gmail.com';
   }, [user]);
 
   const isAdmin = useMemo(() => {
