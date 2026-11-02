@@ -46,15 +46,15 @@ export default function EditCouponPage() {
     try {
       await updateDoc(couponRef, { ...data });
       toast({
-        title: 'Cupón Actualizado',
-        description: `Los cambios en "${data.code}" han sido guardados.`,
+        title: 'Coupon Updated',
+        description: `Changes to "${data.code}" have been saved.`,
       });
       router.push('/admin/coupons');
     } catch (err) {
       console.error("Error updating coupon:", err);
       toast({
         title: 'Error',
-        description: 'No se pudo actualizar el cupón.',
+        description: 'Could not update coupon.',
         variant: 'destructive',
       });
     } finally {
@@ -78,11 +78,11 @@ export default function EditCouponPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Editar Cupón</h1>
+        <h1 className="text-3xl font-bold">Edit Coupon</h1>
         <Button asChild variant="outline">
           <Link href="/admin/coupons">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a Cupones
+            Back to Coupons
           </Link>
         </Button>
       </div>

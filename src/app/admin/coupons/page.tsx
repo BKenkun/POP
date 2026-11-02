@@ -83,11 +83,11 @@ export default function AdminCouponsPage() {
     try {
       await updateDoc(couponRef, { isActive: !coupon.isActive });
       toast({
-        title: 'Cupón actualizado',
-        description: `El estado de "${coupon.code}" ha sido cambiado.`,
+        title: 'Coupon Updated',
+        description: `Status of "${coupon.code}" has been updated.`,
       });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo actualizar el cupón.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not update coupon.', variant: 'destructive' });
     }
   };
   
@@ -95,9 +95,9 @@ export default function AdminCouponsPage() {
     const couponRef = doc(db, 'coupons', couponId);
     try {
         await deleteDoc(couponRef);
-        toast({ title: 'Cupón Eliminado', description: 'El cupón ha sido eliminado permanentemente.', variant: 'destructive'});
+        toast({ title: 'Coupon Deleted', description: 'Coupon has been permanently deleted.', variant: 'destructive'});
     } catch (error) {
-        toast({ title: 'Error', description: 'No se pudo eliminar el cupón.', variant: 'destructive'});
+        toast({ title: 'Error', description: 'Could not delete coupon.', variant: 'destructive'});
     }
   };
 
@@ -105,21 +105,21 @@ export default function AdminCouponsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión de Cupones</h1>
-          <p className="text-muted-foreground">Crea y administra códigos de descuento y envío gratis para tus clientes.</p>
+          <h1 className="text-3xl font-bold">Coupon Management</h1>
+          <p className="text-muted-foreground">Create and manage promo codes and free shipping coupons for your customers.</p>
         </div>
         <Button asChild>
           <Link href="/admin/coupons/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Crear Cupón
+            Create Coupon
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Cupones</CardTitle>
-          <CardDescription>Aquí puedes ver y gestionar todos los cupones activos, porcentaje, cantidad fija o envío gratis.</CardDescription>
+          <CardTitle>Coupons List</CardTitle>
+          <CardDescription>View and manage all active coupons: percentage, fixed discounts, or free shipping.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (
@@ -129,12 +129,12 @@ export default function AdminCouponsPage() {
             ) : coupons.length === 0 ? (
                  <div className="text-center py-12 border-dashed border-2 rounded-lg">
                     <Ticket className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-medium">Aún no hay cupones</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">Crea tu primer cupón para empezar a ofrecer descuentos o envío gratis.</p>
+                    <h3 className="mt-4 text-lg font-medium">No coupons yet</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Create your first coupon to offer discounts or free shipping.</p>
                     <Button asChild className="mt-4">
                         <Link href="/admin/coupons/new">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Crear Cupón
+                            Create Coupon
                         </Link>
                     </Button>
                 </div>
@@ -142,13 +142,13 @@ export default function AdminCouponsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                        <TableHead>Código</TableHead>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead>Tipo / Valor</TableHead>
-                        <TableHead>Usos</TableHead>
-                        <TableHead>Compra Mínima</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Type / Value</TableHead>
+                        <TableHead>Uses</TableHead>
+                        <TableHead>Min Purchase</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -159,7 +159,7 @@ export default function AdminCouponsPage() {
                             <TableCell>
                             {coupon.discountType === 'free_shipping' ? (
                                 <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 font-medium">
-                                    <Truck className="h-3 w-3" /> Envío Gratis
+                                    <Truck className="h-3 w-3" /> Free Shipping
                                 </Badge>
                             ) : coupon.discountType === 'percentage' ? (
                                 <Badge variant="secondary" className="font-semibold">{coupon.discountValue}%</Badge>
@@ -172,23 +172,23 @@ export default function AdminCouponsPage() {
                                     <div className="text-sm">
                                         {coupon.usageLimit === 1 ? (
                                             <span className="font-semibold text-amber-600 dark:text-amber-400">
-                                                1 uso único ({coupon.usageCount || 0}/1)
+                                                Single use ({coupon.usageCount || 0}/1)
                                             </span>
                                         ) : coupon.usageLimit && coupon.usageLimit > 1 ? (
                                             <span>{coupon.usageCount || 0} / {coupon.usageLimit}</span>
                                         ) : (
-                                            <span>{coupon.usageCount || 0} <span className="text-muted-foreground text-xs">(Ilimitado)</span></span>
+                                            <span>{coupon.usageCount || 0} <span className="text-muted-foreground text-xs">(Unlimited)</span></span>
                                         )}
                                     </div>
                                     {coupon.onePerUser && (
                                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500/40 text-blue-600 dark:text-blue-400">
-                                            1 por cliente
+                                            1 per customer
                                         </Badge>
                                     )}
                                 </div>
                             </TableCell>
                             <TableCell>
-                                {coupon.minPurchase && coupon.minPurchase > 0 ? formatPrice(coupon.minPurchase) : 'Sin mínimo'}
+                                {coupon.minPurchase && coupon.minPurchase > 0 ? formatPrice(coupon.minPurchase) : 'No minimum'}
                             </TableCell>
                             <TableCell>
                             <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export default function AdminCouponsPage() {
                                 onCheckedChange={() => handleToggleActive(coupon)}
                                 />
                                 <Badge variant={coupon.isActive ? 'default' : 'outline'}>
-                                {coupon.isActive ? 'Activo' : 'Inactivo'}
+                                {coupon.isActive ? 'Active' : 'Inactive'}
                                 </Badge>
                             </div>
                             </TableCell>
@@ -206,35 +206,35 @@ export default function AdminCouponsPage() {
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Abrir menú</span>
+                                    <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem asChild>
-                                        <Link href={`/admin/coupons/edit/${coupon.id}`}><Edit className="mr-2 h-4 w-4"/>Editar</Link>
+                                        <Link href={`/admin/coupons/edit/${coupon.id}`}><Edit className="mr-2 h-4 w-4"/>Edit</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                      <AlertDialogTrigger asChild>
                                         <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            <span>Eliminar</span>
+                                            <span>Delete</span>
                                         </DropdownMenuItem>
                                     </AlertDialogTrigger>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                                 <AlertDialogContent>
                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Se eliminará permanentemente este cupón.
+                                            This action cannot be undone. This coupon will be permanently removed.
                                         </AlertDialogDescription>
-                                    </AlertDialogHeader>
+                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => handleDeleteCoupon(coupon.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                                            Sí, eliminar
+                                            Yes, delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>

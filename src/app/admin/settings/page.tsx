@@ -29,12 +29,12 @@ export default function AdminSettingsPage() {
     let active = true;
     async function loadSettings() {
       try {
-        if (!user) throw new Error('Sesión de administrador requerida');
+        if (!user) throw new Error('Administrator session required');
         const result = await getPacklinkSettings(await user.getIdToken());
         if (active && result) setSettings({ ...defaults, ...result });
       } catch (error) {
-        console.error('[PACKLINK_SETTINGS] No se pudo cargar la configuración', error);
-        if (active) toast({ title: 'No se pudo cargar la configuración', description: 'Se muestran los valores iniciales. Comprueba los permisos y vuelve a intentarlo.', variant: 'destructive' });
+        console.error('[PACKLINK_SETTINGS] Could not load settings', error);
+        if (active) toast({ title: 'Could not load settings', description: 'Showing default values. Check permissions and try again.', variant: 'destructive' });
       } finally {
         if (active) setLoading(false);
       }
@@ -52,9 +52,9 @@ export default function AdminSettingsPage() {
     setSaving(true);
     try {
       await savePacklinkSettings(settings, await user.getIdToken());
-      toast({ title: 'Configuración guardada', description: 'Los próximos cálculos de envío usarán estos datos.' });
+      toast({ title: 'Settings saved', description: 'Upcoming shipping calculations will use this data.' });
     } catch (error) {
-      toast({ title: 'No se pudo guardar', description: error instanceof Error ? error.message : 'Comprueba que has iniciado sesión como administrador.', variant: 'destructive' });
+      toast({ title: 'Could not save', description: error instanceof Error ? error.message : 'Make sure you are logged in as an administrator.', variant: 'destructive' });
     } finally { setSaving(false); }
   }
 
@@ -65,30 +65,30 @@ export default function AdminSettingsPage() {
   );
 
   return <div className="mx-auto max-w-4xl space-y-6">
-    <div><h1 className="text-3xl font-bold">Configuración de la tienda</h1>
-      <p className="text-muted-foreground">Cambia el almacén de Packlink PRO sin modificar código.</p></div>
+    <div><h1 className="text-3xl font-bold">Store Settings</h1>
+      <p className="text-muted-foreground">Manage Packlink PRO warehouse settings without modifying code.</p></div>
     <Card><CardHeader>
-      <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" />Packlink PRO · Origen de los envíos</CardTitle>
-      <CardDescription>Estos datos se aplican a cotizaciones y nuevos envíos. Los pedidos anteriores conservarán sus datos.</CardDescription>
+      <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" />Packlink PRO · Shipment Origin</CardTitle>
+      <CardDescription>These details apply to quotes and new shipments. Previous orders will retain their data.</CardDescription>
     </CardHeader><CardContent className="space-y-5">
-      {loading ? <div className="flex items-center gap-2 py-8"><Loader2 className="h-5 w-5 animate-spin" />Cargando configuración…</div> : <>
+      {loading ? <div className="flex items-center gap-2 py-8"><Loader2 className="h-5 w-5 animate-spin" />Loading settings…</div> : <>
         <div className="grid gap-4 md:grid-cols-2">
-          {field('Nombre del remitente o empresa', 'senderName')}{field('Dirección', 'street')}
-          {field('Ciudad', 'city')}{field('Código postal', 'postalCode')}
-          <div className="space-y-2"><Label htmlFor="country">País del almacén</Label>
+          {field('Sender name or company', 'senderName')}{field('Address', 'street')}
+          {field('City', 'city')}{field('Postal code', 'postalCode')}
+          <div className="space-y-2"><Label htmlFor="country">Warehouse country</Label>
             <select id="country" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={settings.country} onChange={(e) => update('country', e.target.value)}>
-              <option value="ES">España (pruebas)</option><option value="FR">Francia (almacén definitivo)</option><option value="PT">Portugal</option>
+              <option value="ES">Spain (test)</option><option value="FR">France (main warehouse)</option><option value="PT">Portugal</option>
             </select></div>
-          {field('Teléfono del remitente', 'phone', 'tel')}{field('Correo del remitente', 'email', 'email')}
+          {field('Sender phone', 'phone', 'tel')}{field('Sender email', 'email', 'email')}
         </div>
-        <div className="border-t pt-5"><h3 className="mb-4 font-semibold">Paquete predeterminado</h3>
+        <div className="border-t pt-5"><h3 className="mb-4 font-semibold">Default package</h3>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {field('Peso (kg)', 'weightKg', 'number')}{field('Largo (cm)', 'lengthCm', 'number')}
-            {field('Ancho (cm)', 'widthCm', 'number')}{field('Alto (cm)', 'heightCm', 'number')}
+            {field('Weight (kg)', 'weightKg', 'number')}{field('Length (cm)', 'lengthCm', 'number')}
+            {field('Width (cm)', 'widthCm', 'number')}{field('Height (cm)', 'heightCm', 'number')}
           </div></div>
-        <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">La clave API permanece protegida en Google Cloud Secret Manager. El destino lo introduce cada cliente en el checkout.</div>
+        <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">The API key remains protected in Google Cloud Secret Manager. The destination is entered by each customer at checkout.</div>
         <Button onClick={handleSave} disabled={saving || !user} className="gap-2">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Guardando…' : 'Guardar configuración'}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Saving…' : 'Save settings'}
         </Button>
       </>}
     </CardContent></Card>

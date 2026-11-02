@@ -8,8 +8,8 @@ export default function AdminStockPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión de Almacén</h1>
-          <p className="text-muted-foreground">Controla el inventario de tus productos.</p>
+          <h1 className="text-3xl font-bold">Warehouse Management</h1>
+          <p className="text-muted-foreground">Manage your product inventory.</p>
         </div>
       </div>
       
@@ -18,13 +18,13 @@ export default function AdminStockPage() {
             <div className="mx-auto bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center mb-4">
                 <Warehouse className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>Página en Construcción</CardTitle>
+            <CardTitle>Page Under Construction</CardTitle>
             <CardDescription>
-                Esta sección para la gestión de stock está actualmente en desarrollo.
+                This section for stock and warehouse management is currently under development.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <p className="text-muted-foreground">Próximamente podrás ver informes de inventario, ajustar niveles de stock y más.</p>
+            <p className="text-muted-foreground">Soon you will be able to view inventory reports, adjust stock levels, and more.</p>
         </CardContent>
       </Card>
     </div>

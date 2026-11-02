@@ -66,13 +66,13 @@ export default function AdminProductsPage() {
     try {
         await updateDoc(productRef, { active: newStatus });
         toast({
-            title: `Producto ${newStatus ? 'Activado' : 'Archivado'}`,
-            description: `"${product.name}" ha sido movido a la sección correspondiente.`,
+            title: `Product ${newStatus ? 'Activated' : 'Archived'}`,
+            description: `"${product.name}" has been updated.`,
         });
     } catch (err) {
         toast({
             title: "Error",
-            description: "No se pudo actualizar el estado del producto.",
+            description: "Could not update product status.",
             variant: "destructive"
         });
     }
@@ -83,14 +83,14 @@ export default function AdminProductsPage() {
      try {
         await deleteDoc(productRef);
         toast({
-            title: "Producto Eliminado",
-            description: `El producto "${productName}" ha sido eliminado permanentemente.`,
+            title: "Product Deleted",
+            description: `Product "${productName}" has been permanently deleted.`,
             variant: "destructive",
         });
      } catch (err) {
          toast({
             title: "Error",
-            description: "No se pudo eliminar el producto.",
+            description: "Could not delete product.",
             variant: "destructive"
         });
      }
@@ -118,18 +118,18 @@ export default function AdminProductsPage() {
         </CardHeader>
         <CardContent>
              {products.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No hay productos en esta sección.</p>
+                <p className="text-muted-foreground text-center py-4">No products in this section.</p>
              ) : (
                 <Table>
                 <TableHeader>
                     <TableRow>
-                    <TableHead>Imagen</TableHead>
-                    <TableHead className="w-[30%]">Producto</TableHead>
+                    <TableHead>Image</TableHead>
+                    <TableHead className="w-[30%]">Product</TableHead>
                     <TableHead>SKU</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Precio</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -153,10 +153,10 @@ export default function AdminProductsPage() {
                                 <Switch
                                     checked={product.active !== false}
                                     onCheckedChange={() => handleToggleActive(product)}
-                                    aria-label="Activar o archivar producto"
+                                    aria-label="Toggle active status"
                                 />
                                 <Badge variant={product.active === false ? 'outline' : 'default'}>
-                                    {product.active === false ? 'Archivado' : 'Activo'}
+                                    {product.active === false ? 'Archived' : 'Active'}
                                 </Badge>
                             </div>
                         </TableCell>
@@ -165,7 +165,7 @@ export default function AdminProductsPage() {
                         <Badge 
                             variant={product.stock === undefined ? 'secondary' : (product.stock > 5 ? 'default' : (product.stock > 0 ? 'outline' : 'destructive'))}
                         >
-                            {product.stock ?? 'Ilimitado'}
+                            {product.stock ?? 'Unlimited'}
                         </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -173,45 +173,45 @@ export default function AdminProductsPage() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <span className="sr-only">Abrir menú</span>
+                                            <span className="sr-only">Open menu</span>
                                             <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                         <DropdownMenuItem asChild>
                                             <Link href={`/admin/products/edit/${product.id}`}>
                                                 <Edit className="mr-2 h-4 w-4" />
-                                                <span>Editar</span>
+                                                <span>Edit</span>
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => handleToggleActive(product)}>
                                             {product.active !== false ? (
-                                                <><Archive className="mr-2 h-4 w-4" /><span>Archivar</span></>
+                                                <><Archive className="mr-2 h-4 w-4" /><span>Archive</span></>
                                             ) : (
-                                                <><ArchiveRestore className="mr-2 h-4 w-4" /><span>Desarchivar</span></>
+                                                <><ArchiveRestore className="mr-2 h-4 w-4" /><span>Unarchive</span></>
                                             )}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                          <AlertDialogTrigger asChild>
                                             <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Eliminar</span>
+                                                <span>Delete</span>
                                             </DropdownMenuItem>
                                         </AlertDialogTrigger>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Se eliminará permanentemente el producto de la base de datos.
+                                            This action cannot be undone. This product will be permanently deleted from the database.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => handleDelete(product.id, product.name)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                                            Sí, eliminar
+                                            Yes, delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -230,13 +230,13 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión de Productos</h1>
-          <p className="text-muted-foreground">Añade, edita y gestiona el catálogo de tu tienda.</p>
+          <h1 className="text-3xl font-bold">Product Management</h1>
+          <p className="text-muted-foreground">Add, edit, and manage your store catalog.</p>
         </div>
         <Link href="/admin/products/new" passHref>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Nuevo Producto
+            New Product
           </Button>
         </Link>
       </div>
@@ -247,11 +247,11 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className="space-y-8">
-            <ProductTable products={activeProducts} tableTitle="Productos Activos" />
+            <ProductTable products={activeProducts} tableTitle="Active Products" />
             {archivedProducts.length > 0 && (
                 <>
                     <Separator />
-                    <ProductTable products={archivedProducts} tableTitle="Productos Archivados" />
+                    <ProductTable products={archivedProducts} tableTitle="Archived Products" />
                 </>
             )}
         </div>

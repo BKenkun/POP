@@ -39,7 +39,7 @@ export function StockNotificationDialog({ product, children }: StockNotification
         if (!product?.id || !email) {
             toast({
                 title: 'Error',
-                description: 'Falta información del producto o el email. Inténtalo de nuevo.',
+                description: 'Product information or email is missing. Please try again.',
                 variant: 'destructive',
             });
             setLoading(false);
@@ -57,17 +57,17 @@ export function StockNotificationDialog({ product, children }: StockNotification
 
             if (result.success) {
                 toast({
-                    title: '¡Te avisaremos!',
-                    description: `Recibirás un correo en ${email} en cuanto ${product.name} vuelva a estar disponible.`,
+                    title: "We'll notify you!",
+                    description: `You will receive an email at ${email} as soon as ${product.name} is back in stock.`,
                 });
                 setIsOpen(false);
             } else {
-                throw new Error(result.message || 'No se pudo procesar tu solicitud.');
+                throw new Error(result.message || 'Could not process your request.');
             }
         } catch (error: any) {
              toast({
                 title: 'Error',
-                description: error.message || 'Ocurrió un error inesperado.',
+                description: error.message || 'An unexpected error occurred.',
                 variant: 'destructive',
             });
         } finally {
@@ -82,9 +82,9 @@ export function StockNotificationDialog({ product, children }: StockNotification
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Notificación de Stock</DialogTitle>
+                    <DialogTitle>Stock Notification</DialogTitle>
                     <DialogDescription>
-                        Recibirás un único correo cuando {product.name} vuelva a estar disponible.
+                        You will receive a single email when {product.name} is back in stock.
                     </DialogDescription>
                 </DialogHeader>
                  <form onSubmit={handleSubmit}>
@@ -100,17 +100,17 @@ export function StockNotificationDialog({ product, children }: StockNotification
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="col-span-3"
-                                placeholder="tu@email.com"
+                                placeholder="you@email.com"
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                             <Button type="button" variant="ghost">Cancelar</Button>
+                             <Button type="button" variant="ghost">Cancel</Button>
                         </DialogClose>
                         <Button type="submit" disabled={loading}>
                             {loading ? <Loader2 className="mr-2 animate-spin"/> : <Mail className="mr-2"/>}
-                            {loading ? 'Enviando...' : 'Solicitar Notificación'}
+                            {loading ? 'Sending...' : 'Request Notification'}
                         </Button>
                     </DialogFooter>
                 </form>

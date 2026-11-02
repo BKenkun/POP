@@ -54,9 +54,9 @@ export default function OfferCountdown({ endDate }: OfferCountdownProps) {
     return (
         <Alert variant="destructive">
             <Timer className="h-4 w-4" />
-            <AlertTitle>¡Oferta Terminada!</AlertTitle>
+            <AlertTitle>Special Offer Ended!</AlertTitle>
             <AlertDescription>
-                Esta oferta especial ha finalizado.
+                This special offer has ended.
             </AlertDescription>
         </Alert>
     );
@@ -66,15 +66,15 @@ export default function OfferCountdown({ endDate }: OfferCountdownProps) {
     <Alert variant="destructive" className="text-center">
         <AlertTitle className="flex items-center justify-center gap-2 mb-2">
             <Timer className="h-4 w-4" />
-            ¡Oferta por Tiempo Limitado!
+            Limited Time Offer!
         </AlertTitle>
         <AlertDescription>
-            La oferta termina en:
+            Offer ends in:
             <div className="flex justify-center gap-4 mt-2">
-                {timeLeft.days > 0 && <TimeUnit value={timeLeft.days} label="Días" />}
-                <TimeUnit value={timeLeft.hours} label="Horas" />
-                <TimeUnit value={timeLeft.minutes} label="Min" />
-                <TimeUnit value={timeLeft.seconds} label="Seg" />
+                {timeLeft.days > 0 && <TimeUnit value={timeLeft.days} label="Days" />}
+                <TimeUnit value={timeLeft.hours} label="Hours" />
+                <TimeUnit value={timeLeft.minutes} label="Mins" />
+                <TimeUnit value={timeLeft.seconds} label="Secs" />
             </div>
       </AlertDescription>
     </Alert>

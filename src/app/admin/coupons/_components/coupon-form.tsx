@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -46,11 +45,11 @@ import type { Coupon } from '../page';
 const couponSchema = z.object({
   code: z
     .string()
-    .min(3, 'El código debe tener al menos 3 caracteres.')
-    .refine((val) => val.toUpperCase() === val, 'El código debe estar en mayúsculas.'),
-  description: z.string().min(3, 'La descripción es requerida.'),
+    .min(3, 'Code must have at least 3 characters.')
+    .refine((val) => val.toUpperCase() === val, 'Code must be uppercase.'),
+  description: z.string().min(3, 'Description is required.'),
   discountType: z.enum(['percentage', 'fixed', 'free_shipping']),
-  discountValue: z.coerce.number().min(0, 'El valor no puede ser negativo.'),
+  discountValue: z.coerce.number().min(0, 'Value cannot be negative.'),
   minPurchase: z.coerce.number().min(0).optional(),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
@@ -64,7 +63,7 @@ const couponSchema = z.object({
   }
   return true;
 }, {
-  message: 'El porcentaje no puede ser mayor que 100.',
+  message: 'Percentage cannot be greater than 100.',
   path: ['discountValue'],
 });
 
@@ -142,8 +141,8 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Información del Cupón</CardTitle>
-            <CardDescription>Define el código, la descripción y el beneficio que ofrece (porcentaje, cantidad fija o envío gratis).</CardDescription>
+            <CardTitle>Coupon Information</CardTitle>
+            <CardDescription>Define coupon code, description, and the benefit it offers (percentage, fixed discount, or free shipping).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -151,16 +150,16 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Código del Cupón</FormLabel>
+                  <FormLabel>Coupon Code</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="EJEMPLO: ENVIOGRATIS24, VIP10"
+                      placeholder="EXAMPLE: FREESHIP24, VIP10"
                       onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                       className="font-mono uppercase font-bold"
                     />
                   </FormControl>
-                  <FormDescription>Código que el cliente introducirá en el checkout (siempre en mayúsculas).</FormDescription>
+                  <FormDescription>Code customers enter at checkout (always in uppercase).</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -171,11 +170,11 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descripción</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Ej: Envío gratis en pedidos superiores a 20€" />
+                    <Input {...field} placeholder="E.g., Free shipping on orders over €20" />
                   </FormControl>
-                  <FormDescription>Descripción descriptiva para tu control interno en el panel.</FormDescription>
+                  <FormDescription>Internal descriptive label for admin dashboard tracking.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -187,7 +186,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                 name="discountType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Beneficio</FormLabel>
+                    <FormLabel>Benefit Type</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         field.onChange(val);
@@ -203,9 +202,9 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="percentage">Porcentaje de Descuento (%)</SelectItem>
-                        <SelectItem value="fixed">Cantidad Fija de Descuento (€)</SelectItem>
-                        <SelectItem value="free_shipping">🚚 Envío Gratis (100% de portes bonificados)</SelectItem>
+                        <SelectItem value="percentage">Percentage Discount (%)</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount Discount (€)</SelectItem>
+                        <SelectItem value="free_shipping">🚚 Free Shipping (100% delivery cost covered)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -219,9 +218,9 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                     <Truck className="h-5 w-5" />
                   </div>
                   <div className="text-xs space-y-0.5">
-                    <p className="font-semibold text-emerald-800 dark:text-emerald-300">Cupón de Envío Gratis</p>
+                    <p className="font-semibold text-emerald-800 dark:text-emerald-300">Free Shipping Coupon</p>
                     <p className="text-muted-foreground">
-                      Bonificará el 100% del coste de transporte calculado por Packlink PRO.
+                      Covers 100% of the shipping cost calculated via Packlink PRO.
                     </p>
                   </div>
                 </div>
@@ -232,15 +231,15 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        {discountType === 'percentage' ? 'Porcentaje (%)' : 'Valor en Céntimos (€)'}
+                        {discountType === 'percentage' ? 'Percentage (%)' : 'Value in Cents (€)'}
                       </FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
                       <FormDescription>
                         {discountType === 'percentage'
-                          ? 'Introduce el porcentaje (ej: 10 para 10% de descuento)'
-                          : 'Introduce el importe en céntimos (ej: 500 para 5.00€)'}
+                          ? 'Enter the percentage (e.g. 10 for 10% off)'
+                          : 'Enter amount in cents (e.g. 500 for €5.00)'}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -251,12 +250,12 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
           </CardContent>
         </Card>
 
-        {/* LÍMITES Y USOS */}
+        {/* USAGE LIMITS & RULES */}
         <Card>
           <CardHeader>
-            <CardTitle>Límites de Uso y Reglas</CardTitle>
+            <CardTitle>Usage Limits & Rules</CardTitle>
             <CardDescription>
-              Configura si el cupón es de uso único, tiene un número máximo de usos o es ilimitado.
+              Configure whether the coupon is single-use, has a max redemption limit, or is unlimited.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -265,7 +264,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
               name="usageLimitType"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel className="text-base font-semibold">Tipo de Disponibilidad / Límite de Usos</FormLabel>
+                  <FormLabel className="text-base font-semibold">Availability Type / Usage Limit</FormLabel>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                       type="button"
@@ -280,8 +279,8 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                           : 'border-border hover:border-primary/40 bg-card'
                       )}
                     >
-                      <span className="font-semibold text-sm">Ilimitado</span>
-                      <span className="text-xs text-muted-foreground mt-1">Sin límite de veces. Se puede usar siempre mientras esté activo.</span>
+                      <span className="font-semibold text-sm">Unlimited</span>
+                      <span className="text-xs text-muted-foreground mt-1">No limit. Can be used any number of times while active.</span>
                     </button>
 
                     <button
@@ -297,8 +296,8 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                           : 'border-border hover:border-primary/40 bg-card'
                       )}
                     >
-                      <span className="font-semibold text-sm">Uso Único Global</span>
-                      <span className="text-xs text-muted-foreground mt-1">Solo 1 canje en toda la tienda. El primer cliente que lo use lo agota.</span>
+                      <span className="font-semibold text-sm">Single Use (Global)</span>
+                      <span className="text-xs text-muted-foreground mt-1">Only 1 redemption store-wide. First customer to use it redeems it.</span>
                     </button>
 
                     <button
@@ -316,8 +315,8 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                           : 'border-border hover:border-primary/40 bg-card'
                       )}
                     >
-                      <span className="font-semibold text-sm">Hasta un número de usos</span>
-                      <span className="text-xs text-muted-foreground mt-1">Define un cupo máximo de canjes (ej: los primeros 20 o 50 pedidos).</span>
+                      <span className="font-semibold text-sm">Max Redemptions</span>
+                      <span className="text-xs text-muted-foreground mt-1">Set a total redemption cap (e.g. first 20 or 50 orders).</span>
                     </button>
                   </div>
                   <FormMessage />
@@ -331,12 +330,12 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                 name="usageLimit"
                 render={({ field }) => (
                   <FormItem className="rounded-lg border p-4 bg-muted/20">
-                    <FormLabel>Número Máximo de Usos Totales</FormLabel>
+                    <FormLabel>Maximum Total Redemptions</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} placeholder="Ej: 50" />
+                      <Input type="number" min={1} {...field} placeholder="E.g., 50" />
                     </FormControl>
                     <FormDescription>
-                      El cupón se desactivará automáticamente cuando alcance este número de canjes.
+                      The coupon will automatically deactivate once it reaches this number of uses.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -350,9 +349,9 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base font-medium">Un solo uso por cliente</FormLabel>
+                    <FormLabel className="text-base font-medium">One use per customer</FormLabel>
                     <FormDescription>
-                      Si se activa, cada usuario registrado solo podrá canjear este cupón una única vez en su cuenta.
+                      If enabled, each registered customer can only redeem this coupon once.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -367,12 +366,12 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
               name="minPurchase"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Compra Mínima Requerida (en céntimos)</FormLabel>
+                  <FormLabel>Minimum Purchase Required (in cents)</FormLabel>
                   <FormControl>
                     <Input type="number" min={0} {...field} placeholder="0" />
                   </FormControl>
                   <FormDescription>
-                    Subtotal mínimo del carrito necesario para aplicar el cupón. Pon 0 para que no requiera compra mínima (ej: 2000 = 20.00€).
+                    Minimum cart subtotal required to apply the coupon. Set 0 for no minimum (e.g. 2000 = €20.00).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -385,7 +384,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                 name="startDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Fecha de Inicio (Opcional)</FormLabel>
+                    <FormLabel>Start Date (Optional)</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -397,9 +396,9 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                             )}
                           >
                             {field.value ? (
-                              format(field.value, 'PPP', { locale: es })
+                              format(field.value, 'PPP')
                             ) : (
-                              <span>Válido desde ya</span>
+                              <span>Valid immediately</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -414,7 +413,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>A partir de qué día se puede empezar a canjear.</FormDescription>
+                    <FormDescription>Starting date when the coupon becomes active.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -425,7 +424,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                 name="endDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Fecha de Fin / Caducidad (Opcional)</FormLabel>
+                    <FormLabel>Expiration Date (Optional)</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -437,9 +436,9 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                             )}
                           >
                             {field.value ? (
-                              format(field.value, 'PPP', { locale: es })
+                              format(field.value, 'PPP')
                             ) : (
-                              <span>Sin fecha de caducidad</span>
+                              <span>No expiration date</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -454,7 +453,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>Día en que el cupón deja de ser válido.</FormDescription>
+                    <FormDescription>Date after which the coupon expires.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -467,9 +466,9 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base font-medium">Cupón Activo</FormLabel>
+                    <FormLabel className="text-base font-medium">Active Coupon</FormLabel>
                     <FormDescription>
-                      Los clientes solo podrán aplicar el código si está activo.
+                      Customers can only apply this code if active.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -484,7 +483,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
         <div className="flex justify-end gap-3">
           <Button type="submit" disabled={isSaving} size="lg">
             <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Guardando...' : 'Guardar Cupón'}
+            {isSaving ? 'Saving...' : 'Save Coupon'}
           </Button>
         </div>
       </form>

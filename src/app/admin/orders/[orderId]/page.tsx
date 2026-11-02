@@ -58,12 +58,12 @@ export default function OrderDetailPage() {
   if (!order) {
      return (
         <div className="text-center space-y-4 py-10">
-            <h2 className="text-2xl font-bold">Pedido no encontrado</h2>
-            <p className="text-muted-foreground">No hemos podido encontrar un pedido con el ID: {orderId}</p>
+            <h2 className="text-2xl font-bold">Order not found</h2>
+            <p className="text-muted-foreground">Could not find an order with ID: {orderId}</p>
             <Button asChild variant="outline">
                 <Link href="/admin/orders">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a Todos los Pedidos
+                    Back to All Orders
                 </Link>
             </Button>
         </div>

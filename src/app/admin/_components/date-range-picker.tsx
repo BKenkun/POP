@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { addDays, format, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
@@ -39,25 +39,25 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
 
    const formatDateRange = (range: DateRange | undefined) => {
-        if (!range?.from) return 'Selecciona un rango';
-        if (!range.to) return format(range.from, 'LLL dd, y', { locale: es });
-        return `${format(range.from, 'LLL dd, y', { locale: es })} - ${format(range.to, 'LLL dd, y', { locale: es })}`;
+        if (!range?.from) return 'Select date range';
+        if (!range.to) return format(range.from, 'LLL dd, y', { locale: enUS });
+        return `${format(range.from, 'LLL dd, y', { locale: enUS })} - ${format(range.to, 'LLL dd, y', { locale: enUS })}`;
    }
    
     const today = new Date();
     const presets = [
-        { label: 'Hoy', range: { from: today, to: today } },
-        { label: 'Ayer', range: { from: addDays(today, -1), to: addDays(today, -1) } },
-        { label: 'Últimos 7 días', range: { from: addDays(today, -6), to: today } },
-        { label: 'Últimos 15 días', range: { from: addDays(today, -14), to: today } },
-        { label: 'Últimos 30 días', range: { from: addDays(today, -29), to: today } },
-        { label: 'Este mes', range: { from: startOfMonth(today), to: today } },
-        { label: 'Mes pasado', range: { from: startOfMonth(addDays(today, -30)), to: endOfMonth(addDays(today, -30)) }},
-        { label: 'Últimos 90 días', range: { from: addDays(today, -89), to: today } },
-        { label: 'Últimos 120 días', range: { from: addDays(today, -119), to: today } },
-        { label: 'Este año', range: { from: startOfYear(today), to: today } },
-        { label: 'Año pasado', range: { from: startOfYear(subYears(today, 1)), to: endOfYear(subYears(today, 1)) } },
-        { label: 'Histórico', range: undefined },
+        { label: 'Today', range: { from: today, to: today } },
+        { label: 'Yesterday', range: { from: addDays(today, -1), to: addDays(today, -1) } },
+        { label: 'Last 7 days', range: { from: addDays(today, -6), to: today } },
+        { label: 'Last 15 days', range: { from: addDays(today, -14), to: today } },
+        { label: 'Last 30 days', range: { from: addDays(today, -29), to: today } },
+        { label: 'This month', range: { from: startOfMonth(today), to: today } },
+        { label: 'Last month', range: { from: startOfMonth(addDays(today, -30)), to: endOfMonth(addDays(today, -30)) }},
+        { label: 'Last 90 days', range: { from: addDays(today, -89), to: today } },
+        { label: 'Last 120 days', range: { from: addDays(today, -119), to: today } },
+        { label: 'This year', range: { from: startOfYear(today), to: today } },
+        { label: 'Last year', range: { from: startOfYear(subYears(today, 1)), to: endOfYear(subYears(today, 1)) } },
+        { label: 'All time', range: undefined },
     ];
     
     const DatePresetsColumn = ({ period }: { period: 'A' | 'B' }) => {
@@ -98,9 +98,9 @@ export function DateRangePicker({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">
             <div className="flex items-center justify-between p-4 border-b">
-                <h4 className="font-medium">Seleccionar Fechas</h4>
+                <h4 className="font-medium">Select Dates</h4>
                 <div className="flex items-center space-x-2">
-                    <Label htmlFor="compare-mode">Comparar</Label>
+                    <Label htmlFor="compare-mode">Compare</Label>
                     <Switch
                         id="compare-mode"
                         checked={isCompareEnabled}
@@ -120,7 +120,7 @@ export function DateRangePicker({
                         selected={date}
                         onSelect={setDate}
                         numberOfMonths={isCompareEnabled ? 1 : 2}
-                        locale={es}
+                        locale={enUS}
                     />
                 </div>
 
@@ -135,7 +135,7 @@ export function DateRangePicker({
                             selected={compareDate}
                             onSelect={setCompareDate}
                             numberOfMonths={1}
-                            locale={es}
+                            locale={enUS}
                         />
                     </div>
                 )}

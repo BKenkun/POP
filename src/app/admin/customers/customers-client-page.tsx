@@ -58,13 +58,13 @@ export default function AdminCustomersClientPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Clientes</h1>
+        <h1 className="text-3xl font-bold">Customers</h1>
       </div>
       
       <Card>
         <CardHeader>
-            <CardTitle>Listado de Usuarios Registrados</CardTitle>
-            <CardDescription>Aquí puedes ver y gestionar todos los clientes de la tienda.</CardDescription>
+            <CardTitle>Registered Users List</CardTitle>
+            <CardDescription>View and manage all store customers here.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (
@@ -74,17 +74,17 @@ export default function AdminCustomersClientPage() {
             ) : !customers || customers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-60 text-center border-dashed border-2 rounded-lg">
                     <Users className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
-                    <h3 className="mt-4 text-lg font-semibold">No hay clientes registrados</h3>
-                    <p className="text-muted-foreground">Los nuevos usuarios aparecerán aquí cuando se registren.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No registered customers</h3>
+                    <p className="text-muted-foreground">New users will appear here when they register.</p>
                 </div>
             ) : (
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead>Cliente</TableHead>
+                        <TableHead>Customer</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -95,26 +95,26 @@ export default function AdminCustomersClientPage() {
                                 <AvatarImage src={customer.photoURL} alt={customer.displayName || customer.email} />
                                 <AvatarFallback>{(customer.displayName || customer.email)?.charAt(0).toUpperCase()}</AvatarFallback>
                            </Avatar>
-                           <span className="font-medium">{customer.displayName || 'Sin nombre'}</span>
+                           <span className="font-medium">{customer.displayName || 'Unnamed'}</span>
                         </TableCell>
                         <TableCell>{customer.email}</TableCell>
                         <TableCell>
                              <Badge variant={customer.disabled ? 'destructive' : 'default'}>
-                                {customer.disabled ? 'Deshabilitado' : 'Activo'}
+                                {customer.disabled ? 'Disabled' : 'Active'}
                              </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                            <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Abrir menú</span>
+                                        <span className="sr-only">Open menu</span>
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                    <DropdownMenuItem disabled>Ver Pedidos</DropdownMenuItem>
-                                    <DropdownMenuItem disabled>Deshabilitar Usuario</DropdownMenuItem>
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem disabled>View Orders</DropdownMenuItem>
+                                    <DropdownMenuItem disabled>Disable User</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>

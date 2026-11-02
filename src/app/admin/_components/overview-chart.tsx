@@ -38,11 +38,11 @@ interface OverviewChartProps {
 
 const chartConfig = {
   proyectados: {
-    label: 'Proyectados',
+    label: 'Projected',
     color: 'hsl(var(--chart-2))',
   },
   recogidos: {
-    label: 'Recogidos',
+    label: 'Collected',
     color: 'hsl(var(--chart-1))',
   },
 } satisfies ChartConfig;
@@ -52,13 +52,13 @@ export function OverviewChart({ data }: OverviewChartProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Visión General de Ingresos</CardTitle>
+                <CardTitle>Revenue Overview</CardTitle>
                  <CardDescription>
-                    No hay datos de ingresos para el período seleccionado.
+                    No revenue data for the selected period.
                 </CardDescription>
             </CardHeader>
             <CardContent className="h-[350px] flex items-center justify-center">
-                 <p className="text-muted-foreground">Selecciona otro rango de fechas o espera a que haya nuevos pedidos.</p>
+                 <p className="text-muted-foreground">Select another date range or wait for new orders.</p>
             </CardContent>
         </Card>
     );
@@ -68,9 +68,9 @@ export function OverviewChart({ data }: OverviewChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Visión General de Ingresos</CardTitle>
+        <CardTitle>Revenue Overview</CardTitle>
         <CardDescription>
-          Ingresos proyectados vs. recogidos en el período seleccionado.
+          Projected vs. collected revenue in the selected period.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -88,7 +88,7 @@ export function OverviewChart({ data }: OverviewChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => new Date(value).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+              tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             />
             <YAxis
               tickLine={false}
@@ -99,7 +99,7 @@ export function OverviewChart({ data }: OverviewChartProps) {
              <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(label) => new Date(label).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    labelFormatter={(label) => new Date(label).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     formatter={(value, name) => (
                       <div className="flex flex-col">
                         <span className="font-bold">{formatPrice(Number(value) * 100)}</span>

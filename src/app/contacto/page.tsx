@@ -22,10 +22,10 @@ import { useState } from 'react';
 import { useTranslation } from '@/context/language-context';
 
 const contactSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres.'),
-  email: z.string().email('Por favor, introduce un email válido.'),
-  subject: z.string().min(5, 'El asunto debe tener al menos 5 caracteres.'),
-  message: z.string().min(10, 'El mensaje debe tener al menos 10 caracteres.'),
+  name: z.string().min(2, 'Name must have at least 2 characters.'),
+  email: z.string().email('Please enter a valid email address.'),
+  subject: z.string().min(5, 'Subject must have at least 5 characters.'),
+  message: z.string().min(10, 'Message must have at least 10 characters.'),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;

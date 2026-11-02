@@ -1,7 +1,7 @@
 import CheckoutClientPage from './checkout-client-page';
 
 export const metadata = {
-  title: 'Finalizar Reserva | Popper Online',
+  title: 'Complete Checkout | PuroRush',
 };
 
 export default function CheckoutPage() {

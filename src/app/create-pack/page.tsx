@@ -55,7 +55,7 @@ export default function CreatePackPage() {
             {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <p className="ml-4 text-muted-foreground">Cargando productos...</p>
+                    <p className="ml-4 text-muted-foreground">{t('common.loading') || 'Loading products...'}</p>
                 </div>
             ) : (
                 <CustomPackBuilder 

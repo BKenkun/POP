@@ -12,7 +12,7 @@ import type { SiteSettings } from '@/app/actions/site-settings';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
@@ -58,14 +58,14 @@ export default function AdminWebPage() {
     try {
       await updateSiteSettings(settings);
       toast({
-        title: "Ajustes Guardados",
-        description: "La configuración de la web ha sido actualizada.",
+        title: "Settings Saved",
+        description: "Website settings have been updated.",
       });
     } catch (error) {
       console.error(error);
       toast({
         title: "Error",
-        description: "No se pudieron guardar los cambios.",
+        description: "Could not save changes.",
         variant: "destructive",
       });
     } finally {
@@ -82,37 +82,37 @@ export default function AdminWebPage() {
   }
   
   if (!settings) {
-    return <div>Error al cargar la configuración.</div>;
+    return <div>Failed to load settings.</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Personalización de la Web</h1>
-          <p className="text-muted-foreground">Activa y desactiva funcionalidades globales de tu tienda.</p>
+          <h1 className="text-3xl font-bold">Website Customization</h1>
+          <p className="text-muted-foreground">Enable and disable global store features.</p>
         </div>
          <Button onClick={handleSaveChanges} disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
-            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+            {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
 
        <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2"><PackagePlus />Dosis Mensual</CardTitle>
+            <CardTitle className="flex items-center gap-2"><PackagePlus />Monthly Dose</CardTitle>
             <CardDescription>
-                Activa o desactiva la funcionalidad de suscripción mensual en toda la tienda.
+                Enable or disable monthly subscription features across the store.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
                 <div className="space-y-0.5">
                     <Label htmlFor="subscription-toggle" className="text-base font-medium">
-                        Mostrar funcionalidad de "Dosis Mensual"
+                        Show "Monthly Dose" feature
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                       Si está inactivo, los enlaces y páginas de suscripción no serán visibles para los clientes.
+                       When inactive, subscription links and pages will not be visible to customers.
                     </p>
                 </div>
                  <Switch
@@ -126,19 +126,19 @@ export default function AdminWebPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Construction />Modo "En Construcción"</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Construction />"Under Construction" Mode</CardTitle>
             <CardDescription>
-                Activa una página de aterrizaje para ocultar la web al público mientras realizas cambios.
+                Show a landing page to hide the website from the public while making changes.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
                 <div className="space-y-0.5">
                     <Label htmlFor="construction-toggle" className="text-base font-medium">
-                        Activar modo "En construcción"
+                        Enable "Under construction" mode
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                       Los visitantes verán la página de mantenimiento. Los administradores podrán seguir navegando la web.
+                       Visitors will see the maintenance page. Administrators will still be able to browse the site.
                     </p>
                 </div>
                  <Switch
@@ -153,7 +153,7 @@ export default function AdminWebPage() {
                      <div className="flex items-center justify-between">
                          <div className="space-y-0.5">
                             <Label htmlFor="countdown-toggle" className="text-base font-medium">
-                                Mostrar cuenta regresiva
+                                Show countdown timer
                             </Label>
                         </div>
                         <Switch
@@ -165,7 +165,7 @@ export default function AdminWebPage() {
                      
                       {settings.showCountdown && (
                         <div className="space-y-2 pt-2 border-t">
-                            <Label>Fecha de lanzamiento</Label>
+                            <Label>Launch date</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -176,7 +176,7 @@ export default function AdminWebPage() {
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {settings.launchDate ? format(new Date(settings.launchDate), "dd/MM/yyyy, HH:mm") : <span>Selecciona una fecha y hora</span>}
+                                        {settings.launchDate ? format(new Date(settings.launchDate), "MM/dd/yyyy, HH:mm") : <span>Select date and time</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
@@ -185,10 +185,10 @@ export default function AdminWebPage() {
                                         selected={settings.launchDate ? new Date(settings.launchDate) : undefined}
                                         onSelect={handleDateSelect}
                                         initialFocus
-                                        locale={es}
+                                        locale={enUS}
                                     />
                                      <div className="p-3 border-t border-border">
-                                        <Label htmlFor="time" className="text-sm font-medium">Hora de lanzamiento</Label>
+                                        <Label htmlFor="time" className="text-sm font-medium">Launch time</Label>
                                         <Input
                                             id="time"
                                             type="time"

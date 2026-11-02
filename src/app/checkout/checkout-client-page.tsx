@@ -82,14 +82,14 @@ interface Address {
 
 const getCheckoutSchema = (t: (key: string) => string) =>
   z.object({
-    name: z.string().min(3, t('checkout.form_errors.name_required') || 'El nombre completo es obligatorio.'),
-    email: z.string().email(t('checkout.form_errors.email_invalid') || 'Introduce un correo electrónico válido.'),
-    phone: z.string().min(9, t('checkout.form_errors.phone_required') || 'El teléfono debe tener al menos 9 dígitos.'),
-    street: z.string().min(5, t('checkout.form_errors.street_required') || 'La calle y número son obligatorios.'),
-    city: z.string().min(2, t('checkout.form_errors.city_required') || 'La ciudad es obligatoria.'),
-    state: z.string().min(2, t('checkout.form_errors.state_required') || 'La provincia / estado es obligatorio.'),
-    postalCode: z.string().min(3, t('checkout.form_errors.zip_required') || 'El código postal es obligatorio.'),
-    country: z.string().min(2, t('checkout.form_errors.country_required') || 'El país es obligatorio.'),
+    name: z.string().min(3, t('checkout.form_errors.name_required') || 'Full name is required.'),
+    email: z.string().email(t('checkout.form_errors.email_invalid') || 'Please enter a valid email address.'),
+    phone: z.string().min(9, t('checkout.form_errors.phone_required') || 'Phone number must have at least 9 digits.'),
+    street: z.string().min(5, t('checkout.form_errors.street_required') || 'Street and house number are required.'),
+    city: z.string().min(2, t('checkout.form_errors.city_required') || 'City is required.'),
+    state: z.string().min(2, t('checkout.form_errors.state_required') || 'State / province is required.'),
+    postalCode: z.string().min(3, t('checkout.form_errors.zip_required') || 'Postal code is required.'),
+    country: z.string().min(2, t('checkout.form_errors.country_required') || 'Country is required.'),
     saveAddress: z.boolean().default(false),
   });
 
@@ -97,15 +97,15 @@ type CheckoutFormValues = z.infer<ReturnType<typeof getCheckoutSchema>>;
 
 function checkoutFieldLabels(t: (key: string) => string): Record<keyof CheckoutFormValues, string> {
   return {
-    name: t('checkout.fullname_label'),
-    email: t('checkout.email_label'),
-    phone: t('checkout.phone_label'),
-    street: t('checkout.street_label'),
-    city: t('checkout.city_label'),
-    state: t('checkout.state_label'),
-    postalCode: t('checkout.zip_label'),
-    country: t('checkout.country_label'),
-    saveAddress: t('checkout.save_address_label'),
+    name: t('checkout.fullname_label') || 'Full Name',
+    email: t('checkout.email_label') || 'Email Address',
+    phone: t('checkout.phone_label') || 'Phone Number',
+    street: t('checkout.street_label') || 'Street Address',
+    city: t('checkout.city_label') || 'City',
+    state: t('checkout.state_label') || 'State / Province',
+    postalCode: t('checkout.zip_label') || 'Postal Code',
+    country: t('checkout.country_label') || 'Country',
+    saveAddress: t('checkout.save_address_label') || 'Save this address',
   };
 }
 
@@ -116,7 +116,7 @@ function zodIssuesToLines(
   const labels = checkoutFieldLabels(t);
   return issues.map((issue) => {
     const path = issue.path[0] as keyof CheckoutFormValues | undefined;
-    const label = path && path in labels ? labels[path] : String(path ?? 'campo');
+    const label = path && path in labels ? labels[path] : String(path ?? 'field');
     return `${label}: ${issue.message}`;
   });
 }
@@ -251,39 +251,39 @@ export default function CheckoutClientPage() {
       const q = query(collection(db, 'coupons'), where('code', '==', code));
       const snap = await getDocs(q);
       if (snap.empty) {
-        throw new Error(t('checkout.toasts.coupon_error_invalid') || 'Cupón no válido o no encontrado.');
+        throw new Error(t('checkout.toasts.coupon_error_invalid') || 'Invalid coupon or not found.');
       }
       const coupon = { id: snap.docs[0].id, ...snap.docs[0].data() } as Coupon;
       if (!coupon.isActive) {
-        throw new Error(t('checkout.toasts.coupon_error_inactive') || 'El cupón no está activo en este momento.');
+        throw new Error(t('checkout.toasts.coupon_error_inactive') || 'This coupon is not currently active.');
       }
 
-      // Validar fechas de vigencia
+      // Validate validity dates
       if (coupon.startDate && new Date(coupon.startDate) > new Date()) {
-        throw new Error('Este cupón aún no está disponible.');
+        throw new Error('This coupon is not available yet.');
       }
       if (coupon.endDate && new Date(coupon.endDate) < new Date()) {
-        throw new Error('Este cupón ha caducado.');
+        throw new Error('This coupon has expired.');
       }
 
-      // Validar límite de usos (uso único o número máximo de usos)
+      // Validate usage limits
       if (coupon.usageLimit && coupon.usageLimit > 0 && (coupon.usageCount || 0) >= coupon.usageLimit) {
         throw new Error(
           coupon.usageLimit === 1
-            ? 'Este cupón de uso único ya ha sido canjeado anteriormente.'
-            : `Este cupón ha alcanzado el límite máximo permitido de ${coupon.usageLimit} usos.`
+            ? 'This single-use coupon has already been redeemed.'
+            : `This coupon has reached the maximum limit of ${coupon.usageLimit} uses.`
         );
       }
 
-      // Validar compra mínima
+      // Validate minimum purchase
       if (coupon.minPurchase && coupon.minPurchase > 0 && cartTotal < coupon.minPurchase) {
-        throw new Error(`Este cupón requiere un importe mínimo de compra de ${formatPrice(coupon.minPurchase)}.`);
+        throw new Error(`This coupon requires a minimum purchase of ${formatPrice(coupon.minPurchase)}.`);
       }
 
-      // Validar 1 uso por cliente si está marcado
+      // Validate 1 per user
       if (coupon.onePerUser) {
         if (!user) {
-          throw new Error('Este cupón exclusivo de 1 uso por cliente requiere que inicies sesión o crees una cuenta.');
+          throw new Error('This exclusive coupon (1 use per customer) requires you to log in or create an account.');
         }
         const userOrdersSnap = await getDocs(
           query(
@@ -292,7 +292,7 @@ export default function CheckoutClientPage() {
           )
         );
         if (!userOrdersSnap.empty) {
-          throw new Error('Ya has utilizado este cupón en un pedido anterior. Solo se permite 1 uso por cliente.');
+          throw new Error('You have already used this coupon on a previous order. Only 1 use per customer is allowed.');
         }
       }
 
@@ -300,8 +300,8 @@ export default function CheckoutClientPage() {
         setAppliedCoupon(coupon);
         setCouponDiscount(0);
         toast({
-          title: '¡Envío Gratis aplicado!',
-          description: `El cupón ${coupon.code} bonifica los gastos de envío al 100%.`,
+          title: 'Free Shipping Applied!',
+          description: `Coupon ${coupon.code} grants 100% free delivery.`,
         });
       } else {
         const discount = coupon.discountType === 'percentage'
@@ -310,13 +310,13 @@ export default function CheckoutClientPage() {
         setAppliedCoupon(coupon);
         setCouponDiscount(Math.round(discount));
         toast({
-          title: t('checkout.toasts.coupon_applied_title') || 'Cupón aplicado',
-          description: t('checkout.toasts.coupon_applied_desc', { discount: formatPrice(discount) }) || `Descuento de ${formatPrice(discount)}`,
+          title: t('checkout.toasts.coupon_applied_title') || 'Coupon Applied',
+          description: t('checkout.toasts.coupon_applied_desc', { discount: formatPrice(discount) }) || `Discount of ${formatPrice(discount)}`,
         });
       }
     } catch (e: any) {
       toast({
-        title: t('checkout.toasts.coupon_error_title') || 'Error de cupón',
+        title: t('checkout.toasts.coupon_error_title') || 'Coupon Error',
         description: e.message,
         variant: 'destructive',
       });
@@ -333,12 +333,12 @@ export default function CheckoutClientPage() {
     setStep(next);
   };
 
-  /** Maneja el inicio de sesión rápido en pantalla 2 */
+  /** Handles quick inline login in step 2 */
   const handleInlineLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
     if (!loginEmail.trim() || !loginPassword.trim()) {
-      setLoginError('Por favor introduce tu email y contraseña.');
+      setLoginError('Please enter your email and password.');
       return;
     }
     setLoginLoading(true);
@@ -355,24 +355,24 @@ export default function CheckoutClientPage() {
         form.setValue('name', cred.user.displayName);
       }
       toast({
-        title: '¡Sesión iniciada!',
-        description: 'Tus datos han sido cargados. Puedes revisar la dirección y continuar.',
+        title: 'Logged In Successfully!',
+        description: 'Your details have been loaded. You can verify your address and continue.',
       });
       setLoginLoading(false);
     } catch (err: any) {
       console.error('Error logging in inline:', err);
-      let msg = 'Email o contraseña incorrectos.';
+      let msg = 'Incorrect email or password.';
       if (err.code === 'auth/user-not-found') {
-        msg = 'No existe ninguna cuenta con este email. Puedes crear una en la opción "Crear cuenta".';
+        msg = 'No account found with this email. You can create one by selecting "Create an account".';
       } else if (err.code === 'auth/wrong-password') {
-        msg = 'La contraseña no es correcta.';
+        msg = 'Incorrect password.';
       }
       setLoginError(msg);
       setLoginLoading(false);
     }
   };
 
-  /** Realiza el cálculo de tarifas Packlink */
+  /** Calculates Packlink shipping rates */
   const calculateShippingRate = async (values: CheckoutFormValues): Promise<boolean> => {
     const subtotalAfterDiscounts = cartTotal - volumeDiscount - couponDiscount;
     setPacklinkLoading(true);
@@ -385,11 +385,11 @@ export default function CheckoutClientPage() {
       };
       const countryText = String(values.country || '').trim().toUpperCase();
       const countryCode = countryText.length === 2 ? countryText : countryNames[countryText];
-      if (!countryCode) throw new Error('Escribe el país de entrega con su nombre habitual o código ISO de dos letras (ej: España, ES).');
+      if (!countryCode) throw new Error('Please enter the delivery country name or its 2-letter ISO code (e.g. Spain, ES, UK).');
       
       const result = await getPacklinkShippingQuotes({ postalCode: values.postalCode, country: countryCode });
       if (!result.success || !result.quotes?.length) {
-        throw new Error(result.message || 'Packlink no devolvió tarifas para este código postal.');
+        throw new Error(result.message || 'Packlink returned no shipping rates for this postal code.');
       }
       const validQuotes = result.quotes.filter((quote) => Number.isFinite(quote.price) && quote.price >= 0);
       const isFreeShipping = subtotalAfterDiscounts >= FREE_SHIPPING_THRESHOLD || appliedCoupon?.discountType === 'free_shipping';
@@ -397,14 +397,14 @@ export default function CheckoutClientPage() {
         ? validQuotes.filter((quote) => quote.price > 0)
         : validQuotes;
       if (!payableQuotes.length) {
-        throw new Error('No se pudo obtener una tarifa de envío de Packlink para este destino.');
+        throw new Error('Could not obtain a Packlink shipping rate for this destination.');
       }
       setPacklinkQuote(payableQuotes[0]);
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo calcular el envío.';
+      const message = error instanceof Error ? error.message : 'Could not calculate shipping cost.';
       setStep2ValidationLines([message]);
-      toast({ title: 'No se pudo calcular el envío', description: message, variant: 'destructive' });
+      toast({ title: 'Could Not Calculate Shipping', description: message, variant: 'destructive' });
       return false;
     } finally {
       setPacklinkLoading(false);
@@ -426,7 +426,7 @@ export default function CheckoutClientPage() {
       return;
     }
     if (!finalTotals.isFreeShipping && (!packlinkQuote || !Number.isFinite(packlinkQuote.price) || packlinkQuote.price <= 0)) {
-      setPayStepDetail({ title: 'Falta calcular el envío', items: ['Vuelve a los datos de entrega y calcula una tarifa de Packlink PRO antes de pagar.'] });
+      setPayStepDetail({ title: 'Shipping rate required', items: ['Please return to delivery details and calculate a Packlink PRO shipping rate before proceeding to payment.'] });
       return;
     }
 
@@ -488,7 +488,7 @@ export default function CheckoutClientPage() {
 
       const result = await createCheckoutOrder(orderPayload);
       if (!result.success) {
-        throw new Error(result.error || 'No se pudo guardar el pedido en Firestore.');
+        throw new Error(result.error || 'Could not save the order.');
       }
     } catch (e: any) {
       const msg = e?.message || String(e);
@@ -508,7 +508,7 @@ export default function CheckoutClientPage() {
       if (selectedPaymentMethod === 'nowpayments') {
         const result = await createNowPaymentsInvoice(uniqueId);
         if (!result.success || !result.invoiceUrl) {
-          throw new Error(result.message || 'No se pudo iniciar el pago con NOWPayments.');
+          throw new Error(result.message || 'Could not initiate payment with NOWPayments.');
         }
         window.location.href = result.invoiceUrl;
         return;
@@ -523,7 +523,7 @@ export default function CheckoutClientPage() {
       );
 
       if (!hilowResult.success || !hilowResult.checkoutUrl) {
-        throw new Error(hilowResult.message || 'No se pudo iniciar el pago con tarjeta.');
+        throw new Error(hilowResult.message || 'Could not initiate credit/debit card payment.');
       }
       window.location.href = hilowResult.checkoutUrl;
     } catch (e: any) {
@@ -588,22 +588,22 @@ export default function CheckoutClientPage() {
     goToStep(2);
   };
 
-  /** Validar y avanzar desde la pantalla 2 */
+  /** Validate and advance from step 2 */
   const handleContinueFromStep2 = async () => {
     setStep2ValidationLines(null);
     setRegisterError(null);
 
-    // Si el usuario seleccionó la opción de iniciar sesión pero aún no está logueado:
+    // If user chose login mode but isn't logged in yet:
     if (!user && checkoutMode === 'login') {
       toast({
-        title: 'Inicia sesión primero',
-        description: 'Introduce tu correo y contraseña y pulsa "Iniciar sesión" o elige otra opción.',
+        title: 'Please Log In First',
+        description: 'Enter your email and password and click "Log In", or choose another option.',
         variant: 'destructive',
       });
       return;
     }
 
-    // Validar datos de envío del formulario
+    // Validate shipping details form
     const ok = await form.trigger();
     if (!ok) {
       const parsed = getCheckoutSchema(t).safeParse(form.getValues());
@@ -621,13 +621,13 @@ export default function CheckoutClientPage() {
 
     const values = form.getValues();
 
-    // Si el usuario eligió "Crear cuenta", la creamos ahora antes de continuar
+    // If user chose "Create account", create it now before continuing
     if (!user && checkoutMode === 'register') {
       if (!registerPassword || registerPassword.length < 6) {
-        setRegisterError('La contraseña debe tener al menos 6 caracteres.');
+        setRegisterError('Password must be at least 6 characters.');
         toast({
-          title: 'Contraseña requerida',
-          description: 'Crea una contraseña de al menos 6 caracteres para tu nueva cuenta.',
+          title: 'Password Required',
+          description: 'Create a password of at least 6 characters for your new account.',
           variant: 'destructive',
         });
         return;
@@ -639,7 +639,7 @@ export default function CheckoutClientPage() {
         const newUser = userCred.user;
         const idToken = await newUser.getIdToken();
 
-        // Crear documento del usuario en Firestore
+        // Create user document in Firestore
         await setDoc(doc(db, 'users', newUser.uid), {
           uid: newUser.uid,
           email: newUser.email,
@@ -649,7 +649,7 @@ export default function CheckoutClientPage() {
           addresses: [
             {
               id: `addr_${Date.now()}`,
-              alias: 'Principal',
+              alias: 'Primary',
               name: values.name,
               phone: values.phone,
               street: values.street,
@@ -662,7 +662,7 @@ export default function CheckoutClientPage() {
           ],
         });
 
-        // Crear cookie de sesión
+        // Create session cookie
         await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -670,20 +670,20 @@ export default function CheckoutClientPage() {
         });
 
         toast({
-          title: '¡Cuenta creada con éxito!',
-          description: 'Tus datos han quedado vinculados. ¡Acumularás puntos con este pedido!',
+          title: 'Account Created Successfully!',
+          description: 'Your details have been saved. You will earn loyalty points with this order!',
         });
       } catch (err: any) {
         console.error('Error creating user at checkout:', err);
-        let errorMsg = 'No se pudo crear la cuenta.';
+        let errorMsg = 'Could not create account.';
         if (err.code === 'auth/email-already-in-use') {
-          errorMsg = 'Ya existe una cuenta con este correo electrónico. Por favor selecciona "Iniciar sesión".';
+          errorMsg = 'An account already exists with this email. Please select "Log in".';
         } else if (err.code === 'auth/weak-password') {
-          errorMsg = 'La contraseña es demasiado débil (mínimo 6 caracteres).';
+          errorMsg = 'Password is too weak (minimum 6 characters).';
         }
         setRegisterError(errorMsg);
         toast({
-          title: 'Error al crear la cuenta',
+          title: 'Error Creating Account',
           description: errorMsg,
           variant: 'destructive',
         });
@@ -694,7 +694,7 @@ export default function CheckoutClientPage() {
       }
     }
 
-    // Calcular la tarifa de envío Packlink y pasar a paso 3
+    // Calculate Packlink shipping rate and move to step 3
     const calculated = await calculateShippingRate(values);
     if (calculated) {
       goToStep(3);
@@ -709,8 +709,8 @@ export default function CheckoutClientPage() {
       form.setValue('email', '');
       setCheckoutMode('guest');
       toast({
-        title: 'Sesión cerrada',
-        description: 'Ahora puedes realizar tu pedido como invitado o con otra cuenta.',
+        title: 'Signed Out',
+        description: 'You can now checkout as a guest or sign in with another account.',
       });
     } catch (err) {
       console.error('Error signing out:', err);
@@ -791,21 +791,21 @@ export default function CheckoutClientPage() {
             </Card>
           )}
 
-          {/* PASO 2: TUS DATOS (3 OPCIONES PARA CLIENTE / INVITADO) */}
+          {/* STEP 2: YOUR DETAILS (3 OPTIONS: LOGIN / REGISTER / GUEST) */}
           {step === 2 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl font-headline font-bold text-primary">
-                  {t('checkout.user_details_title') || 'Tus Datos de Entrega'}
+                  {t('checkout.user_details_title') || 'Your Delivery Details'}
                 </CardTitle>
                 <CardDescription>
                   {user
-                    ? 'Estás conectado con tu cuenta. Revisa o modifica los datos de entrega.'
-                    : 'Elige cómo deseas completar tu pedido: iniciando sesión, creando una cuenta o como invitado.'}
+                    ? 'You are signed in with your account. Review or edit your delivery details.'
+                    : 'Choose how you want to complete your order: log in, create an account, or checkout as a guest.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* SI YA ESTÁ LOGUEADO */}
+                {/* IF ALREADY LOGGED IN */}
                 {user ? (
                   <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -818,12 +818,12 @@ export default function CheckoutClientPage() {
                             {user.displayName || user.email}
                           </p>
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-950/50 dark:text-green-300">
-                            <CheckCircle2 className="mr-1 h-3 w-3" /> Cuenta Activa
+                            <CheckCircle2 className="mr-1 h-3 w-3" /> Active Account
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                           <Sparkles className="h-3 w-3 text-amber-500" />
-                          Este pedido se registrará en tu historial y sumará puntos de fidelidad.
+                          This order will be saved to your history and accumulate loyalty points.
                         </p>
                       </div>
                     </div>
@@ -834,14 +834,14 @@ export default function CheckoutClientPage() {
                       onClick={handleSignOut}
                       className="text-xs shrink-0"
                     >
-                      <LogOut className="mr-1 h-3.5 w-3.5" /> Cambiar / Pedir como invitado
+                      <LogOut className="mr-1 h-3.5 w-3.5" /> Switch / Checkout as guest
                     </Button>
                   </div>
                 ) : (
-                  /* SI NO ESTÁ LOGUEADO: SELECTOR DE 3 OPCIONES */
+                  /* IF NOT LOGGED IN: 3 OPTIONS SELECTOR */
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {/* Opción 1: Iniciar Sesión */}
+                      {/* Option 1: Log in */}
                       <button
                         type="button"
                         onClick={() => {
@@ -857,14 +857,14 @@ export default function CheckoutClientPage() {
                       >
                         <div className="flex items-center gap-2 mb-1.5 font-bold text-sm text-foreground">
                           <LogIn className="h-4 w-4 text-primary" />
-                          <span>1. Iniciar sesión</span>
+                          <span>1. Log in</span>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Accede a tu cuenta para usar tus direcciones y acumular puntos.
+                          Access your saved addresses and earn loyalty rewards.
                         </p>
                       </button>
 
-                      {/* Opción 2: Crear Cuenta */}
+                      {/* Option 2: Create Account */}
                       <button
                         type="button"
                         onClick={() => {
@@ -880,14 +880,14 @@ export default function CheckoutClientPage() {
                       >
                         <div className="flex items-center gap-2 mb-1.5 font-bold text-sm text-foreground">
                           <UserPlus className="h-4 w-4 text-primary" />
-                          <span>2. Crear una cuenta</span>
+                          <span>2. Create an account</span>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Crea tu perfil con este pedido y gana puntos de fidelidad.
+                          Save your profile with this order and earn loyalty points.
                         </p>
                       </button>
 
-                      {/* Opción 3: Pedir como Invitado */}
+                      {/* Option 3: Guest Checkout */}
                       <button
                         type="button"
                         onClick={() => {
@@ -903,39 +903,39 @@ export default function CheckoutClientPage() {
                       >
                         <div className="flex items-center gap-2 mb-1.5 font-bold text-sm text-foreground">
                           <UserCheck className="h-4 w-4 text-primary" />
-                          <span>3. Pedir como invitado</span>
+                          <span>3. Checkout as guest</span>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Sin contraseña ni registro. Solo los datos para enviarte el pedido.
+                          No password required. Just the details needed to ship your order.
                         </p>
                       </button>
                     </div>
 
-                    {/* VISTA SEGÚN LA OPCIÓN SELECCIONADA */}
+                    {/* VIEW BASED ON SELECTED OPTION */}
                     {checkoutMode === 'login' && (
                       <div className="rounded-xl border p-5 bg-card space-y-4">
                         <div className="flex items-center gap-2 font-semibold text-primary">
                           <LogIn className="h-5 w-5" />
-                          <h3>Acceder a tu cuenta</h3>
+                          <h3>Sign in to your account</h3>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Introduce tu correo y contraseña. Tras iniciar sesión, podrás verificar la dirección de envío y continuar con tus puntos acumulados.
+                          Enter your email and password. Once logged in, your saved details will load and you will earn points.
                         </p>
 
                         {loginError && (
                           <Alert variant="destructive">
                             <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Error de acceso</AlertTitle>
+                            <AlertTitle>Login Error</AlertTitle>
                             <AlertDescription>{loginError}</AlertDescription>
                           </Alert>
                         )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Correo Electrónico</label>
+                            <label className="text-sm font-medium">Email Address</label>
                             <Input
                               type="email"
-                              placeholder="tu@email.com"
+                              placeholder="you@email.com"
                               value={loginEmail}
                               onChange={(e) => setLoginEmail(e.target.value)}
                               disabled={loginLoading}
@@ -943,13 +943,13 @@ export default function CheckoutClientPage() {
                           </div>
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                              <label className="text-sm font-medium">Contraseña</label>
+                              <label className="text-sm font-medium">Password</label>
                               <Link
                                 href="/forgot-password"
                                 target="_blank"
                                 className="text-xs text-primary hover:underline"
                               >
-                                ¿Olvidaste tu contraseña?
+                                Forgot your password?
                               </Link>
                             </div>
                             <div className="relative">
@@ -986,7 +986,7 @@ export default function CheckoutClientPage() {
                             className="w-full sm:w-auto"
                           >
                             {loginLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <LogIn className="mr-2 h-4 w-4" />}
-                            Iniciar sesión y cargar mis datos
+                            Log in and load my details
                           </Button>
                           <Button
                             type="button"
@@ -994,7 +994,7 @@ export default function CheckoutClientPage() {
                             onClick={() => setCheckoutMode('guest')}
                             className="text-xs text-muted-foreground sm:w-auto"
                           >
-                            Prefiero continuar como invitado
+                            Prefer to continue as guest
                           </Button>
                         </div>
                       </div>
@@ -1003,9 +1003,9 @@ export default function CheckoutClientPage() {
                     {checkoutMode === 'register' && (
                       <Alert className="border-primary/40 bg-primary/5">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <AlertTitle>Crearás tu cuenta al finalizar este paso</AlertTitle>
+                        <AlertTitle>Your account will be created upon completing this step</AlertTitle>
                         <AlertDescription>
-                          Introduce la contraseña que deseas para tu cuenta a continuación. Se guardará tu pedido, tus direcciones y comenzarás a acumular puntos de fidelidad.
+                          Enter your desired password below. Your order and addresses will be saved, and you will begin earning loyalty points.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -1013,16 +1013,16 @@ export default function CheckoutClientPage() {
                     {checkoutMode === 'guest' && (
                       <Alert className="border-border bg-muted/40">
                         <Info className="h-4 w-4 text-muted-foreground" />
-                        <AlertTitle>Pedido como invitado</AlertTitle>
+                        <AlertTitle>Guest Checkout</AlertTitle>
                         <AlertDescription className="text-muted-foreground">
-                          No necesitas contraseña. Rellena los datos para el envío y la factura. No se creará ninguna cuenta ni se acumularán puntos de fidelidad.
+                          No password required. Fill in your details for shipping and invoice. No account will be created and no loyalty points accumulated.
                         </AlertDescription>
                       </Alert>
                     )}
                   </div>
                 )}
 
-                {/* ERRORES DE VALIDACIÓN DEL PASO 2 */}
+                {/* STEP 2 VALIDATION ERRORS */}
                 {step2ValidationLines && step2ValidationLines.length > 0 && (
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -1037,12 +1037,12 @@ export default function CheckoutClientPage() {
                   </Alert>
                 )}
 
-                {/* FORMULARIO DE DATOS DE ENVÍO (VISIBLE EN MODO INVITADO, REGISTRO O USUARIO CONECTADO) */}
+                {/* SHIPPING DETAILS FORM (VISIBLE IN GUEST, REGISTER, OR LOGGED IN) */}
                 {(user || checkoutMode === 'guest' || checkoutMode === 'register') && (
                   <div className="space-y-4 pt-2">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                       <UserCheck className="h-5 w-5 text-primary" />
-                      {checkoutMode === 'register' ? 'Datos de tu cuenta y entrega' : 'Dirección de envío y contacto'}
+                      {checkoutMode === 'register' ? 'Account & Delivery Details' : 'Shipping Address & Contact'}
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1051,8 +1051,8 @@ export default function CheckoutClientPage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.fullname_label') || 'Nombre y Apellidos'}</FormLabel>
-                            <FormControl><Input placeholder="Juan Pérez López" {...field} /></FormControl>
+                            <FormLabel>{t('checkout.fullname_label') || 'Full Name'}</FormLabel>
+                            <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1063,12 +1063,12 @@ export default function CheckoutClientPage() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.email_label') || 'Correo Electrónico'}</FormLabel>
+                            <FormLabel>{t('checkout.email_label') || 'Email Address'}</FormLabel>
                             <FormControl>
                               <Input
                                 type="email"
                                 autoComplete="email"
-                                placeholder="juan@ejemplo.com"
+                                placeholder="john@example.com"
                                 {...field}
                                 disabled={Boolean(user)}
                               />
@@ -1078,17 +1078,17 @@ export default function CheckoutClientPage() {
                         )}
                       />
 
-                      {/* Campo de contraseña adicional solo en modo crear cuenta */}
+                      {/* Extra password field in register mode */}
                       {!user && checkoutMode === 'register' && (
                         <div className="space-y-2 md:col-span-2 rounded-lg border p-3.5 bg-muted/20">
                           <div className="flex justify-between items-center">
-                            <label className="text-sm font-medium">Contraseña para tu nueva cuenta</label>
-                            <span className="text-xs text-muted-foreground">Mínimo 6 caracteres</span>
+                            <label className="text-sm font-medium">Password for your new account</label>
+                            <span className="text-xs text-muted-foreground">Minimum 6 characters</span>
                           </div>
                           <div className="relative">
                             <Input
                               type={showRegisterPassword ? 'text' : 'password'}
-                              placeholder="Crea una contraseña segura"
+                              placeholder="Create a secure password"
                               value={registerPassword}
                               onChange={(e) => setRegisterPassword(e.target.value)}
                               disabled={registerLoading}
@@ -1119,7 +1119,7 @@ export default function CheckoutClientPage() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.phone_label') || 'Teléfono'}</FormLabel>
+                            <FormLabel>{t('checkout.phone_label') || 'Phone Number'}</FormLabel>
                             <FormControl><Input type="tel" placeholder="+34 600 000 000" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1131,8 +1131,8 @@ export default function CheckoutClientPage() {
                         name="street"
                         render={({ field }) => (
                           <FormItem className="md:col-span-2">
-                            <FormLabel>{t('checkout.street_label') || 'Calle, número, piso y puerta'}</FormLabel>
-                            <FormControl><Input placeholder="Calle Mayor 12, 3º B" {...field} /></FormControl>
+                            <FormLabel>{t('checkout.street_label') || 'Street Address'}</FormLabel>
+                            <FormControl><Input placeholder="123 Oxford Street, Flat 4" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1143,8 +1143,8 @@ export default function CheckoutClientPage() {
                         name="city"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.city_label') || 'Ciudad'}</FormLabel>
-                            <FormControl><Input placeholder="Madrid" {...field} /></FormControl>
+                            <FormLabel>{t('checkout.city_label') || 'City'}</FormLabel>
+                            <FormControl><Input placeholder="London" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1155,8 +1155,8 @@ export default function CheckoutClientPage() {
                         name="state"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.state_label') || 'Provincia / Estado'}</FormLabel>
-                            <FormControl><Input placeholder="Madrid" {...field} /></FormControl>
+                            <FormLabel>{t('checkout.state_label') || 'State / Province'}</FormLabel>
+                            <FormControl><Input placeholder="Greater London" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1167,8 +1167,8 @@ export default function CheckoutClientPage() {
                         name="postalCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.zip_label') || 'Código Postal'}</FormLabel>
-                            <FormControl><Input placeholder="28001" {...field} /></FormControl>
+                            <FormLabel>{t('checkout.zip_label') || 'Postal Code'}</FormLabel>
+                            <FormControl><Input placeholder="SW1A 1AA" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1179,8 +1179,8 @@ export default function CheckoutClientPage() {
                         name="country"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('checkout.country_label') || 'País'}</FormLabel>
-                            <FormControl><Input placeholder="España" {...field} /></FormControl>
+                            <FormLabel>{t('checkout.country_label') || 'Country'}</FormLabel>
+                            <FormControl><Input placeholder="Spain" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1192,23 +1192,23 @@ export default function CheckoutClientPage() {
             </Card>
           )}
 
-          {/* PASO 3: REVISIÓN Y PAGO */}
+          {/* STEP 3: REVIEW & PAYMENT */}
           {step === 3 && (
             <Card>
               <CardHeader><CardTitle>{t('checkout.review_title')}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <Alert className="border-primary/30 bg-primary/5">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  <AlertTitle>Método de pago seguro</AlertTitle>
+                  <AlertTitle>Secure Payment Method</AlertTitle>
                   <AlertDescription>
-                    Selecciona cómo quieres completar tu pedido. La confirmación se realizará de forma automática en cuanto la pasarela verifique el pago.
+                    Select how you want to complete your order. Confirmation will occur automatically once the gateway verifies the payment.
                   </AlertDescription>
                 </Alert>
 
                 {!user && (
                   <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground flex items-center justify-between">
-                    <span>Completando pedido como: <strong className="text-foreground">{form.getValues('email')}</strong> (Invitado)</span>
-                    <span className="text-primary font-medium">Sin cuenta vinculada</span>
+                    <span>Completing order as: <strong className="text-foreground">{form.getValues('email')}</strong> (Guest)</span>
+                    <span className="text-primary font-medium">No account linked</span>
                   </div>
                 )}
 
@@ -1219,7 +1219,7 @@ export default function CheckoutClientPage() {
                     className="h-auto min-h-14 whitespace-normal"
                     onClick={() => setSelectedPaymentMethod('hilow')}
                   >
-                    <CreditCard className="mr-2 h-4 w-4 shrink-0" /> Tarjeta Bancaria / HiLow
+                    <CreditCard className="mr-2 h-4 w-4 shrink-0" /> Credit / Debit Card (HiLow)
                   </Button>
                   <Button
                     type="button"
@@ -1227,14 +1227,14 @@ export default function CheckoutClientPage() {
                     className="h-auto min-h-14 whitespace-normal"
                     onClick={() => setSelectedPaymentMethod('nowpayments')}
                   >
-                    <ShieldCheck className="mr-2 h-4 w-4 shrink-0" /> Criptomonedas / NOWPayments
+                    <ShieldCheck className="mr-2 h-4 w-4 shrink-0" /> Cryptocurrency (NOWPayments)
                   </Button>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Código de cupón o descuento"
+                      placeholder="Coupon or promo code"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       disabled={couponLoading || !!appliedCoupon}
@@ -1249,7 +1249,7 @@ export default function CheckoutClientPage() {
                           setCouponCode('');
                         }}
                       >
-                        <X className="h-4 w-4 mr-1 text-destructive" /> Quitar
+                        <X className="h-4 w-4 mr-1 text-destructive" /> Remove
                       </Button>
                     ) : (
                       <Button
@@ -1257,7 +1257,7 @@ export default function CheckoutClientPage() {
                         onClick={handleApplyCoupon}
                         disabled={couponLoading || !couponCode.trim()}
                       >
-                        {couponLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Aplicar'}
+                        {couponLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Apply'}
                       </Button>
                     )}
                   </div>
@@ -1270,12 +1270,12 @@ export default function CheckoutClientPage() {
                         ) : (
                           <Tag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         )}
-                        Cupón activo: <strong>{appliedCoupon.code}</strong> · {
+                        Active coupon: <strong>{appliedCoupon.code}</strong> · {
                           appliedCoupon.discountType === 'free_shipping'
-                            ? 'Envío Gratuito 100%'
+                            ? '100% Free Shipping'
                             : appliedCoupon.discountType === 'percentage'
-                            ? `${appliedCoupon.discountValue}% de descuento`
-                            : `${formatPrice(appliedCoupon.discountValue)} de descuento`
+                            ? `${appliedCoupon.discountValue}% off`
+                            : `${formatPrice(appliedCoupon.discountValue)} discount`
                         }
                       </span>
                     </div>
@@ -1289,38 +1289,38 @@ export default function CheckoutClientPage() {
                   </div>
                   {volumeDiscount > 0 && (
                     <div className="flex justify-between text-destructive">
-                      <span>Descuento por volumen</span>
+                      <span>Volume discount</span>
                       <span>-{formatPrice(volumeDiscount)}</span>
                     </div>
                   )}
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-destructive">
-                      <span>Descuento de cupón ({appliedCoupon?.code})</span>
+                      <span>Coupon discount ({appliedCoupon?.code})</span>
                       <span>-{formatPrice(couponDiscount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center">
-                    <span>Envío</span>
+                    <span>Shipping</span>
                     <span className={finalTotals.isFreeShipping ? 'font-semibold text-emerald-600 dark:text-emerald-400' : ''}>
                       {finalTotals.isFreeShipping
                         ? appliedCoupon?.discountType === 'free_shipping'
-                          ? 'Gratis (Cupón aplicado)'
-                          : 'Gratis'
+                          ? 'Free (Coupon applied)'
+                          : 'Free'
                         : packlinkQuote
                         ? formatPrice(finalTotals.shippingCost)
                         : packlinkLoading
-                        ? 'Calculando…'
-                        : 'Pendiente de cálculo'}
+                        ? 'Calculating…'
+                        : 'Pending calculation'}
                     </span>
                   </div>
                   {packlinkQuote && (
                     <div className="text-xs text-muted-foreground">
-                      Servicio de transporte: {packlinkQuote.carrierName} · {packlinkQuote.serviceName}
+                      Carrier service: {packlinkQuote.carrierName} · {packlinkQuote.serviceName}
                     </div>
                   )}
                   <Separator />
                   <div className="flex justify-between font-bold text-xl">
-                    <span>Total a pagar</span>
+                    <span>Total to pay</span>
                     <span className="text-primary">{formatPrice(finalTotals.total)}</span>
                   </div>
                 </div>
@@ -1383,22 +1383,22 @@ export default function CheckoutClientPage() {
                   onClick={() => submitCheckout()}
                 >
                   {loading ? <Loader2 className="animate-spin mr-2" /> : <CreditCard className="mr-2" />}
-                  {selectedPaymentMethod === 'nowpayments' ? 'Continuar con NOWPayments' : 'Pagar de forma segura'}
+                  {selectedPaymentMethod === 'nowpayments' ? 'Proceed with NOWPayments' : 'Pay Securely'}
                 </Button>
               </CardFooter>
             </Card>
           )}
 
-          {/* BOTONES DE NAVEGACIÓN ENTRE PASOS */}
+          {/* STEP NAVIGATION BUTTONS */}
           <div className="mt-8 flex justify-between">
             {step > 1 && (
               <Button type="button" variant="outline" onClick={() => goToStep(step - 1)}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
             )}
             {step === 1 && (
               <Button type="button" onClick={handleContinueFromStep1}>
-                {t('checkout.next_button') || 'Continuar'}
+                {t('checkout.next_button') || 'Continue'}
               </Button>
             )}
             {step === 2 && (
@@ -1410,17 +1410,17 @@ export default function CheckoutClientPage() {
                 {packlinkLoading || registerLoading ? (
                   <>
                     <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                    {registerLoading ? 'Creando cuenta…' : 'Calculando envío…'}
+                    {registerLoading ? 'Creating account…' : 'Calculating shipping…'}
                   </>
                 ) : (
                   <>
                     {user
-                      ? 'Continuar al pago'
+                      ? 'Proceed to Payment'
                       : checkoutMode === 'register'
-                      ? 'Crear cuenta y continuar al pago'
+                      ? 'Create Account & Proceed to Payment'
                       : checkoutMode === 'guest'
-                      ? 'Continuar como invitado al pago'
-                      : 'Continuar'}
+                      ? 'Continue as Guest to Payment'
+                      : 'Continue'}
                   </>
                 )}
               </Button>

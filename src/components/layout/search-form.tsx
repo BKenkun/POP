@@ -31,7 +31,7 @@ export function SearchForm({ onSearch }: { onSearch?: () => void }) {
             type="search"
             name="search"
             defaultValue={defaultSearch}
-            placeholder="Buscar..."
+            placeholder="Search..."
             className="w-full md:w-40 lg:w-48 pl-9 h-9 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:w-full md:focus:w-48 lg:focus:w-64 transition-all duration-300"
         />
     </form>

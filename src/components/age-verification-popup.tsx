@@ -169,7 +169,7 @@ export default function AgeVerificationPopup() {
               value={date.day}
               onChange={handleInputChange}
               className="w-20 text-center text-lg"
-              aria-label="Día de nacimiento"
+              aria-label="Day of birth"
             />
 
             <Input
@@ -179,17 +179,17 @@ export default function AgeVerificationPopup() {
               value={date.month}
               onChange={handleInputChange}
               className="w-20 text-center text-lg"
-              aria-label="Mes de nacimiento"
+              aria-label="Month of birth"
             />
 
             <Input
               name="year"
-              placeholder="AAAA"
+              placeholder="YYYY"
               maxLength={4}
               value={date.year}
               onChange={handleInputChange}
               className="w-24 text-center text-lg"
-              aria-label="Año de nacimiento"
+              aria-label="Year of birth"
             />
           </div>
 

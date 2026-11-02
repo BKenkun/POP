@@ -78,7 +78,7 @@ const StatCard = ({
                         {hasComparison && (
                             <div className={cn("flex items-center text-xs font-semibold", isPositive ? "text-green-600" : "text-red-600")}>
                                 {isPositive ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                                {difference.toLocaleString('es-ES', { maximumFractionDigits: 2 })} vs. periodo anterior
+                                {difference.toLocaleString('en-US', { maximumFractionDigits: 2 })} vs. previous period
                             </div>
                         )}
                     </div>
@@ -256,7 +256,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Resumen general de tu tienda.</p>
+          <p className="text-muted-foreground">General overview of your store.</p>
         </div>
          <div className="flex items-center gap-2">
             <DateRangePicker 
@@ -274,38 +274,38 @@ export default function AdminDashboardPage() {
 
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             <StatCard 
-                title="Ingresos Recogidos" 
+                title="Collected Revenue" 
                 icon={DollarSign} 
                 loading={loadingStats}
                 value={formatPrice(currentPeriod?.collectedRevenue ?? 0)}
-                description={`${formatPrice(currentPeriod?.totalRevenue ?? 0)} proyectados`}
+                description={`${formatPrice(currentPeriod?.totalRevenue ?? 0)} projected`}
                 compareValue={previousPeriod ? formatPrice(previousPeriod.collectedRevenue) : null}
             />
 
             <StatCard 
-                title="Pedidos" 
+                title="Orders" 
                 icon={ShoppingCart} 
                 loading={loadingStats}
-                value={totalOrders.toLocaleString('es-ES')}
-                description="Total de pedidos en el período."
+                value={totalOrders.toLocaleString('en-US')}
+                description="Total orders in the period."
                 compareValue={previousPeriod?.filteredOrders.length}
             />
 
             <StatCard 
-                title="Clientes Nuevos" 
+                title="New Customers" 
                 icon={Users} 
                 loading={loadingStats}
-                value={newCustomers.toLocaleString('es-ES')}
-                description="Usuarios registrados en el período."
+                value={newCustomers.toLocaleString('en-US')}
+                description="Users registered in the period."
                 compareValue={previousPeriod?.filteredUsers.length}
             />
 
              <StatCard 
-                title="Productos Activos" 
+                title="Active Products" 
                 icon={Package} 
                 loading={loadingProducts}
                 value={products.length}
-                description={`${lowStockCount} con bajo stock`}
+                description={`${lowStockCount} with low stock`}
             />
         </div>
 
@@ -314,11 +314,11 @@ export default function AdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Pedidos Recientes</CardTitle>
+            <CardTitle>Recent Orders</CardTitle>
           </CardHeader>
           <CardContent>
              {loadingOrders ? <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div> 
-             : recentOrders.length === 0 ? <div className="text-center text-muted-foreground py-4">No hay pedidos recientes.</div>
+             : recentOrders.length === 0 ? <div className="text-center text-muted-foreground py-4">No recent orders.</div>
              : (
                 <div className="space-y-4">
                   {recentOrders.map(order => (
@@ -340,11 +340,11 @@ export default function AdminDashboardPage() {
 
         <Card className="lg:col-span-1">
             <CardHeader>
-                <CardTitle>Productos Populares</CardTitle>
+                <CardTitle>Popular Products</CardTitle>
             </CardHeader>
             <CardContent>
                 {loadingOrders ? <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
-                : popularProducts.length === 0 ? <div className="text-center text-muted-foreground py-4">No hay datos de ventas.</div>
+                : popularProducts.length === 0 ? <div className="text-center text-muted-foreground py-4">No sales data.</div>
                 : (
                     <div className="space-y-4">
                     {popularProducts.map(product => (
@@ -356,7 +356,7 @@ export default function AdminDashboardPage() {
                         <div className="ml-4 space-y-1">
                             <p className="text-sm font-medium leading-none">{product.name}</p>
                              <p className="text-sm text-muted-foreground">
-                                {product.unitsSold} {product.unitsSold === 1 ? 'unidad vendida' : 'unidades vendidas'}
+                                {product.unitsSold} {product.unitsSold === 1 ? 'unit sold' : 'units sold'}
                             </p>
                         </div>
                         </div>
@@ -368,11 +368,11 @@ export default function AdminDashboardPage() {
 
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Top Clientes</CardTitle>
+            <CardTitle>Top Customers</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingOrders ? <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
-            : topCustomers.length === 0 ? <div className="text-center text-muted-foreground py-4">No hay datos de clientes.</div>
+            : topCustomers.length === 0 ? <div className="text-center text-muted-foreground py-4">No customer data.</div>
             : (
                 <div className="space-y-4">
                   {topCustomers.map(customer => (
@@ -382,7 +382,7 @@ export default function AdminDashboardPage() {
                       </Avatar>
                       <div className="ml-4 space-y-1">
                         <p className="text-sm font-medium leading-none">{customer.name}</p>
-                        <p className="text-sm text-muted-foreground">{customer.count} pedidos</p>
+                        <p className="text-sm text-muted-foreground">{customer.count} orders</p>
                       </div>
                       <div className="ml-auto font-medium text-primary">{formatPrice(customer.total)}</div>
                     </div>

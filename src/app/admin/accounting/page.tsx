@@ -9,8 +9,8 @@ export default function AdminAccountingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Contabilidad</h1>
-          <p className="text-muted-foreground">Analiza los beneficios, costes e impuestos de tu tienda.</p>
+          <h1 className="text-3xl font-bold">Accounting</h1>
+          <p className="text-muted-foreground">Analyze profits, costs, and taxes for your store.</p>
         </div>
       </div>
       
@@ -19,13 +19,13 @@ export default function AdminAccountingPage() {
             <div className="mx-auto bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center mb-4">
                 <Calculator className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>Página en Construcción</CardTitle>
+            <CardTitle>Page Under Construction</CardTitle>
             <CardDescription>
-                Esta sección para la gestión de la contabilidad está actualmente en desarrollo.
+                This section for accounting and financial management is currently under development.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <p className="text-muted-foreground">Próximamente podrás ver informes detallados sobre beneficios, márgenes por producto y totales de IVA.</p>
+            <p className="text-muted-foreground">Detailed reports on profit margins, costs per product, and VAT totals will be available soon.</p>
         </CardContent>
       </Card>
     </div>

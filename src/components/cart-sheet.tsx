@@ -113,7 +113,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                             <span>-{formatPrice(volumeDiscount)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg">
-                            <span>Total con Descuento</span>
+                            <span>Discounted Total</span>
                             <span>{formatPrice(totalWithDiscount)}</span>
                         </div>
                     </>
@@ -131,7 +131,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>El coste del envío se calculará en el checkout con Packlink PRO.</span>
+                           <span>Shipping cost will be calculated at checkout with Packlink PRO.</span>
                        </div>
                      )}
                 </div>

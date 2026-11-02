@@ -45,13 +45,13 @@ export default function AdminBlogPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-            <h1 className="text-3xl font-bold">Gestionar Blog</h1>
-            <p className="text-muted-foreground">Crea, edita y elimina las entradas del blog.</p>
+            <h1 className="text-3xl font-bold">Manage Blog</h1>
+            <p className="text-muted-foreground">Create, edit, and delete blog posts.</p>
         </div>
         <Link href="/admin/new-post" passHref>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Nueva Entrada
+            New Post
           </Button>
         </Link>
       </div>
@@ -62,8 +62,8 @@ export default function AdminBlogPage() {
             <CardHeader>
               <CardTitle>{post.title}</CardTitle>
               <CardDescription>
-                Publicado el{' '}
-                {new Date(post.date).toLocaleDateString('es-ES')}
+                Published on{' '}
+                {new Date(post.date).toLocaleDateString('en-US')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -75,27 +75,27 @@ export default function AdminBlogPage() {
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/edit-post/${post.slug}`}>
                   <Edit className="mr-2 h-4 w-4" />
-                  Editar
+                  Edit
                 </Link>
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Eliminar
+                    Delete
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Se eliminará permanentemente la entrada del blog.
+                      This action cannot be undone. This will permanently delete the blog post.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => handleDelete(post.id)}>
-                      Continuar
+                      Continue
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -105,7 +105,7 @@ export default function AdminBlogPage() {
         ))}
         {posts.length === 0 && (
             <Card className="text-center p-8">
-                <p className="text-muted-foreground">Aún no hay entradas en el blog.</p>
+                <p className="text-muted-foreground">There are no blog posts yet.</p>
             </Card>
         )}
       </div>

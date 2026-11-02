@@ -22,15 +22,15 @@ export default function NewCouponPage() {
         createdAt: serverTimestamp(),
       });
       toast({
-        title: 'Cupón Creado',
-        description: `El cupón "${data.code}" ha sido creado con éxito.`,
+        title: 'Coupon Created',
+        description: `Coupon "${data.code}" has been created successfully.`,
       });
       router.push('/admin/coupons');
     } catch (err) {
       console.error("Error creating coupon: ", err);
       toast({
         title: 'Error',
-        description: 'No se pudo crear el cupón.',
+        description: 'Could not create coupon.',
         variant: 'destructive',
       });
     } finally {
@@ -40,7 +40,7 @@ export default function NewCouponPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Crear Nuevo Cupón</h1>
+      <h1 className="text-3xl font-bold">Create New Coupon</h1>
       <CouponForm onSave={handleSave} isSaving={isSaving} />
     </div>
   );

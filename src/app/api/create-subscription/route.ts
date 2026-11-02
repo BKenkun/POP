@@ -14,8 +14,11 @@ export async function POST(req: NextRequest) {
     const { orderId: clientProvidedId, successUrl, cancelUrl, userEmail, userName } = body;
 
     if (!clientProvidedId || !successUrl || !cancelUrl) {
-      return NextResponse.json({ error: 'Faltan campos obligatorios en la petición' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields in request' }, { status: 400 });
     }
+
+    const customerEmail = userEmail || 'customer@example.com';
+    const customerName = userName || (userEmail ? userEmail.split('@')[0] : 'Member');
 
     const HILOW_API_KEY = process.env.HILOW_API_KEY;
     const hostHeader = req.headers.get('host')?.split(':')[0] || '';
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
         }, { merge: true });
       }
     } catch (userDbErr: any) {
-      console.warn('[SUBSCRIPTION] Aviso al leer/crear usuario en Firestore:', userDbErr?.message);
+      console.warn('[SUBSCRIPTION] Notice reading/creating user in Firestore:', userDbErr?.message);
     }
 
     // 2. PRE-REGISTRO DEL PEDIDO (BOX)
@@ -142,7 +145,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API FATAL ERROR in create-subscription]:', error?.message || error);
     return NextResponse.json(
-      { error: error?.message || 'Error interno al procesar la suscripción' },
+      { error: error?.message || 'Internal error while processing subscription' },
       { status: 500 }
     );
   }
