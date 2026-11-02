@@ -273,7 +273,13 @@ const enTranslations: Translations = {
           change_selection_button: "Change Selection",
           choose_product_button: "Choose Product",
           surprise_gift_title: "Surprise Gift",
-          surprise_gift_desc: "Included in every monthly box."
+          surprise_gift_desc: "Included in every monthly box.",
+          failed_title: "Payment Failed",
+          failed_subtitle: "Sorry, {name}, we could not process your subscription.",
+          user_placeholder: "User",
+          failed_desc: "The payment could not be completed. Please try again or use another payment method. If the issue persists, feel free to contact us.",
+          retry_button: "Retry Subscription",
+          contact_support_button: "Contact Support"
         }
     },
     popups: {

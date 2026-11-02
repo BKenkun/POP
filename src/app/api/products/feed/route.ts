@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase-admin';
 import { Product } from '@/lib/types';
+import { products as fallbackProducts } from '@/lib/products';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Revalidate at most every hour
@@ -12,24 +13,31 @@ export const revalidate = 3600; // Revalidate at most every hour
  */
 export async function GET() {
   try {
-    const productsRef = firestore.collection('products');
-    const snapshot = await productsRef.where('active', '!=', false).get();
+    let rawProducts: { id: string; data: Product }[] = [];
 
-    if (snapshot.empty) {
-      return NextResponse.json({ data: [] });
+    try {
+      const productsRef = firestore.collection('products');
+      const snapshot = await productsRef.where('active', '!=', false).get();
+      if (!snapshot.empty) {
+        rawProducts = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() as Product }));
+      }
+    } catch (dbError: any) {
+      console.warn('[FEED] Firestore feed query fallback to static products:', dbError?.message || dbError);
     }
 
-    const products = snapshot.docs.map(doc => {
-      const product = doc.data() as Product;
-      
+    if (rawProducts.length === 0) {
+      rawProducts = fallbackProducts.map(p => ({ id: p.id, data: p }));
+    }
+
+    const products = rawProducts.map(({ id, data: product }) => {
       const isOnSale = !!product.originalPrice && product.originalPrice > product.price;
 
       return {
         // Klaviyo standard fields
-        "$custom_id": doc.id,
+        "$custom_id": id,
         "title": product.name,
         "description": product.description || '',
-        "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${doc.id}`,
+        "url": `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${id}`,
         "image_full_url": product.imageUrl,
         "price": product.price / 100,
         // Optional but recommended standard fields
@@ -55,3 +63,4 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch product feed.' }, { status: 500 });
   }
 }
+

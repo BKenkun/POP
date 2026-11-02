@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestore as adminFirestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
+export const dynamic = 'force-dynamic';
+
 /**
- * Endpoint para iniciar el flujo de suscripción en Hilow con pre-registro en Firestore.
- * 1. Crea un pedido con estado 'pending_payment' en la DB local.
- * 2. Genera el ADN del ID para Hilow (compatible con el webhook y el listener en tiempo real).
- * 3. Solicita la orden a la API de Hilow o redirige a la pasarela alojada sin bloquear por falta de API Key.
+ * Endpoint to initialize Hilow subscription flow with Firestore pre-registration.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -67,7 +66,7 @@ export async function POST(req: NextRequest) {
         customerName: customerName,
         items: [{
           productId: 'subscription_club',
-          name: 'Club Dosis Mensual',
+          name: 'Monthly Dose Club',
           price: 4400,
           quantity: 1,
           imageUrl: 'https://picsum.photos/seed/sub/200/200'
@@ -75,19 +74,19 @@ export async function POST(req: NextRequest) {
       };
 
       await orderRef.set(pendingOrderData);
-      console.log(`[SUBSCRIPTION] Pedido pendiente creado: ${uniqueOrderId} para usuario: ${userId}`);
+      console.log(`[SUBSCRIPTION] Pending order created: ${uniqueOrderId} for user: ${userId}`);
     } catch (orderDbErr: any) {
-      console.warn('[SUBSCRIPTION] Aviso al guardar pedido pendiente en Firestore:', orderDbErr?.message);
+      console.warn('[SUBSCRIPTION] Warning saving pending order in Firestore:', orderDbErr?.message);
     }
 
-    // 3. ADN FINAL PARA HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
+    // 3. DNA FOR HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
     const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
 
     const payload = {
       storeId: HILOW_STORE_ID,
       internalOrderId: structuredInternalOrderId,
       amountInCents: 4400,
-      productName: 'Club Dosis Mensual',
+      productName: 'Monthly Dose Club',
       isSubscription: true,
       successUrl: successUrl,
       cancelUrl: cancelUrl,

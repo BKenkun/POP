@@ -152,11 +152,14 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
         </NavigationMenuItem>
         {settings?.showSubscriptionFeature && (
             <NavigationMenuItem>
-                <Button asChild variant="secondary" className="h-10 font-headline uppercase font-bold text-sm px-3 bg-accent text-accent-foreground hover:bg-accent/90">
+                <NavigationMenuLink
+                    asChild
+                    className="inline-flex items-center justify-center rounded-md font-headline uppercase font-bold text-sm px-3 h-10 bg-accent text-accent-foreground hover:bg-accent/90 transition-colors"
+                >
                     <Link href={subscriptionUrl}> 
                         {t('header.monthly_dose')}
                     </Link>
-                </Button>
+                </NavigationMenuLink>
             </NavigationMenuItem>
         )}
       </NavigationMenuList>
@@ -164,17 +167,21 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
   );
 }
 
-const ListItem = ({ href, title, onNavigate, isSubItem = false }: { href: string; title: string, onNavigate?: () => void; isSubItem?: boolean }) => {
+const ListItem = React.forwardRef<
+  HTMLAnchorElement,
+  { href: string; title: string; onNavigate?: () => void; isSubItem?: boolean }
+>(({ href, title, onNavigate, isSubItem = false }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
         <Link
+          ref={ref}
           href={href}
           onClick={onNavigate}
           className={cn(
             'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
             'text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
-            'font-body font-medium uppercase text-sm'
+            isSubItem ? 'font-body font-light uppercase text-xs' : 'font-body font-medium uppercase text-sm'
           )}
         >
           <div>{title}</div>
@@ -182,4 +189,5 @@ const ListItem = ({ href, title, onNavigate, isSubItem = false }: { href: string
       </NavigationMenuLink>
     </li>
   );
-};
+});
+ListItem.displayName = 'ListItem';

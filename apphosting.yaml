@@ -22,9 +22,9 @@ env:
   - variable: FIREBASE_STORAGE_BUCKET
     value: "purorush.appspot.com"
 
-  # --- Packlink PRO: clave protegida; el origen y paquete se editan en administración ---
+  # --- Packlink PRO: clave de servidor (puede configurarse en Secret Manager o Admin) ---
   - variable: PACKLINK_API_KEY
-    secret: PACKLINK_API_KEY
+    value: ""
   - variable: PACKLINK_FROM_COUNTRY
     value: "ES"
   - variable: PACKLINK_PACKAGE_WEIGHT_KG
@@ -53,23 +53,23 @@ env:
   - variable: KLAVIYO_LIST_ID
     value: "WdHvpw"
 
-  # --- Secretos (Referencia a Secret Manager) ---
+  # --- Secretos opcionales (Valores por defecto para evitar errores 404 de Secret Manager durante el despliegue) ---
   - variable: HILOW_API_KEY
-    secret: HILOW_API_KEY
+    value: ""
   - variable: HILOW_WEBHOOK_SECRET
-    secret: HILOW_WEBHOOK_SECRET
+    value: ""
   - variable: STRIPE_SECRET_KEY
-    secret: STRIPE_SECRET_KEY
+    value: ""
   - variable: STRIPE_WEBHOOK_SECRET
-    secret: STRIPE_WEBHOOK_SECRET
+    value: ""
   - variable: NOWPAYMENTS_API_KEY
-    secret: NOWPAYMENTS_API_KEY
+    value: ""
   - variable: NOWPAYMENTS_IPN_SECRET
-    secret: NOWPAYMENTS_IPN_SECRET
+    value: ""
   - variable: KLAVIYO_API_KEY
-    secret: KLAVIYO_API_KEY
+    value: ""
   - variable: FIREBASE_SERVICE_ACCOUNT_JSON
-    secret: FIREBASE_SERVICE_ACCOUNT_JSON
+    value: ""
 
   # --- Firebase Client (Públicas para Next.js) ---
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -85,11 +85,11 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:870980470663:web:533824f7e6c462a8d0f522"
 
-  # --- Mailjet: claves protegidas en Secret Manager ---
+  # --- Mailjet: claves de servidor ---
   - variable: MAILJET_API_KEY
-    secret: MAILJET_API_KEY
+    value: ""
   - variable: MAILJET_SECRET_KEY
-    secret: MAILJET_SECRET_KEY
+    value: ""
 
   # --- Mailjet: datos del remitente ---
   - variable: MAILJET_FROM_EMAIL
