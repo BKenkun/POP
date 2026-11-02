@@ -47,6 +47,8 @@ export default function SubscriptionLandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId,
+          userEmail: user.email,
+          userName: user.displayName || (user.email ? user.email.split('@')[0] : 'Member'),
           successUrl: `${baseUrl}/subscription/success`,
           cancelUrl: `${baseUrl}/subscription`,
         }),

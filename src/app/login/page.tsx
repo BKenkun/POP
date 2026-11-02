@@ -1,23 +1,13 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/context/language-context';
 
-// Use absolute alias for dynamic import to prevent runtime chunk load errors
-const LoginForm = dynamic(() => import('@/app/login/login-form'), { 
-  ssr: false,
-  loading: () => (
-    <div className="p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p>Loading secure login...</p>
-    </div>
-  )
-});
+import LoginForm from './login-form';
 
 function RedirectAlert() {
   const searchParams = useSearchParams();

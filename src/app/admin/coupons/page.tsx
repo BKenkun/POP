@@ -43,13 +43,13 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2, Ticket } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2, Ticket, Truck } from 'lucide-react';
 
 export interface Coupon {
   id: string;
   code: string;
   description: string;
-  discountType: 'percentage' | 'fixed';
+  discountType: 'percentage' | 'fixed' | 'free_shipping';
   discountValue: number;
   minPurchase?: number;
   startDate?: string;
@@ -57,7 +57,7 @@ export interface Coupon {
   isActive: boolean;
   usageLimit?: number;
   usageCount: number;
-  onePerUser?: boolean; // Nuevo campo
+  onePerUser?: boolean;
 }
 
 export default function AdminCouponsPage() {
@@ -101,13 +101,12 @@ export default function AdminCouponsPage() {
     }
   };
 
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Cupones</h1>
-          <p className="text-muted-foreground">Crea y administra códigos de descuento para tus clientes.</p>
+          <p className="text-muted-foreground">Crea y administra códigos de descuento y envío gratis para tus clientes.</p>
         </div>
         <Button asChild>
           <Link href="/admin/coupons/new">
@@ -120,7 +119,7 @@ export default function AdminCouponsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Listado de Cupones</CardTitle>
-          <CardDescription>Aquí puedes ver y gestionar todos los cupones de descuento.</CardDescription>
+          <CardDescription>Aquí puedes ver y gestionar todos los cupones activos, porcentaje, cantidad fija o envío gratis.</CardDescription>
         </CardHeader>
         <CardContent>
             {loading ? (
@@ -131,7 +130,7 @@ export default function AdminCouponsPage() {
                  <div className="text-center py-12 border-dashed border-2 rounded-lg">
                     <Ticket className="mx-auto h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-medium">Aún no hay cupones</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">Crea tu primer cupón para empezar a ofrecer descuentos.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Crea tu primer cupón para empezar a ofrecer descuentos o envío gratis.</p>
                     <Button asChild className="mt-4">
                         <Link href="/admin/coupons/new">
                             <PlusCircle className="mr-2 h-4 w-4" />
@@ -145,8 +144,9 @@ export default function AdminCouponsPage() {
                         <TableRow>
                         <TableHead>Código</TableHead>
                         <TableHead>Descripción</TableHead>
-                        <TableHead>Valor</TableHead>
+                        <TableHead>Tipo / Valor</TableHead>
                         <TableHead>Usos</TableHead>
+                        <TableHead>Compra Mínima</TableHead>
                         <TableHead>Estado</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
@@ -157,12 +157,38 @@ export default function AdminCouponsPage() {
                             <TableCell className="font-mono font-semibold">{coupon.code}</TableCell>
                             <TableCell className="text-muted-foreground">{coupon.description}</TableCell>
                             <TableCell>
-                            {coupon.discountType === 'percentage'
-                                ? `${coupon.discountValue}%`
-                                : formatPrice(coupon.discountValue)}
+                            {coupon.discountType === 'free_shipping' ? (
+                                <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 font-medium">
+                                    <Truck className="h-3 w-3" /> Envío Gratis
+                                </Badge>
+                            ) : coupon.discountType === 'percentage' ? (
+                                <Badge variant="secondary" className="font-semibold">{coupon.discountValue}%</Badge>
+                            ) : (
+                                <Badge variant="secondary" className="font-semibold">{formatPrice(coupon.discountValue)}</Badge>
+                            )}
                             </TableCell>
                             <TableCell>
-                            {coupon.usageLimit ? `${coupon.usageCount} / ${coupon.usageLimit}` : coupon.usageCount}
+                                <div className="space-y-1">
+                                    <div className="text-sm">
+                                        {coupon.usageLimit === 1 ? (
+                                            <span className="font-semibold text-amber-600 dark:text-amber-400">
+                                                1 uso único ({coupon.usageCount || 0}/1)
+                                            </span>
+                                        ) : coupon.usageLimit && coupon.usageLimit > 1 ? (
+                                            <span>{coupon.usageCount || 0} / {coupon.usageLimit}</span>
+                                        ) : (
+                                            <span>{coupon.usageCount || 0} <span className="text-muted-foreground text-xs">(Ilimitado)</span></span>
+                                        )}
+                                    </div>
+                                    {coupon.onePerUser && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500/40 text-blue-600 dark:text-blue-400">
+                                            1 por cliente
+                                        </Badge>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                {coupon.minPurchase && coupon.minPurchase > 0 ? formatPrice(coupon.minPurchase) : 'Sin mínimo'}
                             </TableCell>
                             <TableCell>
                             <div className="flex items-center gap-2">
@@ -187,7 +213,7 @@ export default function AdminCouponsPage() {
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                     <DropdownMenuItem asChild>
-                                        <Link href={`/admin/coupons/edit/${coupon.id}`}><Edit className="mr-2"/>Editar</Link>
+                                        <Link href={`/admin/coupons/edit/${coupon.id}`}><Edit className="mr-2 h-4 w-4"/>Editar</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                      <AlertDialogTrigger asChild>

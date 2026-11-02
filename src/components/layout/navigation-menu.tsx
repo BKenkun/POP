@@ -103,13 +103,11 @@ export default function NavigationMenuComponent({ onNavigate, isMobile = false, 
       <NavigationMenuList>
         <NavigationMenuItem>
            <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "font-headline uppercase font-bold bg-transparent text-primary-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}>
-                 <Link href="/products">
-                    <span>{t('header.products')}</span>
-                 </Link>
+              <span>{t('header.products')}</span>
            </NavigationMenuTrigger>
           <NavigationMenuContent>
              <ul className="flex flex-col p-2 w-64 bg-primary text-primary-foreground border-r border-primary-foreground/20">
-                 {productLinks.slice(1).map(link => ( // Slice to exclude "TODOS LOS PRODUCTOS"
+                 {productLinks.map(link => (
                     <ListItem key={link.href} href={link.href} title={link.title} onNavigate={onNavigate} />
                  ))}
                  

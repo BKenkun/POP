@@ -48,7 +48,7 @@ export async function getCurrentUser() {
         const userDocRef = db.collection('users').doc(userId);
         const docSnap = await userDocRef.get();
 
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
             return { id: docSnap.id, ...docSnap.data() };
         } else {
             return null;
@@ -71,11 +71,11 @@ export async function updateUser(action: 'add-address' | 'update-address' | 'del
 
     try {
         const userDoc = await userDocRef.get();
-        if (!userDoc.exists()) {
+        if (!userDoc.exists) {
             throw new Error("User document not found.");
         }
         
-        let currentAddresses: Address[] = userDoc.data().addresses || [];
+        let currentAddresses: Address[] = userDoc.data()?.addresses || [];
         let updatePayload: { [key: string]: any } = {};
 
         switch (action) {
