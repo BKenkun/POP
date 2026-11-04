@@ -8,7 +8,7 @@
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "postinstall": "patch-package"
@@ -78,6 +78,8 @@
     "@types/react-dom": "^18.3.7",
     "@types/react-signature-canvas": "^1.0.5",
     "@types/ws": "^8.5.10",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.3",
     "eslint-plugin-import": "^2.29.1",
     "genkit-cli": "latest",
     "postcss": "^8",

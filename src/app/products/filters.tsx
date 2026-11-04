@@ -266,15 +266,15 @@ export default function ProductFilters({
     </>
   );
 
+  const showCreatePackCard = useMemo(() => {
+    const hasActiveSpecificFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || !!searchQuery;
+    if (hasActiveSpecificFilters) return false;
+    if (selectedInternalTags.length === 0) return true;
+    return selectedInternalTags.includes('pack') || selectedInternalTags.includes('oferta');
+  }, [selectedBrands, selectedSizes, selectedCompositions, searchQuery, selectedInternalTags]);
+
   // If this is used outside a page context, render the grid directly
   if (!onFilterChange) {
-      const showCreatePackCard = useMemo(() => {
-        const hasActiveSpecificFilters = selectedBrands.length > 0 || selectedSizes.length > 0 || selectedCompositions.length > 0 || !!searchQuery;
-        if (hasActiveSpecificFilters) return false;
-        if (selectedInternalTags.length === 0) return true;
-        return selectedInternalTags.includes('pack') || selectedInternalTags.includes('oferta');
-    }, [selectedBrands, selectedSizes, selectedCompositions, searchQuery, selectedInternalTags]);
-
      return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <aside className="lg:col-span-1">

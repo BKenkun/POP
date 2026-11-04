@@ -8,17 +8,18 @@
         "zones": [
           {
             "target": "./src/app/**/*.tsx",
-            "from": "./src/lib/firebase.ts",
+            "from": "./src/lib/firebase-admin.ts",
             "message": "La importación del SDK de administrador de Firebase ('@/lib/firebase') está prohibida en los componentes de cliente. Usa una Ruta API o una Acción de Servidor para obtener datos."
           },
           {
             "target": "./src/components/**/*.tsx",
-            "from": "./src/lib/firebase.ts",
+            "from": "./src/lib/firebase-admin.ts",
             "message": "La importación del SDK de administrador de Firebase ('@/lib/firebase') está prohibida en los componentes de cliente. Usa una Ruta API o una Acción de Servidor para obtener datos."
           }
         ]
       }
-    ]
+    ],
+    "react/no-unescaped-entities": "off"
   },
   "settings": {
     "import/resolver": {

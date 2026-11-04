@@ -11,6 +11,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from '@/context/language-context';
+import { products as fallbackProducts } from '@/lib/products';
 
 function ProductSection({ title, products, loading }: { title: string; products: Product[]; loading: boolean; }) {
   if (loading) {
@@ -50,11 +51,19 @@ export default function Home() {
 
   useEffect(() => {
     const productsQuery = query(collection(db, 'products'));
-    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setAllProducts(products);
-      setLoadingProducts(false);
-    });
+    const unsubscribe = onSnapshot(
+      productsQuery,
+      (snapshot) => {
+        const prods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setAllProducts(prods.length > 0 ? prods : fallbackProducts);
+        setLoadingProducts(false);
+      },
+      (error) => {
+        console.warn('Firestore snapshot error, falling back to static products:', error);
+        setAllProducts(fallbackProducts);
+        setLoadingProducts(false);
+      }
+    );
     return () => unsubscribe();
   }, []);
 

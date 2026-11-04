@@ -3,7 +3,7 @@ schemaVersion: "v1"
 
 runConfig:
   cpu: 1
-  memoryMiB: 512
+  memoryMiB: 1024
 
 env:
   # --- Configuración de la App (Servidor) ---
