@@ -1,8 +1,8 @@
 // Modificado por: Webmaster Freddy Poleo
 'use server';
 
-import { firestore } from '@/lib/firebase-admin';
 import { readPacklinkSettings } from '@/lib/packlink-config';
+import { enforceServerActionRateLimit } from '@/lib/server-rate-limit';
 
 const API_BASE = 'https://api.packlink.com/v1';
 
@@ -54,7 +54,7 @@ async function packlinkRequest(path: string, init: RequestInit = {}) {
   return body;
 }
 
-/** Consulta tarifas reales de Packlink PRO; los precios devueltos están en euros. */
+/** Consulta las tarifas reales de Packlink PRO; se limita la frecuencia por IP. */
 export async function getPacklinkShippingQuotes(input: {
   postalCode: string;
   country: string;
@@ -64,6 +64,7 @@ export async function getPacklinkShippingQuotes(input: {
   heightCm?: number;
 }): Promise<{ success: boolean; quotes?: PacklinkQuote[]; message?: string }> {
   try {
+    await enforceServerActionRateLimit('packlink-quotes', 15, 60 * 1000);
     const { postalCode: fromPostalCode, country: fromCountry, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
     const postalCode = String(input.postalCode || '').trim();
     const country = normalizeCountryCode(input.country);
@@ -99,135 +100,3 @@ export async function getPacklinkShippingQuotes(input: {
   }
 }
 
-/**
- * Crea un borrador de envío en Packlink después del pago confirmado.
- * Packlink puede requerir contratar/pagar el envío en su panel antes de publicar
- * la etiqueta definitiva; en ese caso la orden queda marcada como pendiente de etiqueta.
- */
-export async function createPacklinkShipmentDraft(orderId: string): Promise<void> {
-  const { postalCode: fromPostalCode, country: fromCountry, senderName, street: senderStreet, city: senderCity, phone: senderPhone, email: senderEmail, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
-  const parts = orderId.split('_');
-  if (parts.length < 3 || parts[0] !== 'CPO') throw new Error('ID de pedido POP no válido para Packlink.');
-  const userId = parts.slice(1, -1).join('_');
-  const orderRef = firestore.collection('users').doc(userId).collection('orders').doc(orderId);
-  const snap = await orderRef.get();
-  if (!snap.exists) throw new Error('Pedido no encontrado para crear el envío Packlink.');
-  const order = snap.data()!;
-
-  if (!['order_received', 'shipped', 'out_for_delivery', 'delivered'].includes(String(order.status))) {
-    throw new Error('No se crea el envío Packlink hasta confirmar el pago.');
-  }
-  if (!order.packlink?.serviceId || !order.packlink?.serviceName || !order.packlink?.carrierName) {
-    await orderRef.set({
-      packlink: { status: 'needs_service_selection', lastError: 'El pedido no contiene el servicio Packlink seleccionado en checkout.' },
-      updatedAt: new Date(),
-    }, { merge: true });
-    return;
-  }
-
-  // Validar el remitente antes de reclamar el envío. Así, una configuración incompleta
-  // no deja el pedido atascado en estado "creating" y permite corregirlo y reintentar.
-  if (!senderName || !senderStreet || !senderCity || !senderPhone || !senderEmail) {
-    throw new Error('Faltan datos de remitente PACKLINK_FROM_NAME/STREET/CITY/PHONE/EMAIL en App Hosting.');
-  }
-
-  // Reclamar la creación dentro de una transacción para evitar borradores duplicados
-  // si el proveedor de pagos reenvía el webhook simultáneamente.
-  const claimed = await firestore.runTransaction(async (transaction) => {
-    const currentSnap = await transaction.get(orderRef);
-    if (!currentSnap.exists) return false;
-    const current = currentSnap.data()!;
-    const status = String(current.packlink?.status || '');
-    if (current.packlink?.reference || ['creating', 'draft_created', 'label_available'].includes(status)) return false;
-    transaction.update(orderRef, {
-      'packlink.status': 'creating',
-      'packlink.lastError': null,
-      'packlink.attemptAt': new Date(),
-      updatedAt: new Date(),
-    });
-    return true;
-  });
-  if (!claimed) return;
-
-  const destination = order.shippingAddress || {};
-  const senderState = senderCity;
-
-  // Payload legacy compatible con el módulo oficial Packlink PRO para eCommerce.
-  const draft = {
-    platform: process.env.PACKLINK_PLATFORM || 'custom',
-    platform_country: fromCountry,
-    from: {
-      name: senderName, street: senderStreet, city: senderCity, state: senderState,
-      zip: fromPostalCode, country: fromCountry, phone: senderPhone, email: senderEmail,
-    },
-    to: {
-      name: order.customerName, street: destination.line1 || '', city: destination.city || '',
-      state: destination.state || destination.city || '', zip: destination.postal_code || '',
-      country: normalizeCountryCode(destination.country || 'ES'), phone: destination.phone || '',
-      email: order.customerEmail || '',
-    },
-    service: order.packlink.serviceName,
-    carrier: order.packlink.carrierName,
-    service_id: order.packlink.serviceId,
-    packages: [{
-      height: heightCm,
-      width: widthCm,
-      length: lengthCm,
-      weight: weightKg,
-    }],
-    content: (order.items || []).map((item: any) => String(item.name || 'Productos')).join(', ').slice(0, 60),
-    contentvalue: Number(order.total || 0) / 100,
-    content_second_hand: false,
-    shipment_custom_reference: orderId.slice(0, 50),
-    contentValue_currency: 'EUR',
-    has_customs: false,
-  };
-
-  let result: any;
-  try {
-    result = await packlinkRequest('/shipments', { method: 'POST', body: JSON.stringify(draft) });
-  } catch (error) {
-    await orderRef.update({
-      'packlink.status': 'creation_failed',
-      'packlink.lastError': error instanceof Error ? error.message : String(error),
-      updatedAt: new Date(),
-    });
-    throw error;
-  }
-  const reference = String(result?.reference || '');
-  if (!reference) {
-    await orderRef.update({ 'packlink.status': 'creation_failed', 'packlink.lastError': 'Packlink no devolvió la referencia del envío.', updatedAt: new Date() });
-    throw new Error('Packlink no devolvió la referencia del envío.');
-  }
-
-  await orderRef.update({
-    'packlink.reference': reference,
-    'packlink.serviceId': order.packlink.serviceId,
-    'packlink.serviceName': order.packlink.serviceName,
-    'packlink.carrierName': order.packlink.carrierName,
-    'packlink.quotedPrice': order.packlink.quotedPrice ?? null,
-    'packlink.status': 'draft_created',
-    'packlink.labelUrl': null,
-    'packlink.trackingUrl': null,
-    'packlink.createdAt': new Date(),
-    updatedAt: new Date(),
-  });
-
-  // Intentar recuperar la etiqueta si el transportista/estado ya la ha generado.
-  try {
-    const labels = await packlinkRequest(`/shipments/${encodeURIComponent(reference)}/labels`, { method: 'GET' });
-    const labelUrl = Array.isArray(labels) ? labels.find((v: unknown) => typeof v === 'string') : labels?.label_url || labels?.url || labels?.labels?.[0]?.url;
-    if (typeof labelUrl === 'string' && labelUrl.startsWith('https://')) {
-      await orderRef.update({ 'packlink.labelUrl': labelUrl, 'packlink.status': 'label_available', updatedAt: new Date() });
-    } else {
-      await orderRef.update({ 'packlink.status': 'draft_created_label_pending', updatedAt: new Date() });
-    }
-  } catch (error) {
-    console.warn('[PACKLINK] El borrador se creó pero la etiqueta aún no está disponible.', {
-      orderId,
-      reference,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    await orderRef.set({ packlink: { status: 'draft_created_label_pending' }, updatedAt: new Date() }, { merge: true });
-  }
-}
