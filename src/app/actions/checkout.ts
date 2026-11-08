@@ -285,6 +285,9 @@ export async function createCheckoutOrder(
     if (!selectedQuote || !Number.isFinite(selectedQuote.price) || selectedQuote.price < 0) {
       throw new Error('La tarifa de envío ha cambiado. Vuelve a calcular el envío antes de pagar.');
     }
+    if (String(selectedQuote.currency || '').toUpperCase() !== 'EUR') {
+      throw new Error('Packlink devolvió una tarifa en una moneda distinta de EUR.');
+    }
     if (!shippingFree && selectedQuote.price <= 0) {
       throw new Error('Packlink no devolvió una tarifa de envío válida para este destino.');
     }
