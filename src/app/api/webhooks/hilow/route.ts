@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const eventType = getEventType(payload);
     const internalOrderId = String(payload.internalOrderId || payload.orderId || '').trim();
     const hilowOrderId = payload.hilowOrderId || payload.paymentId || payload.id || null;
-    const amountInCents = Number(payload.amountInCents ?? payload.amount ?? 0);
+    const amountInCents = Number(payload.amountInCents ?? 0);
 
     if (!internalOrderId) {
       return NextResponse.json({ error: 'internalOrderId no válido' }, { status: 400 });
@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
 
         // Recurring subscription renewals may not have a pre-created order.
         if (!existingOrder && eventType.includes('renewal') && isSubscription) {
-          const renewalTotal = Number.isSafeInteger(amountInCents) && amountInCents > 0 ? amountInCents : 4400;
+          const configuredRenewalTotal = Number(process.env.SUBSCRIPTION_PRICE_CENTS || 4400);\n          const renewalTotal = Number.isSafeInteger(configuredRenewalTotal) && configuredRenewalTotal > 0 ? configuredRenewalTotal : 4400;
           orderData.id = orderDocId;
           orderData.userId = userId;
           orderData.total = renewalTotal;
