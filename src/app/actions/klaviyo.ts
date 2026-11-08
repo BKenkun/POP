@@ -3,6 +3,7 @@
 // Modificado por: Webmaster Freddy Poleo
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
+import { enforceServerActionRateLimit } from '@/lib/server-rate-limit';
 import { auth, firestore } from '@/lib/firebase-admin';
 import type { Order, OrderStatus, Product } from '@/lib/types';
 import {
@@ -31,6 +32,7 @@ async function requireAdminSession() {
  * El navegador no puede elegir el destinatario de la notificación ni los datos del perfil.
  */
 export async function notifyAdminNewUser(idToken: string, displayName?: string) {
+  await enforceServerActionRateLimit('klaviyo-signup-notification', 10, 60 * 60 * 1000);
   if (typeof idToken !== 'string' || idToken.length < 20) {
     throw new Error('Token de registro no válido.');
   }
