@@ -77,10 +77,11 @@ export async function getPacklinkShippingQuotes(input: {
       'from[zip]': fromPostalCode,
       'to[country]': country,
       'to[zip]': postalCode,
-      'packages[0][height]': String(Math.ceil(input.heightCm || heightCm)),
-      'packages[0][width]': String(Math.ceil(input.widthCm || widthCm)),
-      'packages[0][length]': String(Math.ceil(input.lengthCm || lengthCm)),
-      'packages[0][weight]': String(input.weightKg || weightKg),
+      // Package dimensions come only from trusted server-side warehouse settings.
+      'packages[0][height]': String(Math.ceil(heightCm)),
+      'packages[0][width]': String(Math.ceil(widthCm)),
+      'packages[0][length]': String(Math.ceil(lengthCm)),
+      'packages[0][weight]': String(weightKg),
     });
     const body = await packlinkRequest(`/services?${params.toString()}`, { method: 'GET' });
     const rows = Array.isArray(body) ? body : Array.isArray(body?.services) ? body.services : [];
