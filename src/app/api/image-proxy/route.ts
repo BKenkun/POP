@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ALLOWED_HOSTS = new Set([
   'firebasestorage.googleapis.com',
-  'storage.googleapis.com',
 ]);
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
@@ -39,10 +38,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Origen de imagen no permitido.', { status: 403 });
   }
 
-  const validStoragePath =
-    imageUrl.hostname === 'firebasestorage.googleapis.com'
-      ? imageUrl.pathname.startsWith('/v0/b/') && imageUrl.pathname.includes('/o/')
-      : imageUrl.pathname.split('/').filter(Boolean).length >= 2;
+  const validStoragePath = imageUrl.pathname.startsWith('/v0/b/') && imageUrl.pathname.includes('/o/');
 
   if (!validStoragePath) {
     return new NextResponse('Ruta de almacenamiento no permitida.', { status: 403 });
