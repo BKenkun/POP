@@ -175,14 +175,26 @@ export async function POST(req: NextRequest) {
 
     const failureStatuses = ['failed', 'expired', 'refunded'];
     if (failureStatuses.includes(paymentStatus)) {
-      await orderRef.set({
-        nowpaymentsPaymentId: paymentId || null,
-        nowpaymentsStatus: paymentStatus,
-        status: 'issue',
-        paymentFailureAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
-      return NextResponse.json({ received: true, processed: paymentStatus });
+      const failed = await firestore.runTransaction(async transaction => {
+        const currentSnapshot = await transaction.get(orderRef);
+        if (!currentSnapshot.exists) return 'not_found' as const;
+        const current = currentSnapshot.data()!;
+        if (paidStatuses.includes(String(current.status))) return 'already_paid' as const;
+
+        transaction.set(orderRef, {
+          nowpaymentsPaymentId: paymentId || null,
+          nowpaymentsStatus: paymentStatus,
+          status: 'issue',
+          paymentFailureAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return 'failed' as const;
+      });
+
+      if (failed === 'not_found') {
+        return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+      }
+      return NextResponse.json({ received: true, processed: failed === 'already_paid' ? 'already_paid' : paymentStatus });
     }
 
     // waiting, confirming, confirmed, sending, partially_paid, etc. no son pago final.
