@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import admin from 'firebase-admin';
 import { firestore } from '@/lib/firebase-admin';
+import type { DocumentData, DocumentReference } from 'firebase-admin/firestore';
 
 export type CheckoutAccess = {
   idToken?: string;
@@ -9,8 +10,8 @@ export type CheckoutAccess = {
 
 export type AuthorizedCheckoutOrder = {
   userId: string;
-  orderRef: FirebaseFirestore.DocumentReference;
-  order: FirebaseFirestore.DocumentData;
+  orderRef: DocumentReference;
+  order: DocumentData;
 };
 
 /**
