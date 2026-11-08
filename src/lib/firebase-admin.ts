@@ -1,3 +1,4 @@
+import 'server-only';
 // Modificado por: Webmaster Freddy Poleo
 import admin from 'firebase-admin';
 
