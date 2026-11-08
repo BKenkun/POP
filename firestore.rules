@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -11,67 +10,80 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'maryandpopper@gmail.com' ||
-        request.auth.token.email == 'EnriqueEspinCosme@gmail.com' ||
-        request.auth.token.email == 'enriqueespincosme@gmail.com'
-      );
+      return isSignedIn() && request.auth.token.email in [
+        'maryandpopper@gmail.com',
+        'enriqueespincosme@gmail.com',
+        'EnriqueEspinCosme@gmail.com'
+      ];
     }
 
-    // Products are publicly readable by anyone.
-    // Writing is restricted to admins.
+    // Public catalogue; only administrators can change prices or stock.
     match /products/{productId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
-    
-    // Coupons are readable by signed-in users.
-    // Coupon creation and deletion is restricted to admins.
-    // Users can UPDATE a coupon, but ONLY the 'usageCount' field.
+
+    // Customers may read coupon details to validate a code in the UI.
+    // Coupon creation, configuration and usage counters are server/admin-only.
     match /coupons/{couponId} {
       allow read: if isSignedIn();
-      allow create, delete: if isAdmin();
-      allow update: if isSignedIn() && request.resource.data.keys().hasOnly(['usageCount']);
+      allow create, update, delete: if isAdmin();
     }
 
-    // User-specific data.
     match /users/{userId} {
-      // An admin can see any user profile. A user can only see their own.
       allow get: if isOwner(userId) || isAdmin();
-      // Only an admin can list all users.
       allow list: if isAdmin();
-      
-      // A user can only create their own user document.
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      
-      // A user can ONLY update specific, safe fields on their own document.
-      // An admin can update any field (when using Admin SDK).
-      allow update: if (isOwner(userId) && request.resource.data.keys().hasOnly(['addresses', 'loyaltyPoints', 'isSubscribed', 'subscription'])) || isAdmin();
 
-      // A user can delete their own document, an admin can delete any.
-      allow delete: if isExistingOwner(userId) || isAdmin();
+      // A new account may only initialize its own profile with zero privileges/points.
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'creationTime', 'createdAt',
+          'loyaltyPoints', 'isSubscribed', 'addresses'
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.get('loyaltyPoints', 0) == 0
+        && request.resource.data.get('isSubscribed', false) == false;
 
-      // Shopping carts and orders are private to the user.
+      // A customer may edit addresses/display name, never points or subscription flags.
+      allow update: if isAdmin() || (
+        isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['addresses', 'displayName'])
+      );
+
+      // Account deletion must be handled through a trusted server workflow.
+      allow delete: if isAdmin();
+
       match /shoppingCarts/{cartId} {
         allow read, write: if isOwner(userId);
       }
 
       match /orders/{orderId} {
+        // Customers can see their own orders. All order mutations are server/admin-only.
         allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) || isAdmin();
-        allow update, delete: if isExistingOwner(userId) || isAdmin();
+        allow create, update, delete: if isAdmin();
       }
     }
-    
-    // This allows an admin to perform a collectionGroup query on all 'orders'.
-    // It's essential for the admin panel dashboard and order list.
+
+    // Admin order dashboards use collectionGroup('orders').
     match /{path=**}/orders/{orderId} {
-       allow get, list: if isAdmin();
+      allow get, list: if isAdmin();
+    }
+
+    // Server-only rate-limit counters and webhook audit records.
+    match /securityRateLimits/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /webhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // No client access to private application configuration.
+    match /appSettings/{documentId} {
+      allow read, write: if false;
     }
   }
 }
