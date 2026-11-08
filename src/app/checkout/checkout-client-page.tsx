@@ -248,7 +248,7 @@ export default function CheckoutClientPage() {
     if (!code) return;
     setCouponLoading(true);
     try {
-      const q = query(collection(db, 'coupons'), where('code', '==', code));
+      const q = query(collection(db, 'coupons'), where('code', '==', code), where('isActive', '==', true));
       const snap = await getDocs(q);
       if (snap.empty) {
         throw new Error(t('checkout.toasts.coupon_error_invalid') || 'Invalid coupon or not found.');
@@ -345,11 +345,14 @@ export default function CheckoutClientPage() {
     try {
       const cred = await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
       const idToken = await cred.user.getIdToken();
-      await fetch('/api/login', {
+      const sessionResponse = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
+      if (!sessionResponse.ok) {
+        throw new Error('No se pudo establecer la sesión segura. Vuelve a iniciar sesión.');
+      }
       form.setValue('email', cred.user.email || loginEmail.trim());
       if (cred.user.displayName) {
         form.setValue('name', cred.user.displayName);
@@ -672,11 +675,14 @@ export default function CheckoutClientPage() {
         });
 
         // Create session cookie
-        await fetch('/api/login', {
+        const sessionResponse = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
         });
+        if (!sessionResponse.ok) {
+          throw new Error('No se pudo establecer la sesión segura. Vuelve a iniciar sesión.');
+        }
 
         toast({
           title: 'Account Created Successfully!',
