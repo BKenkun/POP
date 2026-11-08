@@ -34,5 +34,18 @@ yarn-error.log*
 next-env.d.ts
 
 # Secretos de Firebase (¡CRÍTICO!)
-src/lib/firebase-admin.ts
 serviceAccountKey.json
+# Private credentials and local Firebase state
+.env
+.env.*
+!.env.example
+serviceAccount*.json
+*service-account*.json
+*.p12
+*.keystore
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.secret
+*.secrets
