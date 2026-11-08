@@ -1,0 +1,234 @@
+
+import 'server-only';
+
+import { Order, OrderItem, Product } from "@/lib/types";
+
+const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
+const KLAVIYO_API_REVISION = '2024-02-15';
+
+if (!KLAVIYO_API_KEY) {
+    console.warn("Klaviyo API Key is not set. Marketing and transactional emails will be simulated.");
+}
+
+// Expand the event name type to include all possible order statuses
+type KlaviyoEventName =
+  | 'COMPRA REALIZADA'
+  | 'Admin New Order Notification'
+  | 'Admin New User Notification'
+  | 'Order Shipped'
+  | 'Order Out For Delivery'
+  | 'Order Delivered'
+  | 'Order Cancelled'
+  | 'Order Issue';
+
+/**
+ * Sends a specific event to the Klaviyo Events API.
+ * @param eventName The name of the event to track.
+ * @param customerEmail The email address of the customer.
+ * @param properties An object containing data about the event.
+ */
+export async function trackKlaviyoEvent(eventName: KlaviyoEventName, customerEmail: string, properties: { [key: string]: any }) {
+    if (!KLAVIYO_API_KEY) {
+        console.log(`[SIMULATION] Klaviyo event '${eventName}' tracked for ${customerEmail}. Properties:`, JSON.stringify(properties, null, 2));
+        return { success: true, message: 'Simulated event tracking (KLAVIYO_API_KEY not set).' };
+    }
+    
+    const payload = {
+        data: {
+            type: "event",
+            attributes: {
+                profile: { email: customerEmail },
+                metric: { name: eventName },
+                properties: properties,
+            }
+        }
+    };
+
+    console.log(`[Klaviyo] Sending event '${eventName}' for ${customerEmail}...`);
+
+    try {
+        const response = await fetch('https://a.klaviyo.com/api/events/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'revision': KLAVIYO_API_REVISION
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.status !== 202) {
+            const errorBody = await response.text();
+            console.error(`[Klaviyo] API responded with status ${response.status}:`, errorBody);
+            throw new Error(`Klaviyo API error (${response.status}): ${errorBody}`);
+        }
+
+        console.log(`✅ Successfully tracked Klaviyo event '${eventName}' for ${customerEmail}.`);
+        return { success: true };
+
+    } catch (error: any) {
+        console.error(`❌ Failed to send event '${eventName}' to Klaviyo:`, error);
+        return { success: false, message: error.message || 'An internal server error occurred.' };
+    }
+}
+
+
+/**
+ * Tracks order status updates in Klaviyo.
+ * This central function maps your internal order status to specific Klaviyo events.
+ * @param order The full order object.
+ * @param newStatus The new status of the order.
+ */
+export async function trackOrderStatusUpdateInternal(order: Order, newStatus: Order['status']) {
+    let eventName: KlaviyoEventName | null = null;
+    let isAdminNotification = false;
+
+    switch (newStatus) {
+        case 'order_received':
+            eventName = 'COMPRA REALIZADA';
+            isAdminNotification = true;
+            break;
+        case 'shipped':
+            eventName = 'Order Shipped';
+            break;
+        case 'out_for_delivery':
+            eventName = 'Order Out For Delivery';
+            break;
+        case 'delivered':
+            eventName = 'Order Delivered';
+            break;
+        case 'cancelled':
+            eventName = 'Order Cancelled';
+            break;
+        case 'issue':
+            eventName = 'Order Issue';
+            break;
+        case 'pending_payment':
+            console.log(`[Klaviyo] Estado '${newStatus}': aún no se envía evento al cliente.`);
+            return { success: true, message: 'No event for pending_payment.' };
+        default:
+            console.log(`[Klaviyo] No hay evento mapeado para el estado: ${newStatus}`);
+            return { success: true, message: 'No event mapped for this status.' };
+    }
+
+    if (!eventName) {
+        return { success: false, message: 'Event name could not be determined.' };
+    }
+
+    try {
+        const klaviyoOrderData = await formatOrderForKlaviyo(order, order.id);
+        
+        // Send notification to the customer
+        await trackKlaviyoEvent(eventName, order.customerEmail, klaviyoOrderData);
+        
+        // Also send a notification to the admin for new orders
+        if (isAdminNotification) {
+            await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
+        }
+
+        return { success: true, message: `Event '${eventName}' tracked successfully.` };
+
+    } catch (error: any) {
+        console.error(`Error in trackOrderStatusUpdate for order ${order.id}:`, error);
+        return { success: false, message: error.message };
+    }
+}
+
+
+/**
+ * Creates or updates a product in the Klaviyo Catalog.
+ * @param product The product data from the store.
+ */
+export async function syncKlaviyoProduct(product: Product) {
+    if (!KLAVIYO_API_KEY) {
+        console.log(`[SIMULATION] Klaviyo product sync for '${product.name}'.`);
+        return { success: true, message: 'Simulated product sync.' };
+    }
+
+    const itemId = product.id;
+    const payload = {
+        data: {
+            type: 'catalog-item',
+            id: itemId,
+            attributes: {
+                title: product.name,
+                description: product.description || 'Sin descripción.',
+                url: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${product.id}`,
+                image_full_url: product.imageUrl,
+                price: product.price / 100, 
+                inventory_quantity: product.stock,
+                custom_metadata: {
+                    brand: product.brand,
+                    size: product.size,
+                    composition: product.composition,
+                    is_on_sale: !!product.originalPrice && product.originalPrice > product.price
+                }
+            }
+        }
+    };
+    
+    const url = `https://a.klaviyo.com/api/catalog-items/${itemId}/`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Klaviyo-API-Key ${KLAVIYO_API_KEY}`,
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'revision': KLAVIYO_API_REVISION,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.errors?.[0]?.detail || 'Could not sync product with Klaviyo.');
+        }
+        
+        console.log(`✅ Successfully synced product '${product.name}' with Klaviyo.`);
+        return { success: true };
+
+    } catch (error: any) {
+        console.error(`❌ Failed to sync product '${product.name}' with Klaviyo:`, error);
+        return { success: false, message: error.message || 'An internal server error occurred.' };
+    }
+}
+
+
+// --- Helper Functions to format data for Klaviyo ---
+
+export async function formatOrderForKlaviyo(order: Order, orderId: string) {
+    const orderDate = order.createdAt instanceof Date 
+        ? order.createdAt.toISOString() 
+        : new Date().toISOString();
+    
+    return {
+      '$event_id': orderId,
+      '$value': order.total / 100,
+      'OrderId': orderId,
+      'ItemNames': order.items.map(item => item.name),
+      'ItemCount': order.items.reduce((acc, item) => acc + item.quantity, 0),
+      'ShippingAddress': order.shippingAddress,
+      'PaymentMethod': order.paymentMethod,
+      'Status': order.status,
+      'Items': order.items.map(formatOrderItemForKlaviyo),
+      'OrderDate': orderDate,
+      'CustomerName': order.customerName,
+    };
+}
+
+function formatOrderItemForKlaviyo(item: OrderItem) {
+    return {
+        'ProductID': item.productId,
+        'SKU': item.productId,
+        'ProductName': item.name,
+        'Quantity': item.quantity,
+        'ItemPrice': item.price / 100,
+        'RowTotal': (item.price * item.quantity) / 100,
+        'ImageURL': item.imageUrl,
+        'Categories': [],
+        'Brand': '',
+    };
+}
