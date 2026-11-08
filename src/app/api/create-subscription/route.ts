@@ -1,151 +1,181 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import admin from 'firebase-admin';
 import { firestore as adminFirestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+const PRICE_CENTS = Number(process.env.SUBSCRIPTION_PRICE_CENTS ?? '4400');
+const APP_BASE_URL = (process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+
+async function applySubscriptionRateLimit(uid: string): Promise<void> {
+  const key = crypto.createHash('sha256').update(uid).digest('hex').slice(0, 40);
+  const ref = adminFirestore.collection('securityRateLimits').doc('subscription_' + key);
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  const maxRequests = 3;
+
+  await adminFirestore.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    const data = snapshot.exists ? snapshot.data()! : {};
+    const windowStart = Number(data.windowStartMs || 0);
+    const count = Number(data.count || 0);
+
+    if (now - windowStart < windowMs && count >= maxRequests) {
+      throw new Error('Has alcanzado el límite de intentos. Vuelve a intentarlo más tarde.');
+    }
+
+    const reset = now - windowStart >= windowMs;
+    transaction.set(ref, {
+      windowStartMs: reset ? now : windowStart || now,
+      count: reset ? 1 : count + 1,
+      updatedAt: FieldValue.serverTimestamp(),
+      expiresAt: new Date(now + 24 * windowMs),
+    });
+  });
+}
 
 /**
- * Endpoint to initialize Hilow subscription flow with Firestore pre-registration.
+ * Subscription checkout. Identity, price and return URLs are derived on the server.
  */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
-    const { orderId: clientProvidedId, successUrl, cancelUrl, userEmail, userName } = body;
-
-    if (!clientProvidedId || !successUrl || !cancelUrl) {
-      return NextResponse.json({ error: 'Missing required fields in request' }, { status: 400 });
+    const authorization = request.headers.get('authorization') || '';
+    const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
+    if (!tokenMatch) {
+      return NextResponse.json({ error: 'Debes iniciar sesión para contratar la suscripción.' }, { status: 401 });
     }
 
-    const customerEmail = userEmail || 'customer@example.com';
-    const customerName = userName || (userEmail ? userEmail.split('@')[0] : 'Member');
-
-    const HILOW_API_KEY = process.env.HILOW_API_KEY;
-    const hostHeader = req.headers.get('host')?.split(':')[0] || '';
-    const HILOW_STORE_ID = process.env.HILOW_STORE_ID || (hostHeader && !hostHeader.includes('localhost') ? hostHeader : 'comprarpopperonline.com');
-    const HILOW_API_BASE_URL = (process.env.HILOW_API_BASE_URL || 'https://hilowglobal.com').replace(/\/$/, '');
-    const HILOW_PAY_ORIGIN = (process.env.HILOW_PAY_ORIGIN || HILOW_API_BASE_URL).replace(/\/$/, '');
-    const HILOW_API_ENDPOINT = `${HILOW_API_BASE_URL}/api/orders`;
-
-    // El clientProvidedId viene como SUB_uid_timestamp
-    const parts = clientProvidedId.split('_');
-    const userId = parts[1] || 'unknown';
-
-    // 1. OBTENER / INICIALIZAR DATOS DEL USUARIO
-    let userData: any = null;
+    let claims;
     try {
-      const userRef = adminFirestore.collection('users').doc(userId);
-      const userDoc = await userRef.get();
-      userData = userDoc.exists ? userDoc.data() : null;
-
-      if (!userDoc.exists) {
-        await userRef.set({
-          uid: userId,
-          email: customerEmail,
-          displayName: customerName,
-          createdAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
-    } catch (userDbErr: any) {
-      console.warn('[SUBSCRIPTION] Notice reading/creating user in Firestore:', userDbErr?.message);
+      claims = await admin.auth().verifyIdToken(tokenMatch[1], true);
+    } catch {
+      return NextResponse.json({ error: 'La sesión ha caducado. Inicia sesión de nuevo.' }, { status: 401 });
     }
 
-    // 2. PRE-REGISTRO DEL PEDIDO (BOX)
-    const uniqueOrderId = `BOX-${Date.now()}`;
-    try {
-      const orderRef = adminFirestore.collection('users').doc(userId).collection('orders').doc(uniqueOrderId);
-      const pendingOrderData = {
-        id: uniqueOrderId,
-        userId: userId,
-        status: 'pending_payment',
-        total: 4400, // Precio fijo suscripción (44,00 €)
-        paymentMethod: 'hilow',
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        isSubscription: true,
-        customerEmail: customerEmail,
-        customerName: customerName,
-        items: [{
-          productId: 'subscription_club',
-          name: 'Monthly Dose Club',
-          price: 4400,
-          quantity: 1,
-          imageUrl: 'https://picsum.photos/seed/sub/200/200'
-        }]
-      };
-
-      await orderRef.set(pendingOrderData);
-      console.log(`[SUBSCRIPTION] Pending order created: ${uniqueOrderId} for user: ${userId}`);
-    } catch (orderDbErr: any) {
-      console.warn('[SUBSCRIPTION] Warning saving pending order in Firestore:', orderDbErr?.message);
+    if (!Number.isSafeInteger(PRICE_CENTS) || PRICE_CENTS <= 0) {
+      console.error('[SUBSCRIPTION] SUBSCRIPTION_PRICE_CENTS no es válido.');
+      return NextResponse.json({ error: 'La suscripción no está configurada correctamente.' }, { status: 503 });
+    }
+    if (!/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(APP_BASE_URL)) {
+      console.error('[SUBSCRIPTION] APP_BASE_URL no es válido.');
+      return NextResponse.json({ error: 'La URL de la tienda no está configurada correctamente.' }, { status: 503 });
     }
 
-    // 3. DNA FOR HILOW: SUB_<userId>_<uniqueOrderId>_<timestamp>
-    const structuredInternalOrderId = `SUB_${userId}_${uniqueOrderId}_${Date.now()}`;
+    const apiKey = process.env.HILOW_API_KEY;
+    const storeId = process.env.HILOW_STORE_ID || 'comprarpopperonline.com';
+    if (!apiKey) {
+      console.error('[SUBSCRIPTION] HILOW_API_KEY no está configurada.');
+      return NextResponse.json({ error: 'La pasarela de pago no está disponible.' }, { status: 503 });
+    }
 
-    const payload = {
-      storeId: HILOW_STORE_ID,
-      internalOrderId: structuredInternalOrderId,
-      amountInCents: 4400,
-      productName: 'Monthly Dose Club',
+    const userId = claims.uid;
+    await applySubscriptionRateLimit(userId);
+
+    const userRef = adminFirestore.collection('users').doc(userId);
+    const userSnapshot = await userRef.get();
+    if (!userSnapshot.exists) {
+      return NextResponse.json({ error: 'No se encontró el perfil de usuario.' }, { status: 404 });
+    }
+
+    const userData = userSnapshot.data()!;
+    if (userData.isSubscribed === true || userData.subscriptionStatus === 'active' ||
+        userData.subscription?.status === 'active') {
+      return NextResponse.json({ error: 'Ya tienes una suscripción activa.' }, { status: 409 });
+    }
+
+    const customerEmail = String(claims.email || userData.email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      return NextResponse.json({ error: 'Tu cuenta necesita un correo electrónico válido.' }, { status: 400 });
+    }
+
+    const customerName = String(userData.displayName || claims.name || customerEmail.split('@')[0]).trim();
+    const uniqueOrderId = 'BOX-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex');
+    const orderRef = userRef.collection('orders').doc(uniqueOrderId);
+    const structuredInternalOrderId = 'SUB_' + userId + '_' + uniqueOrderId + '_' + Date.now();
+
+    await orderRef.create({
+      id: uniqueOrderId,
+      userId,
+      status: 'pending_payment',
+      total: PRICE_CENTS,
+      paymentMethod: 'hilow',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       isSubscription: true,
-      successUrl: successUrl,
-      cancelUrl: cancelUrl,
-    };
-
-    let checkoutUrl: string | null = null;
-
-    // 4. INTENTAR SOLICITUD A LA API DE HILOW SI HAY API KEY DISPONIBLE
-    if (HILOW_API_KEY) {
-      try {
-        const apiResponse = await fetch(HILOW_API_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${HILOW_API_KEY}`,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const responseText = await apiResponse.text();
-        let data: any = null;
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          data = null;
-        }
-
-        if (apiResponse.ok && data && data.hilowOrderId) {
-          checkoutUrl = `${HILOW_PAY_ORIGIN}/pay/${data.hilowOrderId}`;
-        } else {
-          console.warn('[SUBSCRIPTION] Respuesta no exitosa de API Hilow:', {
-            status: apiResponse.status,
-            data,
-          });
-        }
-      } catch (apiErr: any) {
-        console.warn('[SUBSCRIPTION] Error llamando API de Hilow:', apiErr?.message);
-      }
-    } else {
-      console.log('[SUBSCRIPTION] HILOW_API_KEY no presente en entorno, usando pasarela directa alojada de Hilow.');
-    }
-
-    // 5. FALLBACK SEGURO: Si no se obtuvo URL de la API dinámica, usar la pasarela alojada directa de Hilow
-    if (!checkoutUrl) {
-      checkoutUrl = `${HILOW_PAY_ORIGIN}/pay/${structuredInternalOrderId}`;
-    }
-
-    return NextResponse.json({
-      success: true,
-      checkoutUrl,
-      orderId: uniqueOrderId,
-      internalOrderId: structuredInternalOrderId,
+      customerEmail,
+      customerName,
+      items: [{
+        productId: 'subscription_club',
+        name: 'Club Dosis Mensual',
+        price: PRICE_CENTS,
+        quantity: 1,
+        imageUrl: 'https://picsum.photos/seed/sub/200/200',
+      }],
     });
 
-  } catch (error: any) {
-    console.error('[API FATAL ERROR in create-subscription]:', error?.message || error);
-    return NextResponse.json(
-      { error: error?.message || 'Internal error while processing subscription' },
-      { status: 500 }
-    );
+    const payload = {
+      storeId,
+      internalOrderId: structuredInternalOrderId,
+      amountInCents: PRICE_CENTS,
+      productName: 'Club Dosis Mensual',
+      isSubscription: true,
+      successUrl: APP_BASE_URL + '/subscription/success?order_id=' + encodeURIComponent(uniqueOrderId),
+      cancelUrl: APP_BASE_URL + '/subscription',
+    };
+
+    let response: Response;
+    try {
+      response = await fetch('https://hilowglobal.com/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey,
+        },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+      });
+    } catch (error) {
+      await orderRef.set({
+        paymentInitError: 'No se pudo contactar con HiLow.',
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      throw error;
+    }
+
+    const responseText = await response.text();
+    let result: { hilowOrderId?: string; message?: string } = {};
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = {};
+    }
+
+    if (!response.ok || typeof result.hilowOrderId !== 'string' || !result.hilowOrderId) {
+      await orderRef.set({
+        paymentInitError: 'HiLow devolvió un error al crear el pago.',
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      console.error('[SUBSCRIPTION] HiLow rechazó el alta del pago:', { status: response.status });
+      return NextResponse.json({ error: result.message || 'No se pudo iniciar el pago de la suscripción.' }, { status: 502 });
+    }
+
+    const checkoutUrl = 'https://hilowglobal.com/pay/' + encodeURIComponent(result.hilowOrderId);
+    await orderRef.set({
+      hilowOrderId: result.hilowOrderId,
+      hilowCheckoutUrl: checkoutUrl,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return NextResponse.json({ success: true, checkoutUrl, orderId: uniqueOrderId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error interno al procesar la suscripción.';
+    if (message.includes('límite de intentos')) {
+      return NextResponse.json({ error: message }, { status: 429 });
+    }
+    console.error('[SUBSCRIPTION] Error al crear la suscripción:', message);
+    return NextResponse.json({ error: 'No se pudo iniciar la suscripción.' }, { status: 500 });
   }
 }
