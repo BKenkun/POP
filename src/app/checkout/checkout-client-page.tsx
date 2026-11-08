@@ -437,11 +437,13 @@ export default function CheckoutClientPage() {
 
     const isGuestOrder = !user;
     const userId = user ? user.uid : 'guest';
-    const uniqueId = `CPO_${userId}_${Date.now()}`;
+    let createdOrderId = '';
+    let guestAccessToken = '';
+    let idToken: string | undefined;
 
     try {
+      idToken = user ? await user.getIdToken() : undefined;
       const orderPayload: CheckoutOrderData = {
-        orderId: uniqueId,
         userId,
         isGuest: isGuestOrder,
         items: cartItems.map((item) => ({
@@ -486,9 +488,19 @@ export default function CheckoutClientPage() {
         }),
       };
 
-      const result = await createCheckoutOrder(orderPayload);
-      if (!result.success) {
+      const result = await createCheckoutOrder(orderPayload, idToken);
+      if (!result.success || !result.orderId) {
         throw new Error(result.error || 'Could not save the order.');
+      }
+
+      createdOrderId = result.orderId;
+      guestAccessToken = result.guestAccessToken || '';
+      if (isGuestOrder) {
+        if (!guestAccessToken) throw new Error('No se pudo crear el acceso seguro para el pedido de invitado.');
+        sessionStorage.setItem('pop_guest_order_access', JSON.stringify({
+          orderId: createdOrderId,
+          token: guestAccessToken,
+        }));
       }
     } catch (e: any) {
       const msg = e?.message || String(e);
@@ -506,7 +518,7 @@ export default function CheckoutClientPage() {
 
     try {
       if (selectedPaymentMethod === 'nowpayments') {
-        const result = await createNowPaymentsInvoice(uniqueId);
+        const result = await createNowPaymentsInvoice(createdOrderId, { idToken, guestAccessToken });
         if (!result.success || !result.invoiceUrl) {
           throw new Error(result.message || 'Could not initiate payment with NOWPayments.');
         }
@@ -515,11 +527,8 @@ export default function CheckoutClientPage() {
       }
 
       const hilowResult = await createHilowApiOrder(
-        uniqueId,
-        finalTotals.priceInCents,
-        cartItems.map((item) => `${item.quantity}x ${item.name}`).join(', '),
-        false,
-        window.location.origin
+        createdOrderId,
+        { idToken, guestAccessToken }
       );
 
       if (!hilowResult.success || !hilowResult.checkoutUrl) {
