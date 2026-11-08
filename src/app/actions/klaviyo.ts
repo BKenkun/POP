@@ -2,6 +2,7 @@
 
 // Modificado por: Webmaster Freddy Poleo
 import { cookies } from 'next/headers';
+import crypto from 'crypto';
 import { auth, firestore } from '@/lib/firebase-admin';
 import type { Order, OrderStatus, Product } from '@/lib/types';
 import {
@@ -42,6 +43,21 @@ export async function notifyAdminNewUser(idToken: string, displayName?: string) 
     .replace(/[<>\r\n]/g, ' ')
     .trim()
     .slice(0, 80);
+
+  const notificationRef = firestore.collection('securityRateLimits').doc(
+    'klaviyo_signup_' + crypto.createHash('sha256').update(decoded.uid).digest('hex').slice(0, 40)
+  );
+  const shouldNotify = await firestore.runTransaction(async transaction => {
+    const existing = await transaction.get(notificationRef);
+    if (existing.exists) return false;
+    transaction.create(notificationRef, {
+      purpose: 'single_registration_notification',
+      createdAt: new Date(),
+      uidHash: crypto.createHash('sha256').update(decoded.uid).digest('hex'),
+    });
+    return true;
+  });
+  if (!shouldNotify) return { success: true, duplicate: true };
 
   return trackKlaviyoEvent('Admin New User Notification', 'maryandpopper@gmail.com', {
     NewUserEmail: email,
