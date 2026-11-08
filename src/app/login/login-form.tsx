@@ -19,7 +19,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isAdmin } = useAuth(); // We can get isAdmin from context now
+  const { isAdmin } = useAuth(); // Used by navigation once the auth context updates
   const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
@@ -38,15 +38,16 @@ export default function LoginForm() {
       const idToken = await userCredential.user.getIdToken();
 
       // Create session cookie
-      await fetch('/api/login', {
+      const sessionResponse = await fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
+      if (!sessionResponse.ok) {
+        throw new Error('No se pudo establecer la sesión segura. Vuelve a intentarlo.');
+      }
       
-      const loggedInIsAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
+      const loggedInIsAdmin = ['maryandpopper@gmail.com', 'enriqueespincosme@gmail.com'].includes((userCredential.user.email || '').toLowerCase());
       
       toast({
           title: "Inicio de sesión exitoso",
