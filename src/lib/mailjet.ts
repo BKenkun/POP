@@ -1,5 +1,5 @@
 // Modificado por: Webmaster Freddy Poleo
-'use server';
+import 'server-only';
 
 import type { Order } from '@/lib/types';
 
