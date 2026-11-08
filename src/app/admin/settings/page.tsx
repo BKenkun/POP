@@ -30,7 +30,7 @@ export default function AdminSettingsPage() {
     async function loadSettings() {
       try {
         if (!user) throw new Error('Administrator session required');
-        const result = await getPacklinkSettings(await user.getIdToken());
+        const result = await getPacklinkSettings();
         if (active && result) setSettings({ ...defaults, ...result });
       } catch (error) {
         console.error('[PACKLINK_SETTINGS] Could not load settings', error);
@@ -51,7 +51,7 @@ export default function AdminSettingsPage() {
     if (!user) return;
     setSaving(true);
     try {
-      await savePacklinkSettings(settings, await user.getIdToken());
+      await savePacklinkSettings(settings);
       toast({ title: 'Settings saved', description: 'Upcoming shipping calculations will use this data.' });
     } catch (error) {
       toast({ title: 'Could not save', description: error instanceof Error ? error.message : 'Make sure you are logged in as an administrator.', variant: 'destructive' });
