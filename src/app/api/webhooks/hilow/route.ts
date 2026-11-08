@@ -7,7 +7,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
 import { Order } from '@/lib/types';
-import { createPacklinkShipmentDraft } from '@/app/actions/packlink';
+import { createPacklinkShipmentDraft } from '@/lib/packlink-server';
 
 // Route handlers need Node.js for crypto and Firebase Admin.
 export const runtime = 'nodejs';
