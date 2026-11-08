@@ -13,10 +13,8 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingBag, ArrowLeft, Loader2, Save, MapPin, Truck, History, MessageSquare, Phone, User as UserIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
+import { updateOrderStatusWithKlaviyo } from '@/app/actions/klaviyo';
 
 
 const getImageUrl = (url: string) => {
@@ -64,12 +62,7 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
     setIsSaving(true);
     
     try {
-      const orderDocRef = doc(db, order.path);
-      await updateDoc(orderDocRef, {
-        status: order.status,
-      });
-
-      await trackOrderStatusUpdate(order, order.status);
+      await updateOrderStatusWithKlaviyo(order.path, order.status);
 
       toast({
         title: 'Order Updated',
@@ -92,10 +85,8 @@ export default function OrderDetailsClient({ initialOrder }: { initialOrder: Ord
     setIsShipping(true);
     try {
       const newStatus = 'out_for_delivery';
-      const orderDocRef = doc(db, order.path);
-      await updateDoc(orderDocRef, { status: newStatus });
-      
-      await trackOrderStatusUpdate({ ...order, status: newStatus }, newStatus);
+      await updateOrderStatusWithKlaviyo(order.path, newStatus);
+      setOrder(prev => ({ ...prev, status: newStatus }));
 
       toast({ title: 'Order on its way', description: 'Order marked as "Out for Delivery".' });
       router.push(`/admin/shipping/${order.id}?path=${encodeURIComponent(order.path)}`);
