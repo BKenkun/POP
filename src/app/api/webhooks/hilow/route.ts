@@ -180,7 +180,8 @@ export async function POST(req: NextRequest) {
 
         // Recurring subscription renewals may not have a pre-created order.
         if (!existingOrder && eventType.includes('renewal') && isSubscription) {
-          const configuredRenewalTotal = Number(process.env.SUBSCRIPTION_PRICE_CENTS || 4400);\n          const renewalTotal = Number.isSafeInteger(configuredRenewalTotal) && configuredRenewalTotal > 0 ? configuredRenewalTotal : 4400;
+          const configuredRenewalTotal = Number(process.env.SUBSCRIPTION_PRICE_CENTS || 4400);
+          const renewalTotal = Number.isSafeInteger(configuredRenewalTotal) && configuredRenewalTotal > 0 ? configuredRenewalTotal : 4400;
           orderData.id = orderDocId;
           orderData.userId = userId;
           orderData.total = renewalTotal;
