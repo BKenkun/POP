@@ -5,6 +5,7 @@ import admin from 'firebase-admin';
 import { firestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getPacklinkShippingQuotes } from '@/app/actions/packlink';
+import { enforceServerActionRateLimit } from '@/lib/server-rate-limit';
 
 export interface CheckoutOrderItem {
   productId: string;
@@ -136,6 +137,7 @@ export async function createCheckoutOrder(
   error?: string;
 }> {
   try {
+    await enforceServerActionRateLimit('checkout-create', 8, 60 * 1000);
     if (!data || !Array.isArray(data.items) || data.items.length === 0 || data.items.length > 30) {
       return { success: false, error: 'El carrito no es válido.' };
     }
@@ -374,7 +376,9 @@ export async function createCheckoutOrder(
     console.error('[createCheckoutOrder] Pedido rechazado:', error instanceof Error ? error.message : String(error));
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'No se pudo crear el pedido.',
+      error: error instanceof Error && error.message === 'RATE_LIMITED'
+        ? 'Has realizado demasiados intentos. Espera un minuto e inténtalo de nuevo.'
+        : error instanceof Error ? error.message : 'No se pudo crear el pedido.',
     };
   }
 }
