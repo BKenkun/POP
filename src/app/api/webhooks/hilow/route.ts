@@ -225,6 +225,7 @@ export async function POST(req: NextRequest) {
 
         return {
           processed: true as const,
+          reason: 'processed' as const,
           order: {
             ...(existingOrder || {}),
             ...orderData,
