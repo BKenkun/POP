@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
             !Number.isFinite(expectedAmount) ||
             Math.round(receivedAmount) !== Math.round(expectedAmount)
           ) {
-            throw new Error('HILOW_AMOUNT_MISMATCH');
+            return { processed: false as const, reason: 'amount_mismatch' as const };
           }
         }
 
@@ -248,6 +248,10 @@ export async function POST(req: NextRequest) {
         console.log('[HILOW WEBHOOK] Confirmación duplicada ignorada:', { internalOrderId, orderDocId });
         return NextResponse.json({ received: true, processed: 'already_paid' }, { status: 200 });
       }
+      if (completion.reason === 'amount_mismatch') {
+        console.error('[HILOW WEBHOOK] Importe del pago no coincide:', { internalOrderId, orderDocId });
+        return NextResponse.json({ error: 'Importe del pago no coincide' }, { status: 400 });
+      }
 
       const finalOrder = completion.order;
       const notificationResults = await Promise.allSettled([
@@ -297,23 +301,52 @@ export async function POST(req: NextRequest) {
     }
 
     if (isPaymentFailed(eventType)) {
-      if (isSubscription) {
-        await userRef.set({
-          subscriptionStatus: 'past_due',
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+      const failureResult = await adminFirestore.runTransaction(async (transaction) => {
+        const orderSnapshot = await transaction.get(orderRef);
+        const currentOrder = orderSnapshot.exists ? orderSnapshot.data()! : null;
+        const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
 
-        const orderSnap = await orderRef.get();
-        if (orderSnap.exists) {
-          await sendSubscriptionStatusEmail({ ...orderSnap.data(), id: orderDocId } as Order, 'past_due');
+        // Ignore a late failure webhook if a successful payment was already recorded.
+        if (currentOrder && paidStatuses.includes(String(currentOrder.status))) {
+          return { status: 'already_paid' as const, order: currentOrder };
+        }
+        if (!currentOrder && !isSubscription) {
+          return { status: 'not_found' as const, order: null };
+        }
+
+        if (currentOrder) {
+          transaction.set(orderRef, {
+            status: 'issue',
+            paymentFailureAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+        if (isSubscription) {
+          transaction.set(userRef, {
+            subscriptionStatus: 'past_due',
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+
+        return { status: 'failed' as const, order: currentOrder };
+      });
+
+      if (failureResult.status === 'already_paid') {
+        return NextResponse.json({ received: true, processed: 'already_paid' }, { status: 200 });
+      }
+      if (failureResult.status === 'not_found') {
+        return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+      }
+      if (isSubscription && failureResult.order) {
+        try {
+          await sendSubscriptionStatusEmail(
+            { ...failureResult.order, id: orderDocId } as Order,
+            'past_due'
+          );
+        } catch (error) {
+          console.error('[HILOW WEBHOOK] No se pudo enviar el aviso de suscripción:', error instanceof Error ? error.message : String(error));
         }
       }
-
-      await orderRef.set({
-        status: 'issue',
-        paymentFailureAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
 
       return NextResponse.json({ received: true, processed: 'payment_failed' }, { status: 200 });
     }
