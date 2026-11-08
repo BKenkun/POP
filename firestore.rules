@@ -27,7 +27,7 @@ service cloud.firestore {
     // Customers may read coupon details to validate a code in the UI.
     // Coupon creation, configuration and usage counters are server/admin-only.
     match /coupons/{couponId} {
-      allow read: if isSignedIn();
+      allow read: if isAdmin() || resource.data.isActive == true;
       allow create, update, delete: if isAdmin();
     }
 
