@@ -141,147 +141,151 @@ export async function POST(req: NextRequest) {
     });
 
     if (isPaymentCompleted(eventType)) {
-      const orderSnap = await orderRef.get();
+      const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
+      const completion = await adminFirestore.runTransaction(async (transaction) => {
+        const orderSnapshot = await transaction.get(orderRef);
+        const existingOrder = orderSnapshot.exists ? orderSnapshot.data()! : null;
 
-      const existingOrder = orderSnap.exists ? orderSnap.data() : null;
+        // A normal order must exist before the provider can confirm it.
+        if (!existingOrder && !(eventType.includes('renewal') && isSubscription)) {
+          return { processed: false as const, reason: 'not_found' as const };
+        }
 
-      // No marcar como pagado un pedido normal que no existe en Firestore.
-      // Las renovaciones pueden crear un documento nuevo, según el flujo actual.
-      if (!orderSnap.exists && !(eventType.includes('renewal') && isSubscription)) {
-        console.error('[HILOW WEBHOOK] Pedido no encontrado para el pago confirmado:', {
-          internalOrderId,
-          userId,
-          orderDocId,
-        });
+        if (existingOrder && paidStatuses.includes(String(existingOrder.status))) {
+          return { processed: false as const, reason: 'already_paid' as const };
+        }
+
+        // When the provider supplies cents, they must exactly match the stored order total.
+        if (existingOrder && payload.amountInCents !== undefined && payload.amountInCents !== null) {
+          const receivedAmount = Number(payload.amountInCents);
+          const expectedAmount = Number(existingOrder.total);
+          if (
+            !Number.isFinite(receivedAmount) ||
+            !Number.isFinite(expectedAmount) ||
+            Math.round(receivedAmount) !== Math.round(expectedAmount)
+          ) {
+            throw new Error('HILOW_AMOUNT_MISMATCH');
+          }
+        }
+
+        const customerEmail = String(existingOrder?.customerEmail || payload.email || '').trim().toLowerCase();
+        const customerName = String(existingOrder?.customerName || payload.customerName || 'Cliente').trim();
+
+        const orderData: Record<string, any> = {
+          status: 'order_received',
+          paidAt: FieldValue.serverTimestamp(),
+          hilowPaymentId: hilowOrderId,
+          updatedAt: FieldValue.serverTimestamp(),
+        };
+
+        // Recurring subscription renewals may not have a pre-created order.
+        if (!existingOrder && eventType.includes('renewal') && isSubscription) {
+          const renewalTotal = Number.isSafeInteger(amountInCents) && amountInCents > 0 ? amountInCents : 4400;
+          orderData.id = orderDocId;
+          orderData.userId = userId;
+          orderData.total = renewalTotal;
+          orderData.paymentMethod = 'hilow';
+          orderData.createdAt = FieldValue.serverTimestamp();
+          orderData.isSubscription = true;
+          orderData.customerEmail = customerEmail || 'member@comprarpopperonline.com';
+          orderData.customerName = customerName || 'Cliente';
+          orderData.items = [{
+            productId: 'subscription_club',
+            name: 'Club Dosis Mensual',
+            price: renewalTotal,
+            quantity: 1,
+            imageUrl: 'https://picsum.photos/seed/sub/200/200',
+          }];
+        }
+
+        if (existingOrder) {
+          transaction.set(orderRef, orderData, { merge: true });
+        } else {
+          transaction.create(orderRef, orderData);
+        }
+
+        const userUpdate: Record<string, any> = {};
+        if (isSubscription) {
+          userUpdate.isSubscribed = true;
+          userUpdate.subscriptionStatus = 'active';
+          userUpdate.lastSubscriptionPayment = FieldValue.serverTimestamp();
+          userUpdate.updatedAt = FieldValue.serverTimestamp();
+        }
+
+        // Guests do not have a loyalty account. Award points only once, in the same
+        // transaction that claims the payment, to avoid duplicate increments on retries.
+        const paidTotal = Number(existingOrder?.total || orderData.total || amountInCents || 0);
+        const points = Math.floor(paidTotal / 1000);
+        if (userId !== 'guest' && points > 0) {
+          userUpdate.loyaltyPoints = FieldValue.increment(points);
+        }
+        if (Object.keys(userUpdate).length > 0) {
+          transaction.set(userRef, userUpdate, { merge: true });
+        }
+
+        return {
+          processed: true as const,
+          order: {
+            ...(existingOrder || {}),
+            ...orderData,
+            id: orderDocId,
+            userId,
+            total: paidTotal,
+            customerEmail,
+            customerName,
+            status: 'order_received',
+            items: existingOrder?.items || orderData.items || [],
+            isSubscription,
+          } as Order,
+        };
+      });
+
+      if (completion.reason === 'not_found') {
+        console.error('[HILOW WEBHOOK] Pedido no encontrado:', { internalOrderId, userId, orderDocId });
         return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
       }
-
-      // Validar el importe cuando Hilow envía explícitamente amountInCents.
-      // El pedido local almacena el total en céntimos.
-      if (orderSnap.exists && payload.amountInCents !== undefined && payload.amountInCents !== null) {
-        const receivedAmount = Number(payload.amountInCents);
-        const expectedAmount = Number(existingOrder?.total);
-        if (
-          !Number.isFinite(receivedAmount) ||
-          !Number.isFinite(expectedAmount) ||
-          Math.round(receivedAmount) !== Math.round(expectedAmount)
-        ) {
-          console.error('[HILOW WEBHOOK] Importe no coincide con el pedido:', {
-            internalOrderId,
-            receivedAmount,
-            expectedAmount,
-          });
-          return NextResponse.json({ error: 'Importe del pago no coincide' }, { status: 400 });
-        }
-      }
-
-      // Evita repetir puntos y correos si Hilow reenvía la confirmación
-      // después de que el pedido ya haya sido pagado o enviado.
-      const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
-      if (existingOrder?.status && paidStatuses.includes(String(existingOrder.status))) {
-        console.log('[HILOW WEBHOOK] Confirmación duplicada ignorada:', {
-          internalOrderId,
-          orderDocId,
-          status: existingOrder.status,
-        });
+      if (completion.reason === 'already_paid') {
+        console.log('[HILOW WEBHOOK] Confirmación duplicada ignorada:', { internalOrderId, orderDocId });
         return NextResponse.json({ received: true, processed: 'already_paid' }, { status: 200 });
       }
 
-      const customerEmail = payload.email || existingOrder?.customerEmail || '';
-      const customerName = payload.customerName || existingOrder?.customerName || 'Cliente';
+      const finalOrder = completion.order;
+      const notificationResults = await Promise.allSettled([
+        trackOrderStatusUpdateInternal(finalOrder, 'order_received'),
+        sendOrderReceivedEmail(finalOrder),
+        ...(isSubscription ? [sendSubscriptionStatusEmail(finalOrder, 'active')] : []),
+      ]);
 
-      const orderData: Record<string, any> = {
-        status: 'order_received',
-        paidAt: FieldValue.serverTimestamp(),
-        hilowPaymentId: hilowOrderId,
-        updatedAt: FieldValue.serverTimestamp(),
-      };
+      notificationResults.forEach((result, index) => {
+        const notification = index === 0
+          ? 'klaviyo_order_status'
+          : index === 1
+            ? 'mailjet_order_confirmation'
+            : 'mailjet_subscription_status';
 
-      // Una renovación puede llegar sin un documento de pedido previamente creado.
-      if (eventType.includes('renewal') && !orderSnap.exists) {
-        orderData.id = orderDocId;
-        orderData.userId = userId;
-        orderData.total = amountInCents || 4400;
-        orderData.paymentMethod = 'hilow';
-        orderData.createdAt = FieldValue.serverTimestamp();
-        orderData.isSubscription = true;
-        orderData.customerEmail = customerEmail || 'member@comprarpopperonline.com';
-        orderData.customerName = customerName;
-        orderData.items = [{
-          productId: 'subscription_club',
-          name: 'Club Dosis Mensual',
-          price: amountInCents || 4400,
-          quantity: 1,
-          imageUrl: 'https://picsum.photos/seed/sub/200/200',
-        }];
-      }
+        if (result.status === 'rejected') {
+          console.error('[HILOW WEBHOOK] Falló una notificación secundaria:', {
+            notification,
+            orderId: orderDocId,
+            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+          });
+          return;
+        }
 
-      await orderRef.set(orderData, { merge: true });
-
-      if (isSubscription) {
-        await userRef.set({
-          isSubscribed: true,
-          subscriptionStatus: 'active',
-          lastSubscriptionPayment: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
-
-      const points = Math.floor((amountInCents || Number(existingOrder?.total) || 0) / 1000);
-      if (points > 0) {
-        await userRef.set({ loyaltyPoints: FieldValue.increment(points) }, { merge: true });
-      }
-
-      const finalSnap = await orderRef.get();
-      if (finalSnap.exists) {
-        const finalOrder = { ...finalSnap.data(), id: orderDocId } as Order;
-
-        // Estos envíos son secundarios: si Mailjet/Klaviyo falla, el webhook sigue
-        // devolviendo 200 porque el pago ya quedó registrado en Firestore.
-        const notificationResults = await Promise.allSettled([
-          trackOrderStatusUpdateInternal(finalOrder, 'order_received'),
-          sendOrderReceivedEmail(finalOrder),
-          ...(isSubscription ? [sendSubscriptionStatusEmail(finalOrder, 'active')] : []),
-        ]);
-
-        notificationResults.forEach((result, index) => {
-          const notification = index === 0
-            ? 'klaviyo_order_status'
-            : index === 1
-              ? 'mailjet_order_confirmation'
-              : 'mailjet_subscription_status';
-
-          if (result.status === 'rejected') {
-            console.error('[HILOW WEBHOOK] Falló una notificación secundaria:', {
-              notification,
-              orderId: orderDocId,
-              error: result.reason instanceof Error ? result.reason.message : String(result.reason),
-            });
-            return;
-          }
-
-          if (result.value && typeof result.value === 'object' && 'success' in result.value && result.value.success === false) {
-            console.error('[HILOW WEBHOOK] El proveedor no confirmó la notificación:', {
-              notification,
-              orderId: orderDocId,
-              error: 'error' in result.value ? result.value.error : 'Error no especificado',
-              status: 'status' in result.value ? result.value.status : undefined,
-            });
-          } else {
-            console.log('[HILOW WEBHOOK] Notificación procesada:', {
-              notification,
-              orderId: orderDocId,
-              result: result.status,
-            });
-          }
-        });
-      }
+        if (result.value && typeof result.value === 'object' && 'success' in result.value && result.value.success === false) {
+          console.error('[HILOW WEBHOOK] El proveedor no confirmó la notificación:', {
+            notification,
+            orderId: orderDocId,
+            error: 'error' in result.value ? result.value.error : 'Error no especificado',
+            status: 'status' in result.value ? result.value.status : undefined,
+          });
+        }
+      });
 
       if (!isSubscription && prefix === 'CPO') {
         try {
           await createPacklinkShipmentDraft(orderDocId);
         } catch (error) {
-          // El pago ya está confirmado: registrar el fallo logístico sin devolver error al proveedor.
           console.error('[PACKLINK] Pago confirmado; creación de envío pendiente:', {
             orderId: orderDocId,
             error: error instanceof Error ? error.message : String(error),
