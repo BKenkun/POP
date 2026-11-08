@@ -2,6 +2,8 @@
 
 // Modificado por: Webmaster Freddy Poleo
 import { cookies } from 'next/headers';
+import fs from 'fs/promises';
+import path from 'path';
 import { auth, firestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -14,6 +16,7 @@ export interface SiteSettings {
 
 const ADMIN_EMAILS = new Set(['maryandpopper@gmail.com', 'enriqueespincosme@gmail.com']);
 const SETTINGS_REF = firestore.collection('appSettings').doc('site');
+const LEGACY_SETTINGS_PATH = path.join(process.cwd(), 'src', 'lib', 'site-settings.json');
 
 async function requireAdmin(): Promise<string> {
   const session = cookies().get('session')?.value;
@@ -42,7 +45,17 @@ function normalizeSettings(input: Partial<SiteSettings> | null | undefined): Sit
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
     const snapshot = await SETTINGS_REF.get();
-    return normalizeSettings(snapshot.exists ? snapshot.data() as Partial<SiteSettings> : undefined);
+    if (snapshot.exists) {
+      return normalizeSettings(snapshot.data() as Partial<SiteSettings>);
+    }
+
+    // Preserve the existing production settings on the first deployment after this migration.
+    try {
+      const legacyContent = await fs.readFile(LEGACY_SETTINGS_PATH, 'utf-8');
+      return normalizeSettings(JSON.parse(legacyContent) as Partial<SiteSettings>);
+    } catch {
+      return normalizeSettings(undefined);
+    }
   } catch (error) {
     console.error('[SITE SETTINGS] Error leyendo configuración; se usan valores predeterminados:', error);
     return {
