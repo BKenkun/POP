@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { firestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendOrderReceivedEmail } from '@/lib/mailjet';
-import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
+import { trackOrderStatusUpdateInternal } from '@/lib/klaviyo-server';
 import { createPacklinkShipmentDraft } from '@/lib/packlink-server';
 import type { Order } from '@/lib/types';
 
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
         const finalOrder = { ...finalSnap.data(), id: orderId } as Order;
         const results = await Promise.allSettled([
           sendOrderReceivedEmail(finalOrder),
-          trackOrderStatusUpdate(finalOrder, 'order_received'),
+          trackOrderStatusUpdateInternal(finalOrder, 'order_received'),
         ]);
         results.forEach((result, index) => {
           if (result.status === 'rejected') {
