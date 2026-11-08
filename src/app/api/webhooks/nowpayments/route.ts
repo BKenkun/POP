@@ -4,8 +4,8 @@ import crypto from 'crypto';
 import { firestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendOrderReceivedEmail } from '@/lib/mailjet';
-import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
-import { createPacklinkShipmentDraft } from '@/app/actions/packlink';
+import { trackOrderStatusUpdateInternal } from '@/lib/klaviyo-server';
+import { createPacklinkShipmentDraft } from '@/lib/packlink-server';
 import type { Order } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
         const finalOrder = { ...finalSnap.data(), id: orderId } as Order;
         const results = await Promise.allSettled([
           sendOrderReceivedEmail(finalOrder),
-          trackOrderStatusUpdate(finalOrder, 'order_received'),
+          trackOrderStatusUpdateInternal(finalOrder, 'order_received'),
         ]);
         results.forEach((result, index) => {
           if (result.status === 'rejected') {
@@ -175,14 +175,26 @@ export async function POST(req: NextRequest) {
 
     const failureStatuses = ['failed', 'expired', 'refunded'];
     if (failureStatuses.includes(paymentStatus)) {
-      await orderRef.set({
-        nowpaymentsPaymentId: paymentId || null,
-        nowpaymentsStatus: paymentStatus,
-        status: 'issue',
-        paymentFailureAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
-      return NextResponse.json({ received: true, processed: paymentStatus });
+      const failed = await firestore.runTransaction(async transaction => {
+        const currentSnapshot = await transaction.get(orderRef);
+        if (!currentSnapshot.exists) return 'not_found' as const;
+        const current = currentSnapshot.data()!;
+        if (paidStatuses.includes(String(current.status))) return 'already_paid' as const;
+
+        transaction.set(orderRef, {
+          nowpaymentsPaymentId: paymentId || null,
+          nowpaymentsStatus: paymentStatus,
+          status: 'issue',
+          paymentFailureAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return 'failed' as const;
+      });
+
+      if (failed === 'not_found') {
+        return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+      }
+      return NextResponse.json({ received: true, processed: failed === 'already_paid' ? 'already_paid' : paymentStatus });
     }
 
     // waiting, confirming, confirmed, sending, partially_paid, etc. no son pago final.

@@ -39,19 +39,14 @@ export default function SubscriptionLandingPage() {
     setError(null);
 
     try {
-      const orderId = `SUB_${user.uid}_${Date.now()}`;
-      const baseUrl = window.location.origin;
-
+      const idToken = await user.getIdToken();
       const res = await fetch('/api/create-subscription', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId,
-          userEmail: user.email,
-          userName: user.displayName || (user.email ? user.email.split('@')[0] : 'Member'),
-          successUrl: `${baseUrl}/subscription/success`,
-          cancelUrl: `${baseUrl}/subscription`,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + idToken,
+        },
+        body: JSON.stringify({}),
       });
 
       const data = await res.json();

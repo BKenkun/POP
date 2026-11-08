@@ -59,7 +59,7 @@ export default function EditProductPage() {
         await updateDoc(productRef, productData);
         
         // After saving to Firestore, sync with Klaviyo
-        await syncKlaviyoProduct(data);
+        await syncKlaviyoProduct(data.id);
         
         toast({
             title: 'Producto Actualizado',

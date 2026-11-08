@@ -4,7 +4,6 @@
 import { auth, firestore as db } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { FieldValue } from 'firebase-admin/firestore';
 
 interface Address {
     id: string;
@@ -64,7 +63,7 @@ export async function getCurrentUser() {
  * Securely manages user data, including addresses and loyalty points.
  * All logic runs on the server.
  */
-export async function updateUser(action: 'add-address' | 'update-address' | 'delete-address' | 'update-points', data: Partial<Address & { pointsToAdd: number; id?: string }>) {
+export async function updateUser(action: 'add-address' | 'update-address' | 'delete-address', data: Partial<Address & { id?: string }>) {
     const userId = await getUserIdFromSession();
     
     const userDocRef = db.collection('users').doc(userId);
@@ -106,12 +105,6 @@ export async function updateUser(action: 'add-address' | 'update-address' | 'del
                 updatePayload.addresses = currentAddresses;
                 break;
             
-            case 'update-points':
-                 if (typeof data.pointsToAdd !== 'number' || data.pointsToAdd < 0) throw new Error("Invalid points value.");
-                 // Use Firestore's atomic increment operation for safety
-                 updatePayload.loyaltyPoints = FieldValue.increment(data.pointsToAdd);
-                 break;
-
             default:
                 throw new Error("Invalid action specified.");
         }
@@ -126,10 +119,6 @@ export async function updateUser(action: 'add-address' | 'update-address' | 'del
              revalidatePath('/account/addresses');
         }
         
-        if (action === 'update-points') {
-            revalidatePath('/account');
-        }
-
 
         await userDocRef.update(updatePayload);
         

@@ -40,7 +40,7 @@ export default function NewProductPage() {
         await setDoc(productRef, productData);
         
         // After saving to Firestore, sync with Klaviyo
-        await syncKlaviyoProduct(data);
+        await syncKlaviyoProduct(data.id);
         
         toast({
             title: 'Producto Creado',

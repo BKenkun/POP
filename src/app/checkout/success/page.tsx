@@ -32,6 +32,7 @@ function SuccessPageContent() {
     customerEmail?: string;
     total?: number;
   } | null>(null);
+  const [guestAccessToken, setGuestAccessToken] = useState('');
   const clearedRef = useRef(false);
 
   const isGuestOrder = Boolean(
@@ -43,6 +44,21 @@ function SuccessPageContent() {
       router.replace('/');
     }
   }, [orderId, router]);
+
+  // Guest orders are accessed with a one-time capability token, not by guessing an order ID.
+  useEffect(() => {
+    if (!orderId || !isGuestOrder) return;
+    try {
+      const saved = sessionStorage.getItem('pop_guest_order_access');
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as { orderId?: string; token?: string };
+      if (parsed.orderId === orderId && typeof parsed.token === 'string') {
+        setGuestAccessToken(parsed.token);
+      }
+    } catch (error) {
+      console.warn('[checkout/success] No se pudo recuperar el acceso del pedido de invitado.', error);
+    }
+  }, [orderId, isGuestOrder]);
 
   // Listener para pedidos de usuario registrado en Firestore
   useEffect(() => {
@@ -82,7 +98,9 @@ function SuccessPageContent() {
 
     const checkStatus = async () => {
       try {
-        const result = await getCheckoutOrderStatus(orderId, 'guest');
+        if (isGuestOrder && !guestAccessToken) return;
+        const idToken = user ? await user.getIdToken() : undefined;
+        const result = await getCheckoutOrderStatus(orderId, idToken, guestAccessToken || undefined);
         if (!active) return;
         if (result.exists) {
           if (result.customerName || result.customerEmail) {
@@ -119,7 +137,7 @@ function SuccessPageContent() {
       active = false;
       window.clearInterval(interval);
     };
-  }, [orderId, isGuestOrder, user, isConfirmed, clearCart]);
+  }, [orderId, isGuestOrder, user, isConfirmed, clearCart, guestAccessToken]);
 
   useEffect(() => {
     if (!orderId || authLoading || isConfirmed) return;
@@ -147,6 +165,19 @@ function SuccessPageContent() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (!isConfirmed || !isGuestOrder) return;
+    try {
+      const saved = sessionStorage.getItem('pop_guest_order_access');
+      if (saved) {
+        const parsed = JSON.parse(saved) as { orderId?: string };
+        if (parsed.orderId === orderId) sessionStorage.removeItem('pop_guest_order_access');
+      }
+    } catch {
+      // Ignore sessionStorage cleanup failures; the order is already confirmed.
+    }
+  }, [isConfirmed, isGuestOrder, orderId]);
 
   // Si no es un pedido de invitado pero no hay usuario logueado, pedir login
   if (!user && !isGuestOrder) {
