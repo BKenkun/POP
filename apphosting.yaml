@@ -58,18 +58,12 @@ env:
     secret: HILOW_API_KEY
   - variable: HILOW_WEBHOOK_SECRET
     secret: HILOW_WEBHOOK_SECRET
-  - variable: STRIPE_SECRET_KEY
-    secret: STRIPE_SECRET_KEY
-  - variable: STRIPE_WEBHOOK_SECRET
-    secret: STRIPE_WEBHOOK_SECRET
   - variable: NOWPAYMENTS_API_KEY
     secret: NOWPAYMENTS_API_KEY
   - variable: NOWPAYMENTS_IPN_SECRET
     secret: NOWPAYMENTS_IPN_SECRET
   - variable: KLAVIYO_API_KEY
     secret: KLAVIYO_API_KEY
-  - variable: FIREBASE_SERVICE_ACCOUNT_JSON
-    secret: FIREBASE_SERVICE_ACCOUNT_JSON
 
   # --- Firebase Client (Públicas para Next.js) ---
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
