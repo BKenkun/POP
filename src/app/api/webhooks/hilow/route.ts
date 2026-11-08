@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { firestore as adminFirestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
+import { trackOrderStatusUpdateInternal } from '@/lib/klaviyo-server';
 import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
 import { Order } from '@/lib/types';
 import { createPacklinkShipmentDraft } from '@/lib/packlink-server';
@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
         // Estos envíos son secundarios: si Mailjet/Klaviyo falla, el webhook sigue
         // devolviendo 200 porque el pago ya quedó registrado en Firestore.
         const notificationResults = await Promise.allSettled([
-          trackOrderStatusUpdate(finalOrder, 'order_received'),
+          trackOrderStatusUpdateInternal(finalOrder, 'order_received'),
           sendOrderReceivedEmail(finalOrder),
           ...(isSubscription ? [sendSubscriptionStatusEmail(finalOrder, 'active')] : []),
         ]);
