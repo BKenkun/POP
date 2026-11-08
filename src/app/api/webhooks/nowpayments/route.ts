@@ -5,7 +5,7 @@ import { firestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendOrderReceivedEmail } from '@/lib/mailjet';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
-import { createPacklinkShipmentDraft } from '@/app/actions/packlink';
+import { createPacklinkShipmentDraft } from '@/lib/packlink-server';
 import type { Order } from '@/lib/types';
 
 export const runtime = 'nodejs';
