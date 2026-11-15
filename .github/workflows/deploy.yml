@@ -1,0 +1,80 @@
+name: Build & Auto-Deploy (PuroRush)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: purorush-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    name: Compilar y Publicar
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_PROJECT_ID: purorush
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: purorush
+      NEXT_PUBLIC_APP_URL: https://comprarpopperonline.com
+      APP_BASE_URL: https://comprarpopperonline.com
+      SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT || secrets.FIREBASE_SERVICE_ACCOUNT_PURORUSH }}
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Verificar tipos, linter y compilación de producción
+        run: npm run build
+
+      - name: Autenticar con Google Cloud / Firebase
+        if: env.SERVICE_ACCOUNT_JSON != ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ env.SERVICE_ACCOUNT_JSON }}
+
+      - name: Publicar reglas de Firestore (purorush)
+        if: env.SERVICE_ACCOUNT_JSON != ''
+        run: npx --yes firebase-tools@latest deploy --only firestore:rules --project purorush --non-interactive
+
+      - name: Lanzar despliegue en Firebase App Hosting (opcional si no está vinculado por GitHub App)
+        if: env.SERVICE_ACCOUNT_JSON != '' && vars.APPHOSTING_BACKEND_ID != ''
+        run: |
+          npx --yes firebase-tools@latest apphosting:rollouts:create "${{ vars.APPHOSTING_BACKEND_ID }}" \
+            --project purorush \
+            --location "${{ vars.APPHOSTING_LOCATION || 'europe-west4' }}" \
+            --git-commit "${{ github.sha }}" \
+            --non-interactive
+
+      - name: Desplegar en Google Cloud Run (opcional si defines CLOUD_RUN_SERVICE)
+        if: env.SERVICE_ACCOUNT_JSON != '' && vars.CLOUD_RUN_SERVICE != ''
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ vars.CLOUD_RUN_SERVICE }}
+          project_id: purorush
+          region: ${{ vars.CLOUD_RUN_REGION || 'europe-west1' }}
+          source: .
+
+      - name: Resumen de despliegue
+        if: env.SERVICE_ACCOUNT_JSON == ''
+        run: |
+          {
+            echo "### Compilación verificada correctamente"
+            echo ""
+            echo "- Si tu repositorio ya está conectado a **Firebase App Hosting** en la consola de Firebase, el despliegue web se lanza automáticamente con cada \`push\` usando \`apphosting.yaml\`."
+            echo "- Para que GitHub Actions publique también automáticamente \`firestore.rules\` (o lance despliegues directos), añade el secreto \`FIREBASE_SERVICE_ACCOUNT\` con una clave JSON activa en **Settings → Secrets and variables → Actions**."
+          } >> "$GITHUB_STEP_SUMMARY"
