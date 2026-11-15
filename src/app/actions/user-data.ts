@@ -25,17 +25,28 @@ interface Address {
  * Throws an error if the user is not authenticated.
  */
 export async function getUserIdFromSession(): Promise<string> {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) {
-        throw new Error('Authentication required: No session cookie found.');
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('session')?.value;
+    if (sessionCookie) {
+        try {
+            const decodedClaims = await auth.verifySessionCookie(sessionCookie);
+            return decodedClaims.uid;
+        } catch {
+            // Fall through to check session_id_token if present
+        }
     }
-    try {
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        return decodedClaims.uid;
-    } catch (error) {
-        console.error('Error verifying session cookie in server action:', error);
-        throw new Error('Authentication failed: Invalid session.');
+
+    const fallbackToken = cookieStore.get('session_id_token')?.value;
+    if (fallbackToken) {
+        try {
+            const decoded = await auth.verifyIdToken(fallbackToken);
+            return decoded.uid;
+        } catch {
+            throw new Error('Authentication failed: Invalid session.');
+        }
     }
+
+    throw new Error('Authentication required: No session cookie found.');
 }
 
 

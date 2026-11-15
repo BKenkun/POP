@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react';
 import { getSiteSettings } from '../actions/site-settings';
 import type { SiteSettings } from '../actions/site-settings';
 import { useTranslation } from "@/context/language-context";
+import { isAdminEmail } from "@/lib/admin";
 
 export default function AccountDashboardPage() {
   const { user, isSubscribed, loyaltyPoints, isAdmin, isViewingAsCustomer, setIsViewingAsCustomer } = useAuth();
@@ -34,7 +35,7 @@ export default function AccountDashboardPage() {
   const pointsValue = (loyaltyPoints / 100) * 200;
 
   // O "isAdmin" aqui refere-se ao estado real, não ao modo de visualização.
-  const isActualAdmin = !!user && user.email === 'maryandpopper@gmail.com';
+  const isActualAdmin = isAdminEmail(user?.email);
 
   return (
     <div className="space-y-6">

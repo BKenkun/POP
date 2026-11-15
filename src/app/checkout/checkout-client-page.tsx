@@ -438,12 +438,14 @@ export default function CheckoutClientPage() {
     const isGuestOrder = !user;
     const userId = user ? user.uid : 'guest';
     const uniqueId = `CPO_${userId}_${Date.now()}`;
+    const idToken = user ? await user.getIdToken().catch(() => undefined) : undefined;
 
     try {
       const orderPayload: CheckoutOrderData = {
         orderId: uniqueId,
         userId,
         isGuest: isGuestOrder,
+        ...(idToken ? { idToken } : {}),
         items: cartItems.map((item) => ({
           productId: item.id,
           name: item.name,
@@ -506,7 +508,7 @@ export default function CheckoutClientPage() {
 
     try {
       if (selectedPaymentMethod === 'nowpayments') {
-        const result = await createNowPaymentsInvoice(uniqueId);
+        const result = await createNowPaymentsInvoice(uniqueId, idToken);
         if (!result.success || !result.invoiceUrl) {
           throw new Error(result.message || 'Could not initiate payment with NOWPayments.');
         }

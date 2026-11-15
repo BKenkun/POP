@@ -14,6 +14,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
+import { isAdminEmail } from '@/lib/admin';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function LoginForm() {
         body: JSON.stringify({ idToken }),
       });
       
-      const loggedInIsAdmin = userCredential.user.email === 'maryandpopper@gmail.com';
+      const loggedInIsAdmin = isAdminEmail(userCredential.user.email);
       
       toast({
           title: "Inicio de sesión exitoso",

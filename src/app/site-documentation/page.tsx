@@ -9,13 +9,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Home, ShoppingCart, User, FileText, KeyRound, PackagePlus, Wand2, Palette, Code, CheckCircle, ExternalLink, Brush, Type, Feather, BadgePercent, Gift, Truck, UserPlus as UserPlusIcon, Shield, Database, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { useTranslation } from '@/context/language-context';
+import { useAuth } from '@/context/auth-context';
 
 const CHECKLIST_STORAGE_KEY = 'site_documentation_checklist';
 
 export default function SiteDocumentationPage() {
   const { t } = useTranslation();
+  const { isAdmin, loading } = useAuth();
+  const router = useRouter();
   const [checkedState, setCheckedState] = useState<{[key: string]: boolean}>({});
   
   const sections = [
@@ -580,6 +584,15 @@ if (loggedInIsAdmin) {
     img.src = url;
   };
 
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      router.replace('/');
+    }
+  }, [loading, isAdmin, router]);
+
+  if (loading || !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-12">

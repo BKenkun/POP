@@ -1,12 +1,9 @@
-kind: "bundle"
-schemaVersion: "v1"
-
 runConfig:
   cpu: 1
   memoryMiB: 1024
 
 env:
-  # --- Configuración de la App (Servidor) ---
+  # --- Configuración pública / de aplicación ---
   - variable: NEXT_PUBLIC_APP_URL
     value: "https://comprarpopperonline.com"
   - variable: APP_BASE_URL
@@ -22,9 +19,7 @@ env:
   - variable: FIREBASE_STORAGE_BUCKET
     value: "purorush.appspot.com"
 
-  # --- Packlink PRO: clave de servidor (puede configurarse en Secret Manager o Admin) ---
-  - variable: PACKLINK_API_KEY
-    value: ""
+  # --- Parámetros por defecto de paquete Packlink ---
   - variable: PACKLINK_FROM_COUNTRY
     value: "ES"
   - variable: PACKLINK_PACKAGE_WEIGHT_KG
@@ -35,7 +30,8 @@ env:
     value: "8"
   - variable: PACKLINK_PACKAGE_HEIGHT_CM
     value: "6"
-  # --- Configuración de Hilow ---
+
+  # --- Configuración pública de Hilow ---
   - variable: HILOW_API_BASE_URL
     value: "https://hilowglobal.com"
   - variable: HILOW_PAY_ORIGIN
@@ -49,27 +45,9 @@ env:
   - variable: NEXT_PUBLIC_HILOW_FIREBASE_PROJECT_ID
     value: "studio-953389996-b1a64"
 
-  # --- Configuración de Klaviyo ---
+  # --- Configuración pública de Klaviyo ---
   - variable: KLAVIYO_LIST_ID
     value: "WdHvpw"
-
-  # --- Secretos opcionales (Valores por defecto para evitar errores 404 de Secret Manager durante el despliegue) ---
-  - variable: HILOW_API_KEY
-    value: ""
-  - variable: HILOW_WEBHOOK_SECRET
-    value: ""
-  - variable: STRIPE_SECRET_KEY
-    value: ""
-  - variable: STRIPE_WEBHOOK_SECRET
-    value: ""
-  - variable: NOWPAYMENTS_API_KEY
-    value: ""
-  - variable: NOWPAYMENTS_IPN_SECRET
-    value: ""
-  - variable: KLAVIYO_API_KEY
-    value: ""
-  - variable: FIREBASE_SERVICE_ACCOUNT_JSON
-    value: ""
 
   # --- Firebase Client (Públicas para Next.js) ---
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -85,13 +63,7 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:870980470663:web:533824f7e6c462a8d0f522"
 
-  # --- Mailjet: claves de servidor ---
-  - variable: MAILJET_API_KEY
-    value: ""
-  - variable: MAILJET_SECRET_KEY
-    value: ""
-
-  # --- Mailjet: datos del remitente ---
+  # --- Mailjet: datos públicos del remitente ---
   - variable: MAILJET_FROM_EMAIL
     value: "info@comprarpopperonline.com"
   - variable: MAILJET_FROM_NAME

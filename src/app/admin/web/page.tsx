@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { auth } from '@/lib/firebase';
 
 export default function AdminWebPage() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -56,7 +57,8 @@ export default function AdminWebPage() {
     if (!settings) return;
     setIsSaving(true);
     try {
-      await updateSiteSettings(settings);
+      const idToken = await auth.currentUser?.getIdToken();
+      await updateSiteSettings(settings, idToken);
       toast({
         title: "Settings Saved",
         description: "Website settings have been updated.",
@@ -65,7 +67,7 @@ export default function AdminWebPage() {
       console.error(error);
       toast({
         title: "Error",
-        description: "Could not save changes.",
+        description: error instanceof Error ? error.message : "Could not save changes.",
         variant: "destructive",
       });
     } finally {

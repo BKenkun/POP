@@ -1,7 +1,7 @@
 // Modificado por: Webmaster Freddy Poleo
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { firestore } from '@/lib/firebase-admin';
+import { getActiveFirestore, runWithAdminFirestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendOrderReceivedEmail } from '@/lib/mailjet';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
@@ -33,13 +33,13 @@ function validSignature(payload: JsonObject, received: string, secret: string): 
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-function getOrderRef(orderId: string) {
+function parseOrderPath(orderId: string) {
   const parts = orderId.split('_');
   if (parts.length < 3 || parts[0] !== 'CPO') return null;
   const timestamp = parts[parts.length - 1];
   const userId = parts.slice(1, -1).join('_');
   if (!userId || !/^\d+$/.test(timestamp)) return null;
-  return firestore.collection('users').doc(userId).collection('orders').doc(orderId);
+  return { userId, orderId };
 }
 
 export async function GET() {
@@ -76,11 +76,16 @@ export async function POST(req: NextRequest) {
     const orderId = String(payload.order_id || '').trim();
     const paymentStatus = String(payload.payment_status || '').toLowerCase().trim();
     const paymentId = payload.payment_id == null ? '' : String(payload.payment_id);
-    const orderRef = getOrderRef(orderId);
+    const parsedPath = parseOrderPath(orderId);
 
-    if (!orderRef) return NextResponse.json({ error: 'order_id no válido' }, { status: 400 });
+    if (!parsedPath) return NextResponse.json({ error: 'order_id no válido' }, { status: 400 });
 
-    const orderSnap = await orderRef.get();
+    const orderSnap = await runWithAdminFirestore(
+      (db) => db.collection('users').doc(parsedPath.userId).collection('orders').doc(parsedPath.orderId).get(),
+      'nowpayments-webhook'
+    );
+    const firestore = getActiveFirestore();
+    const orderRef = firestore.collection('users').doc(parsedPath.userId).collection('orders').doc(parsedPath.orderId);
     if (!orderSnap.exists) {
       console.error('[NOWPAYMENTS IPN] Pedido no encontrado:', orderId);
       return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });

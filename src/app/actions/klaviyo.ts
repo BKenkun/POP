@@ -154,7 +154,7 @@ export async function syncKlaviyoProduct(product: Product) {
             attributes: {
                 title: product.name,
                 description: product.description || 'Sin descripción.',
-                url: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${product.id}`,
+                url: `${(process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://comprarpopperonline.com').replace(/\/$/, '')}/product/${product.id}`,
                 image_full_url: product.imageUrl,
                 price: product.price / 100, 
                 inventory_quantity: product.stock,

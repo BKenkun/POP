@@ -1,19 +1,5 @@
 {
-  "hosting": {
-    "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "frameworksBackend": {
-      "region": "us-west1"
-    },
-    "rewrites": [
-      {
-        "source": "/images/**",
-        "destination": "https://storage.googleapis.com/purorush.appspot.com/images/**"
-      }
-    ]
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

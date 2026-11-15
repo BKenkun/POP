@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { firestore as adminFirestore } from '@/lib/firebase-admin';
+import { getActiveFirestore, runWithAdminFirestore } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
 import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
@@ -112,9 +112,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'internalOrderId no compatible' }, { status: 400 });
     }
 
-    const userRef = adminFirestore.collection('users').doc(userId);
-    const orderRef = userRef.collection('orders').doc(orderDocId);
-
     console.log('[HILOW WEBHOOK] Evento recibido', {
       eventType,
       internalOrderId,
@@ -126,19 +123,26 @@ export async function POST(req: NextRequest) {
 
     // Guardamos una copia del evento para poder diagnosticar cualquier problema
     // sin depender únicamente de los logs del proveedor de pagos.
-    const eventRef = adminFirestore
-      .collection('webhookEvents')
-      .doc(`${internalOrderId}_${Date.now()}`);
+    await runWithAdminFirestore(
+      (db) =>
+        db
+          .collection('webhookEvents')
+          .doc(`${internalOrderId}_${Date.now()}`)
+          .set({
+            provider: 'hilow',
+            eventType,
+            internalOrderId,
+            hilowOrderId,
+            amountInCents,
+            receivedAt: FieldValue.serverTimestamp(),
+            payload,
+          }),
+      'hilow-webhook'
+    );
 
-    await eventRef.set({
-      provider: 'hilow',
-      eventType,
-      internalOrderId,
-      hilowOrderId,
-      amountInCents,
-      receivedAt: FieldValue.serverTimestamp(),
-      payload,
-    });
+    const adminFirestore = getActiveFirestore();
+    const userRef = adminFirestore.collection('users').doc(userId);
+    const orderRef = userRef.collection('orders').doc(orderDocId);
 
     if (isPaymentCompleted(eventType)) {
       const orderSnap = await orderRef.get();

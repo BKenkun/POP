@@ -8,6 +8,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 
 # production
@@ -23,6 +24,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env.local
 .env*.local
 .env
 
@@ -34,5 +36,4 @@ yarn-error.log*
 next-env.d.ts
 
 # Secretos de Firebase (¡CRÍTICO!)
-src/lib/firebase-admin.ts
 serviceAccountKey.json

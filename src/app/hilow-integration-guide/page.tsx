@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Check, Clipboard, FileCode, Workflow, Info, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
 import { Separator } from '@/components/ui/separator';
 const jsCode = `
 document.addEventListener('DOMContentLoaded', function() {
@@ -99,6 +101,19 @@ const CodeSnippet = ({ code, language }: { code: string; language: string }) => 
   );
 };
 export default function HilowIntegrationGuidePage() {
+  const { isAdmin, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      router.replace('/');
+    }
+  }, [loading, isAdmin, router]);
+
+  if (loading || !isAdmin) {
+    return null;
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <header className="text-center space-y-4">

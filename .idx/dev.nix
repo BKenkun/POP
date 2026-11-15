@@ -9,7 +9,9 @@
     pkgs.zulu
   ];
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    NEXT_DEV_DIST_DIR = ".next-dev";
+  };
   # This adds a file watcher to startup the firebase emulators. The emulators will only start if
   # a firebase.json file is written into the user's directory
   services.firebase.emulators = {
@@ -35,7 +37,7 @@
       enable = true;
       previews = {
         web = {
-          command = ["npm" "run" "dev" "--" "--port" "$PORT" "--hostname" "0.0.0.0"];
+          command = ["npx" "next" "dev" "-H" "0.0.0.0" "-p" "$PORT"];
           manager = "web";
         };
       };

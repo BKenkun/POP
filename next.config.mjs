@@ -1,10 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
+  // Aísla la caché de vista previa (.next-dev) de la compilación de producción (.next)
+  distDir: process.env.NEXT_DEV_DIST_DIR || '.next',
+  output: 'standalone',
+  experimental: {
+    cpus: 1,
+    workerThreads: false,
+    webpackBuildWorker: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  webpack: (config, { dev }) => {
+    // Reduce drásticamente el pico de RAM en next build evitando retener caché pesada en memoria
+    if (!dev) {
+      config.cache = false;
+    }
+    return config;
   },
   images: {
     remotePatterns: [
@@ -25,6 +34,18 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'storage.googleapis.com' },
     ],
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [],
+      fallback: [
+        {
+          source: '/images/:path*',
+          destination: 'https://storage.googleapis.com/purorush.appspot.com/images/:path*',
+        },
+      ],
+    };
   },
 };
 

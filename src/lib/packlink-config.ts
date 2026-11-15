@@ -1,10 +1,20 @@
 // Modificado por: Webmaster Freddy Poleo
 
-import { firestore } from '@/lib/firebase-admin';
+import {
+  areAdminCredentialsAvailable,
+  isAdminCredentialError,
+  runWithAdminFirestore,
+} from '@/lib/firebase-admin';
 import type { PacklinkAdminSettings } from '@/app/actions/packlink-settings';
 
-export async function readPacklinkSettings(): Promise<PacklinkAdminSettings> {
-  const defaults: PacklinkAdminSettings = {
+let memoryPacklinkSettings: Partial<PacklinkAdminSettings> | null = null;
+
+export function setMemoryPacklinkSettings(settings: PacklinkAdminSettings): void {
+  memoryPacklinkSettings = { ...settings };
+}
+
+export function getDefaultPacklinkSettings(): PacklinkAdminSettings {
+  return {
     senderName: process.env.PACKLINK_FROM_NAME || 'enrique espin cosme',
     street: process.env.PACKLINK_FROM_STREET || 'biologo konrad lorenz, 6 3d',
     city: process.env.PACKLINK_FROM_CITY || 'Alicante',
@@ -17,6 +27,31 @@ export async function readPacklinkSettings(): Promise<PacklinkAdminSettings> {
     widthCm: Number(process.env.PACKLINK_PACKAGE_WIDTH_CM || 8),
     heightCm: Number(process.env.PACKLINK_PACKAGE_HEIGHT_CM || 6),
   };
-  const snapshot = await firestore.collection('appSettings').doc('packlink').get();
-  return { ...defaults, ...(snapshot.exists ? snapshot.data() as Partial<PacklinkAdminSettings> : {}) };
+}
+
+export async function readPacklinkSettings(): Promise<PacklinkAdminSettings> {
+  const defaults = getDefaultPacklinkSettings();
+
+  if (!areAdminCredentialsAvailable()) {
+    return { ...defaults, ...(memoryPacklinkSettings || {}) };
+  }
+
+  try {
+    const snapshot = await runWithAdminFirestore(
+      (db) => db.collection('appSettings').doc('packlink').get(),
+      'packlink-config'
+    );
+    if (snapshot.exists) {
+      const remote = snapshot.data() as Partial<PacklinkAdminSettings>;
+      memoryPacklinkSettings = remote;
+      return { ...defaults, ...remote };
+    }
+    return { ...defaults, ...(memoryPacklinkSettings || {}) };
+  } catch (error) {
+    if (!isAdminCredentialError(error)) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.info(`[packlink-config] Using default sender settings (${msg})`);
+    }
+    return { ...defaults, ...(memoryPacklinkSettings || {}) };
+  }
 }

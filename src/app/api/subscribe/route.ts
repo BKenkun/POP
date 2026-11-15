@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   }
 
   const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
-  const KLAVIYO_LIST_ID = process.env.KLAVIYO_LIST_ID;
+  const KLAVIYO_LIST_ID = process.env.KLAVIYO_LIST_ID || 'WdHvpw';
 
   if (!KLAVIYO_API_KEY || !KLAVIYO_LIST_ID) {
     console.warn("Klaviyo API Key or List ID is not set in environment variables. Returning success without subscribing.");

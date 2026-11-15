@@ -1,27 +1,13 @@
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { firebaseConfig } from './firebase-config';
 
-// Ubicación: src/lib/firebase.ts
+// Busca explícitamente la instancia '[DEFAULT]' para no chocar con apps secundarias con nombre (ej. 'hilow-checkout')
+const existingDefaultApp = getApps().find((existing) => existing.name === '[DEFAULT]');
+const app: FirebaseApp = existingDefaultApp ?? initializeApp(firebaseConfig);
 
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
-import { firebaseConfig } from "./firebase-config"; // Import config from a separate file
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
 
-// --- This is the corrected, simplified, and robust initialization ---
-
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-
-// This logic now correctly handles both development and production environments.
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
-
-auth = getAuth(app);
-db = getFirestore(app);
-
-// EXPORTACIÓN
-// Se exportan las instancias para ser usadas en otros lugares.
 export { app, auth, db };

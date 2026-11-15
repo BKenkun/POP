@@ -1,5 +1,8 @@
-
-import { firestore } from '@/lib/firebase-admin';
+import {
+  areAdminCredentialsAvailable,
+  isAdminCredentialError,
+  runWithAdminFirestore,
+} from '@/lib/firebase-admin';
 import { Product } from '@/lib/types';
 import { products as fallbackProducts } from '@/lib/products';
 
@@ -14,14 +17,21 @@ export async function GET() {
   try {
     let rawProducts: { id: string; data: Product }[] = [];
 
-    try {
-      const productsRef = firestore.collection('products');
-      const snapshot = await productsRef.where('active', '!=', false).get();
-      if (!snapshot.empty) {
-        rawProducts = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() as Product }));
+    if (areAdminCredentialsAvailable()) {
+      try {
+        const snapshot = await runWithAdminFirestore(
+          (db) => db.collection('products').where('active', '!=', false).get(),
+          'products-json-feed'
+        );
+        if (!snapshot.empty) {
+          rawProducts = snapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() as Product }));
+        }
+      } catch (dbError: unknown) {
+        if (!isAdminCredentialError(dbError)) {
+          const msg = dbError instanceof Error ? dbError.message : String(dbError);
+          console.info(`[JSON FEED] Firestore feed query fallback to static products (${msg})`);
+        }
       }
-    } catch (dbError: any) {
-      console.warn('[JSON FEED] Firestore feed query fallback to static products:', dbError?.message || dbError);
     }
 
     if (rawProducts.length === 0) {
@@ -35,7 +45,7 @@ export async function GET() {
       return {
         id: id,
         title: product.name,
-        link: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://purorush.com'}/product/${id}`,
+        link: `${(process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://comprarpopperonline.com').replace(/\/$/, '')}/product/${id}`,
         description: product.description || '',
         price: product.price / 100,
         image_link: product.imageUrl,

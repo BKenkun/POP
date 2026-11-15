@@ -8,6 +8,7 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { UserSubscription } from '@/lib/types';
+import { isAdminEmail } from '@/lib/admin';
 
 const ADMIN_VIEW_AS_CUSTOMER_KEY = 'admin_view_as_customer';
 
@@ -64,9 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const isActualAdmin = useMemo(() => {
-    if (!user || !user.email) return false;
-    const email = user.email.toLowerCase();
-    return email === 'maryandpopper@gmail.com' || email === 'enriqueespincosme@gmail.com';
+    return isAdminEmail(user?.email);
   }, [user]);
 
   const isAdmin = useMemo(() => {

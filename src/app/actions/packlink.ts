@@ -1,7 +1,7 @@
 // Modificado por: Webmaster Freddy Poleo
 'use server';
 
-import { firestore } from '@/lib/firebase-admin';
+import { getActiveFirestore, runWithAdminFirestore } from '@/lib/firebase-admin';
 import { readPacklinkSettings } from '@/lib/packlink-config';
 
 const API_BASE = 'https://api.packlink.com/v1';
@@ -109,8 +109,12 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
   const parts = orderId.split('_');
   if (parts.length < 3 || parts[0] !== 'CPO') throw new Error('ID de pedido POP no válido para Packlink.');
   const userId = parts.slice(1, -1).join('_');
-  const orderRef = firestore.collection('users').doc(userId).collection('orders').doc(orderId);
-  const snap = await orderRef.get();
+  const snap = await runWithAdminFirestore(
+    (db) => db.collection('users').doc(userId).collection('orders').doc(orderId).get(),
+    'packlink createShipmentDraft'
+  );
+  const db = getActiveFirestore();
+  const orderRef = db.collection('users').doc(userId).collection('orders').doc(orderId);
   if (!snap.exists) throw new Error('Pedido no encontrado para crear el envío Packlink.');
   const order = snap.data()!;
 
@@ -133,7 +137,7 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
 
   // Reclamar la creación dentro de una transacción para evitar borradores duplicados
   // si el proveedor de pagos reenvía el webhook simultáneamente.
-  const claimed = await firestore.runTransaction(async (transaction) => {
+  const claimed = await db.runTransaction(async (transaction) => {
     const currentSnap = await transaction.get(orderRef);
     if (!currentSnap.exists) return false;
     const current = currentSnap.data()!;

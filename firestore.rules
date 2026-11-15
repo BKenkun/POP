@@ -29,6 +29,12 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    // Global site settings (publicly readable) and admin-only integration settings (e.g. packlink).
+    match /appSettings/{settingId} {
+      allow read: if settingId == 'site' || isAdmin();
+      allow write: if isAdmin();
+    }
     
     // Coupons are readable by signed-in users.
     // Coupon creation and deletion is restricted to admins.

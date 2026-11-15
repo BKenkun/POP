@@ -37,7 +37,8 @@ export async function sendMailjetEmail({
 }: SendMailjetEmailParams): Promise<MailjetResult> {
   const apiKey = process.env.MAILJET_API_KEY;
   const secretKey = process.env.MAILJET_SECRET_KEY;
-  const fromEmail = process.env.MAILJET_FROM_EMAIL;
+  const fromEmail =
+    process.env.MAILJET_FROM_EMAIL || 'info@comprarpopperonline.com';
   const fromName =
     process.env.MAILJET_FROM_NAME || 'Comprar Popper Online';
 
