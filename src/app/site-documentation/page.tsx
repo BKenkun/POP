@@ -188,7 +188,7 @@ const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
         path: '#',
         description: t('docs.welcome_popup_desc'),
         details: [
-            "**Técnico:** El componente \`WelcomePopup\` (\`src/components/welcome-popup.tsx\`) usa \`localStorage\` para registrar si un usuario ya ha visto el popup. Solo se muestra si no hay registro previo o si ha pasado más de 24 horas. El formulario se integra con Klaviyo a través de la API Route \`/api/subscribe\`.",
+            "**Técnico:** El componente \`WelcomePopup\` (\`src/components/welcome-popup.tsx\`) usa \`localStorage\` para registrar si un usuario ya ha visto el popup. Solo se muestra si no hay registro previo o si ha pasado más de 24 horas. El formulario se integra con el servicio de suscripción a través de la API Route \`/api/subscribe\`.",
             `
 <pre><code class="language-javascript">
 // En src/components/welcome-popup.tsx
@@ -352,7 +352,7 @@ const calculatePackPriceFlow = ai.defineFlow(
           '**Fase 1: Confirmar Carrito.** El usuario revisa los productos, puede ajustar cantidades usando el \`QuantitySelector\` o eliminar artículos. La lógica del \`CartContext\` (\`updateQuantity\`, \`removeFromCart\`) actualiza el estado. El subtotal y el posible descuento por volumen se muestran para dar una primera estimación.',
           '**Fase 2: Tus Datos.** Se solicita la información de envío. Si el usuario está autenticado (\`useAuth\`), puede seleccionar una de sus direcciones guardadas (obtenidas del \`userDoc\`) o rellenar el formulario. Un \`RadioGroup\` permite cambiar entre direcciones. La validación se hace con \`react-hook-form\` y \`zod\`. Una \`Server Action\` (\`updateUser\`) se encarga de guardar una nueva dirección si el usuario lo solicita.',
           '**Fase 3: Método de Pago.** El usuario elige entre dos categorías: "Contrareembolso" y "Pago por adelantado". **Aquí reside la lógica de precios clave:** un \`useMemo\` (\`finalTotals\`) recalcula el total del pedido en tiempo real basándose en el método seleccionado. Si es "Pago por adelantado", se aplica el \`volumeDiscount\` del \`CartContext\` y el envío es gratuito. Si es "Contrareembolso", el descuento se elimina y se suma el \`SHIPPING_COST\`. Esta interacción proporciona un feedback instantáneo sobre los beneficios de cada opción.',
-          '**Fase 4: Revisión y Confirmación Final.** Se presenta un resumen completo y final. Al hacer clic en "Confirmar Pedido", se ejecuta la lógica final: si el método es "crypto", se llama a la \`Server Action\` \`createNowPaymentsInvoice\` que devuelve una URL de pago a la que se redirige al usuario. Para los demás métodos, se crea un nuevo documento en la colección \`orders\` de Firestore con todos los detalles del pedido usando \`addDoc\`.',
+          '**Fase 4: Revisión y Confirmación Final.** Se presenta un resumen completo y final. Al hacer clic en "Pagar de forma segura", se crea el pedido en Firestore y se redirige al cliente a la pasarela de pago cifrada con tarjeta.',
         ],
       },
     ]
@@ -367,10 +367,10 @@ const calculatePackPriceFlow = ai.defineFlow(
         path: '/subscription',
         description: t('docs.subscription_start_desc'),
         details: [
-          "**1. Página de Aterrizaje (`/subscription`):**<br/>- **Archivo:** `src/app/subscription/page.tsx`<br/>- **Función:** Muestra los beneficios del club y el precio. El botón principal 'Unirme al Club' es el punto de entrada al flujo de pago.<br/>- **Lógica Clave:** Al hacer clic en el botón, se llama a la función `handleSubscribe`. Esta función primero verifica si el usuario está autenticado. Si lo está, invoca a la `Server Action` `createNowPaymentsInvoice`.",
-          "**2. Server Action (`createNowPaymentsInvoice`):**<br/>- **Archivo:** `src/app/actions/nowpayments.ts`<br/>- **Función:** Es el intermediario seguro entre nuestra aplicación y la API de NOWPayments. Recibe los detalles del pago (precio, moneda, etc.) desde la página de suscripción.<br/>- **Seguridad:** Utiliza la `NOWPAYMENTS_API_KEY` guardada en las variables de entorno del servidor, por lo que la clave nunca se expone en el navegador.<br/>- **Acción:** Realiza una petición `POST` a la API de NOWPayments (`https://api.nowpayments.io/v1/invoice`) para crear una factura de pago único.<br/><pre><code class='language-javascript'>// En src/app/subscription/page.tsx<br/>const result = await createNowPaymentsInvoice({<br/>  price_amount: 44, // Precio de la suscripción<br/>  price_currency: 'eur',<br/>  order_id: `sub_${user.uid}_${Date.now()}`, // ID único para la transacción<br/>  order_description: 'Suscripción Club Dosis Mensual'<br/>});</code></pre>",
-          "**3. Redirección al Pago:**<br/>- La `Server Action` devuelve un objeto con una URL de pago (`invoice_url`).<br/>- El código en la página de suscripción recibe esta URL y redirige automáticamente al usuario a la pasarela de pago de NOWPayments.<br/><pre><code class='language-javascript'>// En src/app/subscription/page.tsx<br/>if (result.success && result.invoice_url) {<br/>  window.location.href = result.invoice_url;<br/>}</code></pre>",
-          "**4. Páginas de Retorno (`/account/subscription/...`):**<br/>- **Archivos:** `success/page.tsx`, `failed/page.tsx`, `partial/page.tsx`<br/>- **Función:** NOWPayments redirige al usuario a una de estas páginas según el resultado del pago (`success_url`, `cancel_url` que se configuran en la petición a la API, aunque actualmente se usa un `success_url` genérico). Estas páginas simplemente muestran un mensaje informativo al usuario. La lógica de negocio real (como activar la suscripción en la base de datos) se manejaría a través de webhooks.",
+          "**1. Página de Aterrizaje (`/subscription`):**<br/>- **Archivo:** `src/app/subscription/page.tsx`<br/>- **Función:** Muestra los beneficios del club y el precio. El botón principal 'Unirme al Club' es el punto de entrada al flujo de pago.<br/>- **Lógica Clave:** Al hacer clic en el botón, se llama a la función `handleSubscribe`, que verifica la sesión del usuario e invoca la ruta `/api/create-subscription`.",
+          "**2. Creación de Suscripción (`/api/create-subscription`):**<br/>- **Función:** Registra la orden pendiente en Firestore y solicita de forma segura en el servidor una sesión de pago cifrada.<br/>- **Seguridad:** Las credenciales de la pasarela se gestionan exclusivamente en variables de entorno del servidor y nunca se exponen en el navegador.",
+          "**3. Redirección al Pago:**<br/>- El endpoint devuelve la URL segura de pago (`checkoutUrl`) y redirige automáticamente al usuario para completar el abono con tarjeta.",
+          "**4. Confirmación por Webhook:**<br/>- Al completarse el cobro, el servidor recibe la notificación firmada por webhook y activa automáticamente el estado de suscriptor en la cuenta del cliente.",
         ]
       },
       {
@@ -379,21 +379,7 @@ const calculatePackPriceFlow = ai.defineFlow(
         path: '/account/subscription',
         description: t('docs.subscription_management_desc'),
         details: [
-          "**1. Panel de Suscriptor (`/account/subscription`):**<br/>- **Archivo:** `src/app/account/subscription/page.tsx`<br/>- **Función:** Esta página es accesible solo para usuarios con una suscripción activa (`isSubscribed` en `AuthContext`). Les permite seleccionar los productos para su caja mensual (lógica simulada en `src/lib/subscription.ts`).<br/>- **Lógica de Cancelación:** Contiene el botón 'Gestionar mi Suscripción', que abre un diálogo para confirmar la cancelación.",
-          "**2. Server Action de Cancelación (`cancelNowPaymentsSubscription`):**<br/>- **Archivo:** `src/app/actions/manage-subscription.ts`<br/>- **Función:** Contiene la lógica segura para cancelar una suscripción en NOWPayments.<br/>- **Autenticación con NOWPayments:** A diferencia de la creación de facturas, la cancelación requiere un **token JWT**. La `Server Action` primero obtiene este token enviando el email y la contraseña de la cuenta de NOWPayments (guardados en variables de entorno) al endpoint de autenticación de NOWPayments.<br/><pre><code class='language-javascript'>// En src/app/actions/manage-subscription.ts<br/>async function getNowPaymentsJwt(): Promise<string> {<br/>  const response = await fetch(`${NOWPAYMENTS_API_URL}/auth`, { ... });<br/>  // ...<br/>  return data.token;<br/>}</code></pre>",
-          "**3. Ejecución de la Cancelación:**<br/>- Una vez obtenido el JWT, la `Server Action` realiza una petición `DELETE` al endpoint de suscripciones de NOWPayments, incluyendo el ID de la suscripción del usuario (que se obtiene de su documento en Firestore) y el token JWT para la autorización.<br/>- Si la cancelación es exitosa, la `Server Action` actualiza el estado del usuario en Firestore (`isSubscribed: false`) y devuelve un mensaje de éxito.",
-        ]
-      },
-      {
-        name: t('docs.subscription_webhook_title'),
-        id: 'subscription-webhook',
-        path: '/api/nowpayments/subscription-webhook',
-        description: t('docs.subscription_webhook_desc'),
-        details: [
-          "**Archivo:** `src/app/api/nowpayments/subscription-webhook/route.ts`",
-          "**Función:** Este es un endpoint de API que **recibe** peticiones `POST` desde los servidores de NOWPayments. Es fundamental para la gestión a largo plazo de las suscripciones (pagos recurrentes, fallos, etc.).",
-          "**Seguridad:** En un entorno de producción, este endpoint **debe verificar la firma** (`x-nowpayments-sig`) que envía NOWPayments en las cabeceras para asegurarse de que la petición es legítima. Actualmente, esta verificación es un placeholder.",
-          "**Lógica Actual:** El webhook simplemente registra en la consola el cuerpo de la notificación que recibe. No ejecuta ninguna lógica de negocio, pero es el punto de partida para construir la automatización de pagos recurrentes en el futuro.",
+          "**1. Panel de Suscriptor (`/account/subscription`):**<br/>- **Archivo:** `src/app/account/subscription/page.tsx`<br/>- **Función:** Accesible para usuarios con una suscripción activa (`isSubscribed` en `AuthContext`). Permite personalizar la selección de aromas y accesorios para su caja mensual.",
         ]
       },
     ]

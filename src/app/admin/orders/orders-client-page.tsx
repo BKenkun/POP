@@ -18,6 +18,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import Link from "next/link";
 import { db } from '@/lib/firebase';
 import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context';
+import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 
 
 const getStatusVariant = (status: string) => {
@@ -54,8 +56,10 @@ const getStatusLabel = (status: string) => {
 export default function OrdersClientPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
+      let active = true;
       const q = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const fetchedOrders: Order[] = [];
@@ -66,12 +70,30 @@ export default function OrdersClientPage() {
           });
           setOrders(fetchedOrders);
           setLoading(false);
-      }, (error) => {
-          console.error("Error fetching orders: ", error);
-          setLoading(false);
+      }, async () => {
+          try {
+              if (user) {
+                  const idToken = await user.getIdToken();
+                  const serverData = await getAdminOrdersAndUsersServer(idToken);
+                  if (active) {
+                      setOrders(
+                          serverData.orders.map(
+                              (o) => ({ ...o, createdAt: new Date(o.createdAt) } as Order)
+                          )
+                      );
+                  }
+              }
+          } catch {
+              // Fallback silencioso
+          } finally {
+              if (active) setLoading(false);
+          }
       });
-      return () => unsubscribe();
-  }, []);
+      return () => {
+          active = false;
+          unsubscribe();
+      };
+  }, [user]);
 
   return (
     <div className="space-y-6">

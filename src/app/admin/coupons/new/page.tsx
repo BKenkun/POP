@@ -3,34 +3,51 @@
 import CouponForm from '../_components/coupon-form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { createAdminCoupon } from '@/app/actions/coupons-admin';
 import type { Coupon } from '../page';
 
 export default function NewCouponPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async (data: Omit<Coupon, 'id' | 'usageCount'>) => {
+    if (!user) {
+      toast({
+        title: 'Session Required',
+        description: 'Please log in as an administrator.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await addDoc(collection(db, 'coupons'), {
-        ...data,
-        usageCount: 0,
-        createdAt: serverTimestamp(),
-      });
+      const idToken = await user.getIdToken();
+      const result = await createAdminCoupon(data, idToken);
+
+      if (!result.success) {
+        toast({
+          title: 'Could not create coupon',
+          description: result.error || 'Verify the coupon fields and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       toast({
         title: 'Coupon Created',
         description: `Coupon "${data.code}" has been created successfully.`,
       });
       router.push('/admin/coupons');
+      router.refresh();
     } catch (err) {
-      console.error("Error creating coupon: ", err);
       toast({
         title: 'Error',
-        description: 'Could not create coupon.',
+        description: err instanceof Error ? err.message : 'Could not create coupon.',
         variant: 'destructive',
       });
     } finally {

@@ -2,6 +2,7 @@
 'use server';
 
 import type { Order } from '@/lib/types';
+import { getAdminNotificationEmails } from '@/lib/admin';
 
 interface MailjetRecipient {
   email: string;
@@ -224,12 +225,14 @@ export async function sendOrderReceivedEmail(
   order: Order
 ): Promise<MailjetResult> {
   const orderId = order.id;
+  const safeCustomerName = order.customerName || 'Cliente';
+  const safeItems = Array.isArray(order.items) ? order.items : [];
 
-  const amount = (order.total / 100)
+  const amount = ((Number(order.total) || 0) / 100)
     .toFixed(2)
     .replace('.', ',');
 
-  const items = order.items
+  const items = safeItems
     .map(
       (item) =>
         `${item.quantity} x ${item.name}`
@@ -239,12 +242,12 @@ export async function sendOrderReceivedEmail(
   return sendMailjetEmail({
     to: {
       email: order.customerEmail,
-      name: order.customerName,
+      name: safeCustomerName,
     },
 
     subject: `Compra confirmada #${orderId}`,
 
-    textPart: `Hola ${order.customerName},
+    textPart: `Hola ${safeCustomerName},
 
 Hemos confirmado tu compra #${orderId}.
 
@@ -265,7 +268,7 @@ Gracias por tu compra.`,
         <h2>Compra confirmada</h2>
 
         <p>
-          Hola ${escapeHtml(order.customerName)},
+          Hola ${escapeHtml(safeCustomerName)},
         </p>
 
         <p>
@@ -281,12 +284,12 @@ Gracias por tu compra.`,
         <h3>Productos</h3>
 
         <ul>
-          ${order.items
+          ${safeItems
             .map(
               (item) =>
                 `<li>
                   ${item.quantity} x
-                  ${escapeHtml(item.name)}
+                  ${escapeHtml(String(item.name || 'Producto'))}
                 </li>`
             )
             .join('')}
@@ -363,6 +366,210 @@ Pedido: ${order.id}`,
       </div>
     `,
   });
+}
+
+/**
+ * Notificación automática de nueva compra confirmada para todos los administradores.
+ */
+export async function sendAdminNewOrderEmail(
+  order: Order
+): Promise<MailjetResult> {
+  const adminEmails = getAdminNotificationEmails();
+  if (!adminEmails.length) {
+    return {
+      success: true,
+      simulated: false,
+    };
+  }
+
+  const orderId = order.id;
+  const safeCustomerName = order.customerName || 'Cliente';
+  const safeCustomerEmail = order.customerEmail || 'Sin email';
+  const isGuest = order.userId === 'guest' || Boolean((order as Record<string, any>).isGuest);
+  const safeItems = Array.isArray(order.items) ? order.items : [];
+
+  const formatCents = (cents: number) =>
+    ((Number(cents) || 0) / 100).toFixed(2).replace('.', ',');
+
+  const totalFormatted = formatCents(order.total);
+  const shippingFormatted = order.shippingFree
+    ? 'Gratis (0,00 €)'
+    : `${formatCents(order.shippingCost || 0)} €`;
+  const carrierDetail = order.packlink?.carrierName
+    ? `${order.packlink.carrierName}${order.packlink.serviceName ? ` - ${order.packlink.serviceName}` : ''}`
+    : 'Estándar';
+
+  const couponObj = (order as Record<string, any>).coupon as
+    | { code?: string; discount?: number; discountType?: string }
+    | undefined;
+  const couponLine = couponObj?.code
+    ? `${couponObj.code}${
+        couponObj.discountType === 'free_shipping'
+          ? ' (Envío gratis)'
+          : couponObj.discount
+          ? ` (-${formatCents(couponObj.discount)} €)`
+          : ''
+      }`
+    : null;
+
+  const addr = order.shippingAddress;
+  const addressParts = [
+    addr?.line1,
+    addr?.line2,
+    [addr?.postal_code, addr?.city].filter(Boolean).join(' '),
+    addr?.state ? `(${addr.state})` : null,
+    addr?.country,
+  ].filter(Boolean);
+  const fullAddress = addressParts.length ? addressParts.join(', ') : 'No especificada';
+  const phone = addr?.phone || 'No indicado';
+
+  const appBaseUrl = (
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    'https://comprarpopperonline.com'
+  ).replace(/\/$/, '');
+  const resolvedPath =
+    order.path || `users/${order.userId || 'guest'}/orders/${orderId}`;
+  const adminOrderUrl = `${appBaseUrl}/admin/orders/${encodeURIComponent(
+    orderId
+  )}?path=${encodeURIComponent(resolvedPath)}`;
+
+  const itemsText = safeItems.length
+    ? safeItems
+        .map(
+          (item) =>
+            `- ${item.quantity} x ${item.name || 'Producto'} (${formatCents(
+              item.price
+            )} € c/u -> ${formatCents(item.price * item.quantity)} €)`
+        )
+        .join('\n')
+    : '- Sin desglose de artículos';
+
+  const subject = `Nuevo pedido pagado #${orderId} — ${totalFormatted} € (${safeCustomerName})`;
+
+  const textPart = `Nuevo pedido pagado y listo para preparar.
+
+Pedido: #${orderId}
+Total cobrado: ${totalFormatted} €
+Envío: ${shippingFormatted} (${carrierDetail})${couponLine ? `\nCupón aplicado: ${couponLine}` : ''}
+
+DATOS DEL CLIENTE Y ENTREGA
+Cliente: ${safeCustomerName} (${isGuest ? 'Invitado' : 'Registrado'})
+Email: ${safeCustomerEmail}
+Teléfono: ${phone}
+Dirección: ${fullAddress}
+
+PRODUCTOS
+${itemsText}
+
+Gestionar pedido en el panel:
+${adminOrderUrl}`;
+
+  const htmlPart = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 640px; margin: 0 auto;">
+      <div style="background: #111827; color: #ffffff; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0; font-size: 18px;">Nuevo pedido pagado</h2>
+        <p style="margin: 4px 0 0; font-size: 13px; color: #d1d5db;">#${escapeHtml(orderId)}</p>
+      </div>
+
+      <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p style="margin-top: 0; font-size: 16px;">
+          <strong>Total cobrado:</strong>
+          <span style="color: #059669; font-weight: bold;">${totalFormatted} €</span>
+        </p>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px;">
+          <tr>
+            <td style="padding: 6px 0; color: #6b7280; width: 140px;">Cliente:</td>
+            <td style="padding: 6px 0;"><strong>${escapeHtml(safeCustomerName)}</strong> (${isGuest ? 'Invitado' : 'Registrado'})</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #6b7280;">Email:</td>
+            <td style="padding: 6px 0;">${escapeHtml(safeCustomerEmail)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #6b7280;">Teléfono:</td>
+            <td style="padding: 6px 0;">${escapeHtml(String(phone))}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #6b7280;">Dirección:</td>
+            <td style="padding: 6px 0;">${escapeHtml(fullAddress)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #6b7280;">Envío:</td>
+            <td style="padding: 6px 0;">${escapeHtml(shippingFormatted)} — ${escapeHtml(carrierDetail)}</td>
+          </tr>
+          ${
+            couponLine
+              ? `<tr>
+                  <td style="padding: 6px 0; color: #6b7280;">Cupón:</td>
+                  <td style="padding: 6px 0;">${escapeHtml(couponLine)}</td>
+                </tr>`
+              : ''
+          }
+        </table>
+
+        <h3 style="font-size: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Productos del pedido</h3>
+        <ul style="padding-left: 18px; margin-bottom: 20px; font-size: 14px;">
+          ${safeItems
+            .map(
+              (item) =>
+                `<li style="margin-bottom: 6px;">
+                  <strong>${item.quantity} x ${escapeHtml(String(item.name || 'Producto'))}</strong>
+                  — ${formatCents(item.price)} € c/u (<strong>${formatCents(item.price * item.quantity)} €</strong>)
+                </li>`
+            )
+            .join('')}
+        </ul>
+
+        <div style="margin-top: 24px;">
+          <a
+            href="${escapeHtml(adminOrderUrl)}"
+            style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; font-size: 14px;"
+          >
+            Ver pedido en el Panel de Administración
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const results = await Promise.allSettled(
+    adminEmails.map((email) =>
+      sendMailjetEmail({
+        to: { email, name: 'Administración' },
+        subject,
+        textPart,
+        htmlPart,
+      })
+    )
+  );
+
+  const anySuccess = results.some(
+    (r) => r.status === 'fulfilled' && r.value.success
+  );
+  const firstFailure = results.find(
+    (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
+  );
+
+  if (!anySuccess && firstFailure) {
+    const errMsg =
+      firstFailure.status === 'rejected'
+        ? firstFailure.reason instanceof Error
+          ? firstFailure.reason.message
+          : String(firstFailure.reason)
+        : firstFailure.value.error || 'No se pudo enviar la notificación a los administradores.';
+    return {
+      success: false,
+      simulated: false,
+      error: errMsg,
+    };
+  }
+
+  return {
+    success: true,
+    simulated: false,
+  };
 }
 
 /**

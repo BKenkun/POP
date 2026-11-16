@@ -63,7 +63,7 @@ export default function EditProductPage() {
         
         toast({
             title: 'Producto Actualizado',
-            description: `Los cambios en "${data.name}" han sido guardados y sincronizados con Klaviyo.`,
+            description: `Los cambios en "${data.name}" han sido guardados.`,
         });
         router.push('/admin/products');
     } catch (err) {

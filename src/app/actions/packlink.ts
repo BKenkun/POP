@@ -28,7 +28,7 @@ function normalizeCountryCode(value: unknown): string {
 
 function packlinkConfig() {
   const apiKey = process.env.PACKLINK_API_KEY;
-  if (!apiKey) throw new Error('Falta configurar PACKLINK_API_KEY en Firebase Secret Manager.');
+  if (!apiKey) throw new Error('El servicio de cálculo de envíos no está disponible temporalmente.');
   return { apiKey };
 }
 
@@ -46,10 +46,10 @@ async function packlinkRequest(path: string, init: RequestInit = {}) {
   });
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    console.error('[PACKLINK] API error', { path, status: response.status });
+    console.error('[SHIPPING] API error', { path, status: response.status });
     throw new Error(response.status === 401
-      ? 'Packlink PRO rechazó la clave API. Revisa PACKLINK_API_KEY.'
-      : 'Packlink PRO no pudo completar la operación. Revisa la configuración y los logs.');
+      ? 'No se pudo autenticar con el servicio logístico.'
+      : 'No se pudo calcular el envío para esta dirección. Revisa el código postal e inténtalo de nuevo.');
   }
   return body;
 }
@@ -92,10 +92,11 @@ export async function getPacklinkShippingQuotes(input: {
     })).filter((q: PacklinkQuote) => q.serviceId && Number.isFinite(q.price) && q.price >= 0)
       .sort((a: PacklinkQuote, b: PacklinkQuote) => a.price - b.price);
 
-    if (!quotes.length) return { success: false, message: 'Packlink no devolvió tarifas válidas para ese destino.' };
+    if (!quotes.length) return { success: false, message: 'No hay tarifas de envío disponibles para ese destino.' };
     return { success: true, quotes };
   } catch (error) {
-    return { success: false, message: error instanceof Error ? error.message : 'No se pudieron consultar tarifas de Packlink PRO.' };
+    const rawMsg = error instanceof Error ? error.message : 'No se pudieron consultar las tarifas de envío.';
+    return { success: false, message: rawMsg.replace(/packlink(\s*pro)?/gi, 'el servicio de envíos') };
   }
 }
 
@@ -107,23 +108,23 @@ export async function getPacklinkShippingQuotes(input: {
 export async function createPacklinkShipmentDraft(orderId: string): Promise<void> {
   const { postalCode: fromPostalCode, country: fromCountry, senderName, street: senderStreet, city: senderCity, phone: senderPhone, email: senderEmail, weightKg, lengthCm, widthCm, heightCm } = await readPacklinkSettings();
   const parts = orderId.split('_');
-  if (parts.length < 3 || parts[0] !== 'CPO') throw new Error('ID de pedido POP no válido para Packlink.');
+  if (parts.length < 3 || parts[0] !== 'CPO') throw new Error('ID de pedido no válido para logística.');
   const userId = parts.slice(1, -1).join('_');
   const snap = await runWithAdminFirestore(
     (db) => db.collection('users').doc(userId).collection('orders').doc(orderId).get(),
-    'packlink createShipmentDraft'
+    'shipping createShipmentDraft'
   );
   const db = getActiveFirestore();
   const orderRef = db.collection('users').doc(userId).collection('orders').doc(orderId);
-  if (!snap.exists) throw new Error('Pedido no encontrado para crear el envío Packlink.');
+  if (!snap.exists) throw new Error('Pedido no encontrado para crear el envío.');
   const order = snap.data()!;
 
   if (!['order_received', 'shipped', 'out_for_delivery', 'delivered'].includes(String(order.status))) {
-    throw new Error('No se crea el envío Packlink hasta confirmar el pago.');
+    throw new Error('No se crea el envío hasta confirmar el pago.');
   }
   if (!order.packlink?.serviceId || !order.packlink?.serviceName || !order.packlink?.carrierName) {
     await orderRef.set({
-      packlink: { status: 'needs_service_selection', lastError: 'El pedido no contiene el servicio Packlink seleccionado en checkout.' },
+      packlink: { status: 'needs_service_selection', lastError: 'El pedido no contiene el servicio de transporte seleccionado en checkout.' },
       updatedAt: new Date(),
     }, { merge: true });
     return;
@@ -132,7 +133,7 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
   // Validar el remitente antes de reclamar el envío. Así, una configuración incompleta
   // no deja el pedido atascado en estado "creating" y permite corregirlo y reintentar.
   if (!senderName || !senderStreet || !senderCity || !senderPhone || !senderEmail) {
-    throw new Error('Faltan datos de remitente PACKLINK_FROM_NAME/STREET/CITY/PHONE/EMAIL en App Hosting.');
+    throw new Error('Faltan datos de remitente en la configuración logística.');
   }
 
   // Reclamar la creación dentro de una transacción para evitar borradores duplicados
@@ -200,8 +201,8 @@ export async function createPacklinkShipmentDraft(orderId: string): Promise<void
   }
   const reference = String(result?.reference || '');
   if (!reference) {
-    await orderRef.update({ 'packlink.status': 'creation_failed', 'packlink.lastError': 'Packlink no devolvió la referencia del envío.', updatedAt: new Date() });
-    throw new Error('Packlink no devolvió la referencia del envío.');
+    await orderRef.update({ 'packlink.status': 'creation_failed', 'packlink.lastError': 'El proveedor logístico no devolvió la referencia del envío.', updatedAt: new Date() });
+    throw new Error('El proveedor logístico no devolvió la referencia del envío.');
   }
 
   await orderRef.update({

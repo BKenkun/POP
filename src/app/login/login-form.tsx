@@ -8,26 +8,68 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Loader2, Eye, EyeOff, Chrome } from 'lucide-react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
 import { isAdminEmail } from '@/lib/admin';
+import { authenticateWithGoogle, getGoogleAuthErrorMessage } from '@/lib/google-auth';
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isAdmin } = useAuth(); // We can get isAdmin from context now
   const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const completeRedirect = (userEmail?: string | null) => {
+    const loggedInIsAdmin = isAdminEmail(userEmail);
+
+    toast({
+      title: 'Inicio de sesión exitoso',
+      description: loggedInIsAdmin ? '¡Bienvenido, Administrador!' : '¡Bienvenido de nuevo!',
+    });
+
+    const redirectUrl = searchParams.get('redirect');
+
+    if (loggedInIsAdmin) {
+      router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
+    } else if (redirectUrl) {
+      router.push(redirectUrl);
+    } else {
+      router.push('/account');
+    }
+
+    router.refresh();
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const { user: googleUser } = await authenticateWithGoogle();
+      completeRedirect(googleUser.email);
+    } catch (err: unknown) {
+      const friendlyError = getGoogleAuthErrorMessage(err);
+      if (friendlyError) {
+        setError(friendlyError);
+        toast({
+          title: 'Error al iniciar sesión con Google',
+          description: friendlyError,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,47 +88,59 @@ export default function LoginForm() {
         },
         body: JSON.stringify({ idToken }),
       });
-      
-      const loggedInIsAdmin = isAdminEmail(userCredential.user.email);
-      
-      toast({
-          title: "Inicio de sesión exitoso",
-          description: loggedInIsAdmin ? "¡Bienvenido, Administrador!" : "¡Bienvenido de nuevo!",
-      });
 
-      const redirectUrl = searchParams.get('redirect');
-
-      if (loggedInIsAdmin) {
-          router.push(redirectUrl && redirectUrl.startsWith('/admin') ? redirectUrl : '/admin');
-      } else if (redirectUrl) {
-          router.push(redirectUrl);
-      } else {
-          router.push('/account');
-      }
-      
-      router.refresh(); 
-
+      completeRedirect(userCredential.user.email);
     } catch (err: any) {
-        let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-             friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-        } else {
-            console.error("Firebase Auth Error:", err);
-        }
-        setError(friendlyError);
-        toast({
-            title: 'Error al iniciar sesión',
-            description: friendlyError,
-            variant: 'destructive',
-        });
+      let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/invalid-credential'
+      ) {
+        friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      } else {
+        console.error('Firebase Auth Error:', err);
+      }
+      setError(friendlyError);
+      toast({
+        title: 'Error al iniciar sesión',
+        description: friendlyError,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const isBusy = loading || googleLoading;
+
   return (
     <form onSubmit={handleLogin}>
       <CardContent className="space-y-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full font-semibold"
+          disabled={isBusy}
+          onClick={handleGoogleLogin}
+        >
+          {googleLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Chrome className="mr-2 h-4 w-4 text-primary" />
+          )}
+          {googleLoading ? t('auth.google_loading_button') : t('auth.google_button')}
+        </Button>
+
+        <div className="relative py-1">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">{t('auth.or_divider')}</span>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email">{t('auth.email_label')}</Label>
           <Input
@@ -95,27 +149,27 @@ export default function LoginForm() {
             type="email"
             placeholder="tu@email.com"
             required
-            disabled={loading}
+            disabled={isBusy}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <div className="space-y-2">
-            <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t('auth.password_label')}</Label>
-                <Link href="/forgot-password" passHref tabIndex={-1}>
-                    <Button variant="link" className="px-0 h-auto text-xs">
-                        {t('auth.forgot_password_link')}
-                    </Button>
-                </Link>
-            </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">{t('auth.password_label')}</Label>
+            <Link href="/forgot-password" passHref tabIndex={-1}>
+              <Button variant="link" className="px-0 h-auto text-xs">
+                {t('auth.forgot_password_link')}
+              </Button>
+            </Link>
+          </div>
           <div className="relative">
             <Input
               id="password"
               name="password"
               type={showPassword ? 'text' : 'password'}
               required
-              disabled={loading}
+              disabled={isBusy}
               className="pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -126,7 +180,7 @@ export default function LoginForm() {
               size="icon"
               className="absolute inset-y-0 right-0 h-full px-3"
               onClick={() => setShowPassword(!showPassword)}
-              disabled={loading}
+              disabled={isBusy}
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
               {showPassword ? <EyeOff /> : <Eye />}
@@ -136,7 +190,7 @@ export default function LoginForm() {
         {error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent>
       <CardFooter className="flex-col gap-4">
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={isBusy}>
           {loading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

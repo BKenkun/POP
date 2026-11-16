@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +43,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
+import {
+  listAdminCoupons,
+  updateAdminCoupon,
+  deleteAdminCoupon,
+} from '@/app/actions/coupons-admin';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2, Ticket, Truck } from 'lucide-react';
 
 export interface Coupon {
@@ -52,8 +58,8 @@ export interface Coupon {
   discountType: 'percentage' | 'fixed' | 'free_shipping';
   discountValue: number;
   minPurchase?: number;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   isActive: boolean;
   usageLimit?: number;
   usageCount: number;
@@ -64,40 +70,100 @@ export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const loadCouponsFromServer = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const idToken = await user.getIdToken();
+      const serverCoupons = await listAdminCoupons(idToken);
+      setCoupons(serverCoupons);
+    } catch (err) {
+      console.warn('Notice loading coupons via server action:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'coupons'), (snapshot) => {
-      const fetchedCoupons: Coupon[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      } as Coupon));
-      setCoupons(fetchedCoupons);
-      setLoading(false);
-    });
+    void loadCouponsFromServer();
+
+    const unsubscribe = onSnapshot(
+      collection(db, 'coupons'),
+      (snapshot) => {
+        const fetchedCoupons: Coupon[] = snapshot.docs.map(
+          (docSnap) =>
+            ({
+              id: docSnap.id,
+              ...docSnap.data(),
+            } as Coupon)
+        );
+        if (fetchedCoupons.length > 0) {
+          setCoupons(fetchedCoupons);
+        }
+        setLoading(false);
+      },
+      () => {
+        // Si las reglas cliente restringen la lectura directa, mantenemos los datos obtenidos por servidor
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [loadCouponsFromServer]);
 
   const handleToggleActive = async (coupon: Coupon) => {
-    const couponRef = doc(db, 'coupons', coupon.id);
+    if (!user) return;
+    const nextState = !coupon.isActive;
+    setCoupons((prev) =>
+      prev.map((c) => (c.id === coupon.id ? { ...c, isActive: nextState } : c))
+    );
+
     try {
-      await updateDoc(couponRef, { isActive: !coupon.isActive });
+      const idToken = await user.getIdToken();
+      const res = await updateAdminCoupon(coupon.id, { isActive: nextState }, idToken);
+      if (!res.success) {
+        throw new Error(res.error || 'Could not update coupon.');
+      }
       toast({
         title: 'Coupon Updated',
         description: `Status of "${coupon.code}" has been updated.`,
       });
     } catch (error) {
-      toast({ title: 'Error', description: 'Could not update coupon.', variant: 'destructive' });
+      setCoupons((prev) =>
+        prev.map((c) => (c.id === coupon.id ? { ...c, isActive: coupon.isActive } : c))
+      );
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Could not update coupon.',
+        variant: 'destructive',
+      });
     }
   };
   
   const handleDeleteCoupon = async (couponId: string) => {
-    const couponRef = doc(db, 'coupons', couponId);
+    if (!user) return;
     try {
-        await deleteDoc(couponRef);
-        toast({ title: 'Coupon Deleted', description: 'Coupon has been permanently deleted.', variant: 'destructive'});
+      const idToken = await user.getIdToken();
+      const res = await deleteAdminCoupon(couponId, idToken);
+      if (!res.success) {
+        throw new Error(res.error || 'Could not delete coupon.');
+      }
+      setCoupons((prev) => prev.filter((c) => c.id !== couponId));
+      toast({
+        title: 'Coupon Deleted',
+        description: 'Coupon has been permanently deleted.',
+        variant: 'destructive',
+      });
     } catch (error) {
-        toast({ title: 'Error', description: 'Could not delete coupon.', variant: 'destructive'});
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Could not delete coupon.',
+        variant: 'destructive',
+      });
     }
   };
 

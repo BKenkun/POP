@@ -3,18 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import CouponForm from '../../_components/coupon-form';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getAdminCouponById, updateAdminCoupon } from '@/app/actions/coupons-admin';
 import type { Coupon } from '../../page';
 
 export default function EditCouponPage() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,39 +23,56 @@ export default function EditCouponPage() {
   const id = params.id as string;
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
+    let active = true;
 
-    const couponRef = doc(db, 'coupons', id);
     const fetchCoupon = async () => {
-      const docSnap = await getDoc(couponRef);
-      if (docSnap.exists()) {
-        setCoupon({ id: docSnap.id, ...docSnap.data() } as Coupon);
-      } else {
-        setCoupon(null);
+      try {
+        const idToken = await user.getIdToken();
+        const result = await getAdminCouponById(id, idToken);
+        if (active) {
+          setCoupon(result);
+        }
+      } catch (err) {
+        console.warn('Notice loading coupon for edit:', err);
+        if (active) setCoupon(null);
+      } finally {
+        if (active) setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    fetchCoupon();
-  }, [id]);
+    void fetchCoupon();
+    return () => {
+      active = false;
+    };
+  }, [id, user]);
 
   const handleSave = async (data: Omit<Coupon, 'id' | 'usageCount'>) => {
-    if (!coupon) return;
+    if (!coupon || !user) return;
     setIsSaving(true);
-    const couponRef = doc(db, 'coupons', coupon.id);
 
     try {
-      await updateDoc(couponRef, { ...data });
+      const idToken = await user.getIdToken();
+      const result = await updateAdminCoupon(coupon.id, data, idToken);
+      if (!result.success) {
+        toast({
+          title: 'Could not update coupon',
+          description: result.error || 'Verify the coupon fields and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       toast({
         title: 'Coupon Updated',
         description: `Changes to "${data.code}" have been saved.`,
       });
       router.push('/admin/coupons');
+      router.refresh();
     } catch (err) {
-      console.error("Error updating coupon:", err);
       toast({
         title: 'Error',
-        description: 'Could not update coupon.',
+        description: err instanceof Error ? err.message : 'Could not update coupon.',
         variant: 'destructive',
       });
     } finally {

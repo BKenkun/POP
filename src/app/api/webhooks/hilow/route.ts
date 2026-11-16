@@ -2,10 +2,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getActiveFirestore, runWithAdminFirestore } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { isAdminCredentialError, runWithAdminFirestore } from '@/lib/firebase-admin';
+import { FieldValue, type DocumentReference } from 'firebase-admin/firestore';
 import { trackOrderStatusUpdate } from '@/app/actions/klaviyo';
-import { sendOrderReceivedEmail, sendSubscriptionStatusEmail } from '@/lib/mailjet';
+import {
+  sendAdminNewOrderEmail,
+  sendOrderReceivedEmail,
+  sendSubscriptionStatusEmail,
+} from '@/lib/mailjet';
 import { Order } from '@/lib/types';
 import { createPacklinkShipmentDraft } from '@/app/actions/packlink';
 
@@ -44,6 +48,20 @@ function isSubscriptionCancelled(eventType: string) {
   return ['subscription.cancelled', 'subscription.canceled'].includes(eventType);
 }
 
+function parseAmountInCents(payload: Record<string, any>): number {
+  if (payload.amountInCents !== undefined && payload.amountInCents !== null) {
+    const val = Number(payload.amountInCents);
+    return Number.isFinite(val) ? Math.round(val) : 0;
+  }
+  if (payload.amount !== undefined && payload.amount !== null) {
+    const val = Number(payload.amount);
+    if (!Number.isFinite(val)) return 0;
+    // Si viene con decimales (ej. 4.47), convertir de euros a céntimos
+    return Number.isInteger(val) ? val : Math.round(val * 100);
+  }
+  return 0;
+}
+
 export async function GET() {
   return NextResponse.json({
     ok: true,
@@ -80,7 +98,7 @@ export async function POST(req: NextRequest) {
     const eventType = getEventType(payload);
     const internalOrderId = String(payload.internalOrderId || payload.orderId || '').trim();
     const hilowOrderId = payload.hilowOrderId || payload.paymentId || payload.id || null;
-    const amountInCents = Number(payload.amountInCents ?? payload.amount ?? 0);
+    const amountInCents = parseAmountInCents(payload);
 
     if (!internalOrderId) {
       return NextResponse.json({ error: 'internalOrderId no válido' }, { status: 400 });
@@ -121,139 +139,215 @@ export async function POST(req: NextRequest) {
       amountInCents,
     });
 
-    // Guardamos una copia del evento para poder diagnosticar cualquier problema
-    // sin depender únicamente de los logs del proveedor de pagos.
-    await runWithAdminFirestore(
-      (db) =>
-        db
-          .collection('webhookEvents')
-          .doc(`${internalOrderId}_${Date.now()}`)
-          .set({
-            provider: 'hilow',
-            eventType,
-            internalOrderId,
-            hilowOrderId,
-            amountInCents,
-            receivedAt: FieldValue.serverTimestamp(),
-            payload,
-          }),
-      'hilow-webhook'
-    );
-
-    const adminFirestore = getActiveFirestore();
-    const userRef = adminFirestore.collection('users').doc(userId);
-    const orderRef = userRef.collection('orders').doc(orderDocId);
+    // Registro de auditoría no bloqueante (si falla por formato de payload, no impide confirmar el pedido,
+    // pero si falla por credenciales Admin SDK lo detectaremos igualmente al operar sobre el pedido).
+    const safePayload = JSON.parse(JSON.stringify(payload));
+    try {
+      await runWithAdminFirestore(
+        (db) =>
+          db
+            .collection('webhookEvents')
+            .doc(`${internalOrderId}_${Date.now()}`)
+            .set({
+              provider: 'hilow',
+              eventType,
+              internalOrderId,
+              hilowOrderId,
+              amountInCents,
+              receivedAt: FieldValue.serverTimestamp(),
+              payload: safePayload,
+            }),
+        'hilow-webhook-audit'
+      );
+    } catch (auditErr) {
+      if (isAdminCredentialError(auditErr)) {
+        throw auditErr;
+      }
+      console.warn(
+        '[HILOW WEBHOOK] No se pudo guardar registro en webhookEvents (continuando procesamiento):',
+        auditErr instanceof Error ? auditErr.message : String(auditErr)
+      );
+    }
 
     if (isPaymentCompleted(eventType)) {
-      const orderSnap = await orderRef.get();
+      const dbResult = await runWithAdminFirestore(async (adminFirestore) => {
+        let resolvedUserId = userId;
+        let userRef = adminFirestore.collection('users').doc(resolvedUserId);
+        let orderRef: DocumentReference = userRef.collection('orders').doc(orderDocId);
+        let orderSnap = await orderRef.get();
 
-      const existingOrder = orderSnap.exists ? orderSnap.data() : null;
-
-      // No marcar como pagado un pedido normal que no existe en Firestore.
-      // Las renovaciones pueden crear un documento nuevo, según el flujo actual.
-      if (!orderSnap.exists && !(eventType.includes('renewal') && isSubscription)) {
-        console.error('[HILOW WEBHOOK] Pedido no encontrado para el pago confirmado:', {
-          internalOrderId,
-          userId,
-          orderDocId,
-        });
-        return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
-      }
-
-      // Validar el importe cuando Hilow envía explícitamente amountInCents.
-      // El pedido local almacena el total en céntimos.
-      if (orderSnap.exists && payload.amountInCents !== undefined && payload.amountInCents !== null) {
-        const receivedAmount = Number(payload.amountInCents);
-        const expectedAmount = Number(existingOrder?.total);
-        if (
-          !Number.isFinite(receivedAmount) ||
-          !Number.isFinite(expectedAmount) ||
-          Math.round(receivedAmount) !== Math.round(expectedAmount)
-        ) {
-          console.error('[HILOW WEBHOOK] Importe no coincide con el pedido:', {
-            internalOrderId,
-            receivedAmount,
-            expectedAmount,
-          });
-          return NextResponse.json({ error: 'Importe del pago no coincide' }, { status: 400 });
+        // Si el documento no está en users/{userId}/orders/{orderDocId}, buscar en collectionGroup('orders')
+        if (!orderSnap.exists) {
+          try {
+            const groupSnap = await adminFirestore
+              .collectionGroup('orders')
+              .where('id', '==', orderDocId)
+              .limit(1)
+              .get();
+            if (!groupSnap.empty) {
+              orderSnap = groupSnap.docs[0];
+              orderRef = groupSnap.docs[0].ref;
+              const parentUserDoc = orderRef.parent.parent;
+              if (parentUserDoc) {
+                resolvedUserId = parentUserDoc.id;
+                userRef = parentUserDoc;
+              }
+            }
+          } catch (groupErr) {
+            console.warn(
+              '[HILOW WEBHOOK] Búsqueda collectionGroup alternativa omitida:',
+              groupErr instanceof Error ? groupErr.message : String(groupErr)
+            );
+          }
         }
+
+        const existingOrder = orderSnap.exists ? orderSnap.data() : null;
+
+        // Validar importe cuando el pedido existe y Hilow envía amountInCents explícito (tolerancia 1 céntimo)
+        if (orderSnap.exists && payload.amountInCents !== undefined && payload.amountInCents !== null) {
+          const receivedAmount = Number(payload.amountInCents);
+          const expectedAmount = Number(existingOrder?.total);
+          if (
+            Number.isFinite(receivedAmount) &&
+            receivedAmount > 0 &&
+            Number.isFinite(expectedAmount) &&
+            expectedAmount > 0 &&
+            Math.abs(Math.round(receivedAmount) - Math.round(expectedAmount)) > 1
+          ) {
+            console.error('[HILOW WEBHOOK] Importe no coincide con el pedido:', {
+              internalOrderId,
+              receivedAmount,
+              expectedAmount,
+            });
+            return { kind: 'amount_mismatch' as const };
+          }
+        }
+
+        // Idempotencia: evita repetir puntos y correos si el webhook se reenvía tras estar ya confirmado
+        const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
+        if (existingOrder?.status && paidStatuses.includes(String(existingOrder.status))) {
+          return { kind: 'already_paid' as const, existingStatus: String(existingOrder.status) };
+        }
+
+        const customerEmail =
+          payload.email || payload.customerEmail || existingOrder?.customerEmail || '';
+        const customerName =
+          payload.customerName || payload.name || existingOrder?.customerName || 'Cliente';
+
+        const orderData: Record<string, any> = {
+          status: 'order_received',
+          paidAt: FieldValue.serverTimestamp(),
+          hilowPaymentId: hilowOrderId,
+          updatedAt: FieldValue.serverTimestamp(),
+        };
+
+        // Si el documento no existía previamente (renovación o compra cuyo guardado previo falló),
+        // se reconstruye con merge para no perder jamás una venta cobrada y firmada por HMAC.
+        if (!orderSnap.exists) {
+          const fallbackTotal = amountInCents || (isSubscription ? 4400 : 0);
+          const productLabel = String(
+            payload.productName ||
+              payload.description ||
+              (isSubscription ? 'Club Dosis Mensual' : 'Pedido confirmado')
+          );
+
+          orderData.id = orderDocId;
+          orderData.userId = resolvedUserId;
+          orderData.isGuest = resolvedUserId === 'guest';
+          orderData.total = fallbackTotal;
+          orderData.shippingCost = 0;
+          orderData.shippingFree = true;
+          orderData.paymentMethod = 'hilow';
+          orderData.createdAt = FieldValue.serverTimestamp();
+          orderData.isSubscription = isSubscription;
+          orderData.reconstructedFromWebhook = !eventType.includes('renewal');
+          orderData.customerEmail = customerEmail || 'pendiente@comprarpopperonline.com';
+          orderData.customerName = customerName;
+          orderData.shippingAddress = existingOrder?.shippingAddress || {
+            line1: payload.address || 'Dirección pendiente de confirmar',
+            line2: null,
+            city: payload.city || '-',
+            state: payload.state || '-',
+            postal_code: payload.postalCode || '00000',
+            country: payload.country || 'ES',
+            phone: payload.phone || '-',
+          };
+          orderData.items = [
+            {
+              productId: isSubscription ? 'subscription_club' : 'paid_order',
+              name: productLabel,
+              price: fallbackTotal,
+              quantity: 1,
+              imageUrl: 'https://picsum.photos/seed/order/200/200',
+            },
+          ];
+        }
+
+        await orderRef.set(orderData, { merge: true });
+
+        if (isSubscription && resolvedUserId !== 'guest') {
+          await userRef.set(
+            {
+              isSubscribed: true,
+              subscriptionStatus: 'active',
+              lastSubscriptionPayment: FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+
+        const points = Math.floor((amountInCents || Number(existingOrder?.total) || 0) / 1000);
+        if (points > 0 && resolvedUserId !== 'guest') {
+          await userRef.set({ loyaltyPoints: FieldValue.increment(points) }, { merge: true });
+        }
+
+        const finalSnap = await orderRef.get();
+        const finalOrder = finalSnap.exists
+          ? ({ ...finalSnap.data(), id: orderDocId, path: orderRef.path } as Order)
+          : null;
+
+        return { kind: 'updated' as const, finalOrder };
+      }, 'hilow-webhook-payment-completed');
+
+      if (dbResult.kind === 'amount_mismatch') {
+        return NextResponse.json({ error: 'Importe del pago no coincide' }, { status: 400 });
       }
 
-      // Evita repetir puntos y correos si Hilow reenvía la confirmación
-      // después de que el pedido ya haya sido pagado o enviado.
-      const paidStatuses = ['order_received', 'shipped', 'out_for_delivery', 'delivered'];
-      if (existingOrder?.status && paidStatuses.includes(String(existingOrder.status))) {
+      if (dbResult.kind === 'already_paid') {
         console.log('[HILOW WEBHOOK] Confirmación duplicada ignorada:', {
           internalOrderId,
           orderDocId,
-          status: existingOrder.status,
+          status: dbResult.existingStatus,
         });
         return NextResponse.json({ received: true, processed: 'already_paid' }, { status: 200 });
       }
 
-      const customerEmail = payload.email || existingOrder?.customerEmail || '';
-      const customerName = payload.customerName || existingOrder?.customerName || 'Cliente';
+      if (dbResult.finalOrder) {
+        const finalOrder = dbResult.finalOrder;
+        const notificationTasks: Array<{ label: string; promise: Promise<unknown> }> = [
+          { label: 'mailjet_admin_new_order', promise: sendAdminNewOrderEmail(finalOrder) },
+        ];
 
-      const orderData: Record<string, any> = {
-        status: 'order_received',
-        paidAt: FieldValue.serverTimestamp(),
-        hilowPaymentId: hilowOrderId,
-        updatedAt: FieldValue.serverTimestamp(),
-      };
+        if (finalOrder.customerEmail) {
+          notificationTasks.push(
+            { label: 'order_status_tracking', promise: trackOrderStatusUpdate(finalOrder, 'order_received') },
+            { label: 'mailjet_order_confirmation', promise: sendOrderReceivedEmail(finalOrder) }
+          );
+          if (isSubscription) {
+            notificationTasks.push({
+              label: 'mailjet_subscription_status',
+              promise: sendSubscriptionStatusEmail(finalOrder, 'active'),
+            });
+          }
+        }
 
-      // Una renovación puede llegar sin un documento de pedido previamente creado.
-      if (eventType.includes('renewal') && !orderSnap.exists) {
-        orderData.id = orderDocId;
-        orderData.userId = userId;
-        orderData.total = amountInCents || 4400;
-        orderData.paymentMethod = 'hilow';
-        orderData.createdAt = FieldValue.serverTimestamp();
-        orderData.isSubscription = true;
-        orderData.customerEmail = customerEmail || 'member@comprarpopperonline.com';
-        orderData.customerName = customerName;
-        orderData.items = [{
-          productId: 'subscription_club',
-          name: 'Club Dosis Mensual',
-          price: amountInCents || 4400,
-          quantity: 1,
-          imageUrl: 'https://picsum.photos/seed/sub/200/200',
-        }];
-      }
-
-      await orderRef.set(orderData, { merge: true });
-
-      if (isSubscription) {
-        await userRef.set({
-          isSubscribed: true,
-          subscriptionStatus: 'active',
-          lastSubscriptionPayment: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
-
-      const points = Math.floor((amountInCents || Number(existingOrder?.total) || 0) / 1000);
-      if (points > 0) {
-        await userRef.set({ loyaltyPoints: FieldValue.increment(points) }, { merge: true });
-      }
-
-      const finalSnap = await orderRef.get();
-      if (finalSnap.exists) {
-        const finalOrder = { ...finalSnap.data(), id: orderDocId } as Order;
-
-        // Estos envíos son secundarios: si Mailjet/Klaviyo falla, el webhook sigue
-        // devolviendo 200 porque el pago ya quedó registrado en Firestore.
-        const notificationResults = await Promise.allSettled([
-          trackOrderStatusUpdate(finalOrder, 'order_received'),
-          sendOrderReceivedEmail(finalOrder),
-          ...(isSubscription ? [sendSubscriptionStatusEmail(finalOrder, 'active')] : []),
-        ]);
+        const notificationResults = await Promise.allSettled(
+          notificationTasks.map((task) => task.promise)
+        );
 
         notificationResults.forEach((result, index) => {
-          const notification = index === 0
-            ? 'klaviyo_order_status'
-            : index === 1
-              ? 'mailjet_order_confirmation'
-              : 'mailjet_subscription_status';
+          const notification = notificationTasks[index]?.label || `notification_${index}`;
 
           if (result.status === 'rejected') {
             console.error('[HILOW WEBHOOK] Falló una notificación secundaria:', {
@@ -264,7 +358,12 @@ export async function POST(req: NextRequest) {
             return;
           }
 
-          if (result.value && typeof result.value === 'object' && 'success' in result.value && result.value.success === false) {
+          if (
+            result.value &&
+            typeof result.value === 'object' &&
+            'success' in result.value &&
+            result.value.success === false
+          ) {
             console.error('[HILOW WEBHOOK] El proveedor no confirmó la notificación:', {
               notification,
               orderId: orderDocId,
@@ -285,8 +384,7 @@ export async function POST(req: NextRequest) {
         try {
           await createPacklinkShipmentDraft(orderDocId);
         } catch (error) {
-          // El pago ya está confirmado: registrar el fallo logístico sin devolver error al proveedor.
-          console.error('[PACKLINK] Pago confirmado; creación de envío pendiente:', {
+          console.error('[SHIPPING] Pago confirmado; creación de envío pendiente:', {
             orderId: orderDocId,
             error: error instanceof Error ? error.message : String(error),
           });
@@ -297,48 +395,79 @@ export async function POST(req: NextRequest) {
     }
 
     if (isPaymentFailed(eventType)) {
-      if (isSubscription) {
-        await userRef.set({
-          subscriptionStatus: 'past_due',
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+      const failedOrder = await runWithAdminFirestore(async (adminFirestore) => {
+        const userRef = adminFirestore.collection('users').doc(userId);
+        const orderRef = userRef.collection('orders').doc(orderDocId);
 
-        const orderSnap = await orderRef.get();
-        if (orderSnap.exists) {
-          await sendSubscriptionStatusEmail({ ...orderSnap.data(), id: orderDocId } as Order, 'past_due');
+        if (isSubscription && userId !== 'guest') {
+          await userRef.set(
+            {
+              subscriptionStatus: 'past_due',
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
         }
-      }
 
-      await orderRef.set({
-        status: 'issue',
-        paymentFailureAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+        await orderRef.set(
+          {
+            status: 'issue',
+            paymentFailureAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        if (isSubscription) {
+          const orderSnap = await orderRef.get();
+          return orderSnap.exists ? ({ ...orderSnap.data(), id: orderDocId } as Order) : null;
+        }
+        return null;
+      }, 'hilow-webhook-payment-failed');
+
+      if (failedOrder) {
+        await sendSubscriptionStatusEmail(failedOrder, 'past_due').catch(() => undefined);
+      }
 
       return NextResponse.json({ received: true, processed: 'payment_failed' }, { status: 200 });
     }
 
     if (isSubscriptionCancelled(eventType)) {
-      await userRef.set({
-        isSubscribed: false,
-        subscriptionStatus: 'cancelled',
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      const cancelledOrder = await runWithAdminFirestore(async (adminFirestore) => {
+        const userRef = adminFirestore.collection('users').doc(userId);
+        const orderRef = userRef.collection('orders').doc(orderDocId);
 
-      const orderSnap = await orderRef.get();
-      if (orderSnap.exists) {
-        await sendSubscriptionStatusEmail({ ...orderSnap.data(), id: orderDocId } as Order, 'cancelled');
+        if (userId !== 'guest') {
+          await userRef.set(
+            {
+              isSubscribed: false,
+              subscriptionStatus: 'cancelled',
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+
+        const orderSnap = await orderRef.get();
+        return orderSnap.exists ? ({ ...orderSnap.data(), id: orderDocId } as Order) : null;
+      }, 'hilow-webhook-subscription-cancelled');
+
+      if (cancelledOrder) {
+        await sendSubscriptionStatusEmail(cancelledOrder, 'cancelled').catch(() => undefined);
       }
 
       return NextResponse.json({ received: true, processed: 'subscription_cancelled' }, { status: 200 });
     }
 
-    // Evento desconocido: se guarda arriba para diagnóstico y se responde 200
-    // para evitar reintentos infinitos de Hilow.
     console.warn('[HILOW WEBHOOK] Evento no mapeado:', eventType);
     return NextResponse.json({ received: true, processed: 'ignored_event', eventType }, { status: 200 });
   } catch (error: any) {
-    console.error('[HILOW WEBHOOK] Error crítico:', error?.message || error);
+    const isAuthError = isAdminCredentialError(error);
+    console.error('[HILOW WEBHOOK] Error crítico:', {
+      category: isAuthError ? 'firebase_admin_credentials_invalid_or_revoked' : 'unexpected_runtime_error',
+      code: error?.code,
+      message: error?.message || String(error),
+    });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

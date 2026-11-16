@@ -128,7 +128,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>Free shipping on orders over 40 €. Otherwise calculated at checkout with Packlink PRO.</span>
+                           <span>Free shipping on orders over 40 €. Otherwise calculated at checkout based on your address.</span>
                        </div>
                      )}
                 </div>

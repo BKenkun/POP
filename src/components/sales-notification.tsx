@@ -47,10 +47,16 @@ export function SalesNotification() {
 
   useEffect(() => {
     const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
-    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-      const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setAllProducts(fetchedProducts);
-    });
+    const unsubscribe = onSnapshot(
+      productsQuery,
+      (snapshot) => {
+        const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setAllProducts(fetchedProducts);
+      },
+      () => {
+        // Silenciar errores de listener para no interrumpir la navegación pública
+      }
+    );
     return () => unsubscribe();
   }, [])
 
@@ -124,7 +130,9 @@ export function SalesNotification() {
           where('createdAt', '>', Timestamp.now())
         );
 
-        unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+        unsubscribeOrders = onSnapshot(
+          ordersQuery,
+          (snapshot) => {
             if (isInitialLoad) {
                 setIsInitialLoad(false);
                 return;
@@ -137,7 +145,11 @@ export function SalesNotification() {
                     scheduleNextToast();
                 }
             });
-        });
+          },
+          () => {
+            // Evitar error no capturado si las reglas cliente o el índice compuesto no están activos
+          }
+        );
     }
 
     const initialDelay = setTimeout(() => {

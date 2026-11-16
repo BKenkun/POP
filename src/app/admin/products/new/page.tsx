@@ -44,7 +44,7 @@ export default function NewProductPage() {
         
         toast({
             title: 'Producto Creado',
-            description: `El producto "${data.name}" ha sido guardado y sincronizado con Klaviyo.`,
+            description: `El producto "${data.name}" ha sido guardado.`,
         });
         router.push('/admin/products');
     } catch (err) {

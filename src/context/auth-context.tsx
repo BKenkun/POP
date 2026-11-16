@@ -42,26 +42,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
+      setUser(currentUser);
+      if (currentUser) {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        unsubscribeSnapshot = onSnapshot(
+          userDocRef,
+          (docSnap) => {
             if (docSnap.exists()) {
-                setUserDoc(docSnap.data());
+              setUserDoc(docSnap.data());
             } else {
-                setUserDoc(null);
+              setUserDoc(null);
             }
             setLoading(false);
-        });
-        return () => unsubscribeSnapshot();
+          },
+          () => {
+            setUserDoc(null);
+            setLoading(false);
+          }
+        );
       } else {
         setUserDoc(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+      unsubscribeAuth();
+    };
   }, []);
 
   const isActualAdmin = useMemo(() => {

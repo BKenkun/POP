@@ -26,6 +26,7 @@ import { addDays, startOfMonth, format as formatDate, subDays } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
+import { getAdminOrdersAndUsersServer } from "@/app/actions/coupons-admin";
 
 // Define a type for the user data we expect
 export interface Customer {
@@ -117,15 +118,40 @@ export default function AdminDashboardPage() {
       setLoadingProducts(false);
       return;
     }
+
+    let active = true;
+    let serverFallbackRequested = false;
+
+    const triggerServerFallback = async () => {
+      if (serverFallbackRequested) return;
+      serverFallbackRequested = true;
+      try {
+        const idToken = await user.getIdToken();
+        const serverData = await getAdminOrdersAndUsersServer(idToken);
+        if (!active) return;
+        setAllOrders(
+          serverData.orders.map(
+            (o) => ({ ...o, createdAt: new Date(o.createdAt) } as Order)
+          )
+        );
+        setAllUsers(serverData.customers);
+      } catch {
+        // Fallback silencioso
+      } finally {
+        if (active) {
+          setLoadingOrders(false);
+          setLoadingUsers(false);
+        }
+      }
+    };
     
     const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
       const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
       setAllOrders(orders);
       setLoadingOrders(false);
-    }, (error) => {
-        console.error("Error fetching orders:", error);
-        setLoadingOrders(false);
+    }, () => {
+      void triggerServerFallback();
     });
 
     const usersQuery = query(collection(db, 'users'));
@@ -133,9 +159,8 @@ export default function AdminDashboardPage() {
       const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as Customer));
       setAllUsers(users);
       setLoadingUsers(false);
-    }, (error) => {
-        console.error("Error fetching users:", error);
-        setLoadingUsers(false);
+    }, () => {
+      void triggerServerFallback();
     });
     
     const productsQuery = query(collection(db, 'products'));
@@ -143,13 +168,13 @@ export default function AdminDashboardPage() {
       const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(products);
       setLoadingProducts(false);
-    }, (error) => {
-        console.error("Error fetching products:", error);
-        setLoadingProducts(false);
+    }, () => {
+      setLoadingProducts(false);
     });
 
 
     return () => {
+      active = false;
       unsubscribeOrders();
       unsubscribeUsers();
       unsubscribeProducts();

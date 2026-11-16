@@ -2,6 +2,7 @@
 'use server';
 
 import { Order, OrderItem, Product } from "@/lib/types";
+import { getAdminNotificationEmails } from "@/lib/admin";
 
 const KLAVIYO_API_KEY = process.env.KLAVIYO_API_KEY;
 const KLAVIYO_API_REVISION = '2024-02-15';
@@ -122,9 +123,13 @@ export async function trackOrderStatusUpdate(order: Order, newStatus: Order['sta
         // Send notification to the customer
         await trackKlaviyoEvent(eventName, order.customerEmail, klaviyoOrderData);
         
-        // Also send a notification to the admin for new orders
+        // Also send a notification to all admins for new orders
         if (isAdminNotification) {
-            await trackKlaviyoEvent('Admin New Order Notification', 'maryandpopper@gmail.com', klaviyoOrderData);
+            await Promise.allSettled(
+                getAdminNotificationEmails().map((adminEmail) =>
+                    trackKlaviyoEvent('Admin New Order Notification', adminEmail, klaviyoOrderData)
+                )
+            );
         }
 
         return { success: true, message: `Event '${eventName}' tracked successfully.` };
@@ -211,7 +216,9 @@ export async function formatOrderForKlaviyo(order: Order, orderId: string) {
       'ItemNames': order.items.map(item => item.name),
       'ItemCount': order.items.reduce((acc, item) => acc + item.quantity, 0),
       'ShippingAddress': order.shippingAddress,
-      'PaymentMethod': order.paymentMethod,
+      'PaymentMethod': order.paymentMethod === 'hilow' || order.paymentMethod === 'stripe'
+          ? 'Tarjeta bancaria'
+          : order.paymentMethod,
       'Status': order.status,
       'Items': order.items.map(formatOrderItemForKlaviyo),
       'OrderDate': orderDate,

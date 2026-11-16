@@ -140,16 +140,16 @@ const enTranslations: Translations = {
         validation_error_title: "Check your details",
         validation_error_desc: "Some required fields are missing or invalid. Go back to the previous step and complete them.",
       },
-      hilow_gateway_info_title: "Secure payment (Hilow)",
+      hilow_gateway_info_title: "100% Secure Payment",
       hilow_gateway_info_desc:
-        "When you confirm, your order is saved and you are redirected to Hilow’s secure payment page. Card details are never entered on this site.",
+        "When you confirm, your order is saved and you are redirected to our encrypted payment gateway. Card details are never stored on this site.",
       payment_error_banner_title: "Could not start payment",
       payment_error_banner_hint:
-        "Check the message below. You can go back and try again. Error 403 often means the store domain does not match Hilow settings.",
+        "Please verify your details below or go back and try again.",
       payment_error_dismiss: "Dismiss",
       payment_error_local_order_title: "Could not save your order",
       payment_error_local_order_hint:
-        "The order was not saved before payment. Check your connection and Firestore rules, then try again.",
+        "The order could not be registered before payment. Please check your connection and try again.",
       pay_error_panel_title: "Cannot continue to payment",
       pay_error_validation_title: "Invalid or missing data",
       pay_error_validation_hint: "Tap “Back” to edit your shipping details and fix the issues listed above.",
@@ -159,7 +159,7 @@ const enTranslations: Translations = {
     checkout_success: {
       verifying_alert_title: "Confirming payment",
       verifying_alert_desc:
-        "We are waiting for confirmation from our system. This usually takes a few seconds after you pay on Hilow.",
+        "We are waiting for confirmation from our secure payment gateway. This usually takes just a few seconds.",
       verifying_keep_open: "Please do not close this window.",
       login_alert_title: "Sign in required",
       login_alert_desc: "Sign in with the same account you used for purchase to see the order status.",
@@ -465,7 +465,10 @@ const enTranslations: Translations = {
       password_strength_lowercase: "One lowercase letter",
       password_strength_number: "One number",
       password_strength_special: "One special character",
-      back_to_login_link: "Back to login"
+      back_to_login_link: "Back to login",
+      google_button: "Continue with Google",
+      google_loading_button: "Connecting...",
+      or_divider: "or"
     },
     stock_notification: {
       dialog_title: "Notify Me",
@@ -638,13 +641,13 @@ const enTranslations: Translations = {
       share_data_title: "Sharing with Third Parties",
       share_data_p: "We share data only with essential service providers:",
       stripe_title: "Payment Processors",
-      stripe_p: "Gateway services like Hilow process your payments securely.",
+      stripe_p: "Certified PCI-DSS payment gateways process your card transactions securely with end-to-end encryption.",
       klaviyo_title: "Communication",
-      klaviyo_p: "Klaviyo handles our transactional and marketing emails.",
+      klaviyo_p: "Dedicated transactional email infrastructure handles your order confirmations and optional newsletter updates.",
       firebase_title: "Infrastructure",
-      firebase_p: "Google Firebase provides our secure database and hosting.",
+      firebase_p: "Enterprise cloud infrastructure provides our encrypted database and secure hosting.",
       clarity_title: "Analytics",
-      clarity_p: "Microsoft Clarity helps us understand site usage anonymously.",
+      clarity_p: "Anonymous usage analytics help us understand navigation patterns and improve site performance.",
       share_data_p2: "We never sell your personal data to advertisers.",
       your_rights_title: "Your Rights",
       your_rights_p: "You have full control over your information:",

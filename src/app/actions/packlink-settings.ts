@@ -3,9 +3,9 @@
 // Modificado por: Webmaster Freddy Poleo
 
 import {
-  auth,
   areAdminCredentialsAvailable,
   isAdminCredentialError,
+  runWithAdminAuth,
   runWithAdminFirestore,
 } from '@/lib/firebase-admin';
 import { isAdminEmail } from '@/lib/admin';
@@ -27,9 +27,9 @@ export type PacklinkAdminSettings = {
 
 export async function getPacklinkSettings(idToken: string): Promise<PacklinkAdminSettings> {
   if (!idToken) throw new Error('Inicia sesión como administrador para ver la configuración.');
-  const decoded = await auth.verifyIdToken(idToken);
+  const decoded = await runWithAdminAuth((a) => a.verifyIdToken(idToken), 'packlink-settings get');
   if (!isAdminEmail(decoded.email)) {
-    throw new Error('No tienes permiso para ver la configuración de Packlink.');
+    throw new Error('No tienes permiso para ver la configuración de envíos.');
   }
   return readPacklinkSettings();
 }
@@ -39,9 +39,9 @@ export async function savePacklinkSettings(
   idToken: string
 ): Promise<{ success: true }> {
   if (!idToken) throw new Error('Inicia sesión como administrador para guardar la configuración.');
-  const decoded = await auth.verifyIdToken(idToken);
+  const decoded = await runWithAdminAuth((a) => a.verifyIdToken(idToken), 'packlink-settings save');
   if (!isAdminEmail(decoded.email)) {
-    throw new Error('No tienes permiso para modificar la configuración de Packlink.');
+    throw new Error('No tienes permiso para modificar la configuración de envíos.');
   }
 
   const settings: PacklinkAdminSettings = {

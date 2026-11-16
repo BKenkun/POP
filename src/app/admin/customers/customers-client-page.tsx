@@ -25,13 +25,17 @@ import {
 import { Customer } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context';
+import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 
 
 export default function AdminCustomersClientPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
+      let active = true;
       const q = query(collection(db, 'users'));
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const fetchedCustomers: Customer[] = [];
@@ -43,17 +47,31 @@ export default function AdminCustomersClientPage() {
                   displayName: data.displayName,
                   photoURL: data.photoURL,
                   disabled: data.disabled || false,
-                  creationTime: data.creationTime?.toDate().toISOString() || new Date().toISOString(),
+                  creationTime: data.creationTime?.toDate ? data.creationTime.toDate().toISOString() : new Date().toISOString(),
               });
           });
           setCustomers(fetchedCustomers);
           setLoading(false);
-      }, (error) => {
-          console.error("Error fetching customers:", error);
-          setLoading(false);
+      }, async () => {
+          try {
+              if (user) {
+                  const idToken = await user.getIdToken();
+                  const serverData = await getAdminOrdersAndUsersServer(idToken);
+                  if (active) {
+                      setCustomers(serverData.customers);
+                  }
+              }
+          } catch {
+              // Fallback silencioso
+          } finally {
+              if (active) setLoading(false);
+          }
       });
-      return () => unsubscribe();
-  }, []);
+      return () => {
+          active = false;
+          unsubscribe();
+      };
+  }, [user]);
 
   return (
     <div className="space-y-6">

@@ -131,7 +131,7 @@ export function CartSheet({ isOpen, onOpenChange }: CartSheetProps) {
                      ) : (
                         <div className="flex items-center gap-2">
                            <Truck className="h-4 w-4 text-primary" />
-                           <span>Shipping cost will be calculated at checkout with Packlink PRO.</span>
+                           <span>Shipping cost will be calculated at checkout based on your address.</span>
                        </div>
                      )}
                 </div>

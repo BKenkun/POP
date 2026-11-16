@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, cert, type App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, cert, applicationDefault, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import { firebaseConfig } from './firebase-config';
@@ -59,15 +59,30 @@ export function markAdminCredentialsUnavailable(context?: string): void {
   }
 }
 
+function createAppWithAdc(name?: string): App {
+  try {
+    return initializeApp(
+      {
+        credential: applicationDefault(),
+        projectId,
+      },
+      name
+    );
+  } catch {
+    return initializeApp({ projectId }, name);
+  }
+}
+
 function initAdminApp(): App {
   if (getApps().length > 0) {
     const existingDefault = getApps().find((a) => a.name === '[DEFAULT]');
     if (existingDefault) return existingDefault;
   }
 
-  // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_KEY from .env.local / env
+  // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON, FIREBASE_ADMIN_SDK_JSON, or FIREBASE_SERVICE_ACCOUNT_KEY
   const saKey =
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.FIREBASE_ADMIN_SDK_JSON ||
     process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (saKey && saKey.trim().length > 0) {
@@ -82,7 +97,7 @@ function initAdminApp(): App {
         projectId: sa.project_id || projectId,
       });
     } catch {
-      console.info('[firebase-admin] Could not parse FIREBASE_SERVICE_ACCOUNT_JSON; falling back to default credentials.');
+      console.info('[firebase-admin] Could not parse service account JSON; falling back to default credentials.');
     }
   }
 
@@ -105,9 +120,7 @@ function initAdminApp(): App {
 
   // 3. Fallback to Application Default Credentials (e.g. Firebase App Hosting / Cloud Run)
   hasExplicitCredential = false;
-  return initializeApp({
-    projectId,
-  });
+  return createAppWithAdc();
 }
 
 function initFirestoreForApp(targetApp: App): Firestore {
@@ -123,7 +136,7 @@ function initFirestoreForApp(targetApp: App): Firestore {
 function getAdcFallbackApp(): App {
   const existing = getApps().find((a) => a.name === 'adc-fallback');
   if (existing) return existing;
-  return initializeApp({ projectId }, 'adc-fallback');
+  return createAppWithAdc('adc-fallback');
 }
 
 const app: App = initAdminApp();

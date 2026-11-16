@@ -8,8 +8,9 @@ import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Order } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 
 
 // This component is now a client component to fetch its own data.
@@ -28,7 +29,8 @@ export default function OrderDetailPage() {
         setLoading(false);
         return;
     }
-    const orderDocRef = doc(db, decodeURIComponent(path));
+    const decodedPath = decodeURIComponent(path);
+    const orderDocRef = doc(db, decodedPath);
     const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
@@ -38,13 +40,37 @@ export default function OrderDetailPage() {
             setOrder(null);
         }
         setLoading(false);
-    }, (error) => {
-        console.error("Error fetching order details:", error);
-        setLoading(false);
+    }, () => {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            setLoading(false);
+            return;
+        }
+        currentUser.getIdToken()
+          .then((token) => getAdminOrdersAndUsersServer(token))
+          .then((res) => {
+            const found = res.orders.find(
+              (o) => o.path === decodedPath || o.id === orderId
+            );
+            if (found) {
+              setOrder({
+                ...found,
+                createdAt: found.createdAt ? new Date(found.createdAt) : new Date(),
+              } as Order);
+            } else {
+              setOrder(null);
+            }
+          })
+          .catch(() => {
+            setOrder(null);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
     });
 
     return () => unsubscribe();
-  }, [path]);
+  }, [path, orderId]);
 
 
   if (loading) {

@@ -16,6 +16,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { useAuth } from '@/context/auth-context';
+import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 import type { Order } from '@/lib/types';
 
 type AdminDisplayOrder = Omit<Order, 'createdAt'> & { createdAt: Date, path: string };
@@ -24,8 +26,10 @@ export default function ShippingClient() {
   const [shippingOrders, setShippingOrders] = useState<AdminDisplayOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
+    let active = true;
     const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
@@ -52,18 +56,40 @@ export default function ShippingClient() {
             
         setShippingOrders(fetchedOrders);
         setLoading(false);
-    }, (error: any) => {
-        console.error("Error fetching shipping orders:", error);
-        toast({ 
-          title: 'Error loading shipments', 
-          description: error.message || 'Could not fetch orders out for delivery.',
-          variant: 'destructive' 
-        });
-        setLoading(false);
+    }, async () => {
+        try {
+          if (user) {
+            const idToken = await user.getIdToken();
+            const serverData = await getAdminOrdersAndUsersServer(idToken);
+            if (active) {
+              setShippingOrders(
+                serverData.orders
+                  .filter((o) => o.status === 'out_for_delivery')
+                  .map((o) => ({
+                    ...o,
+                    createdAt: new Date(o.createdAt),
+                  }))
+              );
+            }
+          }
+        } catch {
+          if (active) {
+            toast({
+              title: 'Error loading shipments',
+              description: 'Could not fetch orders out for delivery.',
+              variant: 'destructive',
+            });
+          }
+        } finally {
+          if (active) setLoading(false);
+        }
     });
 
-    return () => unsubscribe();
-  }, [toast]);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [toast, user]);
 
   return (
     <div className="space-y-6">

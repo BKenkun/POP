@@ -44,11 +44,10 @@ export async function createHilowApiOrder(
             cancelUrl: `${yourStoreUrl}/products`,
         };
 
-        // Tu API Key de Hilow (hlw_live_...) obtenida en el portal
         const HILOW_API_KEY = process.env.HILOW_API_KEY; 
         
         if (!HILOW_API_KEY) {
-            throw new Error('HILOW_API_KEY no configurada en las variables de entorno del cliente.');
+            throw new Error('La pasarela de pago no está disponible temporalmente.');
         }
 
         const response = await fetch(HILOW_API_ENDPOINT, {
@@ -63,19 +62,20 @@ export async function createHilowApiOrder(
         const responseData: HilowApiResponse = await response.json();
 
         if (!response.ok) {
-            throw new Error(responseData.message || `API Error: ${response.status}`);
+            throw new Error(responseData.message || `Error en la pasarela de pago (${response.status}).`);
         }
         
         if (responseData && responseData.hilowOrderId) {
-            // URL final de la pasarela Hilow a la que debes redirigir al usuario
             const checkoutUrl = `https://hilowglobal.com/pay/${responseData.hilowOrderId}`;
             return { success: true, checkoutUrl: checkoutUrl };
         } else {
-            throw new Error('Respuesta inválida de la API de Hilow.');
+            throw new Error('Respuesta no válida de la pasarela de pago.');
         }
 
     } catch (error) {
-        console.error('Hilow Integration Error:', error);
-        return { success: false, message: (error as Error).message };
+        console.error('[PAYMENT] Gateway error:', error instanceof Error ? error.message : String(error));
+        const rawMessage = error instanceof Error ? error.message : 'No se pudo iniciar el pago.';
+        const sanitizedMessage = rawMessage.replace(/hilow(\s*global)?/gi, 'la pasarela de pago');
+        return { success: false, message: sanitizedMessage };
     }
 }

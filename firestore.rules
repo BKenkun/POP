@@ -16,11 +16,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'maryandpopper@gmail.com' ||
-        request.auth.token.email == 'EnriqueEspinCosme@gmail.com' ||
-        request.auth.token.email == 'enriqueespincosme@gmail.com'
-      );
+      return isSignedIn() &&
+        request.auth.token.email != null &&
+        request.auth.token.email.lower() in [
+          'maryandpopper@gmail.com',
+          'enriqueespincosme@gmail.com'
+        ];
     }
 
     // Products are publicly readable by anyone.
@@ -36,13 +37,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
-    // Coupons are readable by signed-in users.
-    // Coupon creation and deletion is restricted to admins.
-    // Users can UPDATE a coupon, but ONLY the 'usageCount' field.
+    // Coupons are validated via Server Action for guests and readable by signed-in users.
+    // Admins have full create/update/delete permissions; signed-in users may only increment usageCount.
     match /coupons/{couponId} {
       allow read: if isSignedIn();
       allow create, delete: if isAdmin();
-      allow update: if isSignedIn() && request.resource.data.keys().hasOnly(['usageCount']);
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usageCount', 'updatedAt'])
+      );
     }
 
     // User-specific data.

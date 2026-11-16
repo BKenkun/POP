@@ -35,6 +35,7 @@ import {
   Truck,
   Tag,
   X,
+  Chrome,
 } from 'lucide-react';
 import Image from 'next/image';
 import { db, auth } from '@/lib/firebase';
@@ -62,9 +63,10 @@ import type { Coupon } from '@/app/admin/coupons/page';
 import { useTranslation } from '@/context/language-context';
 import { QuantitySelector } from '@/components/quantity-selector';
 import { createHilowApiOrder } from '@/app/actions/hilow';
-import { createNowPaymentsInvoice } from '@/app/actions/nowpayments';
 import { getPacklinkShippingQuotes, type PacklinkQuote } from '@/app/actions/packlink';
 import { createCheckoutOrder, type CheckoutOrderData } from '@/app/actions/checkout';
+import { validateCheckoutCoupon } from '@/app/actions/coupons-admin';
+import { authenticateWithGoogle, getGoogleAuthErrorMessage } from '@/lib/google-auth';
 import Link from 'next/link';
 
 interface Address {
@@ -169,8 +171,7 @@ export default function CheckoutClientPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentErrorKind, setPaymentErrorKind] = useState<'hilow' | 'nowpayments' | 'local' | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'hilow' | 'nowpayments'>('hilow');
+  const [paymentErrorKind, setPaymentErrorKind] = useState<'gateway' | 'local' | null>(null);
 
   /** Opciones de la pantalla 2 (cuando no está logueado) */
   const [checkoutMode, setCheckoutMode] = useState<'guest' | 'login' | 'register'>('guest');
@@ -180,6 +181,7 @@ export default function CheckoutClientPage() {
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [googleLoginLoading, setGoogleLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Estados para el registro integrado
@@ -248,52 +250,42 @@ export default function CheckoutClientPage() {
     if (!code) return;
     setCouponLoading(true);
     try {
-      const q = query(collection(db, 'coupons'), where('code', '==', code));
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        throw new Error(t('checkout.toasts.coupon_error_invalid') || 'Invalid coupon or not found.');
-      }
-      const coupon = { id: snap.docs[0].id, ...snap.docs[0].data() } as Coupon;
-      if (!coupon.isActive) {
-        throw new Error(t('checkout.toasts.coupon_error_inactive') || 'This coupon is not currently active.');
+      const idToken = user ? await user.getIdToken().catch(() => null) : null;
+      const validation = await validateCheckoutCoupon({
+        code,
+        cartTotal,
+        idToken,
+      });
+
+      let coupon: Coupon | undefined = validation.coupon as Coupon | undefined;
+      let discountAmount = validation.discountAmount ?? 0;
+
+      // Fallback cliente solo si el usuario tiene sesión iniciada y el servidor no encontró coincidencias en preview local
+      if (!validation.success && user && validation.error === 'Code is not valid.') {
+        try {
+          const q = query(collection(db, 'coupons'), where('code', '==', code));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const c = { id: snap.docs[0].id, ...snap.docs[0].data() } as Coupon;
+            if (c.isActive) {
+              coupon = c;
+              discountAmount =
+                c.discountType === 'free_shipping'
+                  ? 0
+                  : c.discountType === 'percentage'
+                  ? Math.round((cartTotal * c.discountValue) / 100)
+                  : c.discountValue;
+            }
+          }
+        } catch {
+          // Usar resultado de validación del servidor
+        }
       }
 
-      // Validate validity dates
-      if (coupon.startDate && new Date(coupon.startDate) > new Date()) {
-        throw new Error('This coupon is not available yet.');
-      }
-      if (coupon.endDate && new Date(coupon.endDate) < new Date()) {
-        throw new Error('This coupon has expired.');
-      }
-
-      // Validate usage limits
-      if (coupon.usageLimit && coupon.usageLimit > 0 && (coupon.usageCount || 0) >= coupon.usageLimit) {
+      if (!coupon) {
         throw new Error(
-          coupon.usageLimit === 1
-            ? 'This single-use coupon has already been redeemed.'
-            : `This coupon has reached the maximum limit of ${coupon.usageLimit} uses.`
+          validation.error || t('checkout.toasts.coupon_error_invalid') || 'Invalid coupon or not found.'
         );
-      }
-
-      // Validate minimum purchase
-      if (coupon.minPurchase && coupon.minPurchase > 0 && cartTotal < coupon.minPurchase) {
-        throw new Error(`This coupon requires a minimum purchase of ${formatPrice(coupon.minPurchase)}.`);
-      }
-
-      // Validate 1 per user
-      if (coupon.onePerUser) {
-        if (!user) {
-          throw new Error('This exclusive coupon (1 use per customer) requires you to log in or create an account.');
-        }
-        const userOrdersSnap = await getDocs(
-          query(
-            collection(db, 'users', user.uid, 'orders'),
-            where('coupon.code', '==', coupon.code)
-          )
-        );
-        if (!userOrdersSnap.empty) {
-          throw new Error('You have already used this coupon on a previous order. Only 1 use per customer is allowed.');
-        }
       }
 
       if (coupon.discountType === 'free_shipping') {
@@ -304,14 +296,13 @@ export default function CheckoutClientPage() {
           description: `Coupon ${coupon.code} grants 100% free delivery.`,
         });
       } else {
-        const discount = coupon.discountType === 'percentage'
-          ? (cartTotal * coupon.discountValue) / 100
-          : coupon.discountValue;
         setAppliedCoupon(coupon);
-        setCouponDiscount(Math.round(discount));
+        setCouponDiscount(Math.round(discountAmount));
         toast({
           title: t('checkout.toasts.coupon_applied_title') || 'Coupon Applied',
-          description: t('checkout.toasts.coupon_applied_desc', { discount: formatPrice(discount) }) || `Discount of ${formatPrice(discount)}`,
+          description:
+            t('checkout.toasts.coupon_applied_desc', { discount: formatPrice(discountAmount) }) ||
+            `Discount of ${formatPrice(discountAmount)}`,
         });
       }
     } catch (e: any) {
@@ -372,6 +363,37 @@ export default function CheckoutClientPage() {
     }
   };
 
+  /** Handles 1-click Google login inside checkout step 2 */
+  const handleInlineGoogleLogin = async () => {
+    setLoginError(null);
+    setGoogleLoginLoading(true);
+    try {
+      const { user: googleUser } = await authenticateWithGoogle();
+      if (googleUser.email) {
+        form.setValue('email', googleUser.email);
+      }
+      if (googleUser.displayName && !form.getValues('name')) {
+        form.setValue('name', googleUser.displayName);
+      }
+      toast({
+        title: 'Logged In Successfully!',
+        description: 'Your Google account is connected. Verify your shipping address and continue.',
+      });
+    } catch (err: unknown) {
+      const msg = getGoogleAuthErrorMessage(err);
+      if (msg) {
+        setLoginError(msg);
+        toast({
+          title: 'Google Sign-In Error',
+          description: msg,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setGoogleLoginLoading(false);
+    }
+  };
+
   /** Calculates Packlink shipping rates */
   const calculateShippingRate = async (values: CheckoutFormValues): Promise<boolean> => {
     const subtotalAfterDiscounts = cartTotal - volumeDiscount - couponDiscount;
@@ -389,7 +411,7 @@ export default function CheckoutClientPage() {
       
       const result = await getPacklinkShippingQuotes({ postalCode: values.postalCode, country: countryCode });
       if (!result.success || !result.quotes?.length) {
-        throw new Error(result.message || 'Packlink returned no shipping rates for this postal code.');
+        throw new Error(result.message || 'No shipping rates are available for this postal code.');
       }
       const validQuotes = result.quotes.filter((quote) => Number.isFinite(quote.price) && quote.price >= 0);
       const isFreeShipping = subtotalAfterDiscounts >= FREE_SHIPPING_THRESHOLD || appliedCoupon?.discountType === 'free_shipping';
@@ -397,7 +419,7 @@ export default function CheckoutClientPage() {
         ? validQuotes.filter((quote) => quote.price > 0)
         : validQuotes;
       if (!payableQuotes.length) {
-        throw new Error('Could not obtain a Packlink shipping rate for this destination.');
+        throw new Error('Could not obtain a shipping rate for this destination.');
       }
       setPacklinkQuote(payableQuotes[0]);
       return true;
@@ -426,7 +448,7 @@ export default function CheckoutClientPage() {
       return;
     }
     if (!finalTotals.isFreeShipping && (!packlinkQuote || !Number.isFinite(packlinkQuote.price) || packlinkQuote.price <= 0)) {
-      setPayStepDetail({ title: 'Shipping rate required', items: ['Please return to delivery details and calculate a Packlink PRO shipping rate before proceeding to payment.'] });
+      setPayStepDetail({ title: 'Shipping rate required', items: ['Please return to delivery details and calculate your shipping rate before proceeding to payment.'] });
       return;
     }
 
@@ -478,7 +500,7 @@ export default function CheckoutClientPage() {
           phone: data.phone,
         },
         status: 'pending_payment',
-        paymentMethod: selectedPaymentMethod,
+        paymentMethod: 'hilow',
         ...(appliedCoupon && {
           coupon: {
             code: appliedCoupon.code,
@@ -507,16 +529,7 @@ export default function CheckoutClientPage() {
     }
 
     try {
-      if (selectedPaymentMethod === 'nowpayments') {
-        const result = await createNowPaymentsInvoice(uniqueId, idToken);
-        if (!result.success || !result.invoiceUrl) {
-          throw new Error(result.message || 'Could not initiate payment with NOWPayments.');
-        }
-        window.location.href = result.invoiceUrl;
-        return;
-      }
-
-      const hilowResult = await createHilowApiOrder(
+      const paymentResult = await createHilowApiOrder(
         uniqueId,
         finalTotals.priceInCents,
         cartItems.map((item) => `${item.quantity}x ${item.name}`).join(', '),
@@ -524,13 +537,13 @@ export default function CheckoutClientPage() {
         window.location.origin
       );
 
-      if (!hilowResult.success || !hilowResult.checkoutUrl) {
-        throw new Error(hilowResult.message || 'Could not initiate credit/debit card payment.');
+      if (!paymentResult.success || !paymentResult.checkoutUrl) {
+        throw new Error(paymentResult.message || 'Could not initiate credit/debit card payment.');
       }
-      window.location.href = hilowResult.checkoutUrl;
+      window.location.href = paymentResult.checkoutUrl;
     } catch (e: any) {
       const msg = e?.message || String(e);
-      setPaymentErrorKind(selectedPaymentMethod);
+      setPaymentErrorKind('gateway');
       setPaymentError(msg);
       setPayStepDetail(null);
       toast({ title: t('checkout.toasts.order_error_title'), description: msg, variant: 'destructive' });
@@ -563,7 +576,7 @@ export default function CheckoutClientPage() {
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         setLoading(false);
-        setPaymentErrorKind('hilow');
+        setPaymentErrorKind('gateway');
         setPaymentError(msg);
         setPayStepDetail({
           title: t('checkout.pay_error_panel_title'),
@@ -932,6 +945,30 @@ export default function CheckoutClientPage() {
                           </Alert>
                         )}
 
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleInlineGoogleLogin}
+                          disabled={loginLoading || googleLoginLoading}
+                          className="w-full font-semibold"
+                        >
+                          {googleLoginLoading ? (
+                            <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                          ) : (
+                            <Chrome className="mr-2 h-4 w-4 text-primary" />
+                          )}
+                          {googleLoginLoading ? t('auth.google_loading_button') : t('auth.google_button')}
+                        </Button>
+
+                        <div className="relative py-1">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-card px-2 text-muted-foreground">{t('auth.or_divider')}</span>
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Email Address</label>
@@ -940,7 +977,7 @@ export default function CheckoutClientPage() {
                               placeholder="you@email.com"
                               value={loginEmail}
                               onChange={(e) => setLoginEmail(e.target.value)}
-                              disabled={loginLoading}
+                              disabled={loginLoading || googleLoginLoading}
                             />
                           </div>
                           <div className="space-y-2">
@@ -960,7 +997,7 @@ export default function CheckoutClientPage() {
                                 placeholder="••••••••"
                                 value={loginPassword}
                                 onChange={(e) => setLoginPassword(e.target.value)}
-                                disabled={loginLoading}
+                                disabled={loginLoading || googleLoginLoading}
                                 className="pr-10"
                               />
                               <Button
@@ -984,7 +1021,7 @@ export default function CheckoutClientPage() {
                           <Button
                             type="button"
                             onClick={handleInlineLogin}
-                            disabled={loginLoading}
+                            disabled={loginLoading || googleLoginLoading}
                             className="w-full sm:w-auto"
                           >
                             {loginLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <LogIn className="mr-2 h-4 w-4" />}
@@ -1003,13 +1040,29 @@ export default function CheckoutClientPage() {
                     )}
 
                     {checkoutMode === 'register' && (
-                      <Alert className="border-primary/40 bg-primary/5">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        <AlertTitle>Your account will be created upon completing this step</AlertTitle>
-                        <AlertDescription>
-                          Enter your desired password below. Your order and addresses will be saved, and you will begin earning loyalty points.
-                        </AlertDescription>
-                      </Alert>
+                      <div className="space-y-3">
+                        <Alert className="border-primary/40 bg-primary/5">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          <AlertTitle>Your account will be created upon completing this step</AlertTitle>
+                          <AlertDescription>
+                            Enter your desired password below, or connect directly with Google to create your account in one click.
+                          </AlertDescription>
+                        </Alert>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleInlineGoogleLogin}
+                          disabled={googleLoginLoading}
+                          className="w-full font-semibold"
+                        >
+                          {googleLoginLoading ? (
+                            <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                          ) : (
+                            <Chrome className="mr-2 h-4 w-4 text-primary" />
+                          )}
+                          {googleLoginLoading ? t('auth.google_loading_button') : t('auth.google_button')}
+                        </Button>
+                      </div>
                     )}
 
                     {checkoutMode === 'guest' && (
@@ -1214,23 +1267,17 @@ export default function CheckoutClientPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button
-                    type="button"
-                    variant={selectedPaymentMethod === 'hilow' ? 'default' : 'outline'}
-                    className="h-auto min-h-14 whitespace-normal"
-                    onClick={() => setSelectedPaymentMethod('hilow')}
-                  >
-                    <CreditCard className="mr-2 h-4 w-4 shrink-0" /> Credit / Debit Card (HiLow)
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={selectedPaymentMethod === 'nowpayments' ? 'default' : 'outline'}
-                    className="h-auto min-h-14 whitespace-normal"
-                    onClick={() => setSelectedPaymentMethod('nowpayments')}
-                  >
-                    <ShieldCheck className="mr-2 h-4 w-4 shrink-0" /> Cryptocurrency (NOWPayments)
-                  </Button>
+                <div className="rounded-lg border border-primary/30 bg-card p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">Credit / Debit Card</p>
+                      <p className="text-xs text-muted-foreground">Encrypted & discreet payment processing</p>
+                    </div>
+                  </div>
+                  <Lock className="h-4 w-4 text-primary shrink-0" />
                 </div>
 
                 <div className="space-y-2">
@@ -1317,7 +1364,7 @@ export default function CheckoutClientPage() {
                   </div>
                   {packlinkQuote && (
                     <div className="text-xs text-muted-foreground">
-                      Carrier service: {packlinkQuote.carrierName} · {packlinkQuote.serviceName}
+                      Tracked courier delivery · Discreet packaging
                     </div>
                   )}
                   <Separator />
@@ -1385,7 +1432,7 @@ export default function CheckoutClientPage() {
                   onClick={() => submitCheckout()}
                 >
                   {loading ? <Loader2 className="animate-spin mr-2" /> : <CreditCard className="mr-2" />}
-                  {selectedPaymentMethod === 'nowpayments' ? 'Proceed with NOWPayments' : 'Pay Securely'}
+                  Pay Securely
                 </Button>
               </CardFooter>
             </Card>

@@ -66,9 +66,9 @@ export default function AdminSettingsPage() {
 
   return <div className="mx-auto max-w-4xl space-y-6">
     <div><h1 className="text-3xl font-bold">Store Settings</h1>
-      <p className="text-muted-foreground">Manage Packlink PRO warehouse settings without modifying code.</p></div>
+      <p className="text-muted-foreground">Manage warehouse origin and default parcel settings without modifying code.</p></div>
     <Card><CardHeader>
-      <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" />Packlink PRO · Shipment Origin</CardTitle>
+      <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" />Logistics · Shipment Origin</CardTitle>
       <CardDescription>These details apply to quotes and new shipments. Previous orders will retain their data.</CardDescription>
     </CardHeader><CardContent className="space-y-5">
       {loading ? <div className="flex items-center gap-2 py-8"><Loader2 className="h-5 w-5 animate-spin" />Loading settings…</div> : <>

@@ -42,30 +42,66 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Save, CalendarIcon, Truck, Sparkles, AlertCircle } from 'lucide-react';
 import type { Coupon } from '../page';
 
-const couponSchema = z.object({
-  code: z
-    .string()
-    .min(3, 'Code must have at least 3 characters.')
-    .refine((val) => val.toUpperCase() === val, 'Code must be uppercase.'),
-  description: z.string().min(3, 'Description is required.'),
-  discountType: z.enum(['percentage', 'fixed', 'free_shipping']),
-  discountValue: z.coerce.number().min(0, 'Value cannot be negative.'),
-  minPurchase: z.coerce.number().min(0).optional(),
-  startDate: z.date().optional().nullable(),
-  endDate: z.date().optional().nullable(),
-  isActive: z.boolean().default(true),
-  usageLimitType: z.enum(['unlimited', 'single_use', 'custom']).default('unlimited'),
-  usageLimit: z.coerce.number().min(0).optional(),
-  onePerUser: z.boolean().default(false),
-}).refine((data) => {
-  if (data.discountType === 'percentage' && data.discountValue > 100) {
-    return false;
+const parseNumericInput = (val: unknown) => {
+  if (val === '' || val === null || val === undefined) return 0;
+  if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+  if (typeof val === 'string') {
+    const normalized = val.trim().replace(',', '.');
+    if (!normalized) return 0;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : NaN;
   }
-  return true;
-}, {
-  message: 'Percentage cannot be greater than 100.',
-  path: ['discountValue'],
-});
+  return Number(val);
+};
+
+const couponSchema = z
+  .object({
+    code: z
+      .string()
+      .transform((val) => val.trim().toUpperCase().replace(/\s+/g, ''))
+      .pipe(
+        z
+          .string()
+          .min(3, 'Code must have at least 3 characters.')
+          .regex(/^[A-Z0-9_-]+$/, 'Only letters, numbers, hyphens (-), or underscores (_) are allowed.')
+      ),
+    description: z.string().trim().min(3, 'Description is required (at least 3 characters).'),
+    discountType: z.enum(['percentage', 'fixed', 'free_shipping']),
+    discountValue: z.preprocess(
+      parseNumericInput,
+      z.number({ invalid_type_error: 'Enter a valid number.' }).min(0, 'Value cannot be negative.')
+    ),
+    minPurchase: z.preprocess(
+      parseNumericInput,
+      z.number({ invalid_type_error: 'Enter a valid number.' }).min(0).optional()
+    ),
+    startDate: z.date().optional().nullable(),
+    endDate: z.date().optional().nullable(),
+    isActive: z.boolean().default(true),
+    usageLimitType: z.enum(['unlimited', 'single_use', 'custom']).default('unlimited'),
+    usageLimit: z.preprocess(
+      parseNumericInput,
+      z.number({ invalid_type_error: 'Enter a valid number.' }).min(0).optional()
+    ),
+    onePerUser: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (data.discountType === 'percentage') {
+      if (data.discountValue <= 0 || data.discountValue > 100) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Percentage must be between 1 and 100.',
+          path: ['discountValue'],
+        });
+      }
+    } else if (data.discountType === 'fixed' && data.discountValue <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Fixed discount must be greater than 0 cents (e.g. 500 = €5.00).',
+        path: ['discountValue'],
+      });
+    }
+  });
 
 type CouponFormValues = z.infer<typeof couponSchema>;
 
@@ -77,7 +113,7 @@ interface CouponFormProps {
 
 export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps) {
   // Helper to parse date strings from Firestore
-  const parseDate = (dateString?: string): Date | undefined => {
+  const parseDate = (dateString?: string | null): Date | undefined => {
     if (!dateString) return undefined;
     const date = new Date(dateString);
     return isNaN(date.getTime()) ? undefined : date;
@@ -138,7 +174,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} noValidate className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Coupon Information</CardTitle>
@@ -155,7 +191,10 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                     <Input
                       {...field}
                       placeholder="EXAMPLE: FREESHIP24, VIP10"
-                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/\s+/g, ''))}
                       className="font-mono uppercase font-bold"
                     />
                   </FormControl>
@@ -220,7 +259,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                   <div className="text-xs space-y-0.5">
                     <p className="font-semibold text-emerald-800 dark:text-emerald-300">Free Shipping Coupon</p>
                     <p className="text-muted-foreground">
-                      Covers 100% of the shipping cost calculated via Packlink PRO.
+                      Covers 100% of the shipping cost calculated at checkout.
                     </p>
                   </div>
                 </div>
@@ -234,7 +273,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                         {discountType === 'percentage' ? 'Percentage (%)' : 'Value in Cents (€)'}
                       </FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" step="any" inputMode="decimal" {...field} />
                       </FormControl>
                       <FormDescription>
                         {discountType === 'percentage'
@@ -332,7 +371,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                   <FormItem className="rounded-lg border p-4 bg-muted/20">
                     <FormLabel>Maximum Total Redemptions</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} placeholder="E.g., 50" />
+                      <Input type="number" min={1} step="1" inputMode="numeric" {...field} placeholder="E.g., 50" />
                     </FormControl>
                     <FormDescription>
                       The coupon will automatically deactivate once it reaches this number of uses.
@@ -368,7 +407,7 @@ export default function CouponForm({ coupon, onSave, isSaving }: CouponFormProps
                 <FormItem>
                   <FormLabel>Minimum Purchase Required (in cents)</FormLabel>
                   <FormControl>
-                    <Input type="number" min={0} {...field} placeholder="0" />
+                    <Input type="number" min={0} step="1" inputMode="numeric" {...field} placeholder="0" />
                   </FormControl>
                   <FormDescription>
                     Minimum cart subtotal required to apply the coupon. Set 0 for no minimum (e.g. 2000 = €20.00).
