@@ -34,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
-import { collection, doc, updateDoc, deleteDoc, onSnapshot, query } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc, getDocs, query } from 'firebase/firestore';
 
 
 const getImageUrl = (url: string) => {
@@ -50,13 +50,24 @@ export default function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const productsQuery = query(collection(db, 'products'));
-    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+    let active = true;
+    const loadProducts = async () => {
+      try {
+        const productsQuery = query(collection(db, 'products'));
+        const snapshot = await getDocs(productsQuery);
+        if (!active) return;
         const fetchedProducts: Product[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
         setProducts(fetchedProducts);
-        setIsLoading(false);
-    });
-    return () => unsubscribe();
+      } catch {
+        // Ignore read error
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+    void loadProducts();
+    return () => {
+      active = false;
+    };
   }, []);
   
   const handleToggleActive = async (product: Product) => {
@@ -65,6 +76,7 @@ export default function AdminProductsPage() {
     
     try {
         await updateDoc(productRef, { active: newStatus });
+        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, active: newStatus } : p));
         toast({
             title: `Product ${newStatus ? 'Activated' : 'Archived'}`,
             description: `"${product.name}" has been updated.`,
@@ -82,6 +94,7 @@ export default function AdminProductsPage() {
      const productRef = doc(db, 'products', productId);
      try {
         await deleteDoc(productRef);
+        setProducts(prev => prev.filter(p => p.id !== productId));
         toast({
             title: "Product Deleted",
             description: `Product "${productName}" has been permanently deleted.`,

@@ -9,7 +9,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Order } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 
 
@@ -29,47 +29,52 @@ export default function OrderDetailPage() {
         setLoading(false);
         return;
     }
+    let active = true;
     const decodedPath = decodeURIComponent(path);
-    const orderDocRef = doc(db, decodedPath);
-    const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-            setOrder({ id: docSnap.id, path: docSnap.ref.path, ...data, createdAt } as Order);
-        } else {
-            setOrder(null);
-        }
-        setLoading(false);
-    }, () => {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-            setLoading(false);
-            return;
-        }
-        currentUser.getIdToken()
-          .then((token) => getAdminOrdersAndUsersServer(token))
-          .then((res) => {
-            const found = res.orders.find(
-              (o) => o.path === decodedPath || o.id === orderId
-            );
-            if (found) {
-              setOrder({
-                ...found,
-                createdAt: found.createdAt ? new Date(found.createdAt) : new Date(),
-              } as Order);
-            } else {
-              setOrder(null);
-            }
-          })
-          .catch(() => {
-            setOrder(null);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-    });
 
-    return () => unsubscribe();
+    const loadOrder = async () => {
+        try {
+            const orderDocRef = doc(db, decodedPath);
+            const docSnap = await getDoc(orderDocRef);
+            if (!active) return;
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+                setOrder({ id: docSnap.id, path: docSnap.ref.path, ...data, createdAt } as Order);
+            } else {
+                setOrder(null);
+            }
+        } catch {
+            try {
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    const token = await currentUser.getIdToken();
+                    const res = await getAdminOrdersAndUsersServer(token);
+                    if (!active) return;
+                    const found = res.orders.find(
+                      (o) => o.path === decodedPath || o.id === orderId
+                    );
+                    if (found) {
+                      setOrder({
+                        ...found,
+                        createdAt: found.createdAt ? new Date(found.createdAt) : new Date(),
+                      } as Order);
+                    } else {
+                      setOrder(null);
+                    }
+                }
+            } catch {
+                if (active) setOrder(null);
+            }
+        } finally {
+            if (active) setLoading(false);
+        }
+    };
+
+    void loadOrder();
+    return () => {
+        active = false;
+    };
   }, [path, orderId]);
 
 

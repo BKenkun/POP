@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Truck, Inbox, Phone } from 'lucide-react';
 import {
@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 import type { Order } from '@/lib/types';
@@ -27,12 +27,21 @@ export default function ShippingClient() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const userRef = useRef(user);
+  userRef.current = user;
+  const uid = user?.uid ?? null;
 
   useEffect(() => {
+    if (!uid) {
+      setLoading(false);
+      return;
+    }
     let active = true;
-    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+    const loadShipments = async () => {
+      try {
+        const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(ordersQuery);
+        if (!active) return;
         const fetchedOrders: AdminDisplayOrder[] = snapshot.docs
             .map(doc => {
                 const data = doc.data() as Order;
@@ -53,13 +62,12 @@ export default function ShippingClient() {
                 };
             })
             .filter(order => order.status === 'out_for_delivery');
-            
+
         setShippingOrders(fetchedOrders);
-        setLoading(false);
-    }, async () => {
+      } catch {
         try {
-          if (user) {
-            const idToken = await user.getIdToken();
+          if (userRef.current) {
+            const idToken = await userRef.current.getIdToken();
             const serverData = await getAdminOrdersAndUsersServer(idToken);
             if (active) {
               setShippingOrders(
@@ -80,16 +88,18 @@ export default function ShippingClient() {
               variant: 'destructive',
             });
           }
-        } finally {
-          if (active) setLoading(false);
         }
-    });
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadShipments();
 
     return () => {
       active = false;
-      unsubscribe();
     };
-  }, [toast, user]);
+  }, [toast, uid]);
 
   return (
     <div className="space-y-6">

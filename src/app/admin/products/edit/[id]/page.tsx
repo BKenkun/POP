@@ -7,7 +7,7 @@ import { Product } from '@/lib/types';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, deleteField } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, deleteField } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -26,16 +26,27 @@ export default function EditProductPage() {
 
   useEffect(() => {
     if (!id) return;
-    const productDocRef = doc(db, 'products', id);
-    const unsubscribe = onSnapshot(productDocRef, (docSnap) => {
+    let active = true;
+    const loadProduct = async () => {
+      try {
+        const productDocRef = doc(db, 'products', id);
+        const docSnap = await getDoc(productDocRef);
+        if (!active) return;
         if (docSnap.exists()) {
-            setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+          setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
         } else {
-            setProduct(null);
+          setProduct(null);
         }
-        setIsLoading(false);
-    });
-    return () => unsubscribe();
+      } catch {
+        if (active) setProduct(null);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+    void loadProduct();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const handleSave = async (data: Product) => {

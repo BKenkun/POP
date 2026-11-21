@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { collection, query, onSnapshot } from 'firebase/firestore';
+import { collection, query, getDocs } from 'firebase/firestore';
 import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
 import { ProductCard } from '@/components/product-card';
 import SubscriptionForm from '@/components/subscription-form';
@@ -44,22 +44,26 @@ export default function HomeClient({
   const { t } = useTranslation();
 
   useEffect(() => {
-    const productsQuery = query(collection(db, 'products'));
-    const unsubscribe = onSnapshot(
-      productsQuery,
-      (snapshot) => {
+    let active = true;
+    const loadProducts = async () => {
+      try {
+        const productsQuery = query(collection(db, 'products'));
+        const snapshot = await getDocs(productsQuery);
+        if (!active) return;
         const prods = snapshot.docs.map(
           (doc) => ({ id: doc.id, ...doc.data() } as Product)
         );
         if (prods.length > 0) {
           setAllProducts(prods);
         }
-      },
-      (error) => {
-        console.warn('Firestore snapshot error, keeping SSR products:', error);
+      } catch (error) {
+        console.warn('Firestore read error, keeping SSR products:', error);
       }
-    );
-    return () => unsubscribe();
+    };
+    void loadProducts();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const { newArrivals, bestSellers, offers } = useMemo(() => {

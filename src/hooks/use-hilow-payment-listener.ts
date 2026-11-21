@@ -6,9 +6,17 @@
  * sin que el usuario tenga que refrescar la página.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collectionGroup, query, where, onSnapshot } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  memoryLocalCache,
+  collectionGroup,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 
 // Configuración pública de Hilow Global Services
 const hilowFirebaseConfig = {
@@ -22,6 +30,18 @@ const getHilowApp = () => {
   return existing || initializeApp(hilowFirebaseConfig, 'hilowListener');
 };
 
+const getSafeHilowDb = () => {
+  const hilowApp = getHilowApp();
+  try {
+    return initializeFirestore(hilowApp, {
+      experimentalForceLongPolling: true,
+      localCache: memoryLocalCache(),
+    });
+  } catch {
+    return getFirestore(hilowApp);
+  }
+};
+
 /**
  * Hook para escuchar el estado de un pedido específico.
  * 
@@ -29,37 +49,57 @@ const getHilowApp = () => {
  * @param onConfirmed Callback opcional que se ejecuta cuando el pago se confirma en los servidores de Hilow.
  */
 export const useHilowPaymentListener = (internalOrderId: string | null, onConfirmed?: () => void) => {
+  const onConfirmedRef = useRef(onConfirmed);
+  onConfirmedRef.current = onConfirmed;
+
   useEffect(() => {
     if (!internalOrderId) return;
-    
-    let unsubscribe: () => void = () => {};
 
-    try {
-      const db = getFirestore(getHilowApp());
-      
-      // Consultamos en la base de datos de Hilow buscando tu ID interno
-      const q = query(
-        collectionGroup(db, 'orders'), 
-        where('internalOrderId', '==', internalOrderId)
-      );
-      
-      unsubscribe = onSnapshot(q, (snap) => {
-        snap.forEach((doc) => {
-            const data = doc.data();
-            // Verificamos si el estado indica éxito en Hilow
-            const isConfirmed = data.status === 'completed' || data.status === 'renewal_succeeded';
-            
-            if (isConfirmed && onConfirmed) {
-                onConfirmed();
-                unsubscribe(); // Dejamos de escuchar tras recibir la confirmación
-            }
+    let active = true;
+    let intervalId: number | null = null;
+
+    const checkPayment = async () => {
+      try {
+        const db = getSafeHilowDb();
+        const q = query(
+          collectionGroup(db, 'orders'),
+          where('internalOrderId', '==', internalOrderId)
+        );
+        const snap = await getDocs(q);
+        if (!active) return;
+
+        let confirmed = false;
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.status === 'completed' || data.status === 'renewal_succeeded') {
+            confirmed = true;
+          }
         });
-      });
 
-    } catch (e) {
-      console.error("Hilow Real-time Listener Error:", e);
-    }
-    
-    return () => unsubscribe();
-  }, [internalOrderId, onConfirmed]);
+        if (confirmed) {
+          if (intervalId !== null) {
+            window.clearInterval(intervalId);
+            intervalId = null;
+          }
+          onConfirmedRef.current?.();
+        }
+      } catch (e) {
+        console.error("Hilow Real-time Listener Error:", e);
+      }
+    };
+
+    void checkPayment();
+    intervalId = window.setInterval(() => {
+      if (active) {
+        void checkPayment();
+      }
+    }, 3000);
+
+    return () => {
+      active = false;
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [internalOrderId]);
 };

@@ -77,7 +77,7 @@ export default function AccountSidebar() {
               <button
                 type="button"
                 onClick={() => void extendSession()}
-                title="Haz clic para reiniciar el tiempo de inactividad"
+                title="Click to reset the inactivity timer"
                 className={cn(
                   "flex w-full items-center justify-between rounded-md px-3 py-1.5 text-xs font-mono tabular-nums transition-colors",
                   isWarning
@@ -87,7 +87,7 @@ export default function AccountSidebar() {
               >
                 <span className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5" />
-                  Sesión: {formatRemainingClock(sessionRemainingMs)}
+                  Session: {formatRemainingClock(sessionRemainingMs)}
                 </span>
                 <RefreshCw className="h-3 w-3 opacity-70" />
               </button>

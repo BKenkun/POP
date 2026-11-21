@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { getCheckoutOrderStatus } from '@/app/actions/checkout';
 
 const PAYMENT_CONFIRM_TIMEOUT_MS = 3 * 60 * 1000;
@@ -44,15 +44,19 @@ function SuccessPageContent() {
     }
   }, [orderId, router]);
 
-  // Listener para pedidos de usuario registrado en Firestore
+  const uid = user?.uid ?? null;
+
+  // Verificación periódica para pedidos de usuario registrado en Firestore
   useEffect(() => {
-    if (!orderId || isGuestOrder || !user || authLoading) return;
+    if (!orderId || isGuestOrder || !uid || authLoading || isConfirmed) return;
 
-    const orderRef = doc(db, 'users', user.uid, 'orders', orderId);
+    let active = true;
+    const orderRef = doc(db, 'users', uid, 'orders', orderId);
 
-    const unsubscribe = onSnapshot(
-      orderRef,
-      (snap) => {
+    const checkUserOrder = async () => {
+      try {
+        const snap = await getDoc(orderRef);
+        if (!active) return;
         setFirestoreError(null);
         if (!snap.exists()) return;
         const data = snap.data() as { status?: string };
@@ -63,15 +67,26 @@ function SuccessPageContent() {
           }
           setIsConfirmed(true);
         }
-      },
-      (err) => {
-        console.error('[checkout/success] Firestore listener:', err);
-        setFirestoreError(err.message || 'unknown');
+      } catch (err) {
+        if (!active) return;
+        const message = err instanceof Error ? err.message : 'unknown';
+        console.error('[checkout/success] Firestore check:', err);
+        setFirestoreError(message);
       }
-    );
+    };
 
-    return () => unsubscribe();
-  }, [orderId, isGuestOrder, user, authLoading, clearCart]);
+    void checkUserOrder();
+    const interval = window.setInterval(() => {
+      if (active) {
+        void checkUserOrder();
+      }
+    }, 3000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [orderId, isGuestOrder, uid, authLoading, isConfirmed, clearCart]);
 
   // Polling para pedidos de invitados o cuando no hay sesión activa
   useEffect(() => {

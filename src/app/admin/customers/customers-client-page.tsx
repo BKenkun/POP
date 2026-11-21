@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Table,
   TableHeader,
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Customer } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 
@@ -33,45 +33,55 @@ export default function AdminCustomersClientPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const userRef = useRef(user);
+  userRef.current = user;
+  const uid = user?.uid ?? null;
 
   useEffect(() => {
-      let active = true;
-      const q = query(collection(db, 'users'));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const fetchedCustomers: Customer[] = [];
-          querySnapshot.forEach((doc) => {
-              const data = doc.data();
-              fetchedCustomers.push({
-                  uid: doc.id,
-                  email: data.email,
-                  displayName: data.displayName,
-                  photoURL: data.photoURL,
-                  disabled: data.disabled || false,
-                  creationTime: data.creationTime?.toDate ? data.creationTime.toDate().toISOString() : new Date().toISOString(),
-              });
-          });
-          setCustomers(fetchedCustomers);
+      if (!uid) {
           setLoading(false);
-      }, async () => {
+          return;
+      }
+      let active = true;
+      const loadCustomers = async () => {
           try {
-              if (user) {
-                  const idToken = await user.getIdToken();
-                  const serverData = await getAdminOrdersAndUsersServer(idToken);
-                  if (active) {
-                      setCustomers(serverData.customers);
-                  }
-              }
+              const q = query(collection(db, 'users'));
+              const querySnapshot = await getDocs(q);
+              if (!active) return;
+              const fetchedCustomers: Customer[] = [];
+              querySnapshot.forEach((doc) => {
+                  const data = doc.data();
+                  fetchedCustomers.push({
+                      uid: doc.id,
+                      email: data.email,
+                      displayName: data.displayName,
+                      photoURL: data.photoURL,
+                      disabled: data.disabled || false,
+                      creationTime: data.creationTime?.toDate ? data.creationTime.toDate().toISOString() : new Date().toISOString(),
+                  });
+              });
+              setCustomers(fetchedCustomers);
           } catch {
-              // Fallback silencioso
+              try {
+                  if (userRef.current) {
+                      const idToken = await userRef.current.getIdToken();
+                      const serverData = await getAdminOrdersAndUsersServer(idToken);
+                      if (active) {
+                          setCustomers(serverData.customers);
+                      }
+                  }
+              } catch {
+                  // Fallback silencioso
+              }
           } finally {
               if (active) setLoading(false);
           }
-      });
+      };
+      void loadCustomers();
       return () => {
           active = false;
-          unsubscribe();
       };
-  }, [user]);
+  }, [uid]);
 
   return (
     <div className="space-y-6">

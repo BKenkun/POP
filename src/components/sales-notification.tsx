@@ -4,10 +4,9 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import type { Order, Product } from '@/lib/types';
+import type { Product } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, collectionGroup, orderBy, Timestamp } from 'firebase/firestore';
-import { useAuth } from '@/context/auth-context';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useTranslation } from '@/context/language-context';
 
 const internationalData = {
@@ -39,28 +38,31 @@ const getRandomCountry = () => getRandomItem(Object.keys(internationalData));
 export function SalesNotification() {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
-    const unsubscribe = onSnapshot(
-      productsQuery,
-      (snapshot) => {
+    let active = true;
+    const loadProducts = async () => {
+      try {
+        const productsQuery = query(collection(db, 'products'), where('active', '!=', false));
+        const snapshot = await getDocs(productsQuery);
+        if (!active) return;
         const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
         setAllProducts(fetchedProducts);
-      },
-      () => {
-        // Silenciar errores de listener para no interrumpir la navegación pública
+      } catch {
+        // Silenciar errores de lectura para no interrumpir la navegación pública
       }
-    );
-    return () => unsubscribe();
-  }, [])
+    };
+    void loadProducts();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const isAdminPath = pathname.startsWith('/admin');
+  const hasProducts = allProducts.length > 0;
 
   const showToast = useCallback((title: string, description: string, total: number) => {
       toast({
@@ -87,21 +89,6 @@ export function SalesNotification() {
       total
     );
   }, [showToast, allProducts, t]);
-  
-  const showRealOrderToast = useCallback((order: Order) => {
-      const firstItem = order.items[0];
-      if (!firstItem) return;
-
-      const customerName = order.customerName.split(' ')[0];
-      const city = order.shippingAddress?.city || t('notifications.a_city');
-      
-      showToast(
-          t('notifications.real_order_title'),
-          t('notifications.recent_purchase_desc', { name: customerName, location: city, quantity: firstItem.quantity, product_name: firstItem.name }),
-          order.total
-      );
-
-  }, [showToast, t]);
 
   const scheduleNextToast = useCallback(() => {
     if (timeoutRef.current) {
@@ -109,62 +96,37 @@ export function SalesNotification() {
     }
     const randomDelay = Math.random() * 15000 + 12000;
     timeoutRef.current = setTimeout(() => {
-      showRandomToast();
-      scheduleNextToast();
+      showRandomToastRef.current();
+      scheduleNextToastRef.current();
     }, randomDelay);
-  }, [showRandomToast]);
+  }, []);
 
+  const showRandomToastRef = useRef(showRandomToast);
+  const scheduleNextToastRef = useRef(scheduleNextToast);
 
   useEffect(() => {
-    if (isAdminPath || allProducts.length === 0) {
+    showRandomToastRef.current = showRandomToast;
+    scheduleNextToastRef.current = scheduleNextToast;
+  }, [showRandomToast, scheduleNextToast]);
+
+  useEffect(() => {
+    if (isAdminPath || !hasProducts) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
-    
-    let unsubscribeOrders = () => {};
-
-    if (isAdmin) {
-        const ordersQuery = query(
-          collectionGroup(db, 'orders'),
-          orderBy('createdAt', 'desc'),
-          where('createdAt', '>', Timestamp.now())
-        );
-
-        unsubscribeOrders = onSnapshot(
-          ordersQuery,
-          (snapshot) => {
-            if (isInitialLoad) {
-                setIsInitialLoad(false);
-                return;
-            }
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === 'added') {
-                    const newOrder = change.doc.data() as Order;
-                    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                    showRealOrderToast(newOrder);
-                    scheduleNextToast();
-                }
-            });
-          },
-          () => {
-            // Evitar error no capturado si las reglas cliente o el índice compuesto no están activos
-          }
-        );
-    }
 
     const initialDelay = setTimeout(() => {
-        showRandomToast();
-        scheduleNextToast();
+        showRandomToastRef.current();
+        scheduleNextToastRef.current();
     }, 10000);
 
     return () => {
-        unsubscribeOrders();
         clearTimeout(initialDelay);
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [isAdminPath, allProducts, toast, showRandomToast, showRealOrderToast, scheduleNextToast, isInitialLoad, isAdmin]);
+  }, [isAdminPath, hasProducts]);
 
   return null;
 }

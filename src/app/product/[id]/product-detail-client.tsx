@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, collection, query, where, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Product } from '@/lib/types';
 import { ProductGallery } from './product-gallery';
@@ -27,46 +27,46 @@ export default function ProductDetailClient({
 
   useEffect(() => {
     if (!initialProduct.id) return;
+    let active = true;
 
-    const productDocRef = doc(db, 'products', initialProduct.id);
-    const unsubscribeProduct = onSnapshot(
-      productDocRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const next = { id: docSnap.id, ...docSnap.data() } as Product;
+    const refreshProductData = async () => {
+      try {
+        const productDocRef = doc(db, 'products', initialProduct.id);
+        const allProductsQuery = query(
+          collection(db, 'products'),
+          where('active', '!=', false)
+        );
+        const [productSnap, allSnap] = await Promise.allSettled([
+          getDoc(productDocRef),
+          getDocs(allProductsQuery),
+        ]);
+
+        if (!active) return;
+
+        if (productSnap.status === 'fulfilled' && productSnap.value.exists()) {
+          const next = { id: productSnap.value.id, ...productSnap.value.data() } as Product;
           if (next.active !== false) {
             setProduct(next);
           }
         }
-      },
-      () => {
-        // Keep SSR initialProduct if client snapshot fails
-      }
-    );
 
-    const allProductsQuery = query(
-      collection(db, 'products'),
-      where('active', '!=', false)
-    );
-    const unsubscribeAll = onSnapshot(
-      allProductsQuery,
-      (snapshot) => {
-        const products = snapshot.docs.map(
-          (d) => ({ id: d.id, ...d.data() } as Product)
-        );
-        if (products.length > 0) {
-          setAllProducts(products);
+        if (allSnap.status === 'fulfilled') {
+          const products = allSnap.value.docs.map(
+            (d) => ({ id: d.id, ...d.data() } as Product)
+          );
+          if (products.length > 0) {
+            setAllProducts(products);
+          }
         }
-        setLoadingAllProducts(false);
-      },
-      () => {
-        setLoadingAllProducts(false);
+      } finally {
+        if (active) setLoadingAllProducts(false);
       }
-    );
+    };
+
+    void refreshProductData();
 
     return () => {
-      unsubscribeProduct();
-      unsubscribeAll();
+      active = false;
     };
   }, [initialProduct.id]);
 

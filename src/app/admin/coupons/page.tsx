@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -71,14 +71,17 @@ export default function AdminCouponsPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const userRef = useRef(user);
+  userRef.current = user;
+  const uid = user?.uid ?? null;
 
   const loadCouponsFromServer = useCallback(async () => {
-    if (!user) {
+    if (!uid || !userRef.current) {
       setLoading(false);
       return;
     }
     try {
-      const idToken = await user.getIdToken();
+      const idToken = await userRef.current.getIdToken();
       const serverCoupons = await listAdminCoupons(idToken);
       setCoupons(serverCoupons);
     } catch (err) {
@@ -86,14 +89,16 @@ export default function AdminCouponsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [uid]);
 
   useEffect(() => {
+    let active = true;
     void loadCouponsFromServer();
 
-    const unsubscribe = onSnapshot(
-      collection(db, 'coupons'),
-      (snapshot) => {
+    const loadClientCoupons = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'coupons'));
+        if (!active) return;
         const fetchedCoupons: Coupon[] = snapshot.docs.map(
           (docSnap) =>
             ({
@@ -104,15 +109,18 @@ export default function AdminCouponsPage() {
         if (fetchedCoupons.length > 0) {
           setCoupons(fetchedCoupons);
         }
-        setLoading(false);
-      },
-      () => {
+      } catch {
         // Si las reglas cliente restringen la lectura directa, mantenemos los datos obtenidos por servidor
-        setLoading(false);
+      } finally {
+        if (active) setLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    void loadClientCoupons();
+
+    return () => {
+      active = false;
+    };
   }, [loadCouponsFromServer]);
 
   const handleToggleActive = async (coupon: Coupon) => {

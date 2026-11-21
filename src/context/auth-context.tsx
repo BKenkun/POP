@@ -12,7 +12,7 @@ import React, {
 } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { UserSubscription } from '@/lib/types';
@@ -100,6 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const lastHeartbeatRef = useRef<number>(0);
   const isLoggingOutRef = useRef<boolean>(false);
   const warningOpenRef = useRef<boolean>(false);
+  const authSequenceRef = useRef<number>(0);
 
   useEffect(() => {
     try {
@@ -111,33 +112,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    let unsubscribeSnapshot: (() => void) | null = null;
-
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-        unsubscribeSnapshot = null;
-      }
+      const seq = ++authSequenceRef.current;
 
       setUser(currentUser);
       if (currentUser) {
         isLoggingOutRef.current = false;
         const userDocRef = doc(db, 'users', currentUser.uid);
-        unsubscribeSnapshot = onSnapshot(
-          userDocRef,
-          (docSnap) => {
+        void getDoc(userDocRef)
+          .then((docSnap) => {
+            if (authSequenceRef.current !== seq) return;
             if (docSnap.exists()) {
               setUserDoc(docSnap.data());
             } else {
               setUserDoc(null);
             }
             setLoading(false);
-          },
-          () => {
+          })
+          .catch(() => {
+            if (authSequenceRef.current !== seq) return;
             setUserDoc(null);
             setLoading(false);
-          }
-        );
+          });
       } else {
         setUserDoc(null);
         setIsSessionWarningOpen(false);
@@ -148,9 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => {
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-      }
+      authSequenceRef.current += 1;
       unsubscribeAuth();
     };
   }, []);
@@ -178,6 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const reason = options?.reason ?? 'manual';
 
       try {
+        authSequenceRef.current += 1;
         setIsSessionWarningOpen(false);
         warningOpenRef.current = false;
         clearStoredActivity();

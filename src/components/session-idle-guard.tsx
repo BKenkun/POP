@@ -63,19 +63,19 @@ export default function SessionIdleGuard() {
             <ShieldAlert className="h-6 w-6" />
           </div>
           <DialogTitle className="text-center text-xl">
-            Tu sesión está a punto de cerrarse
+            Your session is about to expire
           </DialogTitle>
           <DialogDescription className="text-center">
-            Por seguridad ({isActualAdmin ? 'sesión de administrador' : 'sesión de usuario'} · máximo{' '}
-            {totalMinutes} min sin actividad), cerraremos tu sesión automáticamente si no confirmas
-            que sigues ahí.
+            For security ({isActualAdmin ? 'administrator session' : 'user session'} · max{' '}
+            {totalMinutes} min idle limit), your session will automatically close unless you confirm
+            you are still active.
           </DialogDescription>
         </DialogHeader>
 
         <div className="my-2 space-y-3 rounded-lg border bg-muted/40 p-4 text-center">
           <div className="flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
-            <span>Tiempo restante</span>
+            <span>Time remaining</span>
           </div>
           <div className="font-mono text-4xl font-bold tabular-nums text-amber-600 dark:text-amber-400">
             {formattedClock}
@@ -91,11 +91,11 @@ export default function SessionIdleGuard() {
             disabled={extending}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Cerrar sesión ahora
+            Log out now
           </Button>
           <Button type="button" onClick={handleExtend} disabled={extending}>
             <RefreshCw className={`mr-2 h-4 w-4 ${extending ? 'animate-spin' : ''}`} />
-            {extending ? 'Renovando...' : 'Mantener sesión activa'}
+            {extending ? 'Renewing...' : 'Keep session active'}
           </Button>
         </DialogFooter>
       </DialogContent>

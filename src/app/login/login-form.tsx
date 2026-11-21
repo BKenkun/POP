@@ -37,8 +37,8 @@ export default function LoginForm() {
     const loggedInIsAdmin = isAdminEmail(userEmail);
 
     toast({
-      title: 'Inicio de sesión exitoso',
-      description: loggedInIsAdmin ? '¡Bienvenido, Administrador!' : '¡Bienvenido de nuevo!',
+      title: 'Login successful',
+      description: loggedInIsAdmin ? 'Welcome back, Administrator!' : 'Welcome back!',
     });
 
     const redirectUrl = searchParams.get('redirect');
@@ -65,7 +65,7 @@ export default function LoginForm() {
       if (friendlyError) {
         setError(friendlyError);
         toast({
-          title: 'Error al iniciar sesión con Google',
+          title: 'Google sign-in failed',
           description: friendlyError,
           variant: 'destructive',
         });
@@ -95,19 +95,19 @@ export default function LoginForm() {
 
       completeRedirect(userCredential.user.email);
     } catch (err: any) {
-      let friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+      let friendlyError = 'Incorrect email or password. Please try again.';
       if (
         err.code === 'auth/user-not-found' ||
         err.code === 'auth/wrong-password' ||
         err.code === 'auth/invalid-credential'
       ) {
-        friendlyError = 'Email o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+        friendlyError = 'Incorrect email or password. Please try again.';
       } else {
         console.error('Firebase Auth Error:', err);
       }
       setError(friendlyError);
       toast({
-        title: 'Error al iniciar sesión',
+        title: 'Login error',
         description: friendlyError,
         variant: 'destructive',
       });
@@ -124,9 +124,9 @@ export default function LoginForm() {
         {isSessionExpired && (
           <Alert className="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
             <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <AlertTitle>Sesión cerrada por inactividad</AlertTitle>
+            <AlertTitle>Session closed due to inactivity</AlertTitle>
             <AlertDescription>
-              Por tu seguridad, hemos cerrado automáticamente la sesión tras un periodo sin actividad.
+              For your security, we automatically closed your session after a period of inactivity.
             </AlertDescription>
           </Alert>
         )}
@@ -160,7 +160,7 @@ export default function LoginForm() {
             id="email"
             name="email"
             type="email"
-            placeholder="tu@email.com"
+            placeholder="your@email.com"
             required
             disabled={isBusy}
             value={email}
@@ -194,7 +194,7 @@ export default function LoginForm() {
               className="absolute inset-y-0 right-0 h-full px-3"
               onClick={() => setShowPassword(!showPassword)}
               disabled={isBusy}
-              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff /> : <Eye />}
             </Button>

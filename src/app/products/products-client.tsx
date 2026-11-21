@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import ProductFilters from './filters';
 import { getUniqueValues } from '@/lib/utils';
@@ -33,25 +33,29 @@ export default function ProductsClient({
   const { t } = useTranslation();
 
   useEffect(() => {
-    const productsQuery = query(
-      collection(db, 'products'),
-      where('active', '!=', false)
-    );
-    const unsubscribe = onSnapshot(
-      productsQuery,
-      (snapshot) => {
+    let active = true;
+    const loadProducts = async () => {
+      try {
+        const productsQuery = query(
+          collection(db, 'products'),
+          where('active', '!=', false)
+        );
+        const snapshot = await getDocs(productsQuery);
+        if (!active) return;
         const fetchedProducts = snapshot.docs.map(
           (doc) => ({ id: doc.id, ...doc.data() } as Product)
         );
         if (fetchedProducts.length > 0) {
           setProducts(fetchedProducts);
         }
-      },
-      (error) => {
-        console.warn('Firestore snapshot error on products page:', error);
+      } catch (error) {
+        console.warn('Firestore read error on products page:', error);
       }
-    );
-    return () => unsubscribe();
+    };
+    void loadProducts();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const uniqueBrands = getUniqueValues(products, 'brand').filter(

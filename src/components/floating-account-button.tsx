@@ -96,7 +96,7 @@ export default function FloatingAccountButton() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void extendSession()}>
                 <Clock className="mr-2" />
-                <span>Renovar sesión</span>
+                <span>Renew session</span>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={handleLogout}>
                 <LogOut className="mr-2" />

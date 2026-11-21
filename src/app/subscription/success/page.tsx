@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * Pantalla de éxito tras el pago de suscripción.
@@ -21,34 +21,49 @@ export default function SubscriptionSuccessPage() {
     const [verifying, setVerifying] = useState(true);
     const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false);
 
-    // Escuchamos el documento del usuario para detectar cuando el Webhook lo activa en Firestore
-    useEffect(() => {
-        if (!user) return;
+    const uid = user?.uid ?? null;
 
-        console.log("[SUCCESS PAGE] Esperando activación de suscripción...");
-        const userRef = doc(db, 'users', user.uid);
-        const unsubscribe = onSnapshot(userRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                // En cuanto el flag sea true, dejamos de mostrar el cargador
-                if (data.isSubscribed === true) {
-                    console.log("[SUCCESS PAGE] ¡Suscripción activada en Firestore!");
-                    setVerifying(false);
-                    setIsAlreadySubscribed(true);
+    // Comprobamos periódicamente el documento del usuario para detectar cuando el Webhook lo activa en Firestore
+    useEffect(() => {
+        if (!uid) return;
+
+        let active = true;
+        const userRef = doc(db, 'users', uid);
+
+        const checkSubscription = async () => {
+            try {
+                const docSnap = await getDoc(userRef);
+                if (!active) return;
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.isSubscribed === true) {
+                        setVerifying(false);
+                        setIsAlreadySubscribed(true);
+                    }
                 }
+            } catch {
+                // Ignorar fallos transitorios durante la espera
             }
-        });
+        };
+
+        void checkSubscription();
+        const interval = window.setInterval(() => {
+            if (active) {
+                void checkSubscription();
+            }
+        }, 2500);
 
         // Timeout de seguridad por si el webhook falla o tarda demasiado (20 segundos)
-        const timer = setTimeout(() => {
-            setVerifying(false);
+        const timer = window.setTimeout(() => {
+            if (active) setVerifying(false);
         }, 20000);
 
         return () => {
-            unsubscribe();
-            clearTimeout(timer);
+            active = false;
+            window.clearInterval(interval);
+            window.clearTimeout(timer);
         };
-    }, [user]);
+    }, [uid]);
 
     return (
          <div className="flex flex-col items-center justify-center text-center space-y-8 py-12 max-w-lg mx-auto px-4">

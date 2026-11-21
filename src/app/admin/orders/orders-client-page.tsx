@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Table,
   TableHeader,
@@ -17,7 +17,7 @@ import { formatPrice } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 import { db } from '@/lib/firebase';
-import { collectionGroup, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import { getAdminOrdersAndUsersServer } from '@/app/actions/coupons-admin';
 
@@ -57,43 +57,53 @@ export default function OrdersClientPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const userRef = useRef(user);
+  userRef.current = user;
+  const uid = user?.uid ?? null;
 
   useEffect(() => {
-      let active = true;
-      const q = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const fetchedOrders: Order[] = [];
-          querySnapshot.forEach((doc) => {
-               const data = doc.data();
-               const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-               fetchedOrders.push({ id: doc.id, ...data, path: doc.ref.path, createdAt } as Order);
-          });
-          setOrders(fetchedOrders);
+      if (!uid) {
           setLoading(false);
-      }, async () => {
+          return;
+      }
+      let active = true;
+      const loadOrders = async () => {
           try {
-              if (user) {
-                  const idToken = await user.getIdToken();
-                  const serverData = await getAdminOrdersAndUsersServer(idToken);
-                  if (active) {
-                      setOrders(
-                          serverData.orders.map(
-                              (o) => ({ ...o, createdAt: new Date(o.createdAt) } as Order)
-                          )
-                      );
-                  }
-              }
+              const q = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
+              const querySnapshot = await getDocs(q);
+              if (!active) return;
+              const fetchedOrders: Order[] = [];
+              querySnapshot.forEach((doc) => {
+                   const data = doc.data();
+                   const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+                   fetchedOrders.push({ id: doc.id, ...data, path: doc.ref.path, createdAt } as Order);
+              });
+              setOrders(fetchedOrders);
           } catch {
-              // Fallback silencioso
+              try {
+                  if (userRef.current) {
+                      const idToken = await userRef.current.getIdToken();
+                      const serverData = await getAdminOrdersAndUsersServer(idToken);
+                      if (active) {
+                          setOrders(
+                              serverData.orders.map(
+                                  (o) => ({ ...o, createdAt: new Date(o.createdAt) } as Order)
+                              )
+                          );
+                      }
+                  }
+              } catch {
+                  // Fallback silencioso
+              }
           } finally {
               if (active) setLoading(false);
           }
-      });
+      };
+      void loadOrders();
       return () => {
           active = false;
-          unsubscribe();
       };
-  }, [user]);
+  }, [uid]);
 
   return (
     <div className="space-y-6">

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Order } from '@/lib/types';
 import { Loader2, Package, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -32,26 +32,39 @@ export default function UserOrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const uid = user?.uid ?? null;
+
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !uid) {
         router.push('/login');
         return;
     }
-    if (user && orderId) {
-        const orderDocRef = doc(db, 'users', user.uid, 'orders', orderId);
-        const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
+    if (uid && orderId) {
+        let active = true;
+        const loadOrder = async () => {
+          try {
+            const orderDocRef = doc(db, 'users', uid, 'orders', orderId);
+            const docSnap = await getDoc(orderDocRef);
+            if (!active) return;
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                 const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                 setOrder({ id: docSnap.id, ...data, createdAt } as Order);
             } else {
                 setOrder(null);
             }
-            setIsLoading(false);
-        });
-        return () => unsubscribe();
+          } catch {
+            if (active) setOrder(null);
+          } finally {
+            if (active) setIsLoading(false);
+          }
+        };
+        void loadOrder();
+        return () => {
+          active = false;
+        };
     }
-  }, [user, orderId, authLoading, router]);
+  }, [uid, orderId, authLoading, router]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {

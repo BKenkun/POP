@@ -75,7 +75,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
               variant="outline"
               size="sm"
               onClick={() => void extendSession()}
-              title="Haz clic para reiniciar el reloj de inactividad"
+              title="Click to reset the inactivity timer"
               className={cn(
                 "h-8 gap-2 font-mono text-xs tabular-nums",
                 isWarning
@@ -84,7 +84,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
               )}
             >
               <Clock className="h-3.5 w-3.5" />
-              <span>Sesión: {formatRemainingClock(sessionRemainingMs)}</span>
+              <span>Session: {formatRemainingClock(sessionRemainingMs)}</span>
               <RefreshCw className="h-3 w-3 opacity-70" />
             </Button>
           </div>

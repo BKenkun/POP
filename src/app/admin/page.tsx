@@ -11,7 +11,7 @@ import {
 import { Users, Package, ShoppingCart, DollarSign, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "./_components/date-range-picker";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import { Loader2 } from "lucide-react";
 import { cbdProducts } from "@/lib/cbd-products";
 import type { Order, OrderItem, Product } from "@/lib/types";
 import { db } from "@/lib/firebase";
-import { collection, collectionGroup, query, where, orderBy, limit, Timestamp, onSnapshot } from "firebase/firestore";
+import { collection, collectionGroup, query, orderBy, Timestamp, getDocs } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { addDays, startOfMonth, format as formatDate, subDays } from "date-fns";
 import { OverviewChart } from "./_components/overview-chart";
@@ -91,6 +91,8 @@ const StatCard = ({
 
 export default function AdminDashboardPage() {
   const { user, isAdmin } = useAuth();
+  const userRef = useRef(user);
+  userRef.current = user;
   const today = new Date();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(today),
@@ -110,9 +112,10 @@ export default function AdminDashboardPage() {
   const [allUsers, setAllUsers] = useState<Customer[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
+  const uid = user?.uid ?? null;
+
   useEffect(() => {
-    // Only fetch data if the user is a logged-in admin
-    if (!user || !isAdmin) {
+    if (!uid || !isAdmin) {
       setLoadingOrders(false);
       setLoadingUsers(false);
       setLoadingProducts(false);
@@ -120,66 +123,83 @@ export default function AdminDashboardPage() {
     }
 
     let active = true;
-    let serverFallbackRequested = false;
 
-    const triggerServerFallback = async () => {
-      if (serverFallbackRequested) return;
-      serverFallbackRequested = true;
+    const loadDashboardData = async () => {
       try {
-        const idToken = await user.getIdToken();
-        const serverData = await getAdminOrdersAndUsersServer(idToken);
+        const [ordersRes, usersRes, productsRes] = await Promise.allSettled([
+          getDocs(query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'))),
+          getDocs(query(collection(db, 'users'))),
+          getDocs(query(collection(db, 'products'))),
+        ]);
+
         if (!active) return;
-        setAllOrders(
-          serverData.orders.map(
-            (o) => ({ ...o, createdAt: new Date(o.createdAt) } as Order)
-          )
-        );
-        setAllUsers(serverData.customers);
+
+        let needsServerFallback = false;
+
+        if (ordersRes.status === 'fulfilled') {
+          setAllOrders(
+            ordersRes.value.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as Order))
+          );
+          setLoadingOrders(false);
+        } else {
+          needsServerFallback = true;
+        }
+
+        if (usersRes.status === 'fulfilled') {
+          setAllUsers(
+            usersRes.value.docs.map((docSnap) => ({ uid: docSnap.id, ...docSnap.data() } as Customer))
+          );
+          setLoadingUsers(false);
+        } else {
+          needsServerFallback = true;
+        }
+
+        if (productsRes.status === 'fulfilled') {
+          setProducts(
+            productsRes.value.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as Product))
+          );
+        }
+        setLoadingProducts(false);
+
+        if (needsServerFallback && userRef.current) {
+          try {
+            const idToken = await userRef.current.getIdToken();
+            const serverData = await getAdminOrdersAndUsersServer(idToken);
+            if (!active) return;
+            if (ordersRes.status === 'rejected') {
+              setAllOrders(
+                serverData.orders.map(
+                  (o) => ({ ...o, createdAt: new Date(o.createdAt) } as Order)
+                )
+              );
+            }
+            if (usersRes.status === 'rejected') {
+              setAllUsers(serverData.customers);
+            }
+          } catch {
+            // Fallback silencioso
+          } finally {
+            if (active) {
+              setLoadingOrders(false);
+              setLoadingUsers(false);
+            }
+          }
+        }
       } catch {
-        // Fallback silencioso
-      } finally {
         if (active) {
           setLoadingOrders(false);
           setLoadingUsers(false);
+          setLoadingProducts(false);
         }
       }
     };
-    
-    const ordersQuery = query(collectionGroup(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
-      const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-      setAllOrders(orders);
-      setLoadingOrders(false);
-    }, () => {
-      void triggerServerFallback();
-    });
 
-    const usersQuery = query(collection(db, 'users'));
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-      const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as Customer));
-      setAllUsers(users);
-      setLoadingUsers(false);
-    }, () => {
-      void triggerServerFallback();
-    });
-    
-    const productsQuery = query(collection(db, 'products'));
-    const unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
-      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setProducts(products);
-      setLoadingProducts(false);
-    }, () => {
-      setLoadingProducts(false);
-    });
-
+    void loadDashboardData();
 
     return () => {
       active = false;
-      unsubscribeOrders();
-      unsubscribeUsers();
-      unsubscribeProducts();
     };
-  }, [user, isAdmin]);
+  }, [uid, isAdmin]);
 
   const processDateRange = (range: DateRange | undefined, orders: Order[], users: Customer[]) => {
       if (!orders || !users) return { filteredOrders: [], filteredUsers: [], totalRevenue: 0, collectedRevenue: 0 };

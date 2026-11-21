@@ -7,7 +7,7 @@ import { getUniqueValues } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useTranslation } from '@/context/language-context';
 
 
@@ -17,16 +17,24 @@ export default function CreatePackPage() {
     const { t } = useTranslation();
 
     useEffect(() => {
-        const productsQuery = query(collection(db, 'products'), where('active', '==', true));
-        const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-            const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-            setProducts(fetchedProducts);
-            setIsLoading(false);
-        }, (error) => {
-            console.error("Error fetching products for pack builder:", error);
-            setIsLoading(false);
-        });
-        return () => unsubscribe();
+        let active = true;
+        const loadProducts = async () => {
+            try {
+                const productsQuery = query(collection(db, 'products'), where('active', '==', true));
+                const snapshot = await getDocs(productsQuery);
+                if (!active) return;
+                const fetchedProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+                setProducts(fetchedProducts);
+            } catch (error) {
+                console.error("Error fetching products for pack builder:", error);
+            } finally {
+                if (active) setIsLoading(false);
+            }
+        };
+        void loadProducts();
+        return () => {
+            active = false;
+        };
     }, []);
 
     const { availableForPack, uniqueBrands, uniqueSizes, uniqueCompositions } = useMemo(() => {

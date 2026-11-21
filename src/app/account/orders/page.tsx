@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/auth-context";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, where, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -25,16 +25,24 @@ export default function OrdersPage() {
   const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const uid = user?.uid ?? null;
 
   useEffect(() => {
-    if (!user) return;
-    
-    const ordersQuery = query(
-        collection(db, 'users', user.uid, 'orders'), 
-        orderBy('createdAt', 'desc')
-    );
+    if (!uid) {
+      setLoading(false);
+      return;
+    }
 
-    const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
+    let active = true;
+
+    const loadOrders = async () => {
+      try {
+        const ordersQuery = query(
+          collection(db, 'users', uid, 'orders'),
+          orderBy('createdAt', 'desc')
+        );
+        const querySnapshot = await getDocs(ordersQuery);
+        if (!active) return;
         const fetchedOrders: Order[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -42,11 +50,19 @@ export default function OrdersPage() {
             fetchedOrders.push({ id: doc.id, ...data, createdAt } as Order);
         });
         setOrders(fetchedOrders);
-        setLoading(false);
-    });
+      } catch {
+        // Ignore read error
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
 
-    return () => unsubscribe();
-  }, [user]);
+    void loadOrders();
+
+    return () => {
+      active = false;
+    };
+  }, [uid]);
 
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
