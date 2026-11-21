@@ -1,8 +1,14 @@
-
+import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 
-// This layout is intentionally minimal. It doesn't render Header or Footer
-// because the main AppLayout already handles that. This prevents duplication.
+export const metadata: Metadata = {
+  title: 'Register',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default function RegisterLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }

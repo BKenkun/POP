@@ -37,7 +37,16 @@ const nextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [],
+      beforeFiles: [
+        {
+          source: '/subscription/failed',
+          destination: '/subscription/cancelled',
+        },
+        {
+          source: '/account/subscription/failed',
+          destination: '/account/subscription/cancelled',
+        },
+      ],
       afterFiles: [],
       fallback: [
         {

@@ -19,17 +19,36 @@ interface Address {
     isDefault: boolean;
 }
 
+import {
+  SESSION_ACTIVITY_COOKIE_NAME,
+  verifyActivityToken,
+} from '@/lib/session-server';
+
 /**
  * Securely gets the user's ID from the session cookie.
  * This is the single source of truth for server-side user authentication.
- * Throws an error if the user is not authenticated.
+ * Throws an error if the user is not authenticated or if the session expired due to inactivity.
  */
 export async function getUserIdFromSession(): Promise<string> {
     const cookieStore = cookies();
+    const activityCookie = cookieStore.get(SESSION_ACTIVITY_COOKIE_NAME)?.value;
+    let verifiedActivityUid: string | null = null;
+
+    if (activityCookie) {
+        const activityCheck = verifyActivityToken(activityCookie);
+        if (!activityCheck.valid || activityCheck.expired) {
+            throw new Error('Authentication failed: Session expired due to inactivity.');
+        }
+        verifiedActivityUid = activityCheck.payload?.uid || null;
+    }
+
     const sessionCookie = cookieStore.get('session')?.value;
     if (sessionCookie) {
         try {
-            const decodedClaims = await auth.verifySessionCookie(sessionCookie);
+            const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+            if (verifiedActivityUid && verifiedActivityUid !== decodedClaims.uid) {
+                throw new Error('Authentication failed: Session mismatch.');
+            }
             return decodedClaims.uid;
         } catch {
             // Fall through to check session_id_token if present
@@ -40,6 +59,9 @@ export async function getUserIdFromSession(): Promise<string> {
     if (fallbackToken) {
         try {
             const decoded = await auth.verifyIdToken(fallbackToken);
+            if (verifiedActivityUid && verifiedActivityUid !== decoded.uid) {
+                throw new Error('Authentication failed: Session mismatch.');
+            }
             return decoded.uid;
         } catch {
             throw new Error('Authentication failed: Invalid session.');

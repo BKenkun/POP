@@ -1,132 +1,16 @@
+import HomeClient from './home-client';
+import { buildPageMetadata, getActiveProductsServer } from '@/lib/seo';
 
-'use client';
+export const revalidate = 300;
 
-import { ProductCard } from '@/components/product-card';
-import { ShieldCheck, Truck, Box, CreditCard } from 'lucide-react';
-import { Product } from '@/lib/types';
-import SubscriptionForm from '@/components/subscription-form';
-import WelcomePopupLoader from '@/components/welcome-popup-loader';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo, useState, useEffect } from 'react';
-import { useTranslation } from '@/context/language-context';
-import { products as fallbackProducts } from '@/lib/products';
+export const metadata = buildPageMetadata({
+  title: 'PuroRush | Premium Aromas & Leather Cleaners',
+  description:
+    'Explore our curated selection of premium quality aromas, leather cleaners, and custom packs with discreet 24/48h shipping across Spain and Europe.',
+  path: '/',
+});
 
-function ProductSection({ title, products, loading }: { title: string; products: Product[]; loading: boolean; }) {
-  if (loading) {
-    return (
-      <section className="space-y-6">
-        <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">{title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-[400px] w-full" />
-          <Skeleton className="h-[400px] w-full" />
-          <Skeleton className="h-[400px] w-full" />
-        </div>
-      </section>
-    );
-  }
-
-  if (products.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="space-y-6">
-      <h2 className="text-2xl md:text-3xl font-headline text-primary font-bold">{title}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-
-export default function Home() {
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const { t } = useTranslation();
-
-  useEffect(() => {
-    const productsQuery = query(collection(db, 'products'));
-    const unsubscribe = onSnapshot(
-      productsQuery,
-      (snapshot) => {
-        const prods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setAllProducts(prods.length > 0 ? prods : fallbackProducts);
-        setLoadingProducts(false);
-      },
-      (error) => {
-        console.warn('Firestore snapshot error, falling back to static products:', error);
-        setAllProducts(fallbackProducts);
-        setLoadingProducts(false);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  const { newArrivals, bestSellers, offers } = useMemo(() => {
-    const products = allProducts.filter(p => p.active !== false);
-    return {
-      newArrivals: products.filter(p => p.internalTags?.includes('novedad')),
-      bestSellers: products.filter(p => p.internalTags?.includes('mas-vendido')),
-      offers: products.filter(p => p.internalTags?.includes('oferta')),
-    }
-  }, [allProducts]);
-  
-  return (
-    <div className="space-y-16">
-      <WelcomePopupLoader />
-      
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">{t('home.hero_title')}</h1>
-        <p className="mt-2 text-lg text-foreground/80 max-w-2xl mx-auto">
-          {t('home.hero_subtitle')}
-        </p>
-      </div>
-
-      <ProductSection title={t('home.section_title_new')} products={newArrivals} loading={loadingProducts} />
-      <ProductSection title={t('home.section_title_offers')} products={offers} loading={loadingProducts} />
-      <ProductSection title={t('home.section_title_bestsellers')} products={bestSellers} loading={loadingProducts} />
-      
-       <div className="my-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-left max-w-5xl mx-auto">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
-              <div>
-                <h3 className="font-semibold text-base">{t('home.feature_secure_title')}</h3>
-                <p className="text-sm text-muted-foreground">{t('home.feature_secure_desc')}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <CreditCard className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
-              <div>
-                <h3 className="font-semibold text-base">{t('home.feature_discreet_payment_title')}</h3>
-                <p className="text-sm text-muted-foreground">{t('home.feature_discreet_payment_desc')}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Box className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
-               <div>
-                <h3 className="font-semibold text-base">{t('home.feature_discreet_packaging_title')}</h3>
-                <p className="text-sm text-muted-foreground">{t('home.feature_discreet_packaging_desc')}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Truck className="h-6 w-6 flex-shrink-0 text-primary mt-1" />
-               <div>
-                <h3 className="font-semibold text-base">{t('home.feature_fast_shipping_title')}</h3>
-                <p className="text-sm text-muted-foreground">{t('home.feature_fast_shipping_desc')}</p>
-              </div>
-            </div>
-        </div>
-      </div>
-      
-      <div className="my-12">
-        <SubscriptionForm />
-      </div>
-    </div>
-  );
+export default async function Home() {
+  const initialProducts = await getActiveProductsServer();
+  return <HomeClient initialProducts={initialProducts} />;
 }

@@ -6,14 +6,44 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
-export const metadata = {
-  title: 'Blog | Popper Online',
-  description: 'Artículos, noticias y consejos sobre nuestros productos.',
-};
+import { buildPageMetadata, getSiteUrl } from '@/lib/seo';
+
+export const metadata = buildPageMetadata({
+  title: 'Blog | Guías y Noticias sobre Aromas',
+  description:
+    'Descubre artículos, guías comparativas, diferencias entre fórmulas y consejos de uso seguro y conservación de aromas en nuestro blog.',
+  path: '/blog',
+});
 
 export default function BlogPage() {
+  const siteUrl = getSiteUrl();
+  const blogJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'Blog de PuroRush',
+    url: `${siteUrl}/blog`,
+    description:
+      'Artículos, guías comparativas y consejos sobre aromas y limpiadores de cuero.',
+    blogPost: posts.map((post) => ({
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: post.excerpt,
+      url: `${siteUrl}/blog/${post.slug}`,
+      datePublished: post.date,
+      author: {
+        '@type': 'Person',
+        name: post.author,
+      },
+      image: post.imageUrl,
+    })),
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
+      />
       <div className="text-center space-y-4 mb-12">
         <h1 className="text-4xl md:text-5xl font-headline text-primary tracking-tight font-bold">Nuestro Blog</h1>
         <p className="text-lg text-foreground/80 max-w-2xl mx-auto">

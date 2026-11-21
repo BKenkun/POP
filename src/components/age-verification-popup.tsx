@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,13 +19,38 @@ const AGE_VERIFICATION_KEY = 'age_verified';
 const AGE_VERIFICATION_EVENT = 'age-verification-complete';
 const MIN_AGE = 18;
 
+const NON_BLOCKING_PREFIXES = [
+  '/informacion-legal',
+  '/terminos-y-condiciones',
+  '/privacidad',
+  '/politica-cookies',
+  '/resolucion-litigios',
+  '/contacto',
+  '/shipping',
+  '/pagos-seguros',
+  '/blog',
+  '/login',
+  '/register',
+  '/forgot-password',
+];
+
 export default function AgeVerificationPopup() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState({ day: '', month: '', year: '' });
   const [error, setError] = useState('');
   const { t } = useTranslation();
 
+  const shouldSkipAgeGate = NON_BLOCKING_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
+
   useEffect(() => {
+    if (shouldSkipAgeGate) {
+      setIsOpen(false);
+      return;
+    }
+
     const isVerified =
       localStorage.getItem(AGE_VERIFICATION_KEY) === 'true';
 
@@ -35,7 +61,7 @@ export default function AgeVerificationPopup() {
 
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [shouldSkipAgeGate]);
 
   const isAgeVerified = useMemo(() => {
     const { day, month, year } = date;

@@ -8,19 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Loader2, Eye, EyeOff, Chrome } from 'lucide-react';
+import { LogIn, Loader2, Eye, EyeOff, Chrome, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useTranslation } from '@/context/language-context';
 import { isAdminEmail } from '@/lib/admin';
 import { authenticateWithGoogle, getGoogleAuthErrorMessage } from '@/lib/google-auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SESSION_EXPIRED_QUERY_PARAM } from '@/lib/session-timeout';
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  const isSessionExpired = searchParams.get(SESSION_EXPIRED_QUERY_PARAM) === '1';
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -117,6 +121,15 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleLogin}>
       <CardContent className="space-y-4">
+        {isSessionExpired && (
+          <Alert className="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <AlertTitle>Sesión cerrada por inactividad</AlertTitle>
+            <AlertDescription>
+              Por tu seguridad, hemos cerrado automáticamente la sesión tras un periodo sin actividad.
+            </AlertDescription>
+          </Alert>
+        )}
         <Button
           type="button"
           variant="outline"

@@ -1,98 +1,113 @@
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import ProductDetailClient from './product-detail-client';
+import {
+  buildPageMetadata,
+  getActiveProductsServer,
+  getProductByIdServer,
+  getSiteUrl,
+  SITE_NAME,
+} from '@/lib/seo';
 
-'use client';
+export const revalidate = 300;
 
-import { useParams, notFound } from 'next/navigation';
-import { Product } from '@/lib/types';
-import { ProductGallery } from './product-gallery';
-import { ProductInfo } from './product-info';
-import { ProductDetails } from './product-details';
-import { Separator } from '@/components/ui/separator';
-import { RelatedProducts } from './related-products';
-import { db } from '@/lib/firebase';
-import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+function stripHtml(input?: string | null): string {
+  if (!input) return '';
+  return input.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
-// This is now a Client Component that fetches its own data.
-export default function ProductDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
-  
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loadingProduct, setLoadingProduct] = useState(true);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [loadingAllProducts, setLoadingAllProducts] = useState(true);
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const product = await getProductByIdServer(params.id);
 
-  useEffect(() => {
-    if (!id) return;
-    const productDocRef = doc(db, 'products', id);
-    const unsubscribeProduct = onSnapshot(productDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
-        } else {
-            setProduct(null);
-        }
-        setLoadingProduct(false);
-    });
-
-    const allProductsQuery = query(collection(db, 'products'), where('active', '!=', false));
-    const unsubscribeAll = onSnapshot(allProductsQuery, (snapshot) => {
-        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setAllProducts(products);
-        setLoadingAllProducts(false);
-    });
-
-    return () => {
-        unsubscribeProduct();
-        unsubscribeAll();
+  if (!product || product.active === false) {
+    return {
+      title: 'Product Not Found',
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
-  }, [id]);
-
-
-  // Show a loading spinner while data is being fetched.
-  if (loadingProduct) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
   }
 
-  // If loading is finished and still no product, it's a 404.
-  if (!product) {
+  const rawDescription =
+    stripHtml(product.description) ||
+    stripHtml(product.longDescription) ||
+    `Buy ${product.name} at ${SITE_NAME} with discreet 24/48h shipping across Spain and Europe.`;
+
+  const description =
+    rawDescription.length > 160
+      ? `${rawDescription.slice(0, 157).trimEnd()}...`
+      : rawDescription;
+
+  return buildPageMetadata({
+    title: product.name,
+    description,
+    path: `/product/${product.id}`,
+    images: product.imageUrl
+      ? [{ url: product.imageUrl, alt: product.name }]
+      : undefined,
+  });
+}
+
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [product, allProducts] = await Promise.all([
+    getProductByIdServer(params.id),
+    getActiveProductsServer(),
+  ]);
+
+  if (!product || product.active === false) {
     notFound();
   }
 
-  const galleryImages = [
-    product.imageUrl,
-    ...(product.galleryImages || []),
-  ];
+  const siteUrl = getSiteUrl();
+  const productUrl = `${siteUrl}/product/${product.id}`;
+  const cleanDescription =
+    stripHtml(product.description) ||
+    stripHtml(product.longDescription) ||
+    product.name;
 
-  const hasDetails = (product.productDetails && product.productDetails.length > 0) || (product.longDescription && product.longDescription.length > 0);
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: [product.imageUrl, ...(product.galleryImages || [])].filter(Boolean),
+    description: cleanDescription,
+    sku: product.sku || product.id,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || SITE_NAME,
+    },
+    offers: {
+      '@type': 'Offer',
+      url: productUrl,
+      priceCurrency: 'EUR',
+      price: (product.price / 100).toFixed(2),
+      availability:
+        product.stock === 0
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        <ProductGallery images={galleryImages} productName={product.name} />
-        <div className="flex flex-col space-y-6">
-          <ProductInfo product={product} />
-        </div>
-      </div>
-      
-      {hasDetails && (
-        <>
-          <Separator className="my-10" />
-          <ProductDetails product={product} />
-        </>
-      )}
-
-      <Separator className="my-10" />
-      
-      <RelatedProducts 
-        currentProduct={product} 
-        allProducts={allProducts} 
-        loading={loadingAllProducts} 
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
-    </div>
+      <ProductDetailClient
+        initialProduct={product}
+        initialAllProducts={allProducts}
+      />
+    </>
   );
 }

@@ -4,17 +4,28 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import CommentsSection from './comments-section';
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+import type { Metadata } from 'next';
+import { buildPageMetadata, getSiteUrl } from '@/lib/seo';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const post = posts.find((p) => p.slug === params.slug);
   if (!post) {
     return {
       title: 'Post no encontrado',
+      robots: { index: false, follow: false },
     };
   }
-  return {
-    title: `${post.title} | Blog de Popper Online`,
+  return buildPageMetadata({
+    title: post.title,
     description: post.excerpt,
-  };
+    path: `/blog/${post.slug}`,
+    type: 'article',
+    images: post.imageUrl ? [{ url: post.imageUrl, alt: post.title }] : undefined,
+  });
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
@@ -24,8 +35,30 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     notFound();
   }
 
+  const siteUrl = getSiteUrl();
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.imageUrl,
+    datePublished: post.date,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${siteUrl}/blog/${post.slug}`,
+    },
+  };
+
   return (
     <article className="max-w-3xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <header className="mb-8">
         <h1 className="text-4xl md:text-5xl font-headline text-primary mb-3 font-bold">{post.title}</h1>
         <p className="text-muted-foreground">

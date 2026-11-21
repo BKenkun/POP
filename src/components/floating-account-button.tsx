@@ -14,14 +14,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LayoutDashboard, Package, MapPin, LogOut, Shield } from 'lucide-react';
+import { User, LayoutDashboard, Package, MapPin, LogOut, Shield, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useTranslation } from '@/context/language-context';
+import { formatRemainingClock } from '@/lib/session-timeout';
 
 export default function FloatingAccountButton() {
   const router = useRouter();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, sessionRemainingMs, extendSession } = useAuth();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -56,7 +57,13 @@ export default function FloatingAccountButton() {
         </DropdownMenuTrigger>
         {user && (
             <DropdownMenuContent className="w-56 mb-2" align="end" side="top">
-            <DropdownMenuLabel>{t(isAdmin ? 'account.menu.admin_title' : 'account.menu.user_title')}</DropdownMenuLabel>
+            <DropdownMenuLabel className="flex items-center justify-between gap-2">
+              <span>{t(isAdmin ? 'account.menu.admin_title' : 'account.menu.user_title')}</span>
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-normal text-muted-foreground tabular-nums">
+                <Clock className="h-3 w-3" />
+                {formatRemainingClock(sessionRemainingMs)}
+              </span>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 {isAdmin && (
@@ -87,6 +94,10 @@ export default function FloatingAccountButton() {
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => void extendSession()}>
+                <Clock className="mr-2" />
+                <span>Renovar sesión</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={handleLogout}>
                 <LogOut className="mr-2" />
                 <span>{t('account.menu.logout')}</span>
